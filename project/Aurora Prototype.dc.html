@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#000;font-family:'Barlow',sans-serif;color:#fff}a{color:#6CFF2B}a:hover{color:#b6ff94}input::placeholder{color:#5f6762}input[type=range]{accent-color:#6CFF2B}</style>
+</helmet>
+<div style="min-height:100vh;background:#000">
+<header style="position:sticky;top:0;z-index:5;background:rgba(0,0,0,.92);backdrop-filter:blur(8px);border-bottom:1px solid #1d211e">
+<div style="max-width:1280px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:18px 32px;flex-wrap:wrap">
+<div style="display:flex;align-items:center;gap:40px">
+<div onClick="{{ goHome }}" style="cursor:pointer;font-family:'Archivo';font-weight:900;font-stretch:115%;font-size:24px;display:flex;align-items:center;gap:8px"><span style="width:13px;height:13px;border-radius:50%;background:#6CFF2B;box-shadow:0 0 18px #6CFF2B"></span>OVAL</div>
+<nav style="display:flex;gap:26px;font-size:15px;font-weight:600">
+<sc-for list="{{ nav }}" as="n" hint-placeholder-count="3"><span onClick="{{ n.onClick }}" style="cursor:pointer;color:{{ n.color }};padding:6px 0;border-bottom:2px solid {{ n.line }}">{{ n.label }}</span></sc-for>
+</nav>
+</div>
+<div style="display:flex;align-items:center;gap:14px">
+<span style="font-family:'JetBrains Mono';font-size:12px;color:#9AA39D;white-space:nowrap">KP 5.33 · G1</span>
+<sc-if value="{{ signedIn }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ goAccount }}" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:4px 4px 4px 14px;border:1px solid #2a302c;border-radius:999px"><span style="font-size:13px;font-weight:700;color:#6CFF2B">{{ planName }}</span><span style="width:32px;height:32px;border-radius:50%;background:#1d211e;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px">SR</span></div>
+</sc-if>
+<sc-if value="{{ signedOut }}" hint-placeholder-val="{{ true }}">
+<span onClick="{{ goSignin }}" style="cursor:pointer;font-weight:600;font-size:15px;color:#C9D0CB">Sign in</span>
+<span onClick="{{ goPlans }}" style="cursor:pointer;background:#6CFF2B;color:#000;font-weight:700;font-size:14px;padding:10px 18px;border-radius:999px">Get alerts</span>
+</sc-if>
+</div>
+</div>
+</header>
+
+<sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+<div style="max-width:1280px;margin:16px auto 0;padding:0 32px"><div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 18px;border:1px solid #6CFF2B;border-radius:12px;background:rgba(108,255,43,.08)"><span style="font-weight:600;font-size:15px">{{ toast }}</span><span onClick="{{ clearToast }}" style="cursor:pointer;font-family:'JetBrains Mono';font-size:12px;color:#9AA39D">DISMISS</span></div></div>
+</sc-if>
+
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+<main data-screen-label="Now" style="max-width:1280px;margin:0 auto;padding:40px 32px 48px;display:flex;flex-direction:column;gap:36px">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:40px;align-items:center">
+<div style="display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;align-items:center;gap:10px;font-family:'JetBrains Mono';font-size:12px;letter-spacing:.08em;color:#6CFF2B"><span style="width:8px;height:8px;border-radius:50%;background:#6CFF2B"></span>LIVE · UPDATED 2 MIN AGO</div>
+<h1 style="margin:0;font-family:'Archivo';font-weight:900;font-stretch:112%;font-size:80px;line-height:.88;text-transform:uppercase">G1 Storm<br><span style="color:#6CFF2B;white-space:nowrap">In progress</span></h1>
+<p style="margin:0;max-width:540px;font-size:18px;line-height:1.45;color:#C9D0CB;text-wrap:pretty">A CME shock arrived at 18:20 UT and the IMF has turned hard south. Aurora is likely overhead across central Canada and low on the northern horizon down to the northern US tier tonight.</p>
+<div style="display:grid;grid-template-columns:repeat(9,1fr);gap:4px;max-width:520px">
+<sc-for list="{{ kpScale }}" as="s" hint-placeholder-count="9"><div style="display:flex;flex-direction:column;gap:6px"><div style="height:14px;border-radius:2px;background:{{ s.bg }};opacity:{{ s.op }}"></div><span style="font-family:'JetBrains Mono';font-size:11px;color:#9AA39D">{{ s.n }}</span></div></sc-for>
+</div>
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid #1d211e;border-bottom:1px solid #1d211e">
+<sc-for list="{{ nowStats }}" as="s" hint-placeholder-count="4"><div style="padding:14px;display:flex;flex-direction:column;gap:4px;border-right:1px solid #1d211e">
+<span style="font-family:'JetBrains Mono';font-size:11px;color:#9AA39D">{{ s.label }}</span>
+<span style="font-family:'Archivo';font-weight:900;font-stretch:110%;font-size:32px;line-height:1">{{ s.value }}<span style="font-size:14px;font-weight:600;color:#9AA39D;margin-left:4px">{{ s.unit }}</span></span>
+<span style="font-size:13px;font-weight:600;color:{{ s.c }}">{{ s.note }}</span></div></sc-for>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;max-width:520px;width:100%;justify-self:center">
+<div style="display:flex;justify-content:space-between"><span style="font-family:'Archivo';font-weight:800;font-size:14px;color:#6CFF2B;letter-spacing:.04em">AURORAL OVAL · OVATION</span><span style="font-family:'JetBrains Mono';font-size:11px;color:#9AA39D">22:15 UT</span></div>
+<svg viewBox="0 0 480 480" style="width:100%;display:block">
+<defs><clipPath id="pc"><circle cx="240" cy="240" r="226"></circle></clipPath><filter id="pb" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="16"></feGaussianBlur></filter><filter id="pb2" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="6"></feGaussianBlur></filter><radialGradient id="pg"><stop offset="0" style="stop-color:#141a16"></stop><stop offset="1" style="stop-color:#050605"></stop></radialGradient></defs>
+<circle cx="240" cy="240" r="226" style="fill:url(#pg)"></circle>
+<g style="clip-path:url(#pc)">
+<circle cx="{{ oval.cx }}" cy="{{ oval.cy }}" r="{{ oval.vr }}" style="fill:none;stroke:#E5484D;stroke-width:34;opacity:.45;filter:url(#pb)"></circle>
+<circle cx="{{ oval.cx }}" cy="{{ oval.cy }}" r="{{ oval.r }}" style="fill:none;stroke:#59FF3A;stroke-width:46;opacity:.75;filter:url(#pb)"></circle>
+<circle cx="{{ oval.cx }}" cy="{{ oval.cy }}" r="{{ oval.r }}" style="fill:none;stroke:#9CFF6E;stroke-width:12;opacity:.5;filter:url(#pb2)"></circle>
+<sc-for list="{{ meridians }}" as="m" hint-placeholder-count="12"><line x1="240" y1="240" x2="{{ m.x }}" y2="{{ m.y }}" style="stroke:#fff;stroke-opacity:.08"></line></sc-for>
+<sc-for list="{{ rings }}" as="r" hint-placeholder-count="5"><circle cx="240" cy="240" r="{{ r.r }}" style="fill:none;stroke:#fff;stroke-opacity:.12"></circle><text x="244" y="{{ r.ly }}" style="fill:#7d857f;font:10px 'JetBrains Mono'">{{ r.lbl }}</text></sc-for>
+<circle cx="{{ oval.cx }}" cy="{{ oval.cy }}" r="{{ oval.vr }}" style="fill:none;stroke:#F06A6A;stroke-width:1.5;stroke-dasharray:5 5"></circle>
+<sc-for list="{{ cities }}" as="c" hint-placeholder-count="10"><circle cx="{{ c.x }}" cy="{{ c.y }}" r="2.6" style="fill:#fff"></circle><text x="{{ c.tx }}" y="{{ c.ty }}" style="fill:#fff;font:600 11.5px 'Barlow';text-anchor:{{ c.anchor }}">{{ c.name }}</text></sc-for>
+</g>
+<circle cx="240" cy="240" r="226" style="fill:none;stroke:#2a302c"></circle>
+</svg>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:12px;border-top:1px solid #1d211e;padding-top:24px">
+<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap"><h2 style="margin:0;font-family:'Archivo';font-weight:900;font-stretch:112%;font-size:40px;line-height:1;text-transform:uppercase">Geomagnetic <span style="color:#6CFF2B">outlook</span></h2><span style="font-size:13px;color:#9AA39D">Observed Kp · NOAA 3-day forecast</span></div>
+<svg viewBox="0 0 1200 320" style="width:100%;display:block">
+<sc-for list="{{ kpGrid }}" as="g" hint-placeholder-count="10"><line x1="48" x2="1150" y1="{{ g.y }}" y2="{{ g.y }}" style="stroke:#fff;stroke-opacity:.07"></line><text x="38" y="{{ g.ty }}" style="fill:#9AA39D;font:11px 'JetBrains Mono';text-anchor:end">{{ g.k }}</text></sc-for>
+<sc-for list="{{ dayLines }}" as="d" hint-placeholder-count="4"><line x1="{{ d.x }}" x2="{{ d.x }}" y1="20" y2="290" style="stroke:#fff;stroke-opacity:.14"></line></sc-for>
+<sc-for list="{{ kpBars }}" as="b" hint-placeholder-count="40"><rect x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ b.h }}" style="fill:{{ b.fill }}"></rect></sc-for>
+<line x1="{{ nowX }}" x2="{{ nowX }}" y1="14" y2="292" style="stroke:#fff;stroke-width:3;stroke-dasharray:7 5"></line>
+<text x="{{ nowX }}" y="10" style="fill:#fff;font:700 12px 'Barlow';text-anchor:middle">NOW</text>
+<sc-for list="{{ dayLabels }}" as="d" hint-placeholder-count="5"><text x="{{ d.x }}" y="310" style="fill:#C9D0CB;font:600 13px 'Barlow';text-anchor:middle">{{ d.t }}</text></sc-for>
+<line x1="48" x2="1150" y1="290" y2="290" style="stroke:#9AA39D"></line>
+</svg>
+</div>
+
+<sc-if value="{{ isFree }}" hint-placeholder-val="{{ true }}">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:center;padding:28px 32px;border:1px solid #2a302c;border-radius:16px;background:radial-gradient(120% 140% at 100% 100%,rgba(89,255,58,.18),rgba(0,0,0,0) 60%)">
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font-family:'Archivo';font-weight:900;font-stretch:112%;font-size:36px;line-height:1;text-transform:uppercase">Never miss <span style="color:#6CFF2B">a night</span></span><span style="font-size:16px;color:#C9D0CB">Instant alerts when the oval reaches your sky, with clouds and darkness taken into account.</span></div>
+<span onClick="{{ goPlans }}" style="cursor:pointer;background:#6CFF2B;color:#000;font-weight:700;font-size:15px;padding:14px 22px;border-radius:999px;white-space:nowrap">See memberships</span>
+</div>
+</sc-if>
+</main>
+</sc-if>
+
+<sc-if value="{{ isPlans }}" hint-placeholder-val="{{ false }}">
+<main data-screen-label="Plans" style="max-width:1280px;margin:0 auto;padding:48px 32px 56px;display:flex;flex-direction:column;gap:36px">
+<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap">
+<div style="display:flex;flex-direction:column;gap:14px"><span style="font-family:'JetBrains Mono';font-size:12px;letter-spacing:.08em;color:#6CFF2B">MEMBERSHIP</span><h1 style="margin:0;font-family:'Archivo';font-weight:900;font-stretch:112%;font-size:80px;line-height:.88;text-transform:uppercase">Choose your<br><span style="color:#6CFF2B">sky</span></h1></div>
+<div style="display:flex;align-items:center;gap:12px">
+<div style="display:flex;padding:4px;border:1px solid #2a302c;border-radius:999px">
+<span onClick="{{ setMonthly }}" style="cursor:pointer;padding:9px 16px;border-radius:999px;font-weight:700;font-size:14px;background:{{ mBg }};color:{{ mFg }}">Monthly</span>
+<span onClick="{{ setAnnual }}" style="cursor:pointer;padding:9px 16px;border-radius:999px;font-weight:700;font-size:14px;background:{{ aBg }};color:{{ aFg }}">Annual</span>
+</div>
+<span style="font-size:13px;font-weight:700;color:#6CFF2B">Save up to 25%</span>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+<sc-for list="{{ tierCards }}" as="t" hint-placeholder-count="4">
+<div style="position:relative;display:flex;flex-direction:column;gap:18px;padding:26px 24px;border:1px solid {{ t.border }};border-radius:16px;background:{{ t.bg }}">
+<div style="display:flex;justify-content:space-between;align-items:center;min-height:24px"><span style="font-family:'Archivo';font-weight:800;font-size:15px;letter-spacing:.05em;color:{{ t.accent }}">{{ t.upper }}</span><span style="font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;background:#6CFF2B;color:#000;opacity:{{ t.badgeOp }}">MOST CHASED</span></div>
+<div style="display:flex;align-items:baseline;gap:6px"><span style="font-family:'Archivo';font-weight:900;font-stretch:112%;font-size:60px;line-height:.9">{{ t.price }}</span><span style="font-size:15px;color:#9AA39D;font-weight:600">{{ t.per }}</span></div>
+<span style="font-size:13px;color:#9AA39D;min-height:18px">{{ t.billed }}</span>
+<span style="font-size:16px;color:#C9D0CB;min-height:44px;text-wrap:pretty">{{ t.blurb }}</span>
+<svg viewBox="0 0 200 40" style="width:100%;height:40px;display:block"><sc-for list="{{ t.glyph }}" as="g" hint-placeholder-count="9"><rect x="{{ g.x }}" y="{{ g.y }}" width="18" height="{{ g.h }}" rx="2" style="fill:{{ g.c }}"></rect></sc-for></svg>
+<span onClick="{{ t.onClick }}" style="cursor:pointer;text-align:center;padding:13px;border-radius:999px;font-weight:700;font-size:15px;background:{{ t.ctaBg }};color:{{ t.ctaFg }};border:1px solid {{ t.ctaBorder }}">{{ t.cta }}</span>
+<div style="display:flex;flex-direction:column;gap:10px;border-top:1px solid #1d211e;padding-top:16px">
+<span style="font-size:13px;color:#9AA39D;font-weight:600">{{ t.inherit }}</span>
+<sc-for list="{{ t.feats }}" as="f" hint-placeholder-count="3"><div style="display:flex;gap:10px;font-size:15px;line-height:1.35"><span style="color:{{ t.accent }};font-weight:700">+</span><span>{{ f }}</span></div></sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:0;border-top:1px solid #1d211e">
+<div style="display:grid;grid-template-columns:minmax(180px,1.4fr) repeat(4,minmax(0,1fr));gap:12px;padding:20px 0 14px;border-bottom:1px solid #2a302c">
+<span style="font-family:'Archivo';font-weight:900;font-stretch:112%;font-size:28px;text-transform:uppercase">Compare</span>
+<sc-for list="{{ tierHeads }}" as="h" hint-placeholder-count="4"><span style="font-family:'Archivo';font-weight:800;font-size:15px;color:{{ h.c }};align-self:end">{{ h.name }}</span></sc-for>
+</div>
+<sc-for list="{{ compare }}" as="r" hint-placeholder-count="8"><div style="display:grid;grid-template-columns:minmax(180px,1.4fr) repeat(4,minmax(0,1fr));gap:12px;padding:14px 0;border-bottom:1px solid #1d211e;font-size:15px">
+<span style="color:#C9D0CB">{{ r.label }}</span>
+<sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="4"><span style="color:{{ c.c }};font-weight:600">{{ c.v }}</span></sc-for>
+</div></sc-for>
+</div>
+</main>
+</sc-if>
+
+<sc-if value="{{ isCheckout }}" hint-placeholder-val="{{ false }}">
+<main data-screen-label="Checkout" style="max-width:1080px;margin:0 auto;padding:48px 32px 56px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(360px,100%),1fr));gap:40px;align-items:start">
+<div style="display:flex;flex-direction:column;gap:22px">
+<span onClick="{{ goPlans }}" style="cursor:pointer;font-family:'JetBrains Mono';font-size:12px;color:#9AA39D">← BACK TO PLANS</span>
+<h1 style="margin:0;font-family:'Archivo';font-weight:900;font-stretch:112%;font-size:60px;line-height:.9;text-transform:uppercase">Join as<br><span style="color:#6CFF2B">{{ pendingName }}</span></h1>
+<sc-if value="{{ signedOut }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font-family:'JetBrains Mono';font-size:11px;color:#9AA39D">EMAIL</span><input placeholder="you@example.com" style="background:#0b0d0c;border:1px solid #2a302c;box-sizing:border-box;width:100%;border-radius:10px;padding:14px;color:#fff;font:16px 'Barlow';outline:none"></input></div>
+</sc-if>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font-family:'JetBrains Mono';font-size:11px;color:#9AA39D">CARD NUMBER</span><input placeholder="4242 4242 4242 4242" style="background:#0b0d0c;border:1px solid #2a302c;box-sizing:border-box;width:100%;border-radius:10px;padding:14px;color:#fff;font:16px 'JetBrains Mono';outline:none"></input></div>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px">
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font-family:'JetBrains Mono';font-size:11px;color:#9AA39D">EXPIRY</span><input placeholder="MM / YY" style="min-width:0;background:#0b0d0c;border:1px solid #2a302c;box-sizing:border-box;width:100%;border-radius:10px;padding:14px;color:#fff;font:16px 'JetBrains Mono';outline:none"></input></div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font-family:'JetBrains Mono';font-size:11px;color:#9AA39D">CVC</span><input placeholder="123" style="min-width:0;background:#0b0d0c;border:1px solid #2a302c;box-sizing:border-box;width:100%;border-radius:10px;padding:14px;color:#fff;font:16px 'JetBrains Mono';outline:none"></input></div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font-family:'JetBrains Mono';font-size:11px;color:#9AA39D">ZIP</span><input placeholder="55401" style="min-width:0;background:#0b0d0c;border:1px solid #2a302c;box-sizing:border-box;width:100%;border-radius:10px;padding:14px;color:#fff;font:16px 'JetBrains Mono';outline:none"></input></div>
+</div>
+<span onClick="{{ confirm }}" style="cursor:pointer;text-align:center;background:#6CFF2B;color:#000;font-weight:700;font-size:16px;padding:16px;border-radius:999px">Start 14-day free trial</span>
+<span style="font-size:13px;color:#9AA39D;text-align:center">No charge today. Cancel any time before Oct 30 and you won't be billed.</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:18px;padding:28px;border:1px solid #6CFF2B;border-radius:16px;background:radial-gradient(140% 90% at 50% 120%,rgba(89,255,58,.22),rgba(0,0,0,0) 65%)">
+<span style="font-family:'Archivo';font-weight:800;font-size:14px;letter-spacing:.05em;color:#6CFF2B">ORDER SUMMARY</span>
+<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-family:'Archivo';font-weight:900;font-stretch:112%;font-size:36px;text-transform:uppercase">{{ pendingName }}</span><span style="font-size:15px;color:#C9D0CB">{{ cycleLabel }}</span></div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<sc-for list="{{ pendingFeats }}" as="f" hint-placeholder-count="4"><div style="display:flex;gap:10px;font-size:15px"><span style="color:#6CFF2B;font-weight:700">+</span><span>{{ f }}</span></div></sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;border-top:1px solid #2a302c;padding-top:16px;font-size:15px">
+<div style="display:flex;justify-content:space-between"><span style="color:#9AA39D">{{ cycleLabel }} price</span><span style="font-family:'JetBrains Mono'">{{ pendingPrice }}</span></div>
+<div style="display:flex;justify-content:space-between"><span style="color:#9AA39D">Free trial</span><span style="font-family:'JetBrains Mono'">14 days</span></div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid #2a302c;padding-top:12px"><span style="font-weight:700">Due today</span><span style="font-family:'Archivo';font-weight:900;font-size:32px">$0.00</span></div>
+<span style="font-size:13px;color:#9AA39D">Then {{ pendingPrice }} {{ perLabel }} from Oct 30, 2026.</span>
+</div>
+</div>
+</main>
+</sc-if>
+
+<sc-if value="{{ isSignin }}" hint-placeholder-val="{{ false }}">
+<main data-screen-label="Sign in" style="position:relative;overflow:hidden;min-height:calc(100vh - 72px);display:flex;align-items:center;justify-content:center;padding:48px 24px">
+<div style="position:absolute;left:50%;bottom:-62vh;width:120vh;height:120vh;transform:translateX(-50%);border-radius:50%;border:60px solid rgba(89,255,58,.55);filter:blur(50px)"></div>
+<div style="position:relative;width:100%;max-width:420px;display:flex;flex-direction:column;gap:18px;padding:36px 32px;background:rgba(0,0,0,.82);border:1px solid #2a302c;border-radius:20px">
+<h1 style="margin:0;font-family:'Archivo';font-weight:900;font-stretch:112%;font-size:52px;line-height:.9;text-transform:uppercase">Welcome<br><span style="color:#6CFF2B">back</span></h1>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font-family:'JetBrains Mono';font-size:11px;color:#9AA39D">EMAIL</span><input placeholder="you@example.com" style="background:#0b0d0c;border:1px solid #2a302c;box-sizing:border-box;width:100%;border-radius:10px;padding:14px;color:#fff;font:16px 'Barlow';outline:none"></input></div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font-family:'JetBrains Mono';font-size:11px;color:#9AA39D">PASSWORD</span><input type="password" placeholder="••••••••" style="background:#0b0d0c;border:1px solid #2a302c;box-sizing:border-box;width:100%;border-radius:10px;padding:14px;color:#fff;font:16px 'Barlow';outline:none"></input></div>
+<span onClick="{{ signIn }}" style="cursor:pointer;text-align:center;background:#6CFF2B;color:#000;font-weight:700;font-size:16px;padding:15px;border-radius:999px">Sign in</span>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><span onClick="{{ signIn }}" style="cursor:pointer;text-align:center;border:1px solid #2a302c;padding:12px;border-radius:999px;font-weight:600;font-size:14px">Google</span><span onClick="{{ signIn }}" style="cursor:pointer;text-align:center;border:1px solid #2a302c;padding:12px;border-radius:999px;font-weight:600;font-size:14px">Apple</span></div>
+<span style="font-size:14px;color:#9AA39D;text-align:center">New here? <span onClick="{{ goPlans }}" style="cursor:pointer;color:#6CFF2B;font-weight:700">Pick a membership</span></span>
+</div>
+</main>
+</sc-if>
+
+<sc-if value="{{ isAccount }}" hint-placeholder-val="{{ false }}">
+<main data-screen-label="Account" style="max-width:1280px;margin:0 auto;padding:36px 32px 56px;display:grid;grid-template-columns:220px minmax(0,1fr);gap:40px;align-items:start">
+<aside style="position:sticky;top:96px;display:flex;flex-direction:column;gap:4px">
+<div style="display:flex;align-items:center;gap:12px;padding:0 0 20px"><span style="width:44px;height:44px;border-radius:50%;background:#1d211e;display:flex;align-items:center;justify-content:center;font-weight:700">SR</span><div style="display:flex;flex-direction:column"><span style="font-weight:700">Sam Rivera</span><span style="font-size:13px;color:#9AA39D">sam@example.com</span></div></div>
+<sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4"><span onClick="{{ t.onClick }}" style="cursor:pointer;padding:11px 14px;border-radius:10px;font-weight:600;font-size:15px;background:{{ t.bg }};color:{{ t.color }}">{{ t.label }}</span></sc-for>
+<span onClick="{{ signOut }}" style="cursor:pointer;padding:11px 14px;font-weight:600;font-size:15px;color:#9AA39D;margin-top:12px;border-top:1px solid #1d211e">Sign out</span>
+</aside>
+
+<div style="display:flex;flex-direction:column;gap:28px;min-width:0">
+<sc-if value="{{ tabOverview }}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="Account · Overview" style="display:flex;flex-direction:column;gap:28px">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:20px">
+<div style="position:relative;overflow:hidden;display:flex;flex-direction:column;gap:14px;padding:28px;border:1px solid {{ planAccent }};border-radius:18px;background:#050605">
+<div style="position:absolute;right:-90px;bottom:-150px;width:340px;height:340px;border-radius:50%;border:38px solid {{ planAccent }};opacity:.45;filter:blur(30px)"></div>
+<span style="position:relative;font-family:'JetBrains Mono';font-size:12px;letter-spacing:.08em;color:#9AA39D">MEMBERSHIP</span>
+<span style="position:relative;font-family:'Archivo';font-weight:900;font-stretch:112%;font-size:clamp(34px,4.2vw,60px);line-height:.9;text-transform:uppercase;overflow-wrap:anywhere;color:{{ planAccent }}">{{ planName }}</span>
+<span style="position:relative;font-size:16px;color:#C9D0CB">{{ planLine }}</span>
+<div style="position:relative;display:flex;gap:10px;margin-top:6px">
+<span onClick="{{ goPlans }}" style="cursor:pointer;background:#6CFF2B;color:#000;font-weight:700;font-size:14px;padding:11px 18px;border-radius:999px">{{ changeLabel }}</span>
+<span onClick="{{ tabBillingFn }}" style="cursor:pointer;border:1px solid #2a302c;font-weight:700;font-size:14px;padding:11px 18px;border-radius:999px;background:#000">Billing</span>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#1d211e;border:1px solid #1d211e;border-radius:18px;overflow:hidden">
+<sc-for list="{{ ovStats }}" as="s" hint-placeholder-count="4"><div style="background:#000;padding:18px;display:flex;flex-direction:column;gap:4px"><span style="font-family:'JetBrains Mono';font-size:11px;color:#9AA39D">{{ s.label }}</span><span style="font-family:'Archivo';font-weight:900;font-stretch:110%;font-size:30px;line-height:1;white-space:nowrap">{{ s.value }}</span><span style="font-size:13px;font-weight:600;color:{{ s.c }}">{{ s.note }}</span></div></sc-for>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px"><h2 style="margin:0;font-family:'Archivo';font-weight:900;font-stretch:112%;font-size:34px;line-height:1;text-transform:uppercase">Your <span style="color:#6CFF2B">season</span></h2>
+<div style="display:flex;gap:16px;font-size:13px;color:#C9D0CB"><span style="display:flex;align-items:center;gap:6px"><span style="width:11px;height:11px;background:#2FA84A"></span>Max Kp over Minneapolis</span><span style="display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:50%;background:#fff"></span>Alerts sent</span><span style="display:flex;align-items:center;gap:6px"><span style="width:16px;border-top:2px dashed #E6B800"></span>Visible from home (Kp 5)</span></div></div>
+<svg viewBox="0 0 900 240" style="width:100%;display:block">
+<sc-for list="{{ sGrid }}" as="g" hint-placeholder-count="4"><line x1="30" x2="890" y1="{{ g.y }}" y2="{{ g.y }}" style="stroke:#fff;stroke-opacity:.07"></line><text x="20" y="{{ g.ty }}" style="fill:#9AA39D;font:10px 'JetBrains Mono';text-anchor:end">{{ g.k }}</text></sc-for>
+<line x1="30" x2="890" y1="{{ sVis }}" y2="{{ sVis }}" style="stroke:#E6B800;stroke-width:1.5;stroke-dasharray:6 4"></line>
+<sc-for list="{{ season }}" as="w" hint-placeholder-count="12"><rect x="{{ w.x }}" y="{{ w.y }}" width="{{ w.w }}" height="{{ w.h }}" style="fill:{{ w.fill }}"></rect><sc-for list="{{ w.dots }}" as="d" hint-placeholder-count="1"><circle cx="{{ d.x }}" cy="{{ d.y }}" r="4" style="fill:#fff"></circle></sc-for><text x="{{ w.cx }}" y="230" style="fill:#C9D0CB;font:600 11px 'Barlow';text-anchor:middle">{{ w.lbl }}</text></sc-for>
+<line x1="30" x2="890" y1="210" y2="210" style="stroke:#9AA39D"></line>
+</svg>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<h2 style="margin:0 0 8px;font-family:'Archivo';font-weight:900;font-stretch:112%;font-size:34px;line-height:1;text-transform:uppercase">Best nights <span style="color:#6CFF2B">ahead</span></h2>
+<sc-for list="{{ upcoming }}" as="u" hint-placeholder-count="5"><div style="display:grid;grid-template-columns:130px 70px minmax(0,1fr) 52px;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid #1d211e">
+<span style="font-weight:700;font-size:16px">{{ u.d }}</span>
+<span style="font-family:'Archivo';font-weight:900;font-size:20px;color:{{ u.c }}">Kp {{ u.kp }}</span>
+<div style="display:flex;flex-direction:column;gap:5px"><div style="height:10px;background:#121512;border-radius:2px"><div style="height:10px;width:{{ u.w }};background:{{ u.c }};border-radius:2px;box-shadow:0 0 12px {{ u.c }}"></div></div><span style="font-size:13px;color:#9AA39D">{{ u.note }}</span></div>
+<span style="font-family:'JetBrains Mono';font-size:14px;text-align:right">{{ u.chance }}%</span>
+</div></sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ tabAlerts }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Account · Alerts" style="display:flex;flex-direction:column;gap:28px">
+<h1 style="margin:0;font-family:'Archivo';font-weight:900;font-stretch:112%;font-size:56px;line-height:.9;text-transform:uppercase">Alert <span style="color:#6CFF2B">rules</span></h1>
+<div style="display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:28px;padding:26px;border:1px solid #2a302c;border-radius:18px">
+<div style="display:flex;flex-direction:column;gap:14px">
+<span style="font-family:'Archivo';font-weight:800;font-size:14px;letter-spacing:.05em;color:#6CFF2B">ALERT ME WHEN KP REACHES</span>
+<div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:'Archivo';font-weight:900;font-stretch:112%;font-size:96px;line-height:.85">{{ kpT }}</span><span style="font-family:'Archivo';font-weight:800;font-size:22px;color:{{ kpTColor }}">{{ kpTLabel }}</span></div>
+<input type="range" min="2" max="9" step="1" value="{{ kpT }}" onChange="{{ setKp }}" style="width:100%"></input>
+<span style="font-size:15px;color:#C9D0CB;text-wrap:pretty">At Kp {{ kpT }}, aurora is {{ kpTWhere }} from Minneapolis.</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:14px;color:#9AA39D">Last 30 nights · max Kp</span><span style="font-family:'Archivo';font-weight:900;font-size:22px"><span style="color:#6CFF2B">{{ hitCount }}</span> alerts</span></div>
+<svg viewBox="0 0 450 190" style="width:100%;display:block">
+<line x1="0" x2="450" y1="{{ thY }}" y2="{{ thY }}" style="stroke:#6CFF2B;stroke-width:1.5;stroke-dasharray:5 4"></line>
+<sc-for list="{{ hist }}" as="h" hint-placeholder-count="30"><rect x="{{ h.x }}" y="{{ h.y }}" width="11" height="{{ h.h }}" style="fill:{{ h.fill }}"></rect></sc-for>
+<line x1="0" x2="450" y1="170" y2="170" style="stroke:#9AA39D"></line>
+<text x="0" y="186" style="fill:#9AA39D;font:10px 'JetBrains Mono'">SEP 16</text><text x="450" y="186" style="fill:#9AA39D;font:10px 'JetBrains Mono';text-anchor:end">TONIGHT</text>
+</svg>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px">
+<div style="display:flex;flex-direction:column;gap:4px">
+<span style="font-family:'Archivo';font-weight:800;font-size:14px;letter-spacing:.05em;color:#6CFF2B;margin-bottom:8px">TRIGGERS</span>
+<sc-for list="{{ types }}" as="a" hint-placeholder-count="5"><div onClick="{{ a.onClick }}" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid #1d211e;opacity:{{ a.op }}">
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-weight:700;font-size:16px">{{ a.label }}</span><span style="font-size:13px;color:#9AA39D">{{ a.sub }}</span></div>
+<span style="font-size:11px;font-weight:700;color:{{ a.lockC }};white-space:nowrap">{{ a.lock }}</span>
+<span style="flex:none;position:relative;width:46px;height:26px;border-radius:13px;background:{{ a.track }}"><span style="position:absolute;top:3px;left:{{ a.knob }};width:20px;height:20px;border-radius:50%;background:{{ a.knobC }}"></span></span>
+</div></sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<span style="font-family:'Archivo';font-weight:800;font-size:14px;letter-spacing:.05em;color:#6CFF2B;margin-bottom:8px">DELIVER VIA</span>
+<sc-for list="{{ channels }}" as="a" hint-placeholder-count="3"><div onClick="{{ a.onClick }}" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid #1d211e;opacity:{{ a.op }}">
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-weight:700;font-size:16px">{{ a.label }}</span><span style="font-size:13px;color:#9AA39D">{{ a.sub }}</span></div>
+<span style="font-size:11px;font-weight:700;color:{{ a.lockC }};white-space:nowrap">{{ a.lock }}</span>
+<span style="flex:none;position:relative;width:46px;height:26px;border-radius:13px;background:{{ a.track }}"><span style="position:absolute;top:3px;left:{{ a.knob }};width:20px;height:20px;border-radius:50%;background:{{ a.knobC }}"></span></span>
+</div></sc-for>
+<div style="display:flex;flex-direction:column;gap:2px;padding:14px 0"><span style="font-weight:700;font-size:16px">Quiet hours</span><span style="font-size:13px;color:#9AA39D">Alerts pause automatically while it's daylight at your location.</span></div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ tabLocations }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Account · Locations" style="display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap"><h1 style="margin:0;font-family:'Archivo';font-weight:900;font-stretch:112%;font-size:56px;line-height:.9;text-transform:uppercase">Saved <span style="color:#6CFF2B">skies</span></h1><span style="font-family:'JetBrains Mono';font-size:13px;color:#9AA39D">{{ locUsage }}</span></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px">
+<sc-for list="{{ locs }}" as="l" hint-placeholder-count="3"><div style="display:flex;flex-direction:column;gap:12px;padding:20px;border:1px solid #2a302c;border-radius:16px;opacity:{{ l.op }}">
+<div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="display:flex;flex-direction:column;gap:2px"><span style="font-weight:700;font-size:18px">{{ l.name }}</span><span style="font-family:'JetBrains Mono';font-size:11px;color:#9AA39D">{{ l.coords }}</span></div><span style="font-size:11px;font-weight:700;padding:4px 8px;border-radius:999px;border:1px solid {{ l.tagC }};color:{{ l.tagC }}">{{ l.tag }}</span></div>
+<svg viewBox="0 0 240 90" style="width:100%;display:block;border-radius:10px;background:#050806"><defs><filter id="lb" x="-30%" y="-80%" width="160%" height="260%"><feGaussianBlur stdDeviation="9"></feGaussianBlur></filter></defs><ellipse cx="120" cy="72" rx="110" ry="{{ l.ry }}" style="fill:#59FF3A;opacity:{{ l.glow }};filter:url(#lb)"></ellipse><line x1="0" x2="240" y1="72" y2="72" style="stroke:#fff"></line><rect x="0" y="72" width="240" height="18" style="fill:#000"></rect><text x="120" y="86" style="fill:#9AA39D;font:700 10px 'Barlow';text-anchor:middle">N</text></svg>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+<div style="display:flex;flex-direction:column"><span style="font-family:'JetBrains Mono';font-size:10px;color:#9AA39D">TONIGHT</span><span style="font-family:'Archivo';font-weight:900;font-size:24px;color:{{ l.c }}">{{ l.chance }}%</span></div>
+<div style="display:flex;flex-direction:column"><span style="font-family:'JetBrains Mono';font-size:10px;color:#9AA39D">CLOUD</span><span style="font-family:'Archivo';font-weight:900;font-size:24px">{{ l.cloud }}%</span></div>
+<div style="display:flex;flex-direction:column"><span style="font-family:'JetBrains Mono';font-size:10px;color:#9AA39D">NEEDS</span><span style="font-family:'Archivo';font-weight:900;font-size:24px">Kp {{ l.need }}</span></div>
+</div>
+</div></sc-for>
+<div onClick="{{ addLoc }}" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:240px;padding:20px;border:1px dashed #3a403c;border-radius:16px;text-align:center"><span style="font-family:'Archivo';font-weight:900;font-size:40px;color:#6CFF2B;line-height:1">+</span><span style="font-weight:700;font-size:16px">Add a location</span><span style="font-size:13px;color:#9AA39D">{{ addLocNote }}</span></div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ tabBilling }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Account · Billing" style="display:flex;flex-direction:column;gap:24px">
+<h1 style="margin:0;font-family:'Archivo';font-weight:900;font-stretch:112%;font-size:56px;line-height:.9;text-transform:uppercase">Billing</h1>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+<div style="display:flex;flex-direction:column;gap:8px;padding:22px;border:1px solid #2a302c;border-radius:16px"><span style="font-family:'JetBrains Mono';font-size:11px;color:#9AA39D">PLAN</span><span style="font-family:'Archivo';font-weight:900;font-size:32px;color:{{ planAccent }}">{{ planName }}</span><span style="font-size:14px;color:#C9D0CB">{{ planLine }}</span><span onClick="{{ goPlans }}" style="cursor:pointer;font-weight:700;font-size:14px;color:#6CFF2B;margin-top:6px">{{ changeLabel }} →</span></div>
+<div style="display:flex;flex-direction:column;gap:8px;padding:22px;border:1px solid #2a302c;border-radius:16px"><span style="font-family:'JetBrains Mono';font-size:11px;color:#9AA39D">PAYMENT METHOD</span><span style="font-family:'JetBrains Mono';font-weight:600;font-size:22px">{{ cardLine }}</span><span style="font-size:14px;color:#C9D0CB">{{ cardSub }}</span></div>
+</div>
+<sc-if value="{{ isPaid }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column">
+<div style="display:grid;grid-template-columns:1.2fr 1.5fr 1fr 1fr;gap:12px;padding:10px 0;border-bottom:1px solid #2a302c;font-family:'JetBrains Mono';font-size:11px;color:#9AA39D"><span>DATE</span><span>DESCRIPTION</span><span>AMOUNT</span><span>STATUS</span></div>
+<sc-for list="{{ invoices }}" as="i" hint-placeholder-count="3"><div style="display:grid;grid-template-columns:1.2fr 1.5fr 1fr 1fr;gap:12px;padding:14px 0;border-bottom:1px solid #1d211e;font-size:15px"><span>{{ i.d }}</span><span style="color:#C9D0CB">{{ i.desc }}</span><span style="font-family:'JetBrains Mono'">{{ i.amt }}</span><span style="font-weight:700;color:{{ i.c }}">{{ i.s }}</span></div></sc-for>
+</div>
+<span onClick="{{ cancelPlan }}" style="cursor:pointer;align-self:flex-start;font-weight:600;font-size:14px;color:#F06A6A">Cancel membership</span>
+</sc-if>
+</div>
+</sc-if>
+</div>
+</main>
+</sc-if>
+
+<footer style="border-top:1px solid #1d211e"><div style="max-width:1280px;margin:0 auto;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:18px 32px;font-size:12px;color:#7d857f"><span>Data: NOAA SWPC, GFZ Potsdam, NASA/SDO. Times in UT.</span><span style="color:#6CFF2B;font-weight:700">oval.watch</span></div></footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;home&quot;,&quot;plans&quot;,&quot;checkout&quot;,&quot;signin&quot;,&quot;account&quot;],&quot;default&quot;:&quot;home&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;startPlan&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;free&quot;,&quot;observer&quot;,&quot;chaser&quot;,&quot;observatory&quot;],&quot;default&quot;:&quot;free&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+const TIERS = [
+  { id: 'free', name: 'Free', m: 0, y: 0, blurb: 'The live sky, for the curious.', locs: 1, accent: '#C9D0CB' },
+  { id: 'observer', name: 'Observer', m: 4, y: 36, blurb: 'Instant alerts for your own backyard.', locs: 3, accent: '#2FA84A' },
+  { id: 'chaser', name: 'Chaser', m: 9, y: 84, blurb: 'Everything you need to chase a storm.', locs: 10, accent: '#6CFF2B' },
+  { id: 'observatory', name: 'Observatory', m: 24, y: 216, blurb: 'Raw data, API access and seats for teams.', locs: 99, accent: '#B07CFF' }
+];
+const FEATS = [['Live Kp, oval & solar wind', 0], ['3-day forecast', 0], ['Daily email digest', 0], ['Instant push alerts', 1], ['Hour-by-hour cloud + darkness', 1], ['27-day outlook', 1], ['SMS alerts', 2], ['Bz & substorm onset alerts', 2], ['Dark-sky spot map', 2], ['Data export & API', 3], ['5 team seats', 3]];
+const COMPARE = [['Saved locations', ['1', '3', '10', 'Unlimited']], ['Alert channels', ['Email', 'Email, push', 'Email, push, SMS', 'All + webhook']], ['Alert speed', ['Daily digest', '< 1 min', '< 1 min', '< 1 min']], ['Forecast range', ['3 days', '27 days', '27 days', '27 days']], ['Cloud & darkness model', ['—', '✓', '✓', '✓']], ['Substorm onset alerts', ['—', '—', '✓', '✓']], ['Kp history', ['7 days', '90 days', '2 years', 'Since 1932']], ['API & export', ['—', '—', '—', '✓']]];
+const KPN = ['', '', 'Quiet', 'Unsettled', 'Active', 'G1 Minor', 'G2 Moderate', 'G3 Strong', 'G4 Severe', 'G5 Extreme'];
+const WHERE = ['', '', 'not visible', 'not visible', 'unlikely, except during substorms', 'low on the north horizon', 'clearly visible to the north', 'likely overhead', 'overhead and across the sky', 'overhead and across the sky'];
+class Component extends DCLogic {
+  state = { screen: (this.props && this.props.startScreen) || 'home', tab: 'overview', plan: (this.props && this.props.startPlan) || 'free', pending: 'chaser', annual: true, signedIn: !!(this.props && this.props.startScreen === 'account'), toast: '', kpT: 5, ch: { email: true, push: true, sms: false }, types: { kp: true, cme: true, clear: true, bz: false, sub: false } };
+  build() {
+    const nz = (i, s = 1) => { const x = Math.sin(i * 12.9898 + s * 78.233) * 43758.5453; return x - Math.floor(x); };
+    const f = n => +n.toFixed(1);
+    const col = (k, obs) => k >= 5 ? (obs ? '#C04F52' : '#F06A6A') : k >= 4 ? (obs ? '#B08F0C' : '#E6B800') : (obs ? '#1F6B33' : '#2FA84A');
+    const past = [2, 2.33, 2.67, 2, 1.67, 1, 1.33, 2, 2.33, 2.67, 3, 3.33, 4, 4.67, 5, 5.33];
+    const fc = [5.67, 6, 5.33, 4.67, 4, 3.67, 3.33, 3, 3, 3.33, 3.67, 3.33, 3, 2.67, 2.33, 2.33, 2, 2, 2.33, 2, 1.67, 1.67, 2, 2];
+    const X0 = 48, X1 = 1150, Y1 = 290, U = 30, bw = (X1 - X0) / 40;
+    const kpBars = past.concat(fc).map((k, i) => ({ x: f(X0 + i * bw + 2.5), y: f(Y1 - k * U), w: f(bw - 5), h: f(k * U), fill: col(k, i < 16) }));
+    const kpGrid = [...Array(10)].map((_, k) => ({ k, y: Y1 - k * U, ty: Y1 - k * U + 4 }));
+    const dayLines = [1, 2, 3, 4].map(d => ({ x: f(X0 + d * 8 * bw) }));
+    const dayLabels = ['Oct 15', 'Oct 16', 'Oct 17', 'Oct 18', 'Oct 19'].map((t, d) => ({ t, x: f(X0 + (d * 8 + 4) * bw) }));
+    const kpScale = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => ({ n: n === 5 ? 'G1' : n === 9 ? 'G5' : n, bg: n >= 5 ? '#F06A6A' : n === 4 ? '#E6B800' : '#2FA84A', op: n <= 5 ? 1 : .22 }));
+    const K = 4.2, C = 240;
+    const pol = (lat, lon) => { const r = (90 - lat) * K, a = (90 - (lon + 100)) * Math.PI / 180; return [C + r * Math.cos(a), C + r * Math.sin(a)]; };
+    const [ocx, ocy] = pol(80.7, -72.7);
+    const cities = [['Fairbanks', 64.8, -147.7], ['Anchorage', 61.2, -149.9, 1], ['Yellowknife', 62.5, -114.4], ['Churchill', 58.8, -94.2], ['Edmonton', 53.5, -113.5, 1], ['Winnipeg', 49.9, -97.1], ['Seattle', 47.6, -122.3, 1], ['Minneapolis', 45, -93.3], ['Montreal', 45.5, -73.6], ['Chicago', 41.9, -87.6], ['Reykjavík', 64.1, -21.9]].map(([name, lat, lon, e]) => { const [x, y] = pol(lat, lon); return { name, x: f(x), y: f(y), tx: f(x + (e ? -6 : 6)), ty: f(y + 4), anchor: e ? 'end' : 'start' }; });
+    const season = [3, 4, 5, 3, 6, 4, 3, 7, 4, 5, 3, 6].map((k, i) => { const w = 860 / 12, x = 30 + i * w, alerts = k >= 5 ? Math.min(3, k - 4) : 0, d0 = new Date(Date.UTC(2026, 6, 27) + i * 7 * 864e5); return { x: f(x + 10), w: f(w - 20), y: f(210 - k * 20), h: k * 20, fill: col(k, false), cx: f(x + w / 2), lbl: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d0.getUTCMonth()] + ' ' + d0.getUTCDate(), dots: [...Array(alerts)].map((_, j) => ({ x: f(x + w / 2), y: f(210 - k * 20 - 12 - j * 11) })) }; });
+    const hist30 = [...Array(30)].map((_, i) => i === 29 ? 5.33 : Math.round((1.5 + nz(i, 11) * 3.2 + (i === 8 || i === 9 ? 2.5 : 0) + (i === 21 ? 3 : 0)) * 3) / 3);
+    return { kpBars, kpGrid, dayLines, dayLabels, nowX: f(X0 + 16 * bw), kpScale, cities,
+      oval: { cx: f(ocx), cy: f(ocy), r: 112, vr: 160 },
+      rings: [80, 70, 60, 50, 40].map(l => ({ r: (90 - l) * K, ly: C - (90 - l) * K - 4, lbl: l + '°' })),
+      meridians: [...Array(12)].map((_, i) => { const a = i * Math.PI / 6; return { x: f(C + 240 * Math.cos(a)), y: f(C + 240 * Math.sin(a)) }; }),
+      season, sGrid: [0, 3, 6, 9].map(k => ({ k, y: 210 - k * 20, ty: 214 - k * 20 })), sVis: 110, hist30,
+      nowStats: [{ label: 'IMF BZ', value: '−14.2', unit: 'nT', note: 'Strong south', c: '#6CFF2B' }, { label: 'SPEED', value: '618', unit: 'km/s', note: 'Fast stream', c: '#E6B800' }, { label: 'HEMI POWER', value: '74', unit: 'GW', note: 'High', c: '#F06A6A' }, { label: 'DARK IN', value: '1h 18', unit: 'm', note: 'Central US', c: '#C9D0CB' }]
+    };
+  }
+  renderVals() {
+    const d = this._d = this._d || this.build();
+    const S = this.state, set = o => () => this.setState(o), f = n => +n.toFixed(1);
+    const pi = TIERS.findIndex(t => t.id === S.plan), P = TIERS[pi];
+    const qi = TIERS.findIndex(t => t.id === S.pending), Q = TIERS[qi];
+    const goAccount = () => this.setState(S.signedIn ? { screen: 'account' } : { screen: 'signin' });
+    const choose = (t, i) => () => {
+      if (i === pi && S.signedIn) return;
+      if (i === 0) return this.setState({ plan: 'free', screen: S.signedIn ? 'account' : 'signin', tab: 'overview', toast: S.signedIn ? 'You’re on the Free plan.' : '' });
+      this.setState({ pending: t.id, screen: 'checkout', toast: '' });
+    };
+    const price = t => S.annual ? (t.y ? '$' + (t.y / 12).toFixed(t.y % 12 ? 2 : 0) : '$0') : '$' + t.m;
+    const tierCards = TIERS.map((t, i) => {
+      const cur = S.signedIn && i === pi, hot = t.id === 'chaser';
+      const glyph = [...Array(9)].map((_, j) => { const on = j < 2 + i * 2 + (i === 3 ? 1 : 0); const h = 8 + j * 3.5; return { x: j * 22.5, y: 40 - h, h, c: on ? t.accent : '#1d211e' }; });
+      return { upper: t.name.toUpperCase(), accent: t.accent, price: price(t), per: t.m ? '/ mo' : '', billed: t.m ? (S.annual ? `Billed $${t.y} yearly` : 'Billed monthly') : 'Free forever', blurb: t.blurb, glyph,
+        border: hot ? '#6CFF2B' : '#2a302c', bg: hot ? 'radial-gradient(140% 70% at 50% 120%,rgba(89,255,58,.16),rgba(0,0,0,0) 70%)' : '#000', badgeOp: hot ? 1 : 0,
+        cta: cur ? 'Current plan' : (S.signedIn && i < pi ? 'Downgrade' : i === 0 ? 'Start free' : 'Choose ' + t.name),
+        ctaBg: cur ? 'transparent' : hot ? '#6CFF2B' : '#fff', ctaFg: cur ? '#9AA39D' : '#000', ctaBorder: cur ? '#2a302c' : 'transparent',
+        inherit: i ? `Everything in ${TIERS[i - 1].name}, plus` : 'Includes', feats: FEATS.filter(x => x[1] === i).map(x => x[0]), onClick: choose(t, i) };
+    });
+    const tierHeads = TIERS.map(t => ({ name: t.name, c: t.accent }));
+    const compare = COMPARE.map(([label, v]) => ({ label, cells: v.map((x, i) => ({ v: x, c: x === '—' ? '#4a504c' : i === pi && S.signedIn ? '#6CFF2B' : '#fff' })) }));
+    const navDefs = [['Now', 'home'], ['Plans', 'plans'], ['Account', 'account']];
+    const nav = navDefs.map(([label, s]) => { const on = S.screen === s || (s === 'plans' && S.screen === 'checkout'); return { label, color: on ? '#fff' : '#9AA39D', line: on ? '#6CFF2B' : 'transparent', onClick: s === 'account' ? goAccount : set({ screen: s }) }; });
+    const tabs = [['overview', 'Overview'], ['alerts', 'Alerts'], ['locations', 'Locations'], ['billing', 'Billing']].map(([id, label]) => ({ label, bg: S.tab === id ? '#1d211e' : 'transparent', color: S.tab === id ? '#fff' : '#9AA39D', onClick: set({ tab: id }) }));
+    const tog = (on, locked, onClick, label, sub, need) => ({ label, sub, onClick, op: locked ? .55 : 1, lock: locked ? TIERS[need].name.toUpperCase() : '', lockC: TIERS[need] ? TIERS[need].accent : '#fff', track: on && !locked ? '#6CFF2B' : '#2a302c', knob: on && !locked ? '23px' : '3px', knobC: on && !locked ? '#000' : '#9AA39D' });
+    const toPlans = set({ screen: 'plans' });
+    const typeDefs = [['kp', 'Kp threshold reached', 'Uses the level you set above', 0], ['cme', 'CME arrival & storm watches', 'When NOAA issues a G-scale watch', 0], ['clear', 'Clear sky + aurora', 'Only when your clouds are under 40%', 1], ['bz', 'Bz turns south', 'Sustained −10 nT for 15 minutes', 2], ['sub', 'Substorm onset', 'Sudden brightening detected', 2]];
+    const types = typeDefs.map(([k, l, s, need]) => { const locked = pi < need; return tog(S.types[k], locked, locked ? toPlans : () => this.setState(st => ({ types: { ...st.types, [k]: !st.types[k] } })), l, s, need); });
+    const chDefs = [['email', 'Email', 'sam@example.com', 0], ['push', 'Push', 'iPhone 15 · OVAL app', 1], ['sms', 'SMS', '+1 (612) •••-4410', 2]];
+    const channels = chDefs.map(([k, l, s, need]) => { const locked = pi < need; return tog(S.ch[k], locked, locked ? toPlans : () => this.setState(st => ({ ch: { ...st.ch, [k]: !st.ch[k] } })), l, s, need); });
+    const hist = d.hist30.map((v, i) => ({ x: f(i * 15), y: f(170 - v * 17), h: f(v * 17), fill: v >= S.kpT ? '#6CFF2B' : '#2a302c' }));
+    const hitCount = d.hist30.filter(v => v >= S.kpT).length;
+    const locData = [['Minneapolis, MN', '44.98°N 93.27°W', 62, 15, 5, 'HOME'], ['Duluth, MN', '46.79°N 92.10°W', 78, 30, 4, 'SAVED'], ['Grand Marais, MN', '47.75°N 90.33°W', 86, 10, 4, 'SAVED']];
+    const locs = locData.map(([name, coords, chance, cloud, need, tag], i) => { const paused = i >= P.locs; return { name, coords, chance, cloud, need, tag: paused ? 'PAUSED' : tag, tagC: paused ? '#9AA39D' : i === 0 ? '#6CFF2B' : '#C9D0CB', op: paused ? .45 : 1, ry: f(10 + chance * .35), glow: f(.25 + chance / 160), c: chance >= 70 ? '#6CFF2B' : chance >= 40 ? '#E6B800' : '#F06A6A' }; });
+    const canAdd = P.locs > 3;
+    const cyc = S.annual ? 'Annual' : 'Monthly';
+    const planLine = pi === 0 ? 'Free forever · 1 location · daily digest' : `${S.annual ? '$' + P.y + ' / year' : '$' + P.m + ' / month'} · trial ends Oct 30, 2026`;
+    return {
+      ...d, nav, tabs, tierCards, tierHeads, compare, types, channels, hist, hitCount, locs,
+      thY: f(170 - S.kpT * 17), kpT: S.kpT, kpTLabel: KPN[S.kpT], kpTColor: S.kpT >= 5 ? '#F06A6A' : S.kpT === 4 ? '#E6B800' : '#2FA84A', kpTWhere: WHERE[S.kpT],
+      setKp: e => this.setState({ kpT: +e.target.value }),
+      isHome: S.screen === 'home', isPlans: S.screen === 'plans', isCheckout: S.screen === 'checkout', isSignin: S.screen === 'signin', isAccount: S.screen === 'account',
+      tabOverview: S.tab === 'overview', tabAlerts: S.tab === 'alerts', tabLocations: S.tab === 'locations', tabBilling: S.tab === 'billing',
+      signedIn: S.signedIn, signedOut: !S.signedIn, isFree: pi === 0, isPaid: pi > 0,
+      planName: P.name, planAccent: P.accent, planLine, changeLabel: pi === 3 ? 'Change plan' : 'Upgrade',
+      toast: S.toast || false, clearToast: set({ toast: '' }),
+      goHome: set({ screen: 'home' }), goPlans: toPlans, goSignin: set({ screen: 'signin' }), goAccount,
+      signIn: set({ signedIn: true, screen: 'account', tab: 'overview' }),
+      signOut: set({ signedIn: false, screen: 'home', toast: '' }),
+      tabBillingFn: set({ tab: 'billing' }),
+      setMonthly: set({ annual: false }), setAnnual: set({ annual: true }),
+      mBg: S.annual ? 'transparent' : '#fff', mFg: S.annual ? '#9AA39D' : '#000', aBg: S.annual ? '#fff' : 'transparent', aFg: S.annual ? '#000' : '#9AA39D',
+      pendingName: Q.name, pendingFeats: FEATS.filter(x => x[1] > 0 && x[1] <= qi).map(x => x[0]).slice(-5), cycleLabel: cyc,
+      pendingPrice: '$' + (S.annual ? Q.y : Q.m), perLabel: S.annual ? 'per year' : 'per month',
+      confirm: () => this.setState({ plan: Q.id, signedIn: true, screen: 'account', tab: 'overview', toast: `Welcome to ${Q.name}. Your 14-day trial has started — alerts are live.` }),
+      cancelPlan: () => this.setState({ plan: 'free', tab: 'overview', toast: 'Membership cancelled. You’re back on Free.' }),
+      locUsage: `${Math.min(3, P.locs)} OF ${P.locs > 10 ? '∞' : P.locs} ACTIVE`,
+      addLoc: canAdd ? set({ toast: 'Location search would open here.' }) : toPlans,
+      addLocNote: canAdd ? 'Search a town or drop a pin' : `Your ${P.name} plan includes ${P.locs}. Upgrade for more.`,
+      cardLine: pi ? 'VISA •••• 4242' : 'None on file', cardSub: pi ? 'Expires 08 / 29' : 'Add a card when you upgrade.',
+      invoices: [{ d: 'Oct 16, 2026', desc: `${P.name} · trial started`, amt: '$0.00', s: 'Paid', c: '#6CFF2B' }, { d: 'Oct 30, 2026', desc: `${P.name} · ${cyc.toLowerCase()}`, amt: '$' + (S.annual ? P.y : P.m) + '.00', s: 'Upcoming', c: '#E6B800' }],
+      ovStats: [{ label: 'ALERTS THIS SEASON', value: '14', note: '9 with clear skies', c: '#6CFF2B' }, { label: 'NIGHTS KP ≥ 5', value: '11', note: 'Since Aug 1', c: '#C9D0CB' }, { label: 'STRONGEST', value: 'Kp 7', note: 'Sep 15 · G3', c: '#F06A6A' }, { label: 'TONIGHT', value: '62%', note: 'Best 22:00–01:00', c: '#6CFF2B' }],
+      upcoming: [{ d: 'Sat Oct 17', kp: '7', chance: 78, note: 'CME arrival · G3 watch', c: '#6CFF2B' }, { d: 'Sun Oct 18', kp: '5', chance: 52, note: 'Storm tail, clouds 40%', c: '#2FA84A' }, { d: 'Mon Nov 2', kp: '5', chance: 44, note: 'Recurrent coronal hole', c: '#2FA84A' }, { d: 'Tue Nov 3', kp: '5', chance: 38, note: 'Recurrent coronal hole', c: '#E6B800' }, { d: 'Mon Nov 9', kp: '4', chance: 21, note: 'Unsettled, near new moon', c: '#E6B800' }].map(u => ({ ...u, w: u.chance + '%' }))
+    };
+  }
+}
+</script>
+</body>
+</html>
