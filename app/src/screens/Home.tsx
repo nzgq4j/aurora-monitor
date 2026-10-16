@@ -1,3 +1,5 @@
+'use client';
+
 import { kpScale, nowStats } from '../data';
 import { KpOutlookChart, PolarOval } from '../components/Charts';
 import { useStore } from '../store';

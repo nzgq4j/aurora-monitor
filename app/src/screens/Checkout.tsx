@@ -1,3 +1,5 @@
+'use client';
+
 import { FEATS } from '../data';
 import { Field } from '../components/Field';
 import { useStore } from '../store';

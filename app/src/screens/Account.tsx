@@ -1,3 +1,5 @@
+'use client';
+
 import {
   C, CHANNEL_DEFS, KP_NAME, KP_WHERE, SEASON_VISIBLE_Y, TIERS, TRIGGER_DEFS, f, hist30, locations, overviewStats,
   season, seasonGrid, upcoming,

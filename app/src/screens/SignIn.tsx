@@ -1,3 +1,5 @@
+'use client';
+
 import { useStore } from '../store';
 import { Field } from '../components/Field';
 

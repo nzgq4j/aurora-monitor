@@ -1,9 +1,11 @@
+'use client';
+
 import { useStore, type Screen } from '../store';
 
 const NAV: [string, Screen][] = [['Now', 'home'], ['Plans', 'plans'], ['Account', 'account']];
 
 export function Header() {
-  const { s, plan, go, goAccount } = useStore();
+  const { s, screen: current, plan, go, goAccount } = useStore();
   return (
     <header className="header">
       <div className="wrap header-inner">
@@ -13,7 +15,7 @@ export function Header() {
           </button>
           <nav className="nav">
             {NAV.map(([label, screen]) => {
-              const on = s.screen === screen || (screen === 'plans' && s.screen === 'checkout');
+              const on = current === screen || (screen === 'plans' && current === 'checkout');
               return (
                 <button key={screen} type="button" className={'btn nav-item' + (on ? ' on' : '')} aria-current={on ? 'page' : undefined}
                   onClick={screen === 'account' ? goAccount : () => go(screen)}>

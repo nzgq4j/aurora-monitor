@@ -1,3 +1,5 @@
+'use client';
+
 import { C, COMPARE, FEATS, TIERS } from '../data';
 import { displayPrice, useStore } from '../store';
 
