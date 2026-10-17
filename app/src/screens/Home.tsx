@@ -27,8 +27,9 @@ function summary(d: NowData): string {
   }
   const w = d.wind;
   if (w && (w.speed !== null || w.bz !== null)) {
-    const bits = [w.speed !== null && `solar wind at ${Math.round(w.speed)} km/s`, w.bz !== null && `IMF Bz ${fmt(w.bz, 1)} nT`].filter(Boolean);
-    parts.push(`At L1 the ${bits.join(' with ')}${w.bz !== null ? (w.bz <= -5 ? ', southward, which couples energy into the magnetosphere.' : w.bz < 0 ? ', slightly southward.' : ', northward, which suppresses activity.') : '.'}`);
+    const bits = [w.speed !== null && `solar wind speed is ${Math.round(w.speed)} km/s`, w.bz !== null && `IMF Bz is ${fmt(w.bz, 1)} nT`].filter(Boolean).join(' and ');
+    const tone = w.bz === null ? '' : w.bz <= -5 ? ' Bz is southward, which couples solar-wind energy into the magnetosphere.' : w.bz < 0 ? ' Bz is slightly southward.' : ' Bz is northward, which suppresses activity.';
+    parts.push(`At L1, ${bits}.${tone}`);
   }
   if (d.hemi) parts.push(`Northern hemispheric power is ${d.hemi.north} GW.`);
   return parts.join(' ') || 'Live data from NOAA SWPC is temporarily unavailable.';

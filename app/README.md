@@ -19,8 +19,34 @@ npm start          # serve the production build
 | `/signin`   | Sign in                                                    |
 | `/account`  | Account: Overview, Alerts, Locations, Billing tabs         |
 
-All pages are statically prerendered. Prototype state (plan, sign-in, alert settings) lives in a client-side
-provider in the root layout, so it survives navigation but resets on a full reload. There is no backend; all data is placeholder.
+All pages are statically prerendered and regenerated in the background (Now and Account every 2 minutes).
+Membership, sign-in and billing are still prototype state held in a client-side provider.
+
+## Live data
+
+| What | Source | Where |
+| --- | --- | --- |
+| Planetary Kp (now, observed, 3-day forecast) | NOAA SWPC `noaa-planetary-k-index*.json` | Header, Now |
+| Solar wind Bz, speed, density at L1 | NOAA SWPC solar-wind products (falls back to `rtsw` JSON) | Now |
+| Aurora probability map, 10% edge | NOAA SWPC OVATION Prime `ovation_aurora_latest.json` | Now, `/api/conditions` |
+| Hemispheric power | NOAA SWPC `aurora-nowcast-hemi-power.txt` | Now |
+| Kp history (90 days, official) | GFZ Potsdam Kp API | Account |
+| Best nights ahead | NOAA SWPC 27-day outlook | Account |
+| Sun images | NASA SDO latest AIA 193/171 and HMI | Now |
+| Cloud cover | Open-Meteo forecast API | `/api/conditions` |
+| Town search / device place name | Open-Meteo geocoding / BigDataCloud reverse geocoding | Locations |
+
+`/api/conditions?lat=&lon=` returns OVATION probability (overhead and up to ~6° poleward),
+cloud cover now and for 12 hours, Sun altitude and darkness window (Sun below −12°),
+geomagnetic latitude and an approximate Kp needed for that spot.
+
+## Locations
+
+Saved locations can be added by town search or from the device (Geolocation API). When
+location access was already granted, the device location refreshes automatically on the
+Locations tab. With Supabase configured (`NEXT_PUBLIC_SUPABASE_URL` and
+`NEXT_PUBLIC_SUPABASE_ANON_KEY`), locations are stored in the `locations` table under an
+anonymous user; otherwise they are kept in the browser. See `../supabase/README.md`.
 
 ## Opening a specific state
 
