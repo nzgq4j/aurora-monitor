@@ -25,7 +25,7 @@ export function SolarActivity() {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(440px,100%),1fr))', gap: 14 }}>
       <LineChart title="Hemispheric power · North" unit="GW" color={C.green} points={data.hemi.map(p => ({ t: p.t, v: p.north }))} forecastAfter={now}
-        note="OVATION estimate; dashed values are the short-range forecast." />
+        note="OVATION estimate; NOAA publishes the last several hours. Dashed values are the short-range forecast." />
       <LineChart title="Solar wind speed" unit="km/s" color={C.green} points={wind('speed')} />
       <LineChart title="Solar wind density" unit="p/cm³" color={C.green} decimals={1} points={wind('density')} />
       <LineChart title="IMF Bz (GSM)" unit="nT" color="#7FD4FF" decimals={1} zero points={wind('bz')} note="Southward (negative) Bz lets solar-wind energy into the magnetosphere." />
