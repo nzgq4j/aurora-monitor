@@ -102,7 +102,7 @@ export const fr: Messages = {
   'checkout.joinAs': 'S’abonner en tant que',
   'checkout.liveBody': 'Votre essai de 14 jours commence maintenant, sans carte bancaire. Les paiements par carte ne sont pas encore activés, donc rien ne vous sera facturé à la fin de l’essai.',
   'checkout.start': 'Démarrer l’essai gratuit de 14 jours',
-  'checkout.signInToStart': 'Connectez-vous ou créez un compte pour commencer',
+  'checkout.createToStart': 'Créez votre compte pour commencer',
   'checkout.trialEnds': 'L’essai se termine le {date}.',
   'checkout.demoNote': 'Rien à payer aujourd’hui. Annulez à tout moment avant le {date} et vous ne serez pas facturé.',
   'checkout.summary': 'RÉCAPITULATIF DE LA COMMANDE',

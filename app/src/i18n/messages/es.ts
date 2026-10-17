@@ -102,7 +102,7 @@ export const es: Messages = {
   'checkout.joinAs': 'Únete como',
   'checkout.liveBody': 'Tu prueba de 14 días empieza ahora y no necesita tarjeta. Los pagos con tarjeta aún no están activados, así que no se cobrará nada cuando termine.',
   'checkout.start': 'Empezar prueba gratis de 14 días',
-  'checkout.signInToStart': 'Inicia sesión o crea una cuenta para empezar',
+  'checkout.createToStart': 'Crea tu cuenta para empezar',
   'checkout.trialEnds': 'La prueba termina el {date}.',
   'checkout.demoNote': 'Hoy no se cobra nada. Cancela cuando quieras antes del {date} y no se te cobrará.',
   'checkout.summary': 'RESUMEN DEL PEDIDO',

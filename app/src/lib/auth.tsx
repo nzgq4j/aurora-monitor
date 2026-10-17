@@ -55,7 +55,8 @@ interface AuthCtx {
   trialExpired: boolean;
   /** Re-read the profile (e.g. while waiting for Stripe's webhook after checkout). */
   refreshProfile: () => Promise<Profile | null>;
-  signUp: (email: string, password: string, name: string) => Promise<Result & { needsConfirmation: boolean }>;
+  /** `next` is the page the confirmation email link returns to (default /dashboard). */
+  signUp: (email: string, password: string, name: string, next?: string) => Promise<Result & { needsConfirmation: boolean }>;
   signIn: (email: string, password: string) => Promise<Result>;
   signInWithProvider: (provider: Extract<Provider, 'google' | 'apple'>) => Promise<Result>;
   sendPasswordReset: (email: string) => Promise<Result>;
@@ -149,9 +150,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       effectivePlan: profile && !trialExpired ? profile.plan : 'free',
       trialExpired,
       refreshProfile: () => loadProfile(user),
-      signUp: async (email, password, name) => {
+      signUp: async (email, password, name, next = '/dashboard') => {
         if (!sb) return { ...none, needsConfirmation: false };
-        const { data, error } = await sb.auth.signUp({ email, password, options: { data: { display_name: name, locale }, emailRedirectTo: `${origin}/dashboard` } });
+        const { data, error } = await sb.auth.signUp({ email, password, options: { data: { display_name: name, locale }, emailRedirectTo: `${origin}${next}` } });
         return { error: error ? friendly(error.message) : null, needsConfirmation: !error && !data.session };
       },
       signIn: async (email, password) => {

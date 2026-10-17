@@ -102,7 +102,7 @@ export const en = {
   'checkout.joinAs': 'Join as',
   'checkout.liveBody': 'Your 14-day trial starts now and needs no card. Card payments aren’t switched on yet, so nothing is charged when it ends.',
   'checkout.start': 'Start 14-day free trial',
-  'checkout.signInToStart': 'Sign in or create an account to start',
+  'checkout.createToStart': 'Create your account to start',
   'checkout.trialEnds': 'Trial ends {date}.',
   'checkout.demoNote': 'No charge today. Cancel any time before {date} and you won’t be billed.',
   'checkout.summary': 'ORDER SUMMARY',

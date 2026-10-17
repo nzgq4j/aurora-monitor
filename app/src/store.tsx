@@ -136,7 +136,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       choose: i => {
         if (i === planIndex && signedIn) return;
         if (i === 0) {
-          if (!signedIn) { go('signin'); return; }
+          if (!signedIn) { router.push('/signin?mode=signup'); return; }
           if (live) { void cancel().then(() => go('account')); return; }
           go('account', { plan: 'free', tab: 'overview', toast: t('toast.onFree') });
           return;

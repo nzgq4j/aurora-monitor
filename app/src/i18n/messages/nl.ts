@@ -102,7 +102,7 @@ export const nl: Messages = {
   'checkout.joinAs': 'Word lid als',
   'checkout.liveBody': 'Je proefperiode van 14 dagen begint nu en je hebt geen kaart nodig. Kaartbetalingen zijn nog niet ingeschakeld, dus er wordt niets afgeschreven als de proefperiode afloopt.',
   'checkout.start': 'Start gratis proefperiode van 14 dagen',
-  'checkout.signInToStart': 'Log in of maak een account aan om te beginnen',
+  'checkout.createToStart': 'Maak je account aan om te beginnen',
   'checkout.trialEnds': 'Proefperiode eindigt op {date}.',
   'checkout.demoNote': 'Vandaag betaal je niets. Zeg vóór {date} op en je wordt niets in rekening gebracht.',
   'checkout.summary': 'OVERZICHT BESTELLING',
