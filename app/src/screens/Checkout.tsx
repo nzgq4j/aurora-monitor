@@ -11,7 +11,7 @@ export function Checkout() {
   const trialEnd = new Date(Date.now() + 14 * 864e5).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   const cycle = s.annual ? 'Annual' : 'Monthly';
   const price = '$' + (s.annual ? pending.y : pending.m);
-  const feats = FEATS.filter(x => x[1] > 0 && x[1] <= pendingIndex).map(x => x[0]).slice(-5);
+  const feats = FEATS.filter(x => x[1] > 0 && x[1] <= pendingIndex).map(x => x[0]).slice(0, 6);
 
   return (
     <main data-screen-label="Checkout" style={{ maxWidth: 1080, margin: '0 auto', padding: '48px var(--gutter) 56px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(360px,100%),1fr))', gap: 40, alignItems: 'start' }}>

@@ -3,7 +3,9 @@
 import { C, COMPARE, FEATS, TIERS } from '../data';
 import { displayPrice, useStore } from '../store';
 
-const COMPARE_COLS = 'minmax(180px,1.4fr) repeat(4,minmax(0,1fr))';
+const COMPARE_COLS = `minmax(180px,1.4fr) repeat(${TIERS.length},minmax(0,1fr))`;
+/** Annual saving on the paid plan versus paying monthly, e.g. 17%. */
+const SAVING = Math.round((1 - TIERS[1].y / (TIERS[1].m * 12)) * 100);
 
 export function Plans() {
   const { s, set, planIndex, choose } = useStore();
@@ -21,21 +23,21 @@ export function Plans() {
             <button type="button" className="btn" aria-pressed={!s.annual} onClick={() => set({ annual: false })} style={seg(!s.annual)}>Monthly</button>
             <button type="button" className="btn" aria-pressed={s.annual} onClick={() => set({ annual: true })} style={seg(s.annual)}>Annual</button>
           </div>
-          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--green)' }}>Save up to 25%</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--green)' }}>Save {SAVING}% yearly</span>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(260px,100%),1fr))', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(300px,100%),1fr))', gap: 16, maxWidth: 900 }}>
         {TIERS.map((t, i) => {
           const cur = s.signedIn && i === planIndex;
           const hot = t.id === 'chaser';
-          const lit = 2 + i * 2 + (i === 3 ? 1 : 0);
+          const lit = i ? 9 : 3;
           const cta = cur ? 'Current plan' : s.signedIn && i < planIndex ? 'Downgrade' : i === 0 ? 'Start free' : 'Choose ' + t.name;
           return (
             <div key={t.id} style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 18, padding: '26px 24px', border: `1px solid ${hot ? C.green : C.line2}`, borderRadius: 16, background: hot ? 'radial-gradient(140% 70% at 50% 120%,rgba(89,255,58,.16),rgba(0,0,0,0) 70%)' : '#000' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: 24 }}>
                 <span style={{ fontFamily: 'var(--f-display)', fontWeight: 800, fontSize: 15, letterSpacing: '.05em', color: t.accent }}>{t.name.toUpperCase()}</span>
-                <span aria-hidden={!hot} style={{ fontSize: 11, fontWeight: 700, padding: '4px 9px', borderRadius: 999, background: 'var(--green)', color: '#000', opacity: hot ? 1 : 0 }}>MOST CHASED</span>
+                <span aria-hidden={!hot} style={{ fontSize: 11, fontWeight: 700, padding: '4px 9px', borderRadius: 999, background: 'var(--green)', color: '#000', opacity: hot ? 1 : 0 }}>14-DAY FREE TRIAL</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                 <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontStretch: '112%', fontSize: 60, lineHeight: .9 }}>{displayPrice(t, s.annual)}</span>
@@ -67,7 +69,7 @@ export function Plans() {
       </div>
 
       <div className="rule-top hscroll">
-      <div style={{ display: 'flex', flexDirection: 'column', minWidth: 600 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', minWidth: 420, maxWidth: 900 }}>
         <div style={{ display: 'grid', gridTemplateColumns: COMPARE_COLS, gap: 12, padding: '20px 0 14px', borderBottom: '1px solid var(--line-2)' }}>
           <span className="display" style={{ fontSize: 28 }}>Compare</span>
           {TIERS.map(t => <span key={t.id} style={{ fontFamily: 'var(--f-display)', fontWeight: 800, fontSize: 15, color: t.accent, alignSelf: 'end' }}>{t.name}</span>)}
