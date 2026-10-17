@@ -7,13 +7,22 @@ import { kpNow } from '../lib/feeds';
 import { AuthProvider } from '../lib/auth';
 import { LocationsProvider } from '../lib/locations';
 import { StoreProvider } from '../store';
+import { ServiceWorker } from '../components/ServiceWorker';
 
 export const metadata: Metadata = {
   title: 'OVAL · Aurora monitor',
   description: 'Live aurora forecasts, the auroral oval, and alerts for your sky.',
+  applicationName: 'OVAL',
+  appleWebApp: { capable: true, title: 'OVAL', statusBarStyle: 'black' },
+  icons: {
+    icon: [{ url: '/icons/icon.svg', type: 'image/svg+xml' }, { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }],
+    apple: '/icons/apple-touch-icon.png',
+  },
+  formatDetection: { telephone: false },
 };
 
-export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#000000' };
+// viewport-fit=cover lets the layout use the full screen on notched phones; safe-area insets are applied in CSS.
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#000000', colorScheme: 'dark', viewportFit: 'cover' };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const kp = await kpNow();
@@ -39,6 +48,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                 {children}
                 <Footer />
               </div>
+              <ServiceWorker />
             </LocationsProvider>
           </StoreProvider>
         </AuthProvider>

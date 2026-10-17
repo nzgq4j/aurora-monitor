@@ -111,6 +111,7 @@ export function AuroraMap({ kp }: { kp: number | null }) {
   const mapRef = useRef<Leaflet.Map | null>(null);
   const layers = useRef<{ prob?: Leaflet.Layer; kp?: Leaflet.LayerGroup; marker?: Leaflet.Layer; clouds?: Leaflet.GridLayer }>({});
   const LRef = useRef<typeof Leaflet | null>(null);
+  const cityMarkers = useRef<{ lat: number; lon: number; m: Leaflet.Marker }[]>([]);
   const [mode, setMode] = useState<Mode>('prob');
   const [status, setStatus] = useState<string>('Loading map…');
   const [forecast, setForecast] = useState<number | null>(null);
@@ -200,9 +201,10 @@ export function AuroraMap({ kp }: { kp: number | null }) {
 
       L.polyline([[66.563, -540], [66.563, 540]], { pane: 'land', renderer: landCanvas, color: C.muted, weight: 1, dashArray: '6 6', interactive: false }).addTo(map);
       for (const dx of COPIES) {
-        L.marker([66.563, -30 + dx], { pane: 'labels', interactive: false, icon: L.divIcon({ className: 'map-label map-label-dim', html: 'Arctic Circle', iconSize: undefined }) }).addTo(map);
+        L.marker([66.563, -30 + dx], { pane: 'labels', interactive: false, keyboard: false, icon: L.divIcon({ className: 'map-label map-label-dim', html: 'Arctic Circle', iconSize: undefined }) }).addTo(map);
         for (const [name, lat, lon] of MAP_CITIES) {
-          L.marker([lat, lon + dx], { pane: 'labels', interactive: false, icon: L.divIcon({ className: 'map-city', html: `<i></i><span>${name}</span>`, iconSize: undefined }) }).addTo(map);
+          const m = L.marker([lat, lon + dx], { pane: 'labels', interactive: false, keyboard: false, icon: L.divIcon({ className: 'map-city', html: `<i></i><span>${name}</span>`, iconSize: undefined }) }).addTo(map);
+          cityMarkers.current.push({ lat, lon, m });
         }
       }
 
@@ -216,7 +218,7 @@ export function AuroraMap({ kp }: { kp: number | null }) {
         for (const dx of COPIES) {
           L.polyline(north.map(([la, lo]) => [la, lo + dx] as [number, number]), style).addTo(group);
           L.polyline(south.map(([la, lo]) => [la, lo + dx] as [number, number]), style).addTo(group);
-          if (label) L.marker([label[0], label[1] + dx], { pane: 'labels', interactive: false, icon: L.divIcon({ className: on ? 'map-kp map-kp-on' : 'map-kp', html: `<span style="color:${rgb(ramp(kpT(k)))}">Kp ${k}</span>`, iconSize: undefined }) }).addTo(group);
+          if (label) L.marker([label[0], label[1] + dx], { pane: 'labels', interactive: false, keyboard: false, icon: L.divIcon({ className: on ? 'map-kp map-kp-on' : 'map-kp', html: `<span style="color:${rgb(ramp(kpT(k)))}">Kp ${k}</span>`, iconSize: undefined }) }).addTo(group);
         }
       }
       layers.current.kp = group;
@@ -247,7 +249,7 @@ export function AuroraMap({ kp }: { kp: number | null }) {
       } catch { setStatus('Aurora data is unavailable right now.'); }
       if (!cancelled) setReady(true);
     })();
-    return () => { cancelled = true; mapRef.current?.remove(); mapRef.current = null; };
+    return () => { cancelled = true; mapRef.current?.remove(); mapRef.current = null; cityMarkers.current = []; };
   }, [current]);
 
   // Show the chosen layers.
@@ -271,6 +273,11 @@ export function AuroraMap({ kp }: { kp: number | null }) {
     const map = mapRef.current, L = LRef.current;
     if (!map || !L || !ready) return;
     layers.current.marker?.remove();
+    // Hide reference-city labels that would sit under the chosen place's own label.
+    for (const c of cityMarkers.current) {
+      const near = !!shownPlace && Math.abs(c.lat - shownPlace.lat) < 0.8 && Math.abs(((c.lon - shownPlace.lon + 540) % 360) - 180) < 1.6;
+      c.m.setOpacity(near ? 0 : 1);
+    }
     if (!shownPlace) return;
     const label = shownPlace.isHome ? `${shownPlace.name.split(',')[0]} · Home` : shownPlace.name.split(',')[0];
     layers.current.marker = L.layerGroup(COPIES.map(dx => L.marker([shownPlace.lat, shownPlace.lon + dx], {

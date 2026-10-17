@@ -66,3 +66,41 @@ Demo mode only:
 ## Deployment
 
 Deployed on Vercel with **Root Directory** set to `app` and the Next.js framework preset.
+
+## Installable app (PWA) and Google Play
+
+The site is a Progressive Web App, which is the basis for the Android app: Google Play accepts a PWA
+wrapped as a Trusted Web Activity (TWA), and the app then always shows the live site.
+
+| Piece | Where |
+| --- | --- |
+| Web app manifest (name, colours, icons, shortcuts, screenshots) | `src/app/manifest.ts` → `/manifest.webmanifest` |
+| Icons: 192/512 (`any` and `maskable`), monochrome (Android themed icons), Apple touch, SVG favicon | `public/icons/`, regenerate with `node scripts/make-icons.mjs` from `scripts/icon.svg` |
+| Install-dialog screenshots (1080×2340 narrow, 1920×1080 wide) | `public/screenshots/`, regenerate with `BASE=https://… node scripts/make-screenshots.mjs` |
+| Service worker: pages and `/api/*` network-first with cached fallback, static assets cache-first, `/offline` page when nothing is cached | `public/sw.js`, registered by `src/components/ServiceWorker.tsx` |
+| Digital Asset Links for the TWA | `/.well-known/assetlinks.json` (`src/app/.well-known/assetlinks.json/route.ts`) |
+
+The scripts need Playwright (`npx playwright install chromium`, or `PW_ROOT=$(npm root -g)` for a global install).
+
+**Validate mobile behaviour** against any build (exits non-zero on failure):
+
+```sh
+BASE=https://aurora-monitor.vercel.app node scripts/validate-mobile.mjs
+```
+
+It emulates a Pixel 7 and checks the manifest and its images, Chrome's own installability verdict
+(DevTools `Page.getInstallabilityErrors`), service-worker control and offline behaviour, and every page
+at 360 px and 412 px for sideways scrolling, page errors and touch targets under 44 px.
+
+**Publishing to Google Play** (outline):
+
+1. Install Bubblewrap: `npm i -g @bubblewrap/cli`, then `bubblewrap init --manifest https://aurora-monitor.vercel.app/manifest.webmanifest`
+   (or use the custom domain you'll publish under). Choose an application ID such as `watch.oval.app`.
+2. `bubblewrap build` produces a signed `.aab` for upload.
+3. Create the app in Play Console and upload the `.aab`. With Play App Signing, copy the **app signing key**
+   SHA-256 fingerprint from *Test and release → App integrity*.
+4. In Vercel, set `ANDROID_PACKAGE_NAME` and `ANDROID_CERT_SHA256` (comma-separate several fingerprints, e.g. upload
+   and app signing keys) and redeploy. `/.well-known/assetlinks.json` returns 404 until both are set; once the file
+   verifies, the app opens full-screen without the browser address bar.
+5. Store listing assets: the 512×512 icon is `public/icons/icon-512.png`; Play also needs a 1024×500 feature graphic
+   and phone screenshots.
