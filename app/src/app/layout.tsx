@@ -9,6 +9,7 @@ import { LocationsProvider } from '../lib/locations';
 import { StoreProvider } from '../store';
 import { SITE } from '../lib/site';
 import { ServiceWorker } from '../components/ServiceWorker';
+import { FullScreenPrompt } from '../components/FullScreenPrompt';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
@@ -52,6 +53,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                 <Footer />
               </div>
               <ServiceWorker />
+              <FullScreenPrompt />
             </LocationsProvider>
           </StoreProvider>
         </AuthProvider>

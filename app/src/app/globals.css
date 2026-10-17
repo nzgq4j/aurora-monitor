@@ -189,6 +189,7 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 .map-you span { position: absolute; left: 14px; top: -10px; white-space: nowrap; color: var(--green); font: 700 13px var(--f-body); text-shadow: 0 0 3px #000, 0 0 3px #000, 0 0 3px #000; }
 @keyframes map-ring { from { transform: scale(1); opacity: 1; } to { transform: scale(2.6); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .map-you .map-pulse-ring { animation: none; } }
+.fs-prompt { position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 1000; display: flex; gap: 12px; align-items: flex-start; padding: 14px; border-radius: 16px; background: rgba(11,13,12,.97); border: 1px solid var(--line-2); box-shadow: 0 10px 40px rgba(0,0,0,.6); max-width: 480px; margin: 0 auto; }
 .map-status { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 800; padding: 8px 14px; border-radius: 999px; background: rgba(0,0,0,.8); border: 1px solid var(--line-2); font-size: 13px; color: var(--soft); }
 .map-legend { position: absolute; left: 12px; bottom: 28px; z-index: 800; width: min(300px, calc(100% - 24px)); padding: 12px 14px; border-radius: 12px; background: rgba(0,0,0,.78); border: 1px solid var(--line-2); backdrop-filter: blur(6px); }
 .map-legend[open] > div + div { margin-top: 12px; }
