@@ -2,11 +2,37 @@
 
 import { useEffect, useState, type FormEvent } from 'react';
 import { C } from '../data';
+import { moon, type MoonState } from '../lib/astro';
 import { devicePlace, searchPlaces, useLocations, type Place, type PlaceResult } from '../lib/locations';
 import { useConditions } from '../lib/useConditions';
 import { useStore } from '../store';
 
 const hhmmUT = (t: number) => `${new Date(t).toISOString().slice(11, 16)} UT`;
+
+/** How much the Moon will get in the way right now. */
+function moonEffect(m: MoonState): { text: string; c: string } {
+  if (!m.up) return { text: 'No moonlight now', c: C.green };
+  if (m.illumination < 0.25) return { text: 'Faint moonlight, little effect', c: C.green };
+  if (m.illumination < 0.6) return { text: 'Moonlight will hide fainter aurora', c: C.amber };
+  return { text: 'Bright moon: only stronger displays will stand out', c: C.red };
+}
+
+/** The Moon's disc with its lit part, mirrored for the southern hemisphere. */
+function MoonDisc({ m, south, size = 44 }: { m: MoonState; south: boolean; size?: number }) {
+  const r = 20, k = m.illumination;
+  const litRight = m.waxing !== south;
+  const rx = Math.abs(1 - 2 * k) * r;
+  // Outer limb on the lit side, then back along the terminator (bulging out for a crescent, in for gibbous).
+  const limb = litRight ? 1 : 0;
+  const term = (k < 0.5) === litRight ? 0 : 1;
+  const d = `M24 ${24 - r} A${r} ${r} 0 0 ${limb} 24 ${24 + r} A${rx.toFixed(2)} ${r} 0 0 ${term} 24 ${24 - r}Z`;
+  return (
+    <svg viewBox="0 0 48 48" width={size} height={size} role="img" aria-label={`${m.name}, ${Math.round(k * 100)}% lit`} style={{ flex: 'none' }}>
+      <circle cx="24" cy="24" r={r} style={{ fill: '#1b1f1c', stroke: '#3a403c' }} />
+      {k > 0.01 && <path d={d} style={{ fill: '#F2F0E6' }} />}
+    </svg>
+  );
+}
 
 /** "Your sky" panel on Now: pick a location (device or search), optionally save it as Home, and see its live conditions. */
 export function YourSky({ kp }: { kp: number | null }) {
@@ -23,6 +49,12 @@ export function YourSky({ kp }: { kp: number | null }) {
 
   const home = locations.find(l => l.isHome) ?? null;
   const { data: cond, loading } = useConditions(shown?.lat, shown?.lon);
+
+  // Moon position and phase, worked out here and refreshed every five minutes.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => { const id = setInterval(() => setNow(Date.now()), 3e5); return () => clearInterval(id); }, []);
+  const m = shown ? moon(now, shown.lat, shown.lon) : null;
+  const effect = m ? moonEffect(m) : null;
 
   const choose = async (place: Place, source: 'manual' | 'device') => {
     setMsg(null);
@@ -64,6 +96,7 @@ export function YourSky({ kp }: { kp: number | null }) {
     if (kp >= need) {
       if (dark === false) { verdict = `Kp ${kp.toFixed(1)} is enough for this sky (≈ Kp ${need} needed), but it isn’t dark yet.`; vc = C.amber; }
       else if (cloud !== null && cloud >= 60) { verdict = `Kp ${kp.toFixed(1)} is enough for this sky, but ${cloud}% cloud may hide it.`; vc = C.amber; }
+      else if (m && m.up && m.illumination >= 0.6) { verdict = `Kp ${kp.toFixed(1)} meets the ≈ Kp ${need} this sky needs, but the Moon is ${Math.round(m.illumination * 100)}% lit and will wash out fainter aurora. Look ${look}.`; vc = C.amber; }
       else { verdict = `Kp ${kp.toFixed(1)} meets the ≈ Kp ${need} this sky needs. Look ${look}.`; vc = C.green; }
     } else verdict = `Kp ${kp.toFixed(1)} is below the ≈ Kp ${need} needed here.`;
   }
@@ -153,6 +186,21 @@ export function YourSky({ kp }: { kp: number | null }) {
               </div>
             ))}
           </div>
+          {m && effect && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '2px 0 4px' }}>
+              <MoonDisc m={m} south={shown.lat < 0} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
+                <span className="label">MOON</span>
+                <span style={{ fontWeight: 700, fontSize: 16 }}>
+                  {m.name} · {Math.round(m.illumination * 100)}% lit
+                  <span style={{ fontWeight: 500, color: 'var(--muted)' }}>
+                    {' · '}{m.up ? 'Up' : 'Below horizon'}{m.next ? `, ${m.next.event === 'rise' ? 'rises' : 'sets'} ${hhmmUT(m.next.t)}` : ' all day'}
+                  </span>
+                </span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: effect.c }}>{effect.text}</span>
+              </div>
+            </div>
+          )}
           {verdict && <span style={{ fontSize: 16, fontWeight: 600, color: vc }}>{verdict}</span>}
         </>
       ) : !picking && (
