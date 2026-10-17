@@ -218,3 +218,10 @@ export async function outlook27(): Promise<OutlookDay[]> {
   }
   return out;
 }
+
+/** Whole OVATION grid as base64 bytes, row-major from lat -90 to 90, lon 0..359 east. */
+export function ovalGridBase64(oval: Oval): string {
+  const bytes = new Uint8Array(181 * 360);
+  oval.grid.forEach((row, i) => bytes.set(row, i * 360));
+  return Buffer.from(bytes).toString('base64');
+}

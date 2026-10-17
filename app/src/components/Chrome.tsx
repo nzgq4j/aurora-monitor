@@ -3,7 +3,7 @@
 import { initials, useAuth } from '../lib/auth';
 import { useStore, type Screen } from '../store';
 
-const NAV: [string, Screen][] = [['Now', 'home'], ['Plans', 'plans'], ['Account', 'account']];
+const NAV: [string, Screen][] = [['Now', 'home'], ['Map', 'map'], ['Plans', 'plans'], ['Account', 'account']];
 
 export function Header({ kpLabel }: { kpLabel: string }) {
   const { signedIn, live, screen: current, plan, go, goAccount } = useStore();
