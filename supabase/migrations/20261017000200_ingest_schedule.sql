@@ -1,9 +1,10 @@
 -- Run the ingest-space-weather edge function every 10 minutes.
 -- Requires two Vault secrets, created once per project:
 --   select vault.create_secret('https://<ref>.supabase.co', 'project_url');
---   select vault.create_secret('<publishable or anon key>', 'publishable_key');
-create extension if not exists pg_cron;
-create extension if not exists pg_net;
+--   select vault.create_secret('<legacy anon key (a JWT)>', 'publishable_key');
+-- The key must be the legacy anon JWT: the function is deployed with JWT verification on,
+-- and sb_publishable_ keys are not JWTs.
+-- pg_cron and pg_net come from 20261017000150_enable_cron_and_net.sql.
 
 select cron.schedule(
   'ingest-space-weather',
