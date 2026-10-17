@@ -25,14 +25,16 @@ export const TIERS: Tier[] = [
 /** Feature label and the index of the tier that introduces it. */
 export const FEATS: [string, number][] = [
   ['Live Kp, oval & solar wind', 0],
-  ['3-day forecast', 0],
+  ['3-day forecast (daily peak Kp)', 0],
   ['Daily email digest', 0],
   ['Instant push alerts', 1],
   ['Hour-by-hour cloud + darkness', 1],
+  ['3-hour Kp forecast', 1],
   ['27-day outlook', 1],
   ['SMS alerts', 2],
   ['Bz & substorm onset alerts', 2],
   ['Dark-sky spot map', 2],
+  ['Solar wind & hemispheric power graphs', 2],
   ['Data export & API', 3],
   ['5 team seats', 3],
 ];
@@ -42,11 +44,16 @@ export const COMPARE: [string, string[]][] = [
   ['Alert channels', ['Email', 'Email, push', 'Email, push, SMS', 'All + webhook']],
   ['Alert speed', ['Daily digest', '< 1 min', '< 1 min', '< 1 min']],
   ['Forecast range', ['3 days', '27 days', '27 days', '27 days']],
+  ['Kp forecast detail', ['Daily peak', '3-hourly', '3-hourly', '3-hourly']],
+  ['Solar activity graphs', ['—', '—', '✓', '✓']],
   ['Cloud & darkness model', ['—', '✓', '✓', '✓']],
   ['Substorm onset alerts', ['—', '—', '✓', '✓']],
   ['Kp history', ['7 days', '90 days', '2 years', 'Since 1932']],
   ['API & export', ['—', '—', '—', '✓']],
 ];
+
+/** Index into TIERS of the first plan that includes each gated feature. */
+export const ENTITLEMENTS = { kp3h: 1, outlook27: 1, solarGraphs: 2 } as const;
 
 export const KP_NAME = ['', '', 'Quiet', 'Unsettled', 'Active', 'G1 Minor', 'G2 Moderate', 'G3 Strong', 'G4 Severe', 'G5 Extreme'];
 
@@ -66,6 +73,9 @@ export const f = (n: number) => +n.toFixed(1);
 
 export const kpColor = (k: number, observed = false) =>
   k >= 5 ? (observed ? '#C04F52' : C.red) : k >= 4 ? (observed ? '#B08F0C' : C.amber) : (observed ? '#1F6B33' : C.darkGreen);
+
+/** Bar colour for a Kp value: green below 3, yellow from 3, red from 4. */
+export const kpBarColor = (k: number) => (k >= 4 ? C.red : k >= 3 ? C.amber : C.darkGreen);
 
 // ---- Polar auroral-oval map ----
 const K = 4.2, CTR = 240;

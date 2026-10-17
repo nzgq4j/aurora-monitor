@@ -1,8 +1,7 @@
 'use client';
 
-import { useId } from 'react';
-import { C, kpColor, polar } from '../data';
-import type { KpPoint } from '../lib/feeds';
+import { useEffect, useId, useRef, useState } from 'react';
+import { C, kpBarColor, polar } from '../data';
 
 const monoText = (size: number) => ({ fill: C.muted, font: `${size}px 'JetBrains Mono'` });
 
@@ -86,44 +85,182 @@ export function PolarOval({ points, edge, marker }: PolarProps) {
   );
 }
 
-const DAY = 864e5, STEP = 3 * 36e5;
-const X0 = 48, X1 = 1150, Y1 = 290, U = 30;
-const dayLabel = (t: number) => new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+/** Width of an element in CSS pixels, so charts draw text at its true size on every screen. */
+function useWidth<T extends HTMLElement>(): [React.RefObject<T | null>, number] {
+  const ref = useRef<T>(null);
+  const [w, setW] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setW(Math.floor(e.contentRect.width)));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return [ref, w];
+}
 
-/** 3-hour Kp: observed and estimated bars (darker) up to now, NOAA forecast after. */
-export function KpOutlookChart({ series, now }: { series: KpPoint[]; now: number }) {
-  if (series.length === 0) {
-    return (
-      <svg viewBox="0 0 1200 320" style={{ width: '100%', display: 'block' }} role="img" aria-label="Kp data unavailable">
-        <text x="600" y="160" style={{ fill: C.muted, font: "600 16px 'Barlow'", textAnchor: 'middle' }}>Kp data unavailable</text>
-      </svg>
-    );
+const DAY = 864e5;
+const dayLabel = (t: number) => new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+const weekday = (t: number) => new Date(t).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
+
+export interface KpBar { t: number; kp: number; past: boolean }
+
+/**
+ * Kp bars coloured by level with the value above each bar. `unit` sets the bar length
+ * (3-hourly or daily); `minBar` is the narrowest bar in px before the chart scrolls sideways.
+ */
+export function KpBarChart({ bars, unit, now, minBar = 0, label }: { bars: KpBar[]; unit: 'hour' | 'day'; now: number; minBar?: number; label: string }) {
+  const [ref, cw] = useWidth<HTMLDivElement>();
+  const H = unit === 'hour' ? 292 : 280, X0 = 34, PAD = 8, TOP = 26, Y1 = 230, U = (Y1 - TOP) / 9;
+  const n = bars.length;
+  const W = Math.max(cw, X0 + PAD + n * minBar);
+  const bw = n ? (W - X0 - PAD) / n : 0;
+  const step = n > 1 ? bars[1].t - bars[0].t : unit === 'hour' ? 3 * 36e5 : DAY;
+  const idx = bars.findIndex(b => now >= b.t && now < b.t + step);
+  const nowX = idx >= 0 ? X0 + (idx + (now - bars[idx].t) / step) * bw : null;
+  const fs = bw >= 56 ? 14 : 11;
+
+  // Open the 3-hour view with "now" near the left edge rather than two days back.
+  const scrolled = useRef(false);
+  useEffect(() => {
+    if (!cw || scrolled.current || nowX === null || !ref.current) return;
+    scrolled.current = true;
+    if (W > cw) ref.current.scrollLeft = Math.max(0, nowX - 2 * bw - X0);
+  }, [cw, W, nowX, bw, ref]);
+
+  if (n === 0) {
+    return <div style={{ height: 120, display: 'grid', placeItems: 'center', color: C.muted, fontWeight: 600 }}>Kp data unavailable</div>;
   }
-  const t0 = Math.floor(series[0].t / DAY) * DAY;
-  const t1 = Math.ceil((series[series.length - 1].t + STEP) / DAY) * DAY;
-  const x = (t: number) => X0 + ((t - t0) / (t1 - t0)) * (X1 - X0);
-  const bw = (STEP / (t1 - t0)) * (X1 - X0);
-  const days: number[] = [];
-  for (let d = t0; d < t1; d += DAY) days.push(d);
-  const nowX = f(Math.max(X0, Math.min(X1, x(now))));
+  const days = unit === 'hour' ? bars.reduce<{ t: number; i0: number; i1: number }[]>((acc, b, i) => {
+    const d = Math.floor(b.t / DAY) * DAY;
+    if (acc.length && acc[acc.length - 1].t === d) acc[acc.length - 1].i1 = i; else acc.push({ t: d, i0: i, i1: i });
+    return acc;
+  }, []) : [];
+
   return (
-    <svg viewBox="0 0 1200 320" style={{ width: '100%', display: 'block' }} role="img" aria-label={`Kp index ${dayLabel(t0)} to ${dayLabel(t1 - DAY)}, observed and forecast`}>
-      {[...Array(10)].map((_, k) => (
-        <g key={k}>
-          <line x1="48" x2="1150" y1={Y1 - k * U} y2={Y1 - k * U} style={{ stroke: '#fff', strokeOpacity: .07 }} />
-          <text x="38" y={Y1 - k * U + 4} style={{ ...monoText(11), textAnchor: 'end' }}>{k}</text>
-        </g>
-      ))}
-      {days.slice(1).map(d => <line key={d} x1={f(x(d))} x2={f(x(d))} y1="20" y2="290" style={{ stroke: '#fff', strokeOpacity: .14 }} />)}
-      {series.map(p => (
-        <rect key={p.t} x={f(x(p.t) + 2.5)} y={f(Y1 - p.kp * U)} width={f(Math.max(1, bw - 5))} height={f(p.kp * U)} style={{ fill: kpColor(p.kp, p.kind !== 'predicted') }}>
-          <title>{`${new Date(p.t).toISOString().slice(0, 16).replace('T', ' ')} UT · Kp ${p.kp.toFixed(2)} · ${p.kind}`}</title>
-        </rect>
-      ))}
-      <line x1={nowX} x2={nowX} y1="14" y2="292" style={{ stroke: '#fff', strokeWidth: 3, strokeDasharray: '7 5' }} />
-      <text x={nowX} y="10" style={{ fill: '#fff', font: "700 12px 'Barlow'", textAnchor: 'middle' }}>NOW</text>
-      {days.map(d => <text key={d} x={f(x(d + DAY / 2))} y="310" style={{ fill: C.soft, font: "600 13px 'Barlow'", textAnchor: 'middle' }}>{dayLabel(d)}</text>)}
-      <line x1="48" x2="1150" y1="290" y2="290" style={{ stroke: C.muted }} />
-    </svg>
+    <div ref={ref} className="hscroll" style={{ minHeight: H }}>
+      {cw > 0 && (
+        <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }} role="img" aria-label={label}>
+          {[0, 2, 4, 6, 8].map(k => (
+            <g key={k}>
+              <line x1={X0} x2={W - PAD} y1={Y1 - k * U} y2={Y1 - k * U} style={{ stroke: '#fff', strokeOpacity: k ? .07 : .25 }} />
+              <text x={X0 - 8} y={Y1 - k * U + 4} style={{ ...monoText(11), textAnchor: 'end' }}>{k}</text>
+            </g>
+          ))}
+          {days.slice(1).map(d => <line key={d.t} x1={f(X0 + d.i0 * bw)} x2={f(X0 + d.i0 * bw)} y1={TOP - 10} y2={H - 4} style={{ stroke: '#fff', strokeOpacity: .14 }} />)}
+          {bars.map((b, i) => {
+            const x = X0 + i * bw, h = Math.max(1.5, b.kp * U);
+            return (
+              <g key={b.t}>
+                <rect x={f(x + 2)} y={f(Y1 - h)} width={f(Math.max(1, bw - 4))} height={f(h)} rx="2" style={{ fill: kpBarColor(b.kp), opacity: b.past ? .62 : 1 }}>
+                  <title>{`${new Date(b.t).toISOString().slice(0, 16).replace('T', ' ')} UT · Kp ${b.kp.toFixed(2)} · ${b.past ? 'observed' : 'forecast'}`}</title>
+                </rect>
+                <text x={f(x + bw / 2)} y={f(Y1 - h - 6)} style={{ fill: b.past ? C.soft : '#fff', font: `600 ${fs}px 'Barlow'`, textAnchor: 'middle' }}>{b.kp.toFixed(2)}</text>
+                {unit === 'hour'
+                  ? <text x={f(x + bw / 2)} y={Y1 + 18} style={{ ...monoText(10), textAnchor: 'middle' }}>{new Date(b.t).toISOString().slice(11, 13)}</text>
+                  : (
+                    <>
+                      <text x={f(x + bw / 2)} y={Y1 + 20} style={{ fill: C.soft, font: `600 ${fs}px 'Barlow'`, textAnchor: 'middle' }}>{weekday(b.t)}</text>
+                      <text x={f(x + bw / 2)} y={Y1 + 38} style={{ fill: C.muted, font: `500 ${Math.min(fs, 12)}px 'Barlow'`, textAnchor: 'middle' }}>{dayLabel(b.t)}</text>
+                    </>
+                  )}
+              </g>
+            );
+          })}
+          {days.map(d => (
+            <text key={d.t} x={f(X0 + ((d.i0 + d.i1 + 1) / 2) * bw)} y={Y1 + 44} style={{ fill: C.soft, font: "600 13px 'Barlow'", textAnchor: 'middle' }}>{`${weekday(d.t)} ${dayLabel(d.t)}`}</text>
+          ))}
+          {nowX !== null && (
+            <>
+              <line x1={f(nowX)} x2={f(nowX)} y1={TOP - 8} y2={Y1 + 2} style={{ stroke: '#fff', strokeWidth: 2, strokeDasharray: '6 4' }} />
+              <text x={f(nowX)} y={TOP - 12} style={{ fill: '#fff', font: "700 11px 'Barlow'", textAnchor: 'middle' }}>NOW</text>
+            </>
+          )}
+        </svg>
+      )}
+    </div>
+  );
+}
+
+/** Round axis steps (1, 2, 2.5, 5 × 10ⁿ) for about `count` ticks. */
+function ticks(lo: number, hi: number, count = 4): number[] {
+  const raw = (hi - lo) / count || 1;
+  const p = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 2.5, 5, 10].map(m => m * p).find(s => s >= raw) ?? 10 * p;
+  const out: number[] = [];
+  for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(+v.toFixed(6));
+  return out;
+}
+
+interface LineProps {
+  title: string;
+  unit: string;
+  points: { t: number; v: number | null }[];
+  color: string;
+  decimals?: number;
+  /** Values after this time are forecasts and drawn dashed. */
+  forecastAfter?: number;
+  /** Always include zero on the axis and draw it brighter (for Bz). */
+  zero?: boolean;
+  note?: string;
+}
+
+/** Time series panel with the latest value, UT time axis and gaps where data is missing. */
+export function LineChart({ title, unit, points, color, decimals = 0, forecastAfter, zero, note }: LineProps) {
+  const [ref, W] = useWidth<HTMLDivElement>();
+  const H = 190, X0 = 44, X1 = W - 10, TOP = 10, BOT = 160;
+  const pts = points.filter((p): p is { t: number; v: number } => p.v !== null);
+  const last = [...pts].reverse().find(p => forecastAfter === undefined || p.t <= forecastAfter) ?? pts[pts.length - 1];
+  let lo = Math.min(...pts.map(p => p.v)), hi = Math.max(...pts.map(p => p.v));
+  if (zero) { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
+  const padY = (hi - lo) * 0.1 || 1;
+  lo -= padY; hi += padY;
+  const ys = ticks(lo, hi);
+  lo = Math.min(lo, ys[0]); hi = Math.max(hi, ys[ys.length - 1]);
+  const t0 = pts[0]?.t ?? 0, t1 = pts[pts.length - 1]?.t ?? 1;
+  const x = (t: number) => X0 + ((t - t0) / (t1 - t0 || 1)) * (X1 - X0);
+  const y = (v: number) => BOT - ((v - lo) / (hi - lo || 1)) * (BOT - TOP);
+  // Break the line across gaps longer than 20 minutes; split solid (measured) from dashed (forecast).
+  const paths: { d: string; dashed: boolean }[] = [];
+  let cur: { d: string; dashed: boolean } | null = null;
+  pts.forEach((p, i) => {
+    const dashed = forecastAfter !== undefined && p.t > forecastAfter;
+    const gap = i > 0 && p.t - pts[i - 1].t > 12e5;
+    if (!cur || gap || cur.dashed !== dashed) {
+      const start = cur && !gap ? `M${f(x(pts[i - 1].t))} ${f(y(pts[i - 1].v))} L` : 'M';
+      cur = { d: `${start}${f(x(p.t))} ${f(y(p.v))}`, dashed };
+      paths.push(cur);
+    } else cur.d += ` L${f(x(p.t))} ${f(y(p.v))}`;
+  });
+  const hours: number[] = [];
+  const span = t1 - t0, every = (span > 12 * 36e5 ? (W < 480 ? 6 : 3) : 1) * 36e5;
+  for (let t = Math.ceil(t0 / every) * every; t <= t1; t += every) hours.push(t);
+
+  return (
+    <figure style={{ margin: 0, display: 'flex', flexDirection: 'column', gap: 6, padding: '14px 14px 8px', border: '1px solid var(--line-2)', borderRadius: 14, background: '#070807' }}>
+      <figcaption style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+        <span style={{ fontWeight: 700, fontSize: 15 }}>{title}</span>
+        <span className="mono" style={{ fontSize: 13, color }}>{last ? `${last.v.toFixed(decimals).replace('-', '−')} ${unit}` : '—'}</span>
+      </figcaption>
+      <div ref={ref} style={{ minHeight: H }}>
+        {W > 0 && pts.length > 1 && (
+          <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }} role="img"
+            aria-label={`${title}, last ${Math.round(span / 36e5)} hours${last ? `, latest ${last.v.toFixed(decimals)} ${unit}` : ''}`}>
+            {ys.map(v => (
+              <g key={v}>
+                <line x1={X0} x2={X1} y1={f(y(v))} y2={f(y(v))} style={{ stroke: '#fff', strokeOpacity: zero && v === 0 ? .35 : .07 }} />
+                <text x={X0 - 6} y={f(y(v)) + 4} style={{ ...monoText(10), textAnchor: 'end' }}>{String(v).replace('-', '−')}</text>
+              </g>
+            ))}
+            {hours.map(t => (
+              <text key={t} x={f(x(t))} y={BOT + 20} style={{ ...monoText(10), textAnchor: 'middle' }}>{new Date(t).toISOString().slice(11, 16)}</text>
+            ))}
+            {paths.map((p, i) => <path key={i} d={p.d} style={{ fill: 'none', stroke: color, strokeWidth: 1.6, strokeDasharray: p.dashed ? '4 4' : undefined, strokeLinejoin: 'round' }} />)}
+          </svg>
+        )}
+        {W > 0 && pts.length <= 1 && <div style={{ height: H, display: 'grid', placeItems: 'center', color: C.muted, fontWeight: 600 }}>No recent data</div>}
+      </div>
+      {note && <span style={{ fontSize: 12, color: C.muted }}>{note}</span>}
+    </figure>
   );
 }

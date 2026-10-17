@@ -127,6 +127,47 @@ export async function hemiPower(): Promise<{ t: number; north: number } | null> 
   return out;
 }
 
+export interface WindPoint { t: number; bz: number | null; bt: number | null; speed: number | null; density: number | null }
+
+/** Last 24 hours of real-time solar wind at L1, averaged into 5-minute bins. */
+export async function solarWindSeries(): Promise<WindPoint[]> {
+  const [mag, plasma] = await Promise.all([
+    firstRows([`${SWPC}/products/solar-wind/mag-1-day.json`, `${SWPC}/json/rtsw/rtsw_mag_1m.json`], FAST).then(activeOnly),
+    firstRows([`${SWPC}/products/solar-wind/plasma-1-day.json`, `${SWPC}/json/rtsw/rtsw_wind_1m.json`], FAST).then(activeOnly),
+  ]);
+  const BIN = 3e5;
+  const bins = new Map<number, Record<'bz' | 'bt' | 'speed' | 'density', number[]>>();
+  const add = (t: number | null, key: 'bz' | 'bt' | 'speed' | 'density', v: number | null) => {
+    if (t === null || v === null) return;
+    const k = Math.floor(t / BIN) * BIN;
+    let b = bins.get(k);
+    if (!b) bins.set(k, (b = { bz: [], bt: [], speed: [], density: [] }));
+    b[key].push(v);
+  };
+  for (const r of mag) { const t = parseTime(r.time_tag); add(t, 'bz', num(r.bz_gsm ?? r.bz)); add(t, 'bt', num(r.bt)); }
+  for (const r of plasma) { const t = parseTime(r.time_tag); add(t, 'speed', num(r.speed ?? r.proton_speed)); add(t, 'density', num(r.density ?? r.proton_density)); }
+  const mean = (xs: number[]) => (xs.length ? Math.round((xs.reduce((a, b) => a + b, 0) / xs.length) * 100) / 100 : null);
+  const out = [...bins.entries()].sort((a, b) => a[0] - b[0]).map(([t, b]) => ({ t, bz: mean(b.bz), bt: mean(b.bt), speed: mean(b.speed), density: mean(b.density) }));
+  const end = out.length ? out[out.length - 1].t : 0;
+  return out.filter(p => p.t > end - 864e5);
+}
+
+export interface HemiPoint { t: number; observed: number; north: number; south: number }
+
+/** OVATION hemispheric power (GW) for the last day, stamped at each value's forecast time. */
+export async function hemiPowerSeries(): Promise<HemiPoint[]> {
+  const txt = await getText(`${SWPC}/text/aurora-nowcast-hemi-power.txt`, FAST);
+  if (!txt) return [];
+  const out: HemiPoint[] = [];
+  for (const line of txt.split('\n')) {
+    const m = line.trim().match(/^(\d{4}-\d\d-\d\d)_(\d\d:\d\d)\s+(\d{4}-\d\d-\d\d)_(\d\d:\d\d)\s+(\d+)\s+(\d+)/);
+    if (m) out.push({ observed: Date.parse(`${m[1]}T${m[2]}:00Z`), t: Date.parse(`${m[3]}T${m[4]}:00Z`), north: +m[5], south: +m[6] });
+  }
+  out.sort((a, b) => a.t - b.t);
+  const end = out.length ? out[out.length - 1].t : 0;
+  return out.filter(p => p.t > end - 864e5);
+}
+
 export interface Oval {
   observed: number | null;
   forecast: number | null;
