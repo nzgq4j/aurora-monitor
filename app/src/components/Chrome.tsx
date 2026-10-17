@@ -4,7 +4,7 @@ import { initials, useAuth } from '../lib/auth';
 import { useStore, type Screen } from '../store';
 import { SITE } from '../lib/site';
 
-const NAV: [string, Screen][] = [['Now', 'home'], ['Map', 'map'], ['Plans', 'plans'], ['Account', 'account']];
+const NAV: [string, Screen][] = [['Now', 'home'], ['Map', 'map'], ['Dashboard', 'account']];
 
 export function Header({ kpLabel }: { kpLabel: string }) {
   const { signedIn, live, screen: current, plan, go, goAccount } = useStore();
@@ -21,7 +21,8 @@ export function Header({ kpLabel }: { kpLabel: string }) {
           </button>
           <nav className="nav">
             {NAV.map(([label, screen]) => {
-              const on = current === screen || (screen === 'plans' && current === 'checkout');
+              // Plans and checkout live under the Dashboard.
+              const on = current === screen || (screen === 'account' && (current === 'plans' || current === 'checkout'));
               return (
                 <button key={screen} type="button" className={'btn nav-item' + (on ? ' on' : '')} aria-current={on ? 'page' : undefined}
                   onClick={screen === 'account' ? goAccount : () => go(screen)}>
@@ -34,7 +35,7 @@ export function Header({ kpLabel }: { kpLabel: string }) {
         <div className="header-right">
           <span className="mono header-kp" style={{ fontSize: 12, color: 'var(--muted)', whiteSpace: 'nowrap' }}>{kpLabel}</span>
           {signedIn ? (
-            <button type="button" className="btn header-account" onClick={goAccount} aria-label={`Account, ${plan.name} plan`}>
+            <button type="button" className="btn header-account" onClick={goAccount} aria-label={`Dashboard, ${plan.name} plan`}>
               <span className="header-plan">{plan.name}</span>
               <span className="avatar" style={{ width: 32, height: 32, fontSize: 13 }}>{avatar}</span>
             </button>

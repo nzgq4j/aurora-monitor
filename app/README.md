@@ -19,10 +19,10 @@ npm start          # serve the production build
 | Route       | Screen                                                     |
 | ----------- | ---------------------------------------------------------- |
 | `/`         | Now (live dashboard)                                       |
-| `/plans`    | Membership tiers and comparison                            |
+| `/plans`    | Public pricing page (members see it as the Dashboard's Plans tab) |
 | `/checkout` | Trial checkout for the selected tier                       |
 | `/signin`   | Sign in                                                    |
-| `/account`  | Account: Overview, Alerts, Locations, Billing tabs         |
+| `/dashboard` | Dashboard: Overview, Alerts, Locations, Plans, Billing tabs (`/account` redirects here) |
 
 All pages are statically prerendered and regenerated in the background (Now and Account every 2 minutes).
 Accounts use Supabase Auth when `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are set;
@@ -57,8 +57,8 @@ See `../supabase/README.md`.
 ## Opening a specific state
 
 Demo mode only:
-- Loading `/account` directly starts signed in (the design's "account" starting screen).
-- `?plan=free|chaser` sets the starting plan, e.g. `/account?plan=chaser`.
+- Loading `/dashboard` directly starts signed in (the design's "account" starting screen).
+- `?plan=free|chaser` sets the starting plan, e.g. `/dashboard?plan=chaser`.
 
 ## Layout
 

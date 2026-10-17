@@ -28,7 +28,7 @@ export default function manifest(): MetadataRoute.Manifest {
     shortcuts: [
       { name: 'Aurora now', short_name: 'Now', url: '/?source=shortcut', icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }] },
       { name: 'Aurora map', short_name: 'Map', url: '/map?source=shortcut', icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }] },
-      { name: 'Account & alerts', short_name: 'Account', url: '/account?source=shortcut', icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }] },
+      { name: 'Dashboard & alerts', short_name: 'Dashboard', url: '/dashboard?source=shortcut', icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }] },
     ],
     screenshots: [
       { src: '/screenshots/now-narrow.png', sizes: '1080x2340', type: 'image/png', form_factor: 'narrow', label: 'Live aurora conditions for your sky' },

@@ -24,7 +24,7 @@ export function SignIn() {
   useEffect(() => {
     if (!auth.configured || !auth.user) return;
     const next = new URLSearchParams(window.location.search).get('next');
-    router.replace(next && next.startsWith('/') && !next.startsWith('//') ? next : '/account');
+    router.replace(next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard');
   }, [auth.configured, auth.user, router]);
 
   const alt = { textAlign: 'center' as const, border: '1px solid var(--line-2)', padding: 12, borderRadius: 999, fontWeight: 600, fontSize: 14 };

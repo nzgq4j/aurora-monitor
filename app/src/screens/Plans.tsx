@@ -7,17 +7,26 @@ const COMPARE_COLS = `minmax(180px,1.4fr) repeat(${TIERS.length},minmax(0,1fr))`
 /** Annual saving on the paid plan versus paying monthly, e.g. 17%. */
 const SAVING = Math.round((1 - TIERS[1].y / (TIERS[1].m * 12)) * 100);
 
-export function Plans() {
+/** Pricing page; `embedded` renders it as the Dashboard's Plans tab (no page wrapper or hero heading). */
+export function Plans({ embedded = false }: { embedded?: boolean }) {
   const { s, set, planIndex, choose } = useStore();
+  const Wrapper = embedded ? 'div' : 'main';
+  const wrapperProps = embedded
+    ? { 'data-screen-label': 'Dashboard · Plans', style: { display: 'flex', flexDirection: 'column' as const, gap: 28 } }
+    : { 'data-screen-label': 'Plans', className: 'wrap', style: { padding: '48px var(--gutter) 56px', display: 'flex', flexDirection: 'column' as const, gap: 36 } };
   const seg = (on: boolean) => ({ padding: '9px 16px', borderRadius: 999, fontWeight: 700, fontSize: 14, background: on ? '#fff' : 'transparent', color: on ? '#000' : C.muted });
 
   return (
-    <main data-screen-label="Plans" className="wrap" style={{ padding: '48px var(--gutter) 56px', display: 'flex', flexDirection: 'column', gap: 36 }}>
+    <Wrapper {...wrapperProps}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 24, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <span className="kicker">MEMBERSHIP</span>
-          <h1 className="display" style={{ fontSize: 'var(--h-hero)', lineHeight: .88 }}>Choose your<br /><span className="hl">sky</span></h1>
-        </div>
+        {embedded ? (
+          <h2 className="display" style={{ fontSize: 'clamp(28px, 7.5vw, 34px)', lineHeight: 1 }}>Membership <span className="hl">plans</span></h2>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <span className="kicker">MEMBERSHIP</span>
+            <h1 className="display" style={{ fontSize: 'var(--h-hero)', lineHeight: .88 }}>Choose your<br /><span className="hl">sky</span></h1>
+          </div>
+        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div role="group" aria-label="Billing cycle" style={{ display: 'flex', padding: 4, border: '1px solid var(--line-2)', borderRadius: 999 }}>
             <button type="button" className="btn" aria-pressed={!s.annual} onClick={() => set({ annual: false })} style={seg(!s.annual)}>Monthly</button>
@@ -84,6 +93,6 @@ export function Plans() {
         ))}
       </div>
       </div>
-    </main>
+    </Wrapper>
   );
 }
