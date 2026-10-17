@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { initials, useAuth } from '../lib/auth';
-import { C, CHANNEL_DEFS, KP_NAME, TIERS, TRIGGER_DEFS, f, kpColor } from '../data';
+import { C, CHANNEL_DEFS, KP_NAME, TIERS, TRIGGER_DEFS, f, kpBarColor, kpColor } from '../data';
 import { G_SCALE, kpNeeded } from '../lib/astro';
 import type { AccountData } from '../lib/history';
 import { searchPlaces, useLocations, type PlaceResult, type SavedLocation } from '../lib/locations';
@@ -177,7 +177,7 @@ function Overview({ data }: { data: AccountData }) {
           const best = [...data.outlook].sort((a, b) => b.kp - a.kp || a.t - b.t).slice(0, 5).sort((a, b) => a.t - b.t);
           if (!best.length) return <span style={{ fontSize: 15, color: 'var(--muted)', padding: '12px 0' }}>The 27-day outlook is unavailable right now.</span>;
           return best.map(u => {
-            const c = u.kp >= need ? C.green : u.kp >= need - 1 ? C.darkGreen : C.amber;
+            const c = kpBarColor(u.kp);
             return (
               <div key={u.t} className="night">
                 <span style={{ fontWeight: 700, fontSize: 16 }}>{weekday(u.t)}</span>
