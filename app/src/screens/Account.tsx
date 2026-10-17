@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { initials, useAuth } from '../lib/auth';
 import { C, CHANNEL_DEFS, KP_NAME, TIERS, TRIGGER_DEFS, f, kpBarColor, kpColor } from '../data';
-import { G_SCALE, kpNeeded } from '../lib/astro';
+import { G_SCALE, kpNeeded, moon } from '../lib/astro';
 import type { AccountData } from '../lib/history';
 import { searchPlaces, useLocations, type PlaceResult, type SavedLocation } from '../lib/locations';
 import { useConditions } from '../lib/useConditions';
@@ -79,6 +79,28 @@ const h1 = { fontSize: 'clamp(40px, 11vw, 56px)', lineHeight: .9 };
 
 const DAY = 864e5;
 const shortDate = (t: number) => new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+/**
+ * Plain-language read of a forecast night: how bright and active the aurora should be (from Kp)
+ * and where it sits in the user's sky (from how far Kp clears their location's threshold).
+ */
+function nightOutlook(kp: number, need: number, south: boolean, moonLit: number): { label: string; text: string } {
+  const label = kp >= 7 ? 'Strong storm' : kp >= 6 ? 'Moderate storm' : kp >= 5 ? 'Minor storm' : kp >= 4 ? 'Active' : kp >= 3 ? 'Unsettled' : 'Quiet';
+  const side = south ? 'south' : 'north';
+  const margin = kp - need;
+  if (margin < 0) return { label, text: `Aurora will probably stay ${side} of you. Worth a look only if the forecast rises.` };
+  const look = kp >= 7 ? 'An intense display with colour across much of the sky'
+    : kp >= 6 ? 'Vivid, fast-moving curtains, with red and purple possible'
+    : kp >= 5 ? 'Bright, active curtains, possibly with pink edges'
+    : kp >= 4 ? 'Bright green arcs with some movement'
+    : kp >= 3 ? 'A soft green arc with occasional brightening'
+    : 'A faint, mostly steady glow';
+  const where = margin < 1 ? `low on the ${side}ern horizon` : margin < 3 ? `across the ${side}ern sky` : 'high overhead';
+  let text = `${look}, ${where}.`;
+  if (margin < 1) text += ' Often clearer on camera than to the eye.';
+  if (moonLit >= 0.6) text += ' A bright moon will wash out the fainter parts.';
+  return { label, text };
+}
+
 const weekday = (t: number) => new Date(t).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
 
 /** Home location (loaded on demand) and the Kp it needs, defaulting to Kp 5 when none is saved. */
@@ -186,7 +208,16 @@ function Overview({ data }: { data: AccountData }) {
                   <div style={{ height: 10, background: '#121512', borderRadius: 2 }}>
                     <div style={{ height: 10, width: `${(u.kp / 9) * 100}%`, background: c, borderRadius: 2, boxShadow: `0 0 12px ${c}` }} />
                   </div>
-                  <span style={{ fontSize: 13, color: 'var(--muted)' }}>{u.kp >= need ? `Reaches your ≈ Kp ${need} threshold` : 'Below your threshold'} · 10.7 cm flux {u.flux}</span>
+                  {(() => {
+                    const lit = moon(u.t + 864e5, 0, 0).illumination;
+                    const o = nightOutlook(u.kp, need, (home?.lat ?? 1) < 0, lit);
+                    return (
+                      <>
+                        <span style={{ fontSize: 14, lineHeight: 1.4, color: 'var(--soft)' }}><b style={{ color: c }}>{o.label}.</b> {o.text}</span>
+                        <span style={{ fontSize: 12, color: 'var(--muted)' }}>≈ Kp {need} needed{home ? ` at ${home.name.split(',')[0]}` : ''} · Moon {Math.round(lit * 100)}% lit · 10.7 cm flux {u.flux}</span>
+                      </>
+                    );
+                  })()}
                 </div>
                 <span className="mono" style={{ fontSize: 14, textAlign: 'right' }}>Ap {u.ap}</span>
               </div>
