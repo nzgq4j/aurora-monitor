@@ -2,6 +2,6 @@
 export const SITE = {
   name: 'Polar Lights',
   domain: 'polarlights.io',
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://polarlights.io',
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.polarlights.io',
   tagline: 'Aurora forecasts',
 } as const;

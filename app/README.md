@@ -1,8 +1,8 @@
 # Polar Lights — aurora forecasts
 
-Live at **https://polarlights.io**. `auroracast.io` is registered for the same app and should redirect to
-polarlights.io (set both in Vercel → Project → Domains, with `polarlights.io` as the primary domain and
-`www.polarlights.io`, `auroracast.io` and `www.auroracast.io` as permanent 308 redirects to it).
+Live at **https://www.polarlights.io** (the canonical address; `polarlights.io` redirects to it).
+`auroracast.io` is registered for the same app; to avoid a duplicate site, set `auroracast.io` and
+`www.auroracast.io` in Vercel → Project → Domains as permanent 308 redirects to `www.polarlights.io`.
 The brand name, domain and tagline live in `src/lib/site.ts`; `NEXT_PUBLIC_SITE_URL` overrides the canonical URL.
 
 Next.js (App Router) + TypeScript implementation of `project/Aurora Prototype.dc.html` from the Claude Design handoff.
@@ -90,7 +90,7 @@ The scripts need Playwright (`npx playwright install chromium`, or `PW_ROOT=$(np
 **Validate mobile behaviour** against any build (exits non-zero on failure):
 
 ```sh
-BASE=https://polarlights.io node scripts/validate-mobile.mjs
+BASE=https://www.polarlights.io node scripts/validate-mobile.mjs
 ```
 
 It emulates a Pixel 7 and checks the manifest and its images, Chrome's own installability verdict
@@ -99,7 +99,8 @@ at 360 px and 412 px for sideways scrolling, page errors and touch targets under
 
 **Publishing to Google Play** (outline):
 
-1. Install Bubblewrap: `npm i -g @bubblewrap/cli`, then `bubblewrap init --manifest https://polarlights.io/manifest.webmanifest`.
+1. Install Bubblewrap: `npm i -g @bubblewrap/cli`, then `bubblewrap init --manifest https://www.polarlights.io/manifest.webmanifest`
+   (use the www host: the Android app and `/.well-known/assetlinks.json` are bound to that exact host).
    The Android app is bound to this one domain (the auroracast.io redirect doesn't need its own app).
    Choose an application ID such as `io.polarlights.app`; it can't be changed after the first Play release.
 2. `bubblewrap build` produces a signed `.aab` for upload.

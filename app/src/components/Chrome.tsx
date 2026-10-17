@@ -17,7 +17,7 @@ export function Header({ kpLabel }: { kpLabel: string }) {
           <button type="button" className="btn brand" onClick={() => go('home')} aria-label={`${SITE.name} home`}>
             <span className="brand-dot" />
             {/* Stacks to two lines on phones so the header stays on one row. */}
-            <span className="brand-name" aria-hidden="true"><span>Polar</span> <span>Lights</span></span>
+            <span className="brand-name" aria-hidden="true"><span>Polar</span> <span className="hl">Lights</span></span>
           </button>
           <nav className="nav">
             {NAV.map(([label, screen]) => {
