@@ -20,7 +20,8 @@ npm start          # serve the production build
 | `/account`  | Account: Overview, Alerts, Locations, Billing tabs         |
 
 All pages are statically prerendered and regenerated in the background (Now and Account every 2 minutes).
-Membership, sign-in and billing are still prototype state held in a client-side provider.
+Accounts use Supabase Auth when `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are set;
+without them the site runs in demo mode (simulated sign-in and plan). Card payments are not built yet.
 
 ## Live data
 
@@ -44,12 +45,13 @@ geomagnetic latitude and an approximate Kp needed for that spot.
 
 Saved locations can be added by town search or from the device (Geolocation API). When
 location access was already granted, the device location refreshes automatically on the
-Locations tab. With Supabase configured (`NEXT_PUBLIC_SUPABASE_URL` and
-`NEXT_PUBLIC_SUPABASE_ANON_KEY`), locations are stored in the `locations` table under an
-anonymous user; otherwise they are kept in the browser. See `../supabase/README.md`.
+Locations tab. Signed-in users' locations are stored in the `locations` table; signed-out
+visitors' locations stay in the browser and move into the account at the next sign-in.
+See `../supabase/README.md`.
 
 ## Opening a specific state
 
+Demo mode only:
 - Loading `/account` directly starts signed in (the design's "account" starting screen).
 - `?plan=free|observer|chaser|observatory` sets the starting plan, e.g. `/account?plan=observer`.
 
