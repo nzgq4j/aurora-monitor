@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       trialExpired,
       signUp: async (email, password, name) => {
         if (!sb) return { ...none, needsConfirmation: false };
-        const { data, error } = await sb.auth.signUp({ email, password, options: { data: { display_name: name }, emailRedirectTo: `${origin}/account` } });
+        const { data, error } = await sb.auth.signUp({ email, password, options: { data: { display_name: name }, emailRedirectTo: `${origin}/dashboard` } });
         return { error: error ? friendly(error.message) : null, needsConfirmation: !error && !data.session };
       },
       signIn: async (email, password) => {
@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       signInWithProvider: async provider => {
         if (!sb) return none;
-        const { error } = await sb.auth.signInWithOAuth({ provider, options: { redirectTo: `${origin}/account` } });
+        const { error } = await sb.auth.signInWithOAuth({ provider, options: { redirectTo: `${origin}/dashboard` } });
         return { error: error ? friendly(error.message) : null };
       },
       sendPasswordReset: async email => {

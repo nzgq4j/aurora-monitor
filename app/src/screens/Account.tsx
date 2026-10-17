@@ -9,9 +9,10 @@ import type { AccountData } from '../lib/history';
 import { searchPlaces, useLocations, type PlaceResult, type SavedLocation } from '../lib/locations';
 import { useConditions } from '../lib/useConditions';
 import { useStore, type Tab } from '../store';
+import { Field } from '../components/Field';
 import { Plans } from './Plans';
 
-const TABS: [Tab, string][] = [['overview', 'Overview'], ['alerts', 'Alerts'], ['locations', 'Locations'], ['plans', 'Plans'], ['billing', 'Billing']];
+const TABS: [Tab, string][] = [['overview', 'Overview'], ['alerts', 'Alerts'], ['locations', 'Locations'], ['plans', 'Plans'], ['account', 'Account']];
 
 const longDate = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
@@ -57,7 +58,7 @@ export function Account({ data }: { data: AccountData }) {
         {s.tab === 'alerts' && <Alerts data={data} />}
         {s.tab === 'locations' && <Locations />}
         {s.tab === 'plans' && <Plans embedded />}
-        {s.tab === 'billing' && <Billing />}
+        {s.tab === 'account' && <AccountSettings />}
       </div>
     </main>
   );
@@ -148,7 +149,7 @@ function Overview({ data }: { data: AccountData }) {
           <span style={{ position: 'relative', fontSize: 16, color: 'var(--soft)' }}>{planLine}</span>
           <div style={{ position: 'relative', display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 6 }}>
             <button type="button" className="btn pill pill-primary" onClick={() => go('plans')} style={{ fontSize: 14, padding: '11px 18px' }}>{planIndex === TIERS.length - 1 ? 'Change plan' : 'Upgrade'}</button>
-            <button type="button" className="btn pill pill-ghost" onClick={() => set({ tab: 'billing' })} style={{ fontSize: 14, padding: '11px 18px', background: '#000' }}>Billing</button>
+            <button type="button" className="btn pill pill-ghost" onClick={() => set({ tab: 'account' })} style={{ fontSize: 14, padding: '11px 18px', background: '#000' }}>Billing</button>
           </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'var(--line)', border: '1px solid var(--line)', borderRadius: 18, overflow: 'hidden' }}>
@@ -465,8 +466,8 @@ function Billing() {
   const planLine = usePlanLine();
   const annual = live ? profile?.billingCycle === 'annual' : s.annual;
   return (
-    <div data-screen-label="Dashboard · Billing" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <h1 className="display" style={h1}>Billing</h1>
+    <section aria-labelledby="billing-h" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <h2 id="billing-h" className="display" style={h2}>Billing</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(280px,100%),1fr))', gap: 16 }}>
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 22 }}>
           <span className="label">PLAN</span>
@@ -487,6 +488,78 @@ function Billing() {
       {planIndex > 0 && (
         <button type="button" className="btn" onClick={cancelPlan} style={{ alignSelf: 'flex-start', fontWeight: 600, fontSize: 14, color: C.red }}>Cancel membership</button>
       )}
+    </section>
+  );
+}
+
+/** Dashboard → Account: profile, billing, password and sign-out. */
+function AccountSettings() {
+  const { live, signOut } = useStore();
+  const auth = useAuth();
+  const name = live ? auth.profile?.displayName || auth.user?.email?.split('@')[0] || '—' : 'Sam Rivera';
+  const email = live ? auth.user?.email ?? '—' : 'sam@example.com';
+  return (
+    <div data-screen-label="Dashboard · Account" style={{ display: 'flex', flexDirection: 'column', gap: 36 }}>
+      <h1 className="display" style={h1}>Account</h1>
+      <div className="card" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(220px,100%),1fr))', gap: 16, padding: 22 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
+          <span className="label">NAME</span>
+          <span style={{ fontWeight: 700, fontSize: 17, overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</span>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
+          <span className="label">EMAIL</span>
+          <span style={{ fontWeight: 700, fontSize: 17, overflow: 'hidden', textOverflow: 'ellipsis' }}>{email}</span>
+        </div>
+      </div>
+      <Billing />
+      <ChangePassword email={email} />
+      <section aria-labelledby="signout-h" style={{ display: 'flex', flexDirection: 'column', gap: 12, borderTop: '1px solid var(--line)', paddingTop: 24 }}>
+        <h2 id="signout-h" className="display" style={h2}>Log <span className="hl">out</span></h2>
+        <span style={{ fontSize: 14, color: 'var(--soft)' }}>Sign out of Polar Lights on this device. Your locations and alert settings stay saved to your account.</span>
+        <button type="button" className="btn pill pill-ghost" onClick={signOut} style={{ alignSelf: 'flex-start', fontSize: 15, padding: '12px 22px', color: C.red, borderColor: C.red }}>Log out</button>
+      </section>
     </div>
+  );
+}
+
+/** Change password: confirms the current password first, then sets the new one. */
+function ChangePassword({ email }: { email: string }) {
+  const { live } = useStore();
+  const { signIn, updatePassword } = useAuth();
+  const [current, setCurrent] = useState('');
+  const [next, setNext] = useState('');
+  const [again, setAgain] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    setMsg(null);
+    if (next !== again) { setMsg({ ok: false, text: 'The new passwords don’t match.' }); return; }
+    if (next === current) { setMsg({ ok: false, text: 'Choose a password that’s different from your current one.' }); return; }
+    setBusy(true);
+    if (live) {
+      const check = await signIn(email, current);
+      if (check.error) { setBusy(false); setMsg({ ok: false, text: 'Your current password isn’t right.' }); return; }
+      const r = await updatePassword(next);
+      setBusy(false);
+      if (r.error) { setMsg({ ok: false, text: r.error }); return; }
+    } else setBusy(false);
+    setCurrent(''); setNext(''); setAgain('');
+    setMsg({ ok: true, text: live ? 'Password changed.' : 'Password changed (demo account; nothing was saved).' });
+  };
+  return (
+    <section aria-labelledby="password-h" style={{ display: 'flex', flexDirection: 'column', gap: 16, borderTop: '1px solid var(--line)', paddingTop: 24 }}>
+      <h2 id="password-h" className="display" style={h2}>Change <span className="hl">password</span></h2>
+      <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 420 }}>
+        {/* Hidden username helps password managers update the right entry. */}
+        <input type="email" name="username" autoComplete="username" value={email} readOnly hidden />
+        <Field label="CURRENT PASSWORD" type="password" autoComplete="current-password" required value={current} onChange={e => setCurrent(e.target.value)} />
+        <Field label="NEW PASSWORD" type="password" autoComplete="new-password" required minLength={8} value={next} onChange={e => setNext(e.target.value)} />
+        <Field label="CONFIRM NEW PASSWORD" type="password" autoComplete="new-password" required minLength={8} value={again} onChange={e => setAgain(e.target.value)} />
+        <span style={{ fontSize: 13, color: 'var(--muted)', marginTop: -4 }}>At least 8 characters.</span>
+        {msg && <span role={msg.ok ? 'status' : 'alert'} style={{ fontSize: 14, color: msg.ok ? C.green : C.red }}>{msg.text}</span>}
+        <button type="submit" disabled={busy} className="btn pill pill-primary" style={{ alignSelf: 'flex-start', fontSize: 15, padding: '13px 22px', opacity: busy ? .6 : 1 }}>{busy ? 'Saving…' : 'Change password'}</button>
+      </form>
+    </section>
   );
 }
