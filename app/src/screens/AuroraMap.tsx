@@ -57,7 +57,7 @@ function renderOval(grid: Uint8Array): string {
       // Fade in over the faintest values so the oval's outer edge is soft rather than stepped.
       const fade = Math.min(1, (p - 1.5) / 8);
       img.data[o] = r; img.data[o + 1] = g; img.data[o + 2] = b;
-      img.data[o + 3] = Math.round(255 * fade * Math.min(0.78, 0.22 + 0.6 * Math.max(0, probT(p))));
+      img.data[o + 3] = Math.round(255 * fade * Math.min(0.8, 0.36 + 0.44 * Math.max(0, probT(p))));
     }
   }
   ctx.putImageData(img, 0, 0);
@@ -120,8 +120,8 @@ export function AuroraMap({ kp }: { kp: number | null }) {
 
       try {
         const world = await (await fetch('/geo/countries-50m.json')).json() as Topology<{ countries: GeometryCollection }>;
-        const land = topo.merge(world, world.objects.countries.geometries as never);
-        const borders = topo.mesh(world, world.objects.countries, (a, b) => a !== b);
+        const land = fixPolygons(topo.feature(world, world.objects.countries) as unknown as GeoJSON.FeatureCollection);
+        const borders = fixLines(topo.mesh(world, world.objects.countries, (a, b) => a !== b) as GeoJSON.MultiLineString);
         L.geoJSON(land as never, { pane: 'land', interactive: false, style: { stroke: false, fillColor: '#2b2e2c', fillOpacity: 1 } }).addTo(map);
         L.geoJSON(borders as never, { pane: 'land', interactive: false, style: { color: '#4a504c', weight: 0.7, fill: false } }).addTo(map);
       } catch { setStatus('Basemap failed to load.'); }
@@ -233,6 +233,61 @@ const MAP_CITIES: [string, number, number][] = [
   ['Montreal', 45.5, -73.57], ['Chicago', 41.88, -87.63], ['Reykjavík', 64.15, -21.94], ['Tromsø', 69.65, 18.96],
   ['Oslo', 59.91, 10.75], ['Stockholm', 59.33, 18.07], ['Helsinki', 60.17, 24.94], ['Edinburgh', 55.95, -3.19], ['Rovaniemi', 66.5, 25.73],
 ];
+
+// ---------------------------------------------------------------------------
+// Leaflet draws a straight edge between +180° and −180°, so rings that cross the
+// antimeridian (Russia's far east, Fiji, Antarctica) would streak across the map.
+// Unwrap their longitudes and add a copy shifted by 360° for the part off the edge.
+
+function unwrap(ring: GeoJSON.Position[]): GeoJSON.Position[] {
+  const out: GeoJSON.Position[] = [];
+  let shift = 0;
+  ring.forEach((pt, i) => {
+    if (i) {
+      const d = pt[0] + shift - out[i - 1][0];
+      if (d > 180) shift -= 360; else if (d < -180) shift += 360;
+    }
+    out.push([pt[0] + shift, pt[1]]);
+  });
+  return out;
+}
+
+function fixPolygons(fc: GeoJSON.FeatureCollection): GeoJSON.MultiPolygon {
+  const polys: GeoJSON.Position[][][] = [];
+  const add = (poly: GeoJSON.Position[][]) => {
+    const rings = poly.map(unwrap);
+    const lons = rings[0].map(p => p[0]);
+    const min = Math.min(...lons), max = Math.max(...lons);
+    // Antarctica wraps the whole globe; close it along the bottom edge instead.
+    if (max - min >= 359) {
+      const r = rings[0];
+      polys.push([[...r, [r[r.length - 1][0], -90], [r[0][0], -90], r[0]]]);
+      return;
+    }
+    polys.push(rings);
+    if (max > 180) polys.push(rings.map(r => r.map(p => [p[0] - 360, p[1]])));
+    if (min < -180) polys.push(rings.map(r => r.map(p => [p[0] + 360, p[1]])));
+  };
+  for (const f of fc.features) {
+    const g = f.geometry;
+    if (g?.type === 'Polygon') add(g.coordinates);
+    else if (g?.type === 'MultiPolygon') g.coordinates.forEach(add);
+  }
+  return { type: 'MultiPolygon', coordinates: polys };
+}
+
+function fixLines(ml: GeoJSON.MultiLineString): GeoJSON.MultiLineString {
+  const out: GeoJSON.Position[][] = [];
+  for (const line of ml.coordinates) {
+    let cur: GeoJSON.Position[] = [];
+    line.forEach((pt, i) => {
+      if (i && Math.abs(pt[0] - line[i - 1][0]) > 180) { if (cur.length > 1) out.push(cur); cur = []; }
+      cur.push(pt);
+    });
+    if (cur.length > 1) out.push(cur);
+  }
+  return { type: 'MultiLineString', coordinates: out };
+}
 
 function escapeHtml(s: string) {
   return s.replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]!));
