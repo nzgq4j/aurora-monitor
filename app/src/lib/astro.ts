@@ -81,9 +81,11 @@ export function moonAltitude(t: number, lat: number, lon: number): number {
   return deg(Math.asin(Math.sin(rad(lat)) * Math.sin(m.dec) + Math.cos(rad(lat)) * Math.cos(m.dec) * Math.cos(H)));
 }
 
-const PHASES: [number, string][] = [
-  [0.03, 'New moon'], [0.22, 'Waxing crescent'], [0.28, 'First quarter'], [0.47, 'Waxing gibbous'],
-  [0.53, 'Full moon'], [0.72, 'Waning gibbous'], [0.78, 'Last quarter'], [0.97, 'Waning crescent'], [1.01, 'New moon'],
+export type MoonPhase = 'new' | 'waxingCrescent' | 'firstQuarter' | 'waxingGibbous' | 'full' | 'waningGibbous' | 'lastQuarter' | 'waningCrescent';
+
+const PHASES: [number, MoonPhase][] = [
+  [0.03, 'new'], [0.22, 'waxingCrescent'], [0.28, 'firstQuarter'], [0.47, 'waxingGibbous'],
+  [0.53, 'full'], [0.72, 'waningGibbous'], [0.78, 'lastQuarter'], [0.97, 'waningCrescent'], [1.01, 'new'],
 ];
 
 export interface MoonState {
@@ -91,7 +93,8 @@ export interface MoonState {
   illumination: number;
   /** Position in the cycle: 0 new, 0.25 first quarter, 0.5 full, 0.75 last quarter. */
   phase: number;
-  name: string;
+  /** Phase name, translated as `moon.{name}`. */
+  name: MoonPhase;
   waxing: boolean;
   altitude: number;
   up: boolean;

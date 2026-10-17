@@ -8,6 +8,8 @@ import { C } from '../data';
 import { magLat } from '../lib/astro';
 import { useLocations } from '../lib/locations';
 import type { OvalGrid } from '../app/api/oval/route';
+import { useI18n } from '../i18n/I18n';
+import type { MessageKey } from '../i18n/core';
 
 type Mode = 'prob' | 'kp' | 'both';
 
@@ -113,11 +115,13 @@ export function AuroraMap({ kp }: { kp: number | null }) {
   const LRef = useRef<typeof Leaflet | null>(null);
   const cityMarkers = useRef<{ lat: number; lon: number; m: Leaflet.Marker }[]>([]);
   const [mode, setMode] = useState<Mode>('prob');
-  const [status, setStatus] = useState<string>('Loading map…');
+  const { t, num } = useI18n();
+  // Status and notice hold message keys; '' hides them.
+  const [status, setStatus] = useState<MessageKey | ''>('map.loading');
   const [forecast, setForecast] = useState<number | null>(null);
   const [ready, setReady] = useState(false);
   const [clouds, setClouds] = useState(false);
-  const [notice, setNotice] = useState('');
+  const [notice, setNotice] = useState<MessageKey | ''>('');
   const { shownPlace, locations, load } = useLocations();
   const current = kp === null ? null : Math.max(1, Math.min(9, Math.round(kp)));
 
@@ -135,7 +139,7 @@ export function AuroraMap({ kp }: { kp: number | null }) {
     const home = locations.find(l => l.isHome);
     clearTimeout(noticeTimer.current);
     if (!home) {
-      setNotice('No Home location yet. Set one on the Now page.');
+      setNotice('map.noHome');
       noticeTimer.current = setTimeout(() => setNotice(''), 4000);
       return;
     }
@@ -167,8 +171,8 @@ export function AuroraMap({ kp }: { kp: number | null }) {
         onAdd() {
           const bar = L.DomUtil.create('div', 'leaflet-bar leaflet-control map-home');
           const a = L.DomUtil.create('a', '', bar);
-          a.href = '#'; a.innerHTML = HOUSE; a.title = 'Zoom to Home location';
-          a.setAttribute('role', 'button'); a.setAttribute('aria-label', 'Zoom to Home location');
+          a.href = '#'; a.innerHTML = HOUSE; a.title = t('map.zoomHome');
+          a.setAttribute('role', 'button'); a.setAttribute('aria-label', t('map.zoomHome'));
           L.DomEvent.disableClickPropagation(bar);
           L.DomEvent.on(a, 'click', e => { L.DomEvent.preventDefault(e); goHome.current(); });
           return bar;
@@ -197,11 +201,11 @@ export function AuroraMap({ kp }: { kp: number | null }) {
           L.geoJSON(repeatCollection(lakes) as never, { pane: 'land', ...onCanvas, interactive: false, style: { stroke: false, fillColor: '#000', fillOpacity: 1 } }).addTo(map);
         } catch { /* lakes are optional */ }
         L.geoJSON(repeat(borders) as never, { pane: 'land', ...onCanvas, interactive: false, style: { color: '#4a504c', weight: 0.7, fill: false } }).addTo(map);
-      } catch { setStatus('Basemap failed to load.'); }
+      } catch { setStatus('map.basemapFailed'); }
 
       L.polyline([[66.563, -540], [66.563, 540]], { pane: 'land', renderer: landCanvas, color: C.muted, weight: 1, dashArray: '6 6', interactive: false }).addTo(map);
       for (const dx of COPIES) {
-        L.marker([66.563, -30 + dx], { pane: 'labels', interactive: false, keyboard: false, icon: L.divIcon({ className: 'map-label map-label-dim', html: 'Arctic Circle', iconSize: undefined }) }).addTo(map);
+        L.marker([66.563, -30 + dx], { pane: 'labels', interactive: false, keyboard: false, icon: L.divIcon({ className: 'map-label map-label-dim', html: escapeHtml(t('map.arcticCircle')), iconSize: undefined }) }).addTo(map);
         for (const [name, lat, lon] of MAP_CITIES) {
           const m = L.marker([lat, lon + dx], { pane: 'labels', interactive: false, keyboard: false, icon: L.divIcon({ className: 'map-city', html: `<i></i><span>${name}</span>`, iconSize: undefined }) }).addTo(map);
           cityMarkers.current.push({ lat, lon, m });
@@ -246,11 +250,11 @@ export function AuroraMap({ kp }: { kp: number | null }) {
         layers.current.prob = L.layerGroup(COPIES.map(dx => L.imageOverlay(url, [[-LAT_MAX, -180 + dx], [LAT_MAX, 180 + dx]], { pane: 'aurora', interactive: false })));
         setForecast(grid.forecast);
         setStatus('');
-      } catch { setStatus('Aurora data is unavailable right now.'); }
+      } catch { setStatus('map.auroraUnavailable'); }
       if (!cancelled) setReady(true);
     })();
     return () => { cancelled = true; mapRef.current?.remove(); mapRef.current = null; cityMarkers.current = []; };
-  }, [current]);
+  }, [current]); // eslint-disable-line react-hooks/exhaustive-deps -- t is fixed for the page's lifetime
 
   // Show the chosen layers.
   useEffect(() => {
@@ -279,13 +283,13 @@ export function AuroraMap({ kp }: { kp: number | null }) {
       c.m.setOpacity(near ? 0 : 1);
     }
     if (!shownPlace) return;
-    const label = shownPlace.isHome ? `${shownPlace.name.split(',')[0]} · Home` : shownPlace.name.split(',')[0];
+    const label = shownPlace.isHome ? t('map.placeHome', { place: shownPlace.name.split(',')[0] }) : shownPlace.name.split(',')[0];
     layers.current.marker = L.layerGroup(COPIES.map(dx => L.marker([shownPlace.lat, shownPlace.lon + dx], {
       pane: 'labels', keyboard: false,
       icon: L.divIcon({ className: 'map-you', html: `<i class="map-pulse-ring"></i><b></b><span>${escapeHtml(label)}</span>`, iconSize: [0, 0] }),
     }))).addTo(map);
     if (!centred.current) { centred.current = true; map.setView([shownPlace.lat, shownPlace.lon], 4); }
-  }, [shownPlace, ready]);
+  }, [shownPlace, ready]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const seg = (m: Mode, label: string) => (
     <button type="button" className="btn" aria-pressed={mode === m} onClick={() => setMode(m)}
@@ -297,47 +301,47 @@ export function AuroraMap({ kp }: { kp: number | null }) {
   return (
     <main data-screen-label="Aurora map" style={{ display: 'flex', flexDirection: 'column' }}>
       <div className="wrap" style={{ width: '100%', padding: '16px var(--gutter)', display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-        <h1 className="display" style={{ fontSize: 'clamp(28px, 7vw, 40px)', lineHeight: 1 }}>Aurora <span className="hl">map</span></h1>
-        <div role="group" aria-label="Map layers" style={{ display: 'flex', alignItems: 'center', padding: 4, border: '1px solid var(--line-2)', borderRadius: 999, background: '#111', flex: '1 1 340px', maxWidth: 560 }}>
-          {seg('prob', 'Probability')}{seg('kp', 'Kp reach')}{seg('both', 'Both')}
+        <h1 className="display" style={{ fontSize: 'clamp(28px, 7vw, 40px)', lineHeight: 1 }}>{t('map.h1a')} <span className="hl">{t('map.h1b')}</span></h1>
+        <div role="group" aria-label={t('map.layers')} style={{ display: 'flex', alignItems: 'center', padding: 4, border: '1px solid var(--line-2)', borderRadius: 999, background: '#111', flex: '1 1 340px', maxWidth: 560 }}>
+          {seg('prob', t('map.mode.prob'))}{seg('kp', t('map.mode.kp'))}{seg('both', t('map.mode.both'))}
           <span aria-hidden="true" style={{ width: 1, height: 22, background: 'var(--line-2)', margin: '0 4px', flex: 'none' }} />
           {/* Clouds is an overlay that combines with any of the views above, so it toggles on its own. */}
           <button type="button" className="btn" aria-pressed={clouds} onClick={() => setClouds(on => !on)}
             style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '10px 8px', borderRadius: 999, fontWeight: 700, fontSize: 14, background: clouds ? '#3a3f3c' : 'transparent', color: clouds ? '#fff' : C.soft, whiteSpace: 'nowrap' }}>
             <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M7 18.5h10.5a4 4 0 0 0 .4-8A6 6 0 0 0 6.4 9.2 4.7 4.7 0 0 0 7 18.5Z" fill={clouds ? '#fff' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinejoin="round" /></svg>
-            Clouds
+            {t('map.clouds')}
           </button>
         </div>
       </div>
       <div style={{ position: 'relative' }}>
-        <div ref={box} className="aurora-map" role="application" aria-label="Zoomable aurora map. Drag to pan, scroll or pinch to zoom." />
-        {(notice || status) && <div className="map-status" role="status">{notice || status}</div>}
+        <div ref={box} className="aurora-map" role="application" aria-label={t('map.aria')} />
+        {(notice || status) && <div className="map-status" role="status">{t((notice || status) as MessageKey)}</div>}
         <details className="map-legend" ref={legend} open>
-          <summary>Legend</summary>
+          <summary>{t('map.legend')}</summary>
           {mode !== 'kp' && (
             <div>
-              <span className="label">AURORA PROBABILITY{forecast ? ` · ${hhmm(forecast)} UT` : ''}</span>
+              <span className="label">{t('map.legend.prob')}{forecast ? ` · ${hhmm(forecast)} UT` : ''}</span>
               <div style={{ height: 10, borderRadius: 5, margin: '6px 0 4px', background: `linear-gradient(90deg, ${STOPS.map(([t, c]) => `${rgb(c)} ${t * 100}%`).join(', ')})` }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.muted }}><span>5%</span><span>30%</span><span>60%</span><span>90%</span></div>
             </div>
           )}
           {mode !== 'prob' && (
             <div>
-              <span className="label">KP REACH · EQUATORWARD EDGE</span>
+              <span className="label">{t('map.legend.kp')}</span>
               <div style={{ display: 'flex', gap: 4, marginTop: 6 }}>
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(k => (
                   <span key={k} style={{ flex: 1, textAlign: 'center', fontSize: 11, fontWeight: 700, padding: '3px 0', borderRadius: 4, color: '#000', background: rgb(ramp(kpT(k))), outline: k === current ? '2px solid #fff' : 'none' }}>{k}</span>
                 ))}
               </div>
-              <span style={{ display: 'block', fontSize: 11, color: C.muted, marginTop: 4 }}>{kp === null ? 'Current Kp unavailable' : `Now: Kp ${kp.toFixed(2)} (solid line)`}</span>
+              <span style={{ display: 'block', fontSize: 11, color: C.muted, marginTop: 4 }}>{kp === null ? t('map.legend.kpUnavailable') : t('map.legend.kpNow', { kp: num(kp, 2) })}</span>
             </div>
           )}
           {clouds && (
             <div>
-              <span className="label">CLOUDS · INFRARED</span>
+              <span className="label">{t('map.legend.clouds')}</span>
               <div style={{ height: 10, borderRadius: 5, margin: '6px 0 4px', background: 'linear-gradient(90deg, rgba(236,241,246,0), rgba(236,241,246,.82))', border: '1px solid var(--line-2)' }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.muted }}><span>Clear</span><span>Thick, high cloud</span></div>
-              <span style={{ display: 'block', fontSize: 11, color: C.muted, marginTop: 4 }}>EUMETSAT geostationary mosaic, updated hourly. Very cold snow and ice can read as cloud.</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.muted }}><span>{t('map.legend.clear')}</span><span>{t('map.legend.thick')}</span></div>
+              <span style={{ display: 'block', fontSize: 11, color: C.muted, marginTop: 4 }}>{t('map.legend.cloudNote')}</span>
             </div>
           )}
         </details>

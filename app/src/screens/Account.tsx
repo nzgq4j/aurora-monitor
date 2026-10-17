@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { initials, useAuth } from '../lib/auth';
-import { C, CHANNEL_DEFS, KP_NAME, TIERS, TRIGGER_DEFS, f, kpBarColor, kpColor } from '../data';
+import { C, CHANNEL_DEFS, TIERS, TRIGGER_DEFS, f, kpBarColor, kpColor } from '../data';
 import { G_SCALE, kpNeeded, moon } from '../lib/astro';
 import type { AccountData } from '../lib/history';
 import { searchPlaces, useLocations, type PlaceResult, type SavedLocation } from '../lib/locations';
@@ -11,21 +11,26 @@ import { useConditions } from '../lib/useConditions';
 import { useStore, type Tab } from '../store';
 import { Field } from '../components/Field';
 import { Plans } from './Plans';
+import { applyLocale, useI18n, type I18n } from '../i18n/I18n';
+import { LOCALES, LOCALE_NAMES, isLocale } from '../i18n/config';
+import type { MessageKey } from '../i18n/core';
 
-const TABS: [Tab, string][] = [['overview', 'Overview'], ['alerts', 'Alerts'], ['locations', 'Locations'], ['plans', 'Plans'], ['account', 'Account']];
+const TABS: Tab[] = ['overview', 'alerts', 'locations', 'plans', 'account'];
 
-const longDate = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+/** Kp level name for 2–9 (`kp.name.{n}`). */
+const kpName = (t: I18n['t'], k: number) => t(`kp.name.${Math.max(2, Math.min(9, Math.round(k))) as 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9}`);
 
 export function Account({ data }: { data: AccountData }) {
   const { s, set, signOut, live } = useStore();
   const auth = useAuth();
   const router = useRouter();
+  const { t } = useI18n();
   // With real accounts, the Dashboard needs a signed-in user.
   useEffect(() => { if (live && auth.ready && !auth.user) router.replace('/signin?next=/dashboard'); }, [live, auth.ready, auth.user, router]);
   if (live && !auth.user) {
-    return <main className="wrap" style={{ padding: '64px var(--gutter)', color: 'var(--muted)' }}>{auth.ready ? 'Redirecting to sign in…' : 'Loading your account…'}</main>;
+    return <main className="wrap" style={{ padding: '64px var(--gutter)', color: 'var(--muted)' }}>{auth.ready ? t('dash.redirecting') : t('dash.loading')}</main>;
   }
-  const name = live ? auth.profile?.displayName || auth.user?.email?.split('@')[0] || 'Your account' : 'Sam Rivera';
+  const name = live ? auth.profile?.displayName || auth.user?.email?.split('@')[0] || t('dash.yourAccount') : 'Sam Rivera';
   const email = live ? auth.user?.email ?? '' : 'sam@example.com';
   return (
     <main data-screen-label="Dashboard" className="wrap account">
@@ -38,18 +43,18 @@ export function Account({ data }: { data: AccountData }) {
           </div>
         </div>
         <nav role="tablist" className="account-tabs">
-          {TABS.map(([id, label]) => {
+          {TABS.map(id => {
             const on = s.tab === id;
             return (
               <button key={id} type="button" role="tab" aria-selected={on} className="btn" onClick={() => set({ tab: id })}
                 style={{ padding: '11px 14px', borderRadius: 10, fontWeight: 600, fontSize: 15, whiteSpace: 'nowrap', background: on ? C.line : 'transparent', color: on ? '#fff' : C.muted }}>
-                {label}
+                {t(`dash.tab.${id}`)}
               </button>
             );
           })}
         </nav>
         <button type="button" className="btn account-signout" onClick={signOut}>
-          Sign out
+          {t('dash.signOut')}
         </button>
       </aside>
 
@@ -67,44 +72,36 @@ export function Account({ data }: { data: AccountData }) {
 function usePlanLine() {
   const { s, plan, planIndex, live } = useStore();
   const { profile, trialExpired } = useAuth();
+  const { t, money, date } = useI18n();
+  const price = (annual: boolean) => (annual ? t('dash.perYear', { price: money(plan.y) }) : t('dash.perMonth', { price: money(plan.m) }));
   if (live) {
-    if (planIndex === 0) return trialExpired ? 'Your trial has ended · back on Free' : 'Free forever · 1 location · daily digest';
-    const annual = profile?.billingCycle === 'annual';
-    return `${annual ? '$' + plan.y + ' / year' : '$' + plan.m + ' / month'}${profile?.trialEndsAt ? ` · trial ends ${longDate(profile.trialEndsAt)}` : ''}`;
+    if (planIndex === 0) return trialExpired ? t('dash.trialEnded') : t('dash.freeLine');
+    const trial = profile?.trialEndsAt ? ` · ${t('dash.trialEnds', { date: date(profile.trialEndsAt, { month: 'short', day: 'numeric', year: 'numeric' }) })}` : '';
+    return price(profile?.billingCycle === 'annual') + trial;
   }
-  return planIndex === 0
-    ? 'Free forever · 1 location · daily digest'
-    : `${s.annual ? '$' + plan.y + ' / year' : '$' + plan.m + ' / month'} · 14-day trial`;
+  return planIndex === 0 ? t('dash.freeLine') : `${price(s.annual)} · ${t('dash.trial14')}`;
 }
 
 const h2 = { fontSize: 'clamp(28px, 7.5vw, 34px)', lineHeight: 1 };
 const h1 = { fontSize: 'clamp(40px, 11vw, 56px)', lineHeight: .9 };
 
 const DAY = 864e5;
-const shortDate = (t: number) => new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 /**
  * Plain-language read of a forecast night: how bright and active the aurora should be (from Kp)
  * and where it sits in the user's sky (from how far Kp clears their location's threshold).
  */
-function nightOutlook(kp: number, need: number, south: boolean, moonLit: number): { label: string; text: string } {
-  const label = kp >= 7 ? 'Strong storm' : kp >= 6 ? 'Moderate storm' : kp >= 5 ? 'Minor storm' : kp >= 4 ? 'Active' : kp >= 3 ? 'Unsettled' : 'Quiet';
+function nightOutlook(kp: number, need: number, south: boolean, moonLit: number, t: I18n['t']): { label: string; text: string } {
+  const level = kp >= 7 ? 'strong' : kp >= 6 ? 'moderate' : kp >= 5 ? 'minor' : kp >= 4 ? 'active' : kp >= 3 ? 'unsettled' : 'quiet';
+  const label = t(`night.label.${level}`);
   const side = south ? 'south' : 'north';
   const margin = kp - need;
-  if (margin < 0) return { label, text: `Aurora will probably stay ${side} of you. Worth a look only if the forecast rises.` };
-  const look = kp >= 7 ? 'An intense display with colour across much of the sky'
-    : kp >= 6 ? 'Vivid, fast-moving curtains, with red and purple possible'
-    : kp >= 5 ? 'Bright, active curtains, possibly with pink edges'
-    : kp >= 4 ? 'Bright green arcs with some movement'
-    : kp >= 3 ? 'A soft green arc with occasional brightening'
-    : 'A faint, mostly steady glow';
-  const where = margin < 1 ? `low on the ${side}ern horizon` : margin < 3 ? `across the ${side}ern sky` : 'high overhead';
-  let text = `${look}, ${where}.`;
-  if (margin < 1) text += ' Often clearer on camera than to the eye.';
-  if (moonLit >= 0.6) text += ' A bright moon will wash out the fainter parts.';
-  return { label, text };
+  if (margin < 0) return { label, text: t(`night.miss.${side}`) };
+  const where: MessageKey = margin < 1 ? `night.where.low.${side}` : margin < 3 ? `night.where.across.${side}` : 'night.where.overhead';
+  const parts = [t('night.sentence', { look: t(`night.look.${level}`), where: t(where) })];
+  if (margin < 1) parts.push(t('night.camera'));
+  if (moonLit >= 0.6) parts.push(t('night.moon'));
+  return { label, text: parts.join(' ') };
 }
-
-const weekday = (t: number) => new Date(t).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
 
 /** Home location (loaded on demand) and the Kp it needs, defaulting to Kp 5 when none is saved. */
 function useHome() {
@@ -116,6 +113,9 @@ function useHome() {
 
 function Overview({ data }: { data: AccountData }) {
   const { set, plan, planIndex, go } = useStore();
+  const { t, num, date } = useI18n();
+  const shortDate = (d: number) => date(d, { month: 'short', day: 'numeric', timeZone: 'UTC' });
+  const weekday = (d: number) => date(d, { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
   const planLine = usePlanLine();
   const { home, need, count } = useHome();
   const days = data.days;
@@ -123,10 +123,10 @@ function Overview({ data }: { data: AccountData }) {
   const nights = days.filter(d => d.kpMax >= need).length;
   const kp = data.kp?.kp ?? null;
   const stats = [
-    { label: 'KP NOW', value: kp === null ? '—' : `Kp ${kp.toFixed(1)}`, note: kp === null ? 'Unavailable' : G_SCALE(kp) ? `G${G_SCALE(kp)} storm` : KP_NAME[Math.max(2, Math.min(9, Math.round(kp)))], c: kp !== null && kp >= 5 ? C.red : C.soft },
-    { label: `DAYS KP ≥ ${need}`, value: days.length ? String(nights) : '—', note: `Last ${days.length || 90} days`, c: C.green },
-    { label: 'STRONGEST', value: strongest ? `Kp ${strongest.kpMax.toFixed(1)}` : '—', note: strongest ? `${shortDate(strongest.t)}${G_SCALE(strongest.kpMax) ? ` · G${G_SCALE(strongest.kpMax)}` : ''}` : 'No data', c: C.red },
-    { label: 'SAVED SKIES', value: String(count), note: home ? `Home: ${home.name}` : 'No home set', c: C.soft },
+    { label: t('dash.stat.kpNow'), value: kp === null ? '—' : `Kp ${num(kp, 1)}`, note: kp === null ? t('home.h.unavailable') : G_SCALE(kp) ? t('dash.gStorm', { g: G_SCALE(kp) }) : kpName(t, kp), c: kp !== null && kp >= 5 ? C.red : C.soft },
+    { label: t('dash.stat.days', { need }), value: days.length ? String(nights) : '—', note: t('dash.lastDays', { n: days.length || 90 }), c: C.green },
+    { label: t('dash.stat.strongest'), value: strongest ? `Kp ${num(strongest.kpMax, 1)}` : '—', note: strongest ? `${shortDate(strongest.t)}${G_SCALE(strongest.kpMax) ? ` · G${G_SCALE(strongest.kpMax)}` : ''}` : t('common.noData'), c: C.red },
+    { label: t('dash.stat.saved'), value: String(count), note: home ? t('dash.homeIs', { place: home.name }) : t('dash.noHome'), c: C.soft },
   ];
 
   // Twelve 7-day buckets ending today.
@@ -144,12 +144,12 @@ function Overview({ data }: { data: AccountData }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(340px,100%),1fr))', gap: 20 }}>
         <div style={{ position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 14, padding: 'clamp(20px, 5vw, 28px)', border: `1px solid ${plan.accent}`, borderRadius: 18, background: 'var(--panel)' }}>
           <div aria-hidden="true" style={{ position: 'absolute', right: -90, bottom: -150, width: 340, height: 340, borderRadius: '50%', border: `38px solid ${plan.accent}`, opacity: .45, filter: 'blur(30px)' }} />
-          <span className="mono" style={{ position: 'relative', fontSize: 12, letterSpacing: '.08em', color: 'var(--muted)' }}>MEMBERSHIP</span>
-          <span className="display" style={{ position: 'relative', fontSize: 'clamp(34px,4.2vw,60px)', lineHeight: .9, overflowWrap: 'anywhere', color: plan.accent }}>{plan.name}</span>
+          <span className="mono" style={{ position: 'relative', fontSize: 12, letterSpacing: '.08em', color: 'var(--muted)' }}>{t('plans.kicker')}</span>
+          <span className="display" style={{ position: 'relative', fontSize: 'clamp(34px,4.2vw,60px)', lineHeight: .9, overflowWrap: 'anywhere', color: plan.accent }}>{t(`tier.${plan.id}`)}</span>
           <span style={{ position: 'relative', fontSize: 16, color: 'var(--soft)' }}>{planLine}</span>
           <div style={{ position: 'relative', display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 6 }}>
-            <button type="button" className="btn pill pill-primary" onClick={() => go('plans')} style={{ fontSize: 14, padding: '11px 18px' }}>{planIndex === TIERS.length - 1 ? 'Change plan' : 'Upgrade'}</button>
-            <button type="button" className="btn pill pill-ghost" onClick={() => set({ tab: 'account' })} style={{ fontSize: 14, padding: '11px 18px', background: '#000' }}>Billing</button>
+            <button type="button" className="btn pill pill-primary" onClick={() => go('plans')} style={{ fontSize: 14, padding: '11px 18px' }}>{planIndex === TIERS.length - 1 ? t('dash.changePlan') : t('dash.upgrade')}</button>
+            <button type="button" className="btn pill pill-ghost" onClick={() => set({ tab: 'account' })} style={{ fontSize: 14, padding: '11px 18px', background: '#000' }}>{t('dash.billing')}</button>
           </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'var(--line)', border: '1px solid var(--line)', borderRadius: 18, overflow: 'hidden' }}>
@@ -165,13 +165,13 @@ function Overview({ data }: { data: AccountData }) {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12 }}>
-          <h2 className="display" style={h2}>Your <span className="hl">season</span></h2>
+          <h2 className="display" style={h2}>{t('dash.season.h2a')} <span className="hl">{t('dash.season.h2b')}</span></h2>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 16px', fontSize: 13, color: 'var(--soft)' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 11, height: 11, background: C.darkGreen }} />Weekly max Kp · GFZ Potsdam</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 16, borderTop: `2px dashed ${C.amber}` }} />{home ? `Visible from ${home.name}` : 'Typical mid-latitude view'} (≈ Kp {need})</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 11, height: 11, background: C.darkGreen }} />{t('dash.season.weekly')}</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 16, borderTop: `2px dashed ${C.amber}` }} />{home ? t('dash.season.visibleFrom', { place: home.name, need }) : t('dash.season.typical', { need })}</span>
           </div>
         </div>
-        <div className="hscroll"><svg viewBox="0 0 900 240" style={{ width: '100%', minWidth: 560, display: 'block' }} role="img" aria-label="Weekly maximum Kp over the last 12 weeks">
+        <div className="hscroll"><svg viewBox="0 0 900 240" style={{ width: '100%', minWidth: 560, display: 'block' }} role="img" aria-label={t('dash.season.aria')}>
           {[0, 3, 6, 9].map(k => (
             <g key={k}>
               <line x1="30" x2="890" y1={210 - k * 20} y2={210 - k * 20} style={{ stroke: '#fff', strokeOpacity: .07 }} />
@@ -183,24 +183,24 @@ function Overview({ data }: { data: AccountData }) {
             const x = 30 + i * w;
             return (
               <g key={wk.from}>
-                {wk.kp !== null && <rect x={f(x + 10)} y={f(210 - wk.kp * 20)} width={f(w - 20)} height={f(wk.kp * 20)} style={{ fill: kpColor(wk.kp) }}><title>{`Week of ${shortDate(wk.from)}: max Kp ${wk.kp.toFixed(2)}`}</title></rect>}
+                {wk.kp !== null && <rect x={f(x + 10)} y={f(210 - wk.kp * 20)} width={f(w - 20)} height={f(wk.kp * 20)} style={{ fill: kpColor(wk.kp) }}><title>{t('dash.season.week', { date: shortDate(wk.from), kp: num(wk.kp, 2) })}</title></rect>}
                 <text x={f(x + w / 2)} y="230" style={{ fill: C.soft, font: "600 11px 'Barlow'", textAnchor: 'middle' }}>{shortDate(wk.from)}</text>
               </g>
             );
           })}
           <line x1="30" x2="890" y1="210" y2="210" style={{ stroke: C.muted }} />
-          {days.length === 0 && <text x="460" y="120" style={{ fill: C.muted, font: "600 14px 'Barlow'", textAnchor: 'middle' }}>Kp history unavailable</text>}
+          {days.length === 0 && <text x="460" y="120" style={{ fill: C.muted, font: "600 14px 'Barlow'", textAnchor: 'middle' }}>{t('dash.historyUnavailable')}</text>}
         </svg></div>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12, marginBottom: 8 }}>
-          <h2 className="display" style={h2}>Best nights <span className="hl">ahead</span></h2>
-          <span style={{ fontSize: 13, color: 'var(--muted)' }}>Largest predicted Kp · NOAA 27-day outlook</span>
+          <h2 className="display" style={h2}>{t('dash.best.h2a')} <span className="hl">{t('dash.best.h2b')}</span></h2>
+          <span style={{ fontSize: 13, color: 'var(--muted)' }}>{t('dash.best.source')}</span>
         </div>
         {(() => {
           const best = [...data.outlook].sort((a, b) => b.kp - a.kp || a.t - b.t).slice(0, 5).sort((a, b) => a.t - b.t);
-          if (!best.length) return <span style={{ fontSize: 15, color: 'var(--muted)', padding: '12px 0' }}>The 27-day outlook is unavailable right now.</span>;
+          if (!best.length) return <span style={{ fontSize: 15, color: 'var(--muted)', padding: '12px 0' }}>{t('dash.best.unavailable')}</span>;
           return best.map(u => {
             const c = kpBarColor(u.kp);
             return (
@@ -213,11 +213,11 @@ function Overview({ data }: { data: AccountData }) {
                   </div>
                   {(() => {
                     const lit = moon(u.t + 864e5, 0, 0).illumination;
-                    const o = nightOutlook(u.kp, need, (home?.lat ?? 1) < 0, lit);
+                    const o = nightOutlook(u.kp, need, (home?.lat ?? 1) < 0, lit, t);
                     return (
                       <>
                         <span style={{ fontSize: 14, lineHeight: 1.4, color: 'var(--soft)' }}><b style={{ color: c }}>{o.label}.</b> {o.text}</span>
-                        <span style={{ fontSize: 12, color: 'var(--muted)' }}>≈ Kp {need} needed{home ? ` at ${home.name.split(',')[0]}` : ''} · Moon {Math.round(lit * 100)}% lit · 10.7 cm flux {u.flux}</span>
+                        <span style={{ fontSize: 12, color: 'var(--muted)' }}>{home ? t('dash.best.needAt', { need, place: home.name.split(',')[0] }) : t('dash.best.need', { need })} · {t('dash.best.moon', { pct: Math.round(lit * 100) })} · {t('dash.best.flux', { flux: u.flux })}</span>
                       </>
                     );
                   })()}
@@ -236,16 +236,18 @@ interface ToggleProps { label: string; sub: string; on: boolean; need: number; l
 
 /** Settings row with a switch. Rows above the user's plan are dimmed, labelled with the required tier, and link to Plans. */
 function ToggleRow({ label, sub, on, need, locked, onClick }: ToggleProps) {
+  const { t } = useI18n();
+  const tier = t(`tier.${TIERS[need].id}`);
   const active = on && !locked;
   return (
     <button type="button" className="btn toggle-row" onClick={onClick} style={{ opacity: locked ? .55 : 1 }}
       role={locked ? undefined : 'switch'} aria-checked={locked ? undefined : active}
-      aria-label={locked ? `${label}: requires ${TIERS[need].name}. View plans.` : undefined}>
+      aria-label={locked ? t('dash.requires', { label, plan: tier }) : undefined}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <span style={{ fontWeight: 700, fontSize: 16 }}>{label}</span>
         <span style={{ fontSize: 13, color: 'var(--muted)' }}>{sub}</span>
       </div>
-      <span style={{ fontSize: 11, fontWeight: 700, color: TIERS[need].accent, whiteSpace: 'nowrap' }}>{locked ? TIERS[need].name.toUpperCase() : ''}</span>
+      <span style={{ fontSize: 11, fontWeight: 700, color: TIERS[need].accent, whiteSpace: 'nowrap' }}>{locked ? tier.toUpperCase() : ''}</span>
       <span className={'switch' + (active ? ' on' : '')}><span className="switch-knob" /></span>
     </button>
   );
@@ -254,70 +256,70 @@ function ToggleRow({ label, sub, on, need, locked, onClick }: ToggleProps) {
 function Alerts({ data }: { data: AccountData }) {
   const { s, set, planIndex, go, live } = useStore();
   const { user } = useAuth();
+  const { t, tn, num, date } = useI18n();
+  const shortDate = (d: number) => date(d, { month: 'short', day: 'numeric', timeZone: 'UTC' });
   // Email alerts go to the address the account signed up with.
-  const accountEmail = live ? user?.email ?? 'Your account email' : 'sam@example.com';
+  const accountEmail = live ? user?.email ?? t('dash.accountEmail') : 'sam@example.com';
   const { home, need } = useHome();
   const kp = s.kpThreshold;
   const last30 = data.days.slice(-30);
   const hits = last30.filter(d => d.kpMax >= kp).length;
   const thY = f(170 - kp * 17);
-  const where = !home ? `Add a location to see what Kp ${kp} means for your sky.`
-    : kp >= need + 2 ? `At Kp ${kp}, aurora is likely overhead or high in the sky from ${home.name}.`
-    : kp >= need ? `At Kp ${kp}, aurora should be visible low on the poleward horizon from ${home.name}.`
-    : `At Kp ${kp}, aurora is unlikely to be visible from ${home.name} (≈ Kp ${need} needed).`;
+  const where = !home ? t('alerts.where.none', { kp })
+    : t(kp >= need + 2 ? 'alerts.where.high' : kp >= need ? 'alerts.where.low' : 'alerts.where.unlikely', { kp, place: home.name, need });
   const bw = 450 / Math.max(30, last30.length);
   return (
     <div data-screen-label="Dashboard · Alerts" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-      <h1 className="display" style={h1}>Alert <span className="hl">rules</span></h1>
+      <h1 className="display" style={h1}>{t('alerts.h1a')} <span className="hl">{t('alerts.h1b')}</span></h1>
       <div className="alert-rule">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <label htmlFor="kp-threshold" className="eyebrow">ALERT ME WHEN KP REACHES</label>
+          <label htmlFor="kp-threshold" className="eyebrow">{t('alerts.threshold')}</label>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
             <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontStretch: '112%', fontSize: 96, lineHeight: .85 }}>{kp}</span>
-            <span style={{ fontFamily: 'var(--f-display)', fontWeight: 800, fontSize: 22, color: kp >= 5 ? C.red : kp === 4 ? C.amber : C.darkGreen }}>{KP_NAME[kp]}</span>
+            <span style={{ fontFamily: 'var(--f-display)', fontWeight: 800, fontSize: 22, color: kp >= 5 ? C.red : kp === 4 ? C.amber : C.darkGreen }}>{kpName(t, kp)}</span>
           </div>
           <input id="kp-threshold" type="range" min={2} max={9} step={1} value={kp} onChange={e => set({ kpThreshold: +e.target.value })} style={{ width: '100%' }} />
           <span style={{ fontSize: 15, color: 'var(--soft)', textWrap: 'pretty' }}>{where}</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
-            <span style={{ fontSize: 14, color: 'var(--muted)' }}>Last 30 days · daily max Kp (GFZ)</span>
-            <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 22, whiteSpace: 'nowrap' }}><span className="hl">{hits}</span> {hits === 1 ? 'alert' : 'alerts'}</span>
+            <span style={{ fontSize: 14, color: 'var(--muted)' }}>{t('alerts.last30')}</span>
+            <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 22, whiteSpace: 'nowrap' }}><span className="hl">{hits}</span> {tn('alerts.count', hits)}</span>
           </div>
-          <svg viewBox="0 0 450 190" style={{ width: '100%', display: 'block' }} role="img" aria-label={`${hits} of the last ${last30.length} days reached Kp ${kp}`}>
+          <svg viewBox="0 0 450 190" style={{ width: '100%', display: 'block' }} role="img" aria-label={t('alerts.aria', { hits, days: last30.length, kp })}>
             <line x1="0" x2="450" y1={thY} y2={thY} style={{ stroke: C.green, strokeWidth: 1.5, strokeDasharray: '5 4' }} />
             {last30.map((d, i) => (
               <rect key={d.t} x={f(i * bw)} y={f(170 - d.kpMax * 17)} width={f(bw - 4)} height={f(d.kpMax * 17)} style={{ fill: d.kpMax >= kp ? C.green : C.line2 }}>
-                <title>{`${shortDate(d.t)}: max Kp ${d.kpMax.toFixed(2)}`}</title>
+                <title>{t('alerts.dayTitle', { date: shortDate(d.t), kp: num(d.kpMax, 2) })}</title>
               </rect>
             ))}
             <line x1="0" x2="450" y1="170" y2="170" style={{ stroke: C.muted }} />
             {last30.length > 0 && <text x="0" y="186" style={{ fill: C.muted, font: "10px 'JetBrains Mono'" }}>{shortDate(last30[0].t).toUpperCase()}</text>}
-            <text x="450" y="186" style={{ fill: C.muted, font: "10px 'JetBrains Mono'", textAnchor: 'end' }}>TODAY</text>
-            {last30.length === 0 && <text x="225" y="90" style={{ fill: C.muted, font: "600 13px 'Barlow'", textAnchor: 'middle' }}>Kp history unavailable</text>}
+            <text x="450" y="186" style={{ fill: C.muted, font: "10px 'JetBrains Mono'", textAnchor: 'end' }}>{t('alerts.today')}</text>
+            {last30.length === 0 && <text x="225" y="90" style={{ fill: C.muted, font: "600 13px 'Barlow'", textAnchor: 'middle' }}>{t('dash.historyUnavailable')}</text>}
           </svg>
         </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(300px,100%),1fr))', gap: 20 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span className="eyebrow" style={{ marginBottom: 8 }}>TRIGGERS</span>
-          {TRIGGER_DEFS.map(([k, label, sub, need]) => {
+          <span className="eyebrow" style={{ marginBottom: 8 }}>{t('alerts.triggers')}</span>
+          {TRIGGER_DEFS.map(([k, need]) => {
             const locked = planIndex < need;
-            return <ToggleRow key={k} label={label} sub={sub} need={need} locked={locked} on={s.triggers[k]}
+            return <ToggleRow key={k} label={t(`trigger.${k}`)} sub={t(`trigger.${k}.sub`)} need={need} locked={locked} on={s.triggers[k]}
               onClick={locked ? () => go('plans') : () => set(st => ({ triggers: { ...st.triggers, [k]: !st.triggers[k] } }))} />;
           })}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span className="eyebrow" style={{ marginBottom: 8 }}>DELIVER VIA</span>
-          {CHANNEL_DEFS.map(([k, label, sub, need]) => {
+          <span className="eyebrow" style={{ marginBottom: 8 }}>{t('alerts.deliver')}</span>
+          {CHANNEL_DEFS.map(([k, need]) => {
             const locked = planIndex < need;
-            return <ToggleRow key={k} label={label} sub={k === 'email' ? accountEmail : sub} need={need} locked={locked} on={s.channels[k]}
+            return <ToggleRow key={k} label={t(`channel.${k}`)} sub={k === 'email' ? accountEmail : t(`channel.${k}.sub`)} need={need} locked={locked} on={s.channels[k]}
               onClick={locked ? () => go('plans') : () => set(st => ({ channels: { ...st.channels, [k]: !st.channels[k] } }))} />;
           })}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '14px 0' }}>
-            <span style={{ fontWeight: 700, fontSize: 16 }}>Quiet hours</span>
-            <span style={{ fontSize: 13, color: 'var(--muted)' }}>Alerts pause automatically while it's daylight at your location.</span>
+            <span style={{ fontWeight: 700, fontSize: 16 }}>{t('alerts.quiet')}</span>
+            <span style={{ fontSize: 13, color: 'var(--muted)' }}>{t('alerts.quietSub')}</span>
           </div>
         </div>
       </div>
@@ -326,29 +328,32 @@ function Alerts({ data }: { data: AccountData }) {
 }
 
 const hhmmUT = (t: number) => `${new Date(t).toISOString().slice(11, 16)} UT`;
-const coords = (l: { lat: number; lon: number }) => `${Math.abs(l.lat).toFixed(2)}°${l.lat >= 0 ? 'N' : 'S'} ${Math.abs(l.lon).toFixed(2)}°${l.lon >= 0 ? 'E' : 'W'}`;
+const coords = (l: { lat: number; lon: number }, { t, num }: I18n) =>
+  `${num(Math.abs(l.lat), 2)}°${t(l.lat >= 0 ? 'dir.N' : 'dir.S')} ${num(Math.abs(l.lon), 2)}°${t(l.lon >= 0 ? 'dir.E' : 'dir.W')}`;
 
 function LocationCard({ loc, paused, index }: { loc: SavedLocation; paused: boolean; index: number }) {
   const { setHome, remove } = useLocations();
   const { data: cond, loading } = useConditions(loc.lat, loc.lon);
+  const i18n = useI18n();
+  const { t } = i18n;
   const aur = cond?.aurora?.nearby ?? null;
-  const tag = paused ? 'PAUSED' : loc.isHome ? 'HOME' : loc.source === 'device' ? 'DEVICE' : 'SAVED';
+  const tag = t(paused ? 'loc.tag.paused' : loc.isHome ? 'sky.tag.home' : loc.source === 'device' ? 'loc.tag.device' : 'loc.tag.saved');
   const tagC = paused ? C.muted : loc.isHome ? C.green : loc.source === 'device' ? '#9CFF6E' : C.soft;
   const ac = aur === null ? C.soft : aur >= 30 ? C.green : aur >= 10 ? C.amber : C.soft;
   const mono10 = { fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)' };
   const big = { fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 24 };
   const glow = aur ?? 0;
   const sun = cond?.sun;
-  const darkLine = !sun ? (loading ? 'Checking sky…' : 'Conditions unavailable')
-    : sun.dark ? `Dark now${sun.changesAt ? ` · until ${hhmmUT(sun.changesAt)}` : ''}`
-    : sun.changesAt ? `Dark from ${hhmmUT(sun.changesAt)}` : 'No darkness (midnight sun)';
+  const darkLine = !sun ? (loading ? t('loc.checking') : t('loc.unavailable'))
+    : sun.dark ? (sun.changesAt ? t('loc.darkUntil', { time: hhmmUT(sun.changesAt) }) : t('loc.darkNow'))
+    : sun.changesAt ? t('loc.darkFrom', { time: hhmmUT(sun.changesAt) }) : t('loc.midnightSun');
   const linkBtn = { fontSize: 13, fontWeight: 700, color: 'var(--muted)' };
   return (
     <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 20, opacity: paused ? .45 : 1 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
           <span style={{ fontWeight: 700, fontSize: 18, overflowWrap: 'anywhere' }}>{loc.name}</span>
-          <span className="label">{coords(loc)}</span>
+          <span className="label">{coords(loc, i18n)}</span>
         </div>
         <span style={{ flex: 'none', fontSize: 11, fontWeight: 700, padding: '4px 8px', borderRadius: 999, border: `1px solid ${tagC}`, color: tagC }}>{tag}</span>
       </div>
@@ -357,17 +362,17 @@ function LocationCard({ loc, paused, index }: { loc: SavedLocation; paused: bool
         <ellipse cx="120" cy="72" rx="110" ry={f(8 + glow * .45)} style={{ fill: '#59FF3A', opacity: f(Math.min(.9, .08 + glow / 70)), filter: `url(#lb${index})` }} />
         <line x1="0" x2="240" y1="72" y2="72" style={{ stroke: '#fff' }} />
         <rect x="0" y="72" width="240" height="18" style={{ fill: '#000' }} />
-        <text x="120" y="86" style={{ fill: C.muted, font: "700 10px 'Barlow'", textAnchor: 'middle' }}>{loc.lat >= 0 ? 'N' : 'S'}</text>
+        <text x="120" y="86" style={{ fill: C.muted, font: "700 10px 'Barlow'", textAnchor: 'middle' }}>{t(loc.lat >= 0 ? 'dir.N' : 'dir.S')}</text>
       </svg>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-        <div style={{ display: 'flex', flexDirection: 'column' }}><span style={mono10}>AURORA</span><span style={{ ...big, color: ac }}>{aur === null ? '—' : `${aur}%`}</span></div>
-        <div style={{ display: 'flex', flexDirection: 'column' }}><span style={mono10}>CLOUD</span><span style={big}>{cond?.cloud ? `${cond.cloud.now}%` : '—'}</span></div>
-        <div style={{ display: 'flex', flexDirection: 'column' }}><span style={mono10}>NEEDS</span><span style={big}>Kp {cond?.kpNeeded ?? kpNeeded(loc.lat, loc.lon)}</span></div>
+        <div style={{ display: 'flex', flexDirection: 'column' }}><span style={mono10}>{t('sky.stat.aurora')}</span><span style={{ ...big, color: ac }}>{aur === null ? '—' : `${aur}%`}</span></div>
+        <div style={{ display: 'flex', flexDirection: 'column' }}><span style={mono10}>{t('sky.stat.cloud')}</span><span style={big}>{cond?.cloud ? `${cond.cloud.now}%` : '—'}</span></div>
+        <div style={{ display: 'flex', flexDirection: 'column' }}><span style={mono10}>{t('sky.stat.needs')}</span><span style={big}>Kp {cond?.kpNeeded ?? kpNeeded(loc.lat, loc.lon)}</span></div>
       </div>
       <span style={{ fontSize: 13, color: sun?.dark ? C.green : 'var(--muted)', fontWeight: 600 }}>{darkLine}</span>
       <div style={{ display: 'flex', gap: 16, borderTop: '1px solid var(--line)', paddingTop: 10 }}>
-        {!loc.isHome && <button type="button" className="btn" style={linkBtn} onClick={() => setHome(loc.id)}>Make home</button>}
-        <button type="button" className="btn" style={{ ...linkBtn, color: C.red }} onClick={() => remove(loc.id)}>Remove</button>
+        {!loc.isHome && <button type="button" className="btn" style={linkBtn} onClick={() => setHome(loc.id)}>{t('loc.makeHome')}</button>}
+        <button type="button" className="btn" style={{ ...linkBtn, color: C.red }} onClick={() => remove(loc.id)}>{t('loc.remove')}</button>
       </div>
     </div>
   );
@@ -376,6 +381,7 @@ function LocationCard({ loc, paused, index }: { loc: SavedLocation; paused: bool
 function AddLocation({ disabled }: { disabled: boolean }) {
   const { plan, go } = useStore();
   const { add, detectDevice, detecting } = useLocations();
+  const { t, tn } = useI18n();
   const [q, setQ] = useState('');
   const [results, setResults] = useState<PlaceResult[] | null>(null);
   const [busy, setBusy] = useState(false);
@@ -385,16 +391,16 @@ function AddLocation({ disabled }: { disabled: boolean }) {
       <button type="button" className="btn" onClick={() => go('plans')}
         style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 240, padding: 20, border: '1px dashed var(--line-3)', borderRadius: 16, textAlign: 'center' }}>
         <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 40, color: 'var(--green)', lineHeight: 1 }}>+</span>
-        <span style={{ fontWeight: 700, fontSize: 16 }}>Add a location</span>
-        <span style={{ fontSize: 13, color: 'var(--muted)' }}>Your {plan.name} plan includes {plan.locs}. Upgrade for more.</span>
+        <span style={{ fontWeight: 700, fontSize: 16 }}>{t('loc.add')}</span>
+        <span style={{ fontSize: 13, color: 'var(--muted)' }}>{t('loc.planIncludes', { plan: t(`tier.${plan.id}`), locs: tn('sky.locs', plan.locs) })}</span>
       </button>
     );
   }
   const search = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true); setMsg(null);
-    try { const r = await searchPlaces(q); setResults(r); if (!r.length) setMsg('No places found.'); }
-    catch { setMsg('Search is unavailable right now.'); }
+    try { const r = await searchPlaces(q); setResults(r); if (!r.length) setMsg(t('search.none')); }
+    catch { setMsg(t('search.unavailable')); }
     finally { setBusy(false); }
   };
   const pick = async (r: PlaceResult) => {
@@ -403,14 +409,14 @@ function AddLocation({ disabled }: { disabled: boolean }) {
   };
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minHeight: 240, padding: 20, border: '1px dashed var(--line-3)', borderRadius: 16 }}>
-      <span style={{ fontWeight: 700, fontSize: 16 }}>Add a location</span>
+      <span style={{ fontWeight: 700, fontSize: 16 }}>{t('loc.add')}</span>
       <button type="button" className="btn pill pill-primary" disabled={detecting} onClick={async () => { setMsg(null); if (!(await detectDevice())) setMsg(null); }}
         style={{ fontSize: 14, padding: '11px 16px', opacity: detecting ? .6 : 1 }}>
-        {detecting ? 'Finding you…' : 'Use my current location'}
+        {detecting ? t('loc.finding') : t('loc.useCurrent')}
       </button>
       <form onSubmit={search} style={{ display: 'flex', gap: 8 }}>
-        <input className="input" value={q} onChange={e => setQ(e.target.value)} placeholder="Search a town" aria-label="Search a town" style={{ padding: 11 }} />
-        <button type="submit" className="btn pill pill-ghost" disabled={busy || q.trim().length < 2} style={{ fontSize: 14, padding: '0 16px', flex: 'none' }}>{busy ? '…' : 'Search'}</button>
+        <input className="input" value={q} onChange={e => setQ(e.target.value)} placeholder={t('search.placeholder')} aria-label={t('search.placeholder')} style={{ padding: 11 }} />
+        <button type="submit" className="btn pill pill-ghost" disabled={busy || q.trim().length < 2} style={{ fontSize: 14, padding: '0 16px', flex: 'none' }}>{busy ? '…' : t('search.button')}</button>
       </form>
       {results && results.length > 0 && (
         <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column' }}>
@@ -431,6 +437,7 @@ function AddLocation({ disabled }: { disabled: boolean }) {
 function Locations() {
   const { plan, live } = useStore();
   const { locations, status, load, backend, error, detectDevice } = useLocations();
+  const { t } = useI18n();
   useEffect(() => {
     load();
     // If location access was granted before, refresh the device location without prompting.
@@ -443,50 +450,74 @@ function Locations() {
   return (
     <div data-screen-label="Dashboard · Locations" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' }}>
-        <h1 className="display" style={h1}>Saved <span className="hl">skies</span></h1>
-        <span className="mono" style={{ fontSize: 13, color: 'var(--muted)' }}>{`${active} OF ${limit > 10 ? '∞' : limit} ACTIVE`}</span>
+        <h1 className="display" style={h1}>{t('loc.h1a')} <span className="hl">{t('loc.h1b')}</span></h1>
+        <span className="mono" style={{ fontSize: 13, color: 'var(--muted)' }}>{t('loc.active', { n: active, limit: limit > 10 ? '∞' : limit })}</span>
       </div>
       {error && <span role="status" style={{ fontSize: 14, color: C.amber }}>{error}</span>}
-      {backend === 'local' && <span style={{ fontSize: 13, color: 'var(--muted)' }}>Locations are saved in this browser{live ? '. Sign in to keep them in your account.' : '.'}</span>}
+      {backend === 'local' && <span style={{ fontSize: 13, color: 'var(--muted)' }}>{live ? t('loc.browserLive') : t('loc.browser')}</span>}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(260px,100%),1fr))', gap: 16 }}>
-        {status !== 'ready' && <span style={{ color: 'var(--muted)' }}>Loading your locations…</span>}
+        {status !== 'ready' && <span style={{ color: 'var(--muted)' }}>{t('loc.loading')}</span>}
         {locations.map((l, i) => <LocationCard key={l.id} loc={l} index={i} paused={i >= limit} />)}
         <AddLocation disabled={locations.length >= limit} />
       </div>
-      <span style={{ fontSize: 12, color: 'var(--dim)' }}>
-        Aurora: highest OVATION probability overhead or up to ~6° poleward. Cloud: Open-Meteo. Needs: approximate Kp for aurora low on the horizon, from geomagnetic latitude.
-      </span>
+      <span style={{ fontSize: 12, color: 'var(--dim)' }}>{t('loc.footnote')}</span>
     </div>
+  );
+}
+
+/** Language picker: saved to the account (so it follows the user to other devices) and to this browser. */
+function Language() {
+  const { live } = useStore();
+  const { user, saveLocale } = useAuth();
+  const { t, locale } = useI18n();
+  const [busy, setBusy] = useState(false);
+  const change = async (next: string) => {
+    if (!isLocale(next) || next === locale) return;
+    setBusy(true);
+    if (live && user) await saveLocale(next);
+    applyLocale(next);
+  };
+  return (
+    <section aria-labelledby="language-h" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <h2 id="language-h" className="display" style={h2}>{t('lang.h2')}</h2>
+      <span style={{ fontSize: 14, color: 'var(--soft)' }}>{t('lang.body')}</span>
+      <select className="input" aria-labelledby="language-h" value={locale} disabled={busy} onChange={e => change(e.target.value)}
+        style={{ maxWidth: 320, padding: 12, fontSize: 16, fontWeight: 600, opacity: busy ? .6 : 1 }}>
+        {LOCALES.map(l => <option key={l} value={l} lang={l}>{LOCALE_NAMES[l]}</option>)}
+      </select>
+    </section>
   );
 }
 
 function Billing() {
   const { s, plan, planIndex, go, cancelPlan, live } = useStore();
   const { profile } = useAuth();
+  const { t, money } = useI18n();
+  const planName = t(`tier.${plan.id}`);
   const planLine = usePlanLine();
   const annual = live ? profile?.billingCycle === 'annual' : s.annual;
   return (
     <section aria-labelledby="billing-h" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <h2 id="billing-h" className="display" style={h2}>Billing</h2>
+      <h2 id="billing-h" className="display" style={h2}>{t('dash.billing')}</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(280px,100%),1fr))', gap: 16 }}>
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 22 }}>
-          <span className="label">PLAN</span>
-          <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 32, color: plan.accent }}>{plan.name}</span>
+          <span className="label">{t('billing.plan')}</span>
+          <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 32, color: plan.accent }}>{planName}</span>
           <span style={{ fontSize: 14, color: 'var(--soft)' }}>{planLine}</span>
           <button type="button" className="btn" onClick={() => go('plans')} style={{ fontWeight: 700, fontSize: 14, color: 'var(--green)', marginTop: 6, alignSelf: 'flex-start' }}>
-            {planIndex === TIERS.length - 1 ? 'Change plan' : 'Upgrade'} →
+            {planIndex === TIERS.length - 1 ? t('dash.changePlan') : t('dash.upgrade')} →
           </button>
         </div>
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 22 }}>
-          <span className="label">PAYMENT</span>
-          <span style={{ fontWeight: 700, fontSize: 18 }}>No payment method needed yet</span>
+          <span className="label">{t('billing.payment')}</span>
+          <span style={{ fontWeight: 700, fontSize: 18 }}>{t('billing.noMethod')}</span>
           <span style={{ fontSize: 14, color: 'var(--soft)' }}>
-            {planIndex ? `Your trial is free. After it, ${plan.name} is ${annual ? `$${plan.y} a year` : `$${plan.m} a month`} once card payments are switched on.` : 'Free accounts are never charged.'}
+            {planIndex ? t('billing.after', { plan: planName, price: annual ? t('billing.aYear', { price: money(plan.y) }) : t('billing.aMonth', { price: money(plan.m) }) }) : t('billing.freeNever')}
           </span>
         </div>
       </div>
       {planIndex > 0 && (
-        <button type="button" className="btn" onClick={cancelPlan} style={{ alignSelf: 'flex-start', fontWeight: 600, fontSize: 14, color: C.red }}>Cancel membership</button>
+        <button type="button" className="btn" onClick={cancelPlan} style={{ alignSelf: 'flex-start', fontWeight: 600, fontSize: 14, color: C.red }}>{t('billing.cancel')}</button>
       )}
     </section>
   );
@@ -496,27 +527,29 @@ function Billing() {
 function AccountSettings() {
   const { live, signOut } = useStore();
   const auth = useAuth();
+  const { t } = useI18n();
   const name = live ? auth.profile?.displayName || auth.user?.email?.split('@')[0] || '—' : 'Sam Rivera';
   const email = live ? auth.user?.email ?? '—' : 'sam@example.com';
   return (
     <div data-screen-label="Dashboard · Account" style={{ display: 'flex', flexDirection: 'column', gap: 36 }}>
-      <h1 className="display" style={h1}>Account</h1>
+      <h1 className="display" style={h1}>{t('dash.tab.account')}</h1>
       <div className="card" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(220px,100%),1fr))', gap: 16, padding: 22 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
-          <span className="label">NAME</span>
+          <span className="label">{t('field.name')}</span>
           <span style={{ fontWeight: 700, fontSize: 17, overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
-          <span className="label">EMAIL</span>
+          <span className="label">{t('field.email')}</span>
           <span style={{ fontWeight: 700, fontSize: 17, overflow: 'hidden', textOverflow: 'ellipsis' }}>{email}</span>
         </div>
       </div>
+      <Language />
       <Billing />
       <ChangePassword email={email} />
       <section aria-labelledby="signout-h" style={{ display: 'flex', flexDirection: 'column', gap: 12, borderTop: '1px solid var(--line)', paddingTop: 24 }}>
-        <h2 id="signout-h" className="display" style={h2}>Log <span className="hl">out</span></h2>
-        <span style={{ fontSize: 14, color: 'var(--soft)' }}>Sign out of Polar Lights on this device. Your locations and alert settings stay saved to your account.</span>
-        <button type="button" className="btn pill pill-ghost" onClick={signOut} style={{ alignSelf: 'flex-start', fontSize: 15, padding: '12px 22px', color: C.red, borderColor: C.red }}>Log out</button>
+        <h2 id="signout-h" className="display" style={h2}>{t('logout.h2a')} <span className="hl">{t('logout.h2b')}</span></h2>
+        <span style={{ fontSize: 14, color: 'var(--soft)' }}>{t('logout.body')}</span>
+        <button type="button" className="btn pill pill-ghost" onClick={signOut} style={{ alignSelf: 'flex-start', fontSize: 15, padding: '12px 22px', color: C.red, borderColor: C.red }}>{t('logout.button')}</button>
       </section>
     </div>
   );
@@ -526,6 +559,7 @@ function AccountSettings() {
 function ChangePassword({ email }: { email: string }) {
   const { live } = useStore();
   const { signIn, updatePassword } = useAuth();
+  const { t, tx } = useI18n();
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [again, setAgain] = useState('');
@@ -534,31 +568,31 @@ function ChangePassword({ email }: { email: string }) {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setMsg(null);
-    if (next !== again) { setMsg({ ok: false, text: 'The new passwords don’t match.' }); return; }
-    if (next === current) { setMsg({ ok: false, text: 'Choose a password that’s different from your current one.' }); return; }
+    if (next !== again) { setMsg({ ok: false, text: t('pw.mismatch') }); return; }
+    if (next === current) { setMsg({ ok: false, text: t('err.samePassword') }); return; }
     setBusy(true);
     if (live) {
       const check = await signIn(email, current);
-      if (check.error) { setBusy(false); setMsg({ ok: false, text: 'Your current password isn’t right.' }); return; }
+      if (check.error) { setBusy(false); setMsg({ ok: false, text: t('pw.wrongCurrent') }); return; }
       const r = await updatePassword(next);
       setBusy(false);
-      if (r.error) { setMsg({ ok: false, text: r.error }); return; }
+      if (r.error) { setMsg({ ok: false, text: tx(r.error) }); return; }
     } else setBusy(false);
     setCurrent(''); setNext(''); setAgain('');
-    setMsg({ ok: true, text: live ? 'Password changed.' : 'Password changed (demo account; nothing was saved).' });
+    setMsg({ ok: true, text: live ? t('pw.changed') : t('pw.changedDemo') });
   };
   return (
     <section aria-labelledby="password-h" style={{ display: 'flex', flexDirection: 'column', gap: 16, borderTop: '1px solid var(--line)', paddingTop: 24 }}>
-      <h2 id="password-h" className="display" style={h2}>Change <span className="hl">password</span></h2>
+      <h2 id="password-h" className="display" style={h2}>{t('pw.h2a')} <span className="hl">{t('pw.h2b')}</span></h2>
       <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 420 }}>
         {/* Hidden username helps password managers update the right entry. */}
         <input type="email" name="username" autoComplete="username" value={email} readOnly hidden />
-        <Field label="CURRENT PASSWORD" type="password" autoComplete="current-password" required value={current} onChange={e => setCurrent(e.target.value)} />
-        <Field label="NEW PASSWORD" type="password" autoComplete="new-password" required minLength={8} value={next} onChange={e => setNext(e.target.value)} />
-        <Field label="CONFIRM NEW PASSWORD" type="password" autoComplete="new-password" required minLength={8} value={again} onChange={e => setAgain(e.target.value)} />
-        <span style={{ fontSize: 13, color: 'var(--muted)', marginTop: -4 }}>At least 8 characters.</span>
+        <Field label={t('field.currentPassword')} type="password" autoComplete="current-password" required value={current} onChange={e => setCurrent(e.target.value)} />
+        <Field label={t('field.newPassword')} type="password" autoComplete="new-password" required minLength={8} value={next} onChange={e => setNext(e.target.value)} />
+        <Field label={t('field.confirmPassword')} type="password" autoComplete="new-password" required minLength={8} value={again} onChange={e => setAgain(e.target.value)} />
+        <span style={{ fontSize: 13, color: 'var(--muted)', marginTop: -4 }}>{t('pw.rule')}</span>
         {msg && <span role={msg.ok ? 'status' : 'alert'} style={{ fontSize: 14, color: msg.ok ? C.green : C.red }}>{msg.text}</span>}
-        <button type="submit" disabled={busy} className="btn pill pill-primary" style={{ alignSelf: 'flex-start', fontSize: 15, padding: '13px 22px', opacity: busy ? .6 : 1 }}>{busy ? 'Saving…' : 'Change password'}</button>
+        <button type="submit" disabled={busy} className="btn pill pill-primary" style={{ alignSelf: 'flex-start', fontSize: 15, padding: '13px 22px', opacity: busy ? .6 : 1 }}>{busy ? t('common.saving') : t('pw.button')}</button>
       </form>
     </section>
   );

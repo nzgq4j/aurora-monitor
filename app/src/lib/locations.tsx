@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useAuth } from './auth';
+import { useI18n } from '../i18n/I18n';
 import { supabase } from './supabase';
 
 export type LocationSource = 'manual' | 'device';
@@ -62,10 +63,13 @@ const writeLocal = (xs: SavedLocation[]) => {
 interface Row { id: string; name: string; lat: number; lon: number; source: LocationSource; is_home: boolean; created_at: string }
 const fromRow = (r: Row): SavedLocation => ({ id: r.id, name: r.name, lat: r.lat, lon: r.lon, source: r.source, isHome: r.is_home, createdAt: r.created_at });
 
+/** Language of the page, so place names come back in it. */
+const pageLang = () => (typeof document === 'undefined' ? 'en' : document.documentElement.lang || 'en');
+
 /** Place search (Open-Meteo geocoding, no key required). */
 export async function searchPlaces(q: string): Promise<PlaceResult[]> {
   if (q.trim().length < 2) return [];
-  const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q.trim())}&count=6&language=en&format=json`);
+  const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q.trim())}&count=6&language=${pageLang()}&format=json`);
   if (!res.ok) throw new Error('Search failed');
   const j = await res.json();
   return (j.results ?? []).map((r: { name: string; admin1?: string; country?: string; latitude: number; longitude: number }) => ({
@@ -76,7 +80,7 @@ export async function searchPlaces(q: string): Promise<PlaceResult[]> {
 /** Name for a coordinate (BigDataCloud client-side reverse geocoding, no key required). */
 async function placeName(lat: number, lon: number): Promise<string> {
   try {
-    const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
+    const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=${pageLang()}`);
     const j = await res.json();
     const city = j.city || j.locality;
     const region = j.principalSubdivisionCode?.split('-').pop() || j.principalSubdivision || j.countryCode;
@@ -95,14 +99,15 @@ export async function devicePlace(): Promise<{ name: string; lat: number; lon: n
 /** `maxAge` 0 forces a fresh fix (explicit button presses); silent refreshes may reuse a recent one. */
 function position(maxAge = 0): Promise<GeolocationPosition> {
   return new Promise((resolve, reject) => {
-    if (!('geolocation' in navigator)) return reject(new Error('This device does not provide location.'));
-    navigator.geolocation.getCurrentPosition(resolve, e => reject(new Error(e.code === e.PERMISSION_DENIED ? 'Location permission was denied.' : 'Could not get your location.')), { enableHighAccuracy: false, timeout: 15000, maximumAge: maxAge });
+    if (!('geolocation' in navigator)) return reject(new Error('loc.err.noDevice'));
+    navigator.geolocation.getCurrentPosition(resolve, e => reject(new Error(e.code === e.PERMISSION_DENIED ? 'loc.err.denied' : 'loc.err.position')), { enableHighAccuracy: false, timeout: 15000, maximumAge: maxAge });
   });
 }
 
 export function LocationsProvider({ children }: { children: ReactNode }) {
   const sb = supabase();
   const { user, ready } = useAuth();
+  const { t, tx, tn } = useI18n();
   // Signed in: the user's rows in Supabase. Signed out (or not connected): this browser.
   const remote = !!(sb && user);
   const backend: Ctx['backend'] = remote ? 'supabase' : 'local';
@@ -142,10 +147,10 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
         if (e) skipped++;
       }
       writeLocal([]);
-      if (skipped) setError(`${skipped} location${skipped === 1 ? '' : 's'} saved on this device couldn’t be added: your plan’s location limit was reached.`);
+      if (skipped) setError(tn('loc.err.skipped', skipped));
     }
     const { data, error: e } = await sb!.from('locations').select('*').order('created_at');
-    if (e) { setError('Could not load your saved locations.'); setStatus('error'); return; }
+    if (e) { setError(t('loc.err.load')); setStatus('error'); return; }
     list.current = (data as Row[]).map(fromRow); setLocations(list.current); setStatus('ready');
   }, [remote, sb, user]);
 
@@ -161,7 +166,7 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
     const isHome = !list.current.some(l => l.isHome);
     if (remote) {
       const { data, error: e } = await sb!.from('locations').insert({ name: loc.name, lat: loc.lat, lon: loc.lon, source: loc.source, is_home: isHome }).select().single();
-      if (e) { setError(/limit reached/i.test(e.message) ? 'You’ve reached your plan’s location limit.' : 'Could not save that location.'); return null; }
+      if (e) { setError(/limit reached/i.test(e.message) ? t('loc.err.limit') : t('loc.err.save')); return null; }
       const saved = fromRow(data as Row);
       put([...list.current, saved]);
       return saved;
@@ -177,7 +182,7 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
     if (gone?.isHome && rest.length) rest = rest.map((l, i) => (i === 0 ? { ...l, isHome: true } : l));
     if (remote) {
       const { error: e } = await sb!.from('locations').delete().eq('id', id);
-      if (e) { setError('Could not remove that location.'); return; }
+      if (e) { setError(t('loc.err.remove')); return; }
       if (gone?.isHome && rest.length) await sb!.from('locations').update({ is_home: true }).eq('id', rest[0].id);
     }
     put(rest);
@@ -186,7 +191,7 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
   const setHome = useCallback<Ctx['setHome']>(async id => {
     if (remote) {
       const { error: e } = await sb!.rpc('set_home_location', { location_id: id });
-      if (e) { setError('Could not change your home location.'); return; }
+      if (e) { setError(t('loc.err.home')); return; }
     }
     put(list.current.map(l => ({ ...l, isHome: l.id === id })));
   }, [remote, sb]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -207,7 +212,7 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
       }
       return await add({ name, lat, lon, source: 'device' });
     } catch (e) {
-      if (!opts?.silent) setError((e as Error).message);
+      if (!opts?.silent) setError(tx((e as Error).message));
       return null;
     } finally {
       setDetecting(false);
@@ -224,7 +229,7 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
       const patch = { name: place.name, lat: place.lat, lon: place.lon, source };
       if (remote) {
         const { error: e } = await sb!.from('locations').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', target.id);
-        if (e) { setError('Could not save that location.'); return null; }
+        if (e) { setError(t('loc.err.save')); return null; }
       }
       const updated = { ...target, ...patch };
       put(list.current.map(l => (l.id === target.id ? updated : l)));
