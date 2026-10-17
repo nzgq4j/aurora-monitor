@@ -2,6 +2,7 @@
 
 import { initials, useAuth } from '../lib/auth';
 import { useStore, type Screen } from '../store';
+import { SITE } from '../lib/site';
 
 const NAV: [string, Screen][] = [['Now', 'home'], ['Map', 'map'], ['Plans', 'plans'], ['Account', 'account']];
 
@@ -13,8 +14,10 @@ export function Header({ kpLabel }: { kpLabel: string }) {
     <header className="header">
       <div className="wrap header-inner">
         <div className="header-left">
-          <button type="button" className="btn brand" onClick={() => go('home')}>
-            <span className="brand-dot" />OVAL
+          <button type="button" className="btn brand" onClick={() => go('home')} aria-label={`${SITE.name} home`}>
+            <span className="brand-dot" />
+            {/* Stacks to two lines on phones so the header stays on one row. */}
+            <span className="brand-name" aria-hidden="true"><span>Polar</span> <span>Lights</span></span>
           </button>
           <nav className="nav">
             {NAV.map(([label, screen]) => {
@@ -65,7 +68,7 @@ export function Footer() {
     <footer className="rule-top">
       <div className="wrap" style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', padding: '18px var(--gutter)', fontSize: 12, color: 'var(--dim)' }}>
         <span>Data: NOAA SWPC, GFZ Potsdam, NASA/SDO. Times in UT.</span>
-        <span style={{ color: 'var(--green)', fontWeight: 700 }}>oval.watch</span>
+        <span style={{ color: 'var(--green)', fontWeight: 700 }}>{SITE.domain}</span>
       </div>
     </footer>
   );

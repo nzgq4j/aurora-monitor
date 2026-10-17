@@ -8,7 +8,7 @@ type Row = Record<string, unknown>;
 
 async function json(url: string): Promise<unknown | null> {
   try {
-    const r = await fetch(url, { headers: { 'User-Agent': 'oval.watch ingest' } });
+    const r = await fetch(url, { headers: { 'User-Agent': 'polarlights.io ingest' } });
     return r.ok ? await r.json() : null;
   } catch {
     return null;

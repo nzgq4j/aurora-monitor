@@ -1,4 +1,4 @@
-// Mobile / PWA validation for OVAL. Runs Chromium as an Android phone against a running build and checks:
+// Mobile / PWA validation for Polar Lights. Runs Chromium as an Android phone against a running build and checks:
 //   1. Web app manifest: required fields, icons and screenshots load at their declared sizes.
 //   2. Installability as reported by Chrome itself (DevTools Page.getInstallabilityErrors).
 //   3. Service worker: registers, controls the page, and serves cached pages and /offline with no network.

@@ -108,6 +108,6 @@ export const TRIGGER_DEFS: [TriggerKey, string, string, number][] = [
 
 export const CHANNEL_DEFS: [ChannelKey, string, string, number][] = [
   ['email', 'Email', 'sam@example.com', 0],
-  ['push', 'Push', 'iPhone 15 · OVAL app', 1],
+  ['push', 'Push', 'Pixel 8 · Polar Lights app', 1],
   ['sms', 'SMS', '+1 (612) •••-4410', 1],
 ];
