@@ -11,8 +11,9 @@ security) plus a public archive of space-weather data.
 | `pg_cron` + `pg_net` (`enable_cron_and_net`) | Applied |
 | `ingest-space-weather` edge function | Deployed (v1, JWT verification on); a manual run stored Kp, GFZ Kp, solar wind and OVATION |
 | Vault secrets `project_url`, `publishable_key` | Stored |
-| Cron jobs (`20261017000200_ingest_schedule.sql`) | **Pending**: `cron.schedule()` times out through the MCP connector; run the file in the SQL Editor |
-| Auth URL configuration | **Pending**: dashboard only (step 5 below) |
+| Cron jobs (`20261017000200_ingest_schedule.sql`) | Applied in the SQL Editor (`cron.schedule()` times out through the MCP connector); runs succeeding |
+| Auth URL configuration | Set in the dashboard |
+| Profile language (`profile_locale`) | Applied; users can update `display_name` and `locale` only |
 | Vercel env vars | Added by the Vercel ↔ Supabase integration |
 
 ## Contents
@@ -20,6 +21,7 @@ security) plus a public archive of space-weather data.
 - `migrations/20261017000100_core_schema.sql`: tables, RLS policies, `set_home_location()`
 - `migrations/20261017000150_enable_cron_and_net.sql`: pg_cron and pg_net
 - `migrations/20261017000200_ingest_schedule.sql`: pg_cron jobs (ingest every 10 min, nightly prune)
+- `migrations/20261017000300_profile_locale.sql`: `profiles.locale`, the account's interface language
 - `functions/ingest-space-weather/`: edge function that pulls NOAA SWPC Kp, solar wind and
   OVATION, and GFZ Potsdam Kp, into the archive tables
 

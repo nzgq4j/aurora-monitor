@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { TIERS, type ChannelKey, type Tier, type TierId, type TriggerKey } from './data';
 import { useAuth } from './lib/auth';
 import { supabase } from './lib/supabase';
+import { useI18n } from './i18n/I18n';
 
 export type Screen = 'home' | 'map' | 'plans' | 'checkout' | 'signin' | 'account';
 export type Tab = 'overview' | 'alerts' | 'locations' | 'plans' | 'account';
@@ -68,6 +69,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const screen = screenFromPath(pathname);
   const auth = useAuth();
+  const { t, tx } = useI18n();
   const live = auth.configured;
 
   // Demo mode only: landing directly on /dashboard starts signed in, like the design's "account" starting screen.
@@ -110,8 +112,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const cancel = async () => {
       if (live) {
         const { error } = await auth.cancelMembership();
-        set({ tab: 'overview', toast: error ? `Couldn’t cancel: ${error}` : 'Membership cancelled. You’re back on Free.' });
-      } else set({ plan: 'free', tab: 'overview', toast: 'Membership cancelled. You’re back on Free.' });
+        set({ tab: 'overview', toast: error ? t('toast.cancelFailed', { error: tx(error) }) : t('toast.cancelled') });
+      } else set({ plan: 'free', tab: 'overview', toast: t('toast.cancelled') });
     };
     return {
       s, screen, live, signedIn, set, go, planIndex, plan: TIERS[planIndex], pendingIndex, pending,
@@ -121,7 +123,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (i === 0) {
           if (!signedIn) { go('signin'); return; }
           if (live) { void cancel().then(() => go('account')); return; }
-          go('account', { plan: 'free', tab: 'overview', toast: 'You’re on the Free plan.' });
+          go('account', { plan: 'free', tab: 'overview', toast: t('toast.onFree') });
           return;
         }
         go('checkout', { pending: TIERS[i].id, toast: '' });
@@ -130,11 +132,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (live) {
           if (!auth.user) { go('signin'); return; }
           const { error } = await auth.startTrial(pending.id, s.annual ? 'annual' : 'monthly');
-          if (error) { set({ toast: `Couldn’t start the trial: ${error}` }); return; }
-          go('account', { tab: 'overview', toast: `Welcome to ${pending.name}. Your 14-day trial has started.` });
+          if (error) { set({ toast: t('toast.trialFailed', { error: tx(error) }) }); return; }
+          go('account', { tab: 'overview', toast: t('toast.welcome', { plan: t(`tier.${pending.id}`) }) });
           return;
         }
-        go('account', { plan: pending.id, signedIn: true, tab: 'overview', toast: `Welcome to ${pending.name}. Your 14-day trial has started — alerts are live.` });
+        go('account', { plan: pending.id, signedIn: true, tab: 'overview', toast: t('toast.welcomeDemo', { plan: t(`tier.${pending.id}`) }) });
       },
       signIn: () => go('account', { signedIn: true, tab: 'overview' }),
       signOut: async () => {
@@ -143,7 +145,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       },
       cancelPlan: cancel,
     };
-  }, [s, screen, router, live, auth]);
+  }, [s, screen, router, live, auth, t, tx]);
 
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>;
 }
@@ -178,6 +180,6 @@ export function useStore(): Store {
   return v;
 }
 
-/** Displayed per-month price for a tier under the current billing cycle. */
-export const displayPrice = (t: Tier, annual: boolean) =>
-  annual ? (t.y ? '$' + (t.y / 12).toFixed(t.y % 12 ? 2 : 0) : '$0') : '$' + t.m;
+/** Displayed per-month price for a tier under the current billing cycle, formatted by `money`. */
+export const displayPrice = (t: Tier, annual: boolean, money: (usd: number) => string) =>
+  money(annual ? +(t.y / 12).toFixed(2) : t.m);

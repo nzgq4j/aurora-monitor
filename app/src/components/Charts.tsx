@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useId, useRef, useState } from 'react';
+import { useI18n } from '../i18n/I18n';
 import { C, kpBarColor, polar } from '../data';
 
 const monoText = (size: number) => ({ fill: C.muted, font: `${size}px 'JetBrains Mono'` });
@@ -31,6 +32,7 @@ export const POLAR_MIN_LAT = 90 - 222 / K;
 /** Live OVATION aurora probability on a polar map, with the 10% equatorward edge and reference cities. */
 export function PolarOval({ points, edge, marker }: PolarProps) {
   const id = useId().replace(/:/g, '');
+  const { t } = useI18n();
   const edgePath = edge.length > 2
     ? edge.map(([lon, lat], i) => { const [x, y] = pol(lat, lon > 180 ? lon - 360 : lon); return `${i ? 'L' : 'M'}${f(x)} ${f(y)}`; }).join(' ') + ' Z'
     : '';
@@ -39,7 +41,7 @@ export function PolarOval({ points, edge, marker }: PolarProps) {
   const cities = m ? polar.cities.filter(c => Math.hypot(c.x - m.x, c.y - m.y) > 26) : polar.cities;
   return (
     <svg viewBox="0 0 480 480" style={{ width: '100%', display: 'block' }} role="img"
-      aria-label={`OVATION aurora probability over the northern hemisphere${m ? `, with ${m.name} marked` : ''}`}>
+      aria-label={m ? t('chart.ovalMarked', { place: m.name }) : t('chart.oval')}>
       <defs>
         <clipPath id={`${id}c`}><circle cx="240" cy="240" r="226" /></clipPath>
         <filter id={`${id}b`} x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" /></filter>
@@ -80,7 +82,7 @@ export function PolarOval({ points, edge, marker }: PolarProps) {
           </text>
         </g>
       )}
-      {points.length === 0 && <text x="240" y="244" style={{ fill: C.muted, font: "600 13px 'Barlow'", textAnchor: 'middle' }}>Oval data unavailable</text>}
+      {points.length === 0 && <text x="240" y="244" style={{ fill: C.muted, font: "600 13px 'Barlow'", textAnchor: 'middle' }}>{t('chart.ovalUnavailable')}</text>}
     </svg>
   );
 }
@@ -100,8 +102,6 @@ function useWidth<T extends HTMLElement>(): [React.RefObject<T | null>, number] 
 }
 
 const DAY = 864e5;
-const dayLabel = (t: number) => new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
-const weekday = (t: number) => new Date(t).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
 
 export interface KpBar { t: number; kp: number; past: boolean }
 
@@ -111,6 +111,9 @@ export interface KpBar { t: number; kp: number; past: boolean }
  */
 export function KpBarChart({ bars, unit, now, minBar = 0, label }: { bars: KpBar[]; unit: 'hour' | 'day'; now: number; minBar?: number; label: string }) {
   const [ref, cw] = useWidth<HTMLDivElement>();
+  const { t, num, date } = useI18n();
+  const dayLabel = (d: number) => date(d, { month: 'short', day: 'numeric', timeZone: 'UTC' });
+  const weekday = (d: number) => date(d, { weekday: 'short', timeZone: 'UTC' });
   const H = unit === 'hour' ? 292 : 280, X0 = 34, PAD = 8, TOP = 26, Y1 = 230, U = (Y1 - TOP) / 9;
   const n = bars.length;
   const W = Math.max(cw, X0 + PAD + n * minBar);
@@ -129,7 +132,7 @@ export function KpBarChart({ bars, unit, now, minBar = 0, label }: { bars: KpBar
   }, [cw, W, nowX, bw, ref]);
 
   if (n === 0) {
-    return <div style={{ height: 120, display: 'grid', placeItems: 'center', color: C.muted, fontWeight: 600 }}>Kp data unavailable</div>;
+    return <div style={{ height: 120, display: 'grid', placeItems: 'center', color: C.muted, fontWeight: 600 }}>{t('chart.kpUnavailable')}</div>;
   }
   const days = unit === 'hour' ? bars.reduce<{ t: number; i0: number; i1: number }[]>((acc, b, i) => {
     const d = Math.floor(b.t / DAY) * DAY;
@@ -152,7 +155,7 @@ export function KpBarChart({ bars, unit, now, minBar = 0, label }: { bars: KpBar
           {nowX !== null && (
             <>
               <line x1={f(nowX)} x2={f(nowX)} y1={TOP - 8} y2={Y1 + 2} style={{ stroke: '#fff', strokeWidth: 2, strokeDasharray: '6 4' }} />
-              <text x={f(nowX)} y={TOP - 12} style={{ fill: '#fff', font: "700 11px 'Barlow'", textAnchor: 'middle' }}>NOW</text>
+              <text x={f(nowX)} y={TOP - 12} style={{ fill: '#fff', font: "700 11px 'Barlow'", textAnchor: 'middle' }}>{t('chart.now')}</text>
             </>
           )}
           {bars.map((b, i) => {
@@ -160,9 +163,9 @@ export function KpBarChart({ bars, unit, now, minBar = 0, label }: { bars: KpBar
             return (
               <g key={b.t}>
                 <rect x={f(x + 2)} y={f(Y1 - h)} width={f(Math.max(1, bw - 4))} height={f(h)} rx="2" style={{ fill: kpBarColor(b.kp), opacity: b.past ? .62 : 1 }}>
-                  <title>{`${new Date(b.t).toISOString().slice(0, 16).replace('T', ' ')} UT · Kp ${b.kp.toFixed(2)} · ${b.past ? 'observed' : 'forecast'}`}</title>
+                  <title>{`${new Date(b.t).toISOString().slice(0, 16).replace('T', ' ')} UT · Kp ${num(b.kp, 2)} · ${b.past ? t('chart.observed') : t('chart.forecast')}`}</title>
                 </rect>
-                <text x={f(x + bw / 2)} y={f(Y1 - h - 6)} style={{ fill: b.past ? C.soft : '#fff', font: `600 ${fs}px 'Barlow'`, textAnchor: 'middle' }}>{b.kp.toFixed(2)}</text>
+                <text x={f(x + bw / 2)} y={f(Y1 - h - 6)} style={{ fill: b.past ? C.soft : '#fff', font: `600 ${fs}px 'Barlow'`, textAnchor: 'middle' }}>{num(b.kp, 2)}</text>
                 {unit === 'hour'
                   ? <text x={f(x + bw / 2)} y={Y1 + 18} style={{ ...monoText(10), textAnchor: 'middle' }}>{new Date(b.t).toISOString().slice(11, 13)}</text>
                   : (
@@ -209,6 +212,7 @@ interface LineProps {
 /** Time series panel with the latest value, UT time axis and gaps where data is missing. */
 export function LineChart({ title, unit, points, color, decimals = 0, forecastAfter, zero, note }: LineProps) {
   const [ref, W] = useWidth<HTMLDivElement>();
+  const { t, num } = useI18n();
   const H = 190, X0 = 44, X1 = W - 10, TOP = 10, BOT = 160;
   const pts = points.filter((p): p is { t: number; v: number } => p.v !== null);
   const last = [...pts].reverse().find(p => forecastAfter === undefined || p.t <= forecastAfter) ?? pts[pts.length - 1];
@@ -241,25 +245,25 @@ export function LineChart({ title, unit, points, color, decimals = 0, forecastAf
     <figure style={{ margin: 0, display: 'flex', flexDirection: 'column', gap: 6, padding: '14px 14px 8px', border: '1px solid var(--line-2)', borderRadius: 14, background: '#070807' }}>
       <figcaption style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
         <span style={{ fontWeight: 700, fontSize: 15 }}>{title}</span>
-        <span className="mono" style={{ fontSize: 13, color }}>{last ? `${last.v.toFixed(decimals).replace('-', '−')} ${unit}` : '—'}</span>
+        <span className="mono" style={{ fontSize: 13, color }}>{last ? `${num(last.v, decimals)} ${unit}` : '—'}</span>
       </figcaption>
       <div ref={ref} style={{ minHeight: H }}>
         {W > 0 && pts.length > 1 && (
           <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }} role="img"
-            aria-label={`${title}, last ${Math.round(span / 36e5)} hours${last ? `, latest ${last.v.toFixed(decimals)} ${unit}` : ''}`}>
+            aria-label={`${title}, ${t('chart.lastHours', { n: Math.round(span / 36e5) })}${last ? `, ${t('chart.latest', { value: `${num(last.v, decimals)} ${unit}` })}` : ''}`}>
             {ys.map(v => (
               <g key={v}>
                 <line x1={X0} x2={X1} y1={f(y(v))} y2={f(y(v))} style={{ stroke: '#fff', strokeOpacity: zero && v === 0 ? .35 : .07 }} />
-                <text x={X0 - 6} y={f(y(v)) + 4} style={{ ...monoText(10), textAnchor: 'end' }}>{String(v).replace('-', '−')}</text>
+                <text x={X0 - 6} y={f(y(v)) + 4} style={{ ...monoText(10), textAnchor: 'end' }}>{num(v, String(v).split('.')[1]?.length ?? 0)}</text>
               </g>
             ))}
-            {hours.map(t => (
-              <text key={t} x={f(x(t))} y={BOT + 20} style={{ ...monoText(10), textAnchor: 'middle' }}>{new Date(t).toISOString().slice(11, 16)}</text>
+            {hours.map(h => (
+              <text key={h} x={f(x(h))} y={BOT + 20} style={{ ...monoText(10), textAnchor: 'middle' }}>{new Date(h).toISOString().slice(11, 16)}</text>
             ))}
             {paths.map((p, i) => <path key={i} d={p.d} style={{ fill: 'none', stroke: color, strokeWidth: 1.6, strokeDasharray: p.dashed ? '4 4' : undefined, strokeLinejoin: 'round' }} />)}
           </svg>
         )}
-        {W > 0 && pts.length <= 1 && <div style={{ height: H, display: 'grid', placeItems: 'center', color: C.muted, fontWeight: 600 }}>No recent data</div>}
+        {W > 0 && pts.length <= 1 && <div style={{ height: H, display: 'grid', placeItems: 'center', color: C.muted, fontWeight: 600 }}>{t('chart.noRecent')}</div>}
       </div>
       {note && <span style={{ fontSize: 12, color: C.muted }}>{note}</span>}
     </figure>

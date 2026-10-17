@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Field } from '../components/Field';
 import { useAuth } from '../lib/auth';
 import { useStore } from '../store';
+import { useI18n } from '../i18n/I18n';
 
 type Mode = 'signin' | 'signup' | 'reset';
 
@@ -12,6 +13,7 @@ export function SignIn() {
   const { go, signIn: demoSignIn } = useStore();
   const auth = useAuth();
   const router = useRouter();
+  const { t, tx } = useI18n();
   const [mode, setMode] = useState<Mode>('signin');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -40,10 +42,10 @@ export function SignIn() {
     } else if (mode === 'signup') {
       const r = await auth.signUp(email, password, name.trim());
       if (r.error) setError(r.error);
-      else if (r.needsConfirmation) setNotice(`We sent a confirmation link to ${email}. Open it to finish creating your account.`);
+      else if (r.needsConfirmation) setNotice(t('signin.confirmSent', { email }));
     } else {
       const r = await auth.sendPasswordReset(email);
-      if (r.error) setError(r.error); else setNotice(`If an account exists for ${email}, a reset link is on its way.`);
+      if (r.error) setError(r.error); else setNotice(t('signin.resetSent', { email }));
     }
     setBusy(false);
   };
@@ -55,7 +57,7 @@ export function SignIn() {
     if (r.error) setError(r.error);
   };
 
-  const heading = mode === 'signup' ? ['Create', 'account'] : mode === 'reset' ? ['Reset', 'password'] : ['Welcome', 'back'];
+  const heading = mode === 'signup' ? [t('signin.h.signupA'), t('signin.h.signupB')] : mode === 'reset' ? [t('signin.h.resetA'), t('signin.h.resetB')] : [t('signin.h.signinA'), t('signin.h.signinB')];
   const switchTo = (m: Mode) => { setMode(m); setError(null); setNotice(null); };
 
   return (
@@ -64,16 +66,16 @@ export function SignIn() {
       <form onSubmit={submit}
         style={{ position: 'relative', width: '100%', maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 18, padding: '36px clamp(20px, 6vw, 32px)', background: 'rgba(0,0,0,.82)', border: '1px solid var(--line-2)', borderRadius: 20 }}>
         <h1 className="display" style={{ fontSize: 'clamp(40px, 12vw, 52px)', lineHeight: .9 }}>{heading[0]}<br /><span className="hl">{heading[1]}</span></h1>
-        {mode === 'signup' && <Field label="NAME" placeholder="Your name" autoComplete="name" value={name} onChange={e => setName(e.target.value)} />}
-        <Field label="EMAIL" placeholder="you@example.com" type="email" autoComplete="email" required={auth.configured} value={email} onChange={e => setEmail(e.target.value)} />
+        {mode === 'signup' && <Field label={t('field.name')} placeholder={t('field.namePlaceholder')} autoComplete="name" value={name} onChange={e => setName(e.target.value)} />}
+        <Field label={t('field.email')} placeholder={t('field.emailPlaceholder')} type="email" autoComplete="email" required={auth.configured} value={email} onChange={e => setEmail(e.target.value)} />
         {mode !== 'reset' && (
-          <Field label="PASSWORD" placeholder="••••••••" type="password" autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+          <Field label={t('field.password')} placeholder="••••••••" type="password" autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
             required={auth.configured} minLength={auth.configured ? 8 : undefined} value={password} onChange={e => setPassword(e.target.value)} />
         )}
-        {error && <span role="alert" style={{ fontSize: 14, color: 'var(--red)' }}>{error}</span>}
+        {error && <span role="alert" style={{ fontSize: 14, color: 'var(--red)' }}>{tx(error)}</span>}
         {notice && <span role="status" style={{ fontSize: 14, color: 'var(--green)' }}>{notice}</span>}
         <button type="submit" disabled={busy} className="btn pill pill-primary" style={{ fontSize: 16, padding: 15, opacity: busy ? .6 : 1 }}>
-          {busy ? 'One moment…' : mode === 'signup' ? 'Create account' : mode === 'reset' ? 'Send reset link' : 'Sign in'}
+          {busy ? t('common.oneMoment') : mode === 'signup' ? t('signin.create') : mode === 'reset' ? t('signin.sendReset') : t('nav.signIn')}
         </button>
         {mode !== 'reset' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -83,11 +85,11 @@ export function SignIn() {
         )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center', fontSize: 14, color: 'var(--muted)', textAlign: 'center' }}>
           {mode === 'signin' && auth.configured && <>
-            <span>New here? <button type="button" className="btn" onClick={() => switchTo('signup')} style={link}>Create an account</button></span>
-            <button type="button" className="btn" onClick={() => switchTo('reset')} style={{ fontWeight: 600 }}>Forgot your password?</button>
+            <span>{t('signin.newHere')} <button type="button" className="btn" onClick={() => switchTo('signup')} style={link}>{t('signin.createLink')}</button></span>
+            <button type="button" className="btn" onClick={() => switchTo('reset')} style={{ fontWeight: 600 }}>{t('signin.forgot')}</button>
           </>}
-          {mode !== 'signin' && <span>Have an account? <button type="button" className="btn" onClick={() => switchTo('signin')} style={link}>Sign in</button></span>}
-          {!auth.configured && <span>New here? <button type="button" className="btn" onClick={() => go('plans')} style={link}>Pick a membership</button></span>}
+          {mode !== 'signin' && <span>{t('signin.haveAccount')} <button type="button" className="btn" onClick={() => switchTo('signin')} style={link}>{t('nav.signIn')}</button></span>}
+          {!auth.configured && <span>{t('signin.newHere')} <button type="button" className="btn" onClick={() => go('plans')} style={link}>{t('signin.pickMembership')}</button></span>}
         </div>
       </form>
     </main>

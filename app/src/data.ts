@@ -2,56 +2,34 @@
 
 export type TierId = 'free' | 'chaser';
 
+/** Plan names and copy are translated: see `tier.{id}` and `tier.{id}.blurb` in the messages. */
 export interface Tier {
   id: TierId;
-  name: string;
   /** Monthly price in USD. */
   m: number;
   /** Annual price in USD. */
   y: number;
-  blurb: string;
   /** Saved-location allowance. */
   locs: number;
   accent: string;
 }
 
 export const TIERS: Tier[] = [
-  { id: 'free', name: 'Free', m: 0, y: 0, blurb: 'The live sky, for the curious.', locs: 1, accent: '#C9D0CB' },
-  { id: 'chaser', name: 'Chaser', m: 5, y: 50, blurb: 'Everything you need to catch the aurora.', locs: 10, accent: '#6CFF2B' },
+  { id: 'free', m: 0, y: 0, locs: 1, accent: '#C9D0CB' },
+  { id: 'chaser', m: 5, y: 50, locs: 10, accent: '#6CFF2B' },
 ];
 
-/** Feature label and the index of the tier that introduces it. */
-export const FEATS: [string, number][] = [
-  ['Live Kp, oval & solar wind', 0],
-  ['3-day forecast (daily peak Kp)', 0],
-  ['Daily email digest', 0],
-  ['Instant push alerts', 1],
-  ['3-hour Kp forecast', 1],
-  ['27-day outlook', 1],
-  ['Hour-by-hour cloud + darkness', 1],
-  ['Solar wind & hemispheric power graphs', 1],
-  ['SMS alerts', 1],
-  ['Bz & substorm onset alerts', 1],
-  ['Dark-sky spot map', 1],
-  ['Up to 10 saved locations', 1],
-];
+/** Feature (message key `feat.{id}`) and the index of the tier that introduces it. */
+export const FEATS = [
+  ['live', 0], ['forecast3d', 0], ['digest', 0], ['push', 1], ['kp3h', 1], ['outlook27', 1],
+  ['hourly', 1], ['solarGraphs', 1], ['sms', 1], ['substorm', 1], ['darkSky', 1], ['locations10', 1],
+] as const;
 
-export const COMPARE: [string, string[]][] = [
-  ['Saved locations', ['1', '10']],
-  ['Alert channels', ['Email', 'Email, push, SMS']],
-  ['Alert speed', ['Daily digest', '< 1 min']],
-  ['Forecast range', ['3 days', '27 days']],
-  ['Kp forecast detail', ['Daily peak', '3-hourly']],
-  ['Solar activity graphs', ['—', '✓']],
-  ['Cloud & darkness model', ['—', '✓']],
-  ['Substorm onset alerts', ['—', '✓']],
-  ['Kp history', ['7 days', '2 years']],
-];
+/** Comparison rows: label `cmp.{id}`, cells `cmp.{id}.{tier}`. A cell reading "—" means not included. */
+export const COMPARE = ['locations', 'channels', 'speed', 'range', 'detail', 'solar', 'cloud', 'substorm', 'history'] as const;
 
 /** Index into TIERS of the first plan that includes each gated feature. */
 export const ENTITLEMENTS = { kp3h: 1, outlook27: 1, solarGraphs: 1 } as const;
-
-export const KP_NAME = ['', '', 'Quiet', 'Unsettled', 'Active', 'G1 Minor', 'G2 Moderate', 'G3 Strong', 'G4 Severe', 'G5 Extreme'];
 
 export const C = {
   green: '#6CFF2B',
@@ -97,17 +75,8 @@ export const polar = {
 export type TriggerKey = 'kp' | 'cme' | 'clear' | 'bz' | 'sub';
 export type ChannelKey = 'email' | 'push' | 'sms';
 
-/** [key, label, sub, minimum tier index] */
-export const TRIGGER_DEFS: [TriggerKey, string, string, number][] = [
-  ['kp', 'Kp threshold reached', 'Uses the level you set above', 0],
-  ['cme', 'CME arrival & storm watches', 'When NOAA issues a G-scale watch', 0],
-  ['clear', 'Clear sky + aurora', 'Only when your clouds are under 40%', 1],
-  ['bz', 'Bz turns south', 'Sustained −10 nT for 15 minutes', 1],
-  ['sub', 'Substorm onset', 'Sudden brightening detected', 1],
-];
+/** [key, minimum tier index]; label `trigger.{key}`, detail `trigger.{key}.sub`. */
+export const TRIGGER_DEFS: [TriggerKey, number][] = [['kp', 0], ['cme', 0], ['clear', 1], ['bz', 1], ['sub', 1]];
 
-export const CHANNEL_DEFS: [ChannelKey, string, string, number][] = [
-  ['email', 'Email', 'Account email', 0], // replaced by the signed-in user's address
-  ['push', 'Push', 'Not set up', 1],
-  ['sms', 'SMS', 'Not set up', 1],
-];
+/** [key, minimum tier index]; label `channel.{key}`, detail `channel.{key}.sub` (email shows the account address instead). */
+export const CHANNEL_DEFS: [ChannelKey, number][] = [['email', 0], ['push', 1], ['sms', 1]];

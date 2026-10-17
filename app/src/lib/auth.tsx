@@ -4,6 +4,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import type { Provider, User } from '@supabase/supabase-js';
 import type { TierId } from '../data';
 import { supabase } from './supabase';
+import { applyLocale, useI18n } from '../i18n/I18n';
+import { isLocale, type Locale } from '../i18n/config';
 
 export interface Profile {
   id: string;
@@ -12,10 +14,12 @@ export interface Profile {
   billingCycle: 'monthly' | 'annual';
   trialEndsAt: string | null;
   createdAt: string;
+  /** Chosen language; null until the user (or their first visit) sets one. */
+  locale: Locale | null;
 }
 
-interface ProfileRow { id: string; display_name: string | null; plan: TierId; billing_cycle: 'monthly' | 'annual'; trial_ends_at: string | null; created_at: string }
-const fromRow = (r: ProfileRow): Profile => ({ id: r.id, displayName: r.display_name, plan: r.plan, billingCycle: r.billing_cycle, trialEndsAt: r.trial_ends_at, createdAt: r.created_at });
+interface ProfileRow { id: string; display_name: string | null; plan: TierId; billing_cycle: 'monthly' | 'annual'; trial_ends_at: string | null; created_at: string; locale: string | null }
+const fromRow = (r: ProfileRow): Profile => ({ id: r.id, displayName: r.display_name, plan: r.plan, billingCycle: r.billing_cycle, trialEndsAt: r.trial_ends_at, createdAt: r.created_at, locale: isLocale(r.locale) ? r.locale : null });
 
 type Result = { error: string | null };
 
@@ -35,6 +39,8 @@ interface AuthCtx {
   sendPasswordReset: (email: string) => Promise<Result>;
   updatePassword: (password: string) => Promise<Result>;
   updateName: (name: string) => Promise<Result>;
+  /** Save the language to the profile (and user metadata, for localised emails). */
+  saveLocale: (locale: Locale) => Promise<Result>;
   signOut: () => Promise<void>;
   startTrial: (tier: TierId, cycle: 'monthly' | 'annual') => Promise<Result>;
   cancelMembership: () => Promise<Result>;
@@ -42,12 +48,16 @@ interface AuthCtx {
 
 const Ctx = createContext<AuthCtx | null>(null);
 
+/** Known errors become message keys (translated where shown); anything else is passed through as-is. */
 const friendly = (msg: string) =>
-  /invalid login/i.test(msg) ? 'That email and password don’t match an account.'
-    : /already registered|already exists/i.test(msg) ? 'An account with that email already exists. Sign in instead.'
-    : /provider is not enabled|unsupported provider/i.test(msg) ? 'That sign-in method isn’t switched on yet. Use email and password.'
-    : /email not confirmed/i.test(msg) ? 'Confirm your email first. Check your inbox for the link.'
-    : /failed to fetch|network|load failed/i.test(msg) ? 'Can’t reach the account service right now. Check your connection and try again.'
+  /invalid login/i.test(msg) ? 'err.invalidLogin'
+    : /already registered|already exists/i.test(msg) ? 'err.exists'
+    : /provider is not enabled|unsupported provider/i.test(msg) ? 'err.provider'
+    : /email not confirmed/i.test(msg) ? 'err.unconfirmed'
+    : /failed to fetch|network|load failed/i.test(msg) ? 'err.network'
+    : /different from the old password/i.test(msg) ? 'err.samePassword'
+    : /password should be|weak password/i.test(msg) ? 'err.weakPassword'
+    : /rate limit|too many requests/i.test(msg) ? 'err.rateLimit'
     : msg;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -55,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [ready, setReady] = useState(!sb);
+  const { locale } = useI18n();
 
   const loadProfile = useCallback(async (u: User | null) => {
     if (!sb || !u) { setProfile(null); return; }
@@ -79,8 +90,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => { live = false; sub.subscription.unsubscribe(); };
   }, [sb, loadProfile]);
 
+  // The account's language wins over this browser's: switch to it once per session.
+  // An account without one adopts the language in use now.
+  useEffect(() => {
+    if (!sb || !profile) return;
+    if (!profile.locale) { void sb.from('profiles').update({ locale }).eq('id', profile.id); return; }
+    if (profile.locale === locale) return;
+    try {
+      if (sessionStorage.getItem('pl.lang.synced')) return;
+      sessionStorage.setItem('pl.lang.synced', '1');
+    } catch { return; }
+    applyLocale(profile.locale);
+  }, [sb, profile, locale]);
+
   const value = useMemo<AuthCtx>(() => {
-    const none = { error: 'Accounts are not connected yet.' };
+    const none = { error: 'err.notConnected' };
     const origin = typeof window === 'undefined' ? '' : window.location.origin;
     const trialExpired = !!profile && profile.plan !== 'free' && !!profile.trialEndsAt && Date.parse(profile.trialEndsAt) < Date.now();
     return {
@@ -89,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       trialExpired,
       signUp: async (email, password, name) => {
         if (!sb) return { ...none, needsConfirmation: false };
-        const { data, error } = await sb.auth.signUp({ email, password, options: { data: { display_name: name }, emailRedirectTo: `${origin}/dashboard` } });
+        const { data, error } = await sb.auth.signUp({ email, password, options: { data: { display_name: name, locale }, emailRedirectTo: `${origin}/dashboard` } });
         return { error: error ? friendly(error.message) : null, needsConfirmation: !error && !data.session };
       },
       signIn: async (email, password) => {
@@ -118,6 +142,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!error) await loadProfile(user);
         return { error: error?.message ?? null };
       },
+      saveLocale: async next => {
+        if (!sb || !user) return none;
+        const [{ error }] = await Promise.all([
+          sb.from('profiles').update({ locale: next }).eq('id', user.id),
+          sb.auth.updateUser({ data: { locale: next } }),
+        ]);
+        return { error: error?.message ?? null };
+      },
       signOut: async () => { if (sb) await sb.auth.signOut(); setProfile(null); },
       startTrial: async (tier, cycle) => {
         if (!sb || !user) return none;
@@ -132,7 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: error?.message ?? null };
       },
     };
-  }, [sb, ready, user, profile, loadProfile]);
+  }, [sb, ready, user, profile, loadProfile, locale]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
