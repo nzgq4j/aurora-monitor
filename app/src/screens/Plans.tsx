@@ -1,3 +1,5 @@
+'use client';
+
 import { C, COMPARE, FEATS, TIERS } from '../data';
 import { displayPrice, useStore } from '../store';
 
@@ -8,11 +10,11 @@ export function Plans() {
   const seg = (on: boolean) => ({ padding: '9px 16px', borderRadius: 999, fontWeight: 700, fontSize: 14, background: on ? '#fff' : 'transparent', color: on ? '#000' : C.muted });
 
   return (
-    <main data-screen-label="Plans" className="wrap" style={{ padding: '48px 32px 56px', display: 'flex', flexDirection: 'column', gap: 36 }}>
+    <main data-screen-label="Plans" className="wrap" style={{ padding: '48px var(--gutter) 56px', display: 'flex', flexDirection: 'column', gap: 36 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 24, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <span className="kicker">MEMBERSHIP</span>
-          <h1 className="display" style={{ fontSize: 80, lineHeight: .88 }}>Choose your<br /><span className="hl">sky</span></h1>
+          <h1 className="display" style={{ fontSize: 'var(--h-hero)', lineHeight: .88 }}>Choose your<br /><span className="hl">sky</span></h1>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div role="group" aria-label="Billing cycle" style={{ display: 'flex', padding: 4, border: '1px solid var(--line-2)', borderRadius: 999 }}>
@@ -23,7 +25,7 @@ export function Plans() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(260px,100%),1fr))', gap: 16 }}>
         {TIERS.map((t, i) => {
           const cur = s.signedIn && i === planIndex;
           const hot = t.id === 'chaser';
@@ -64,7 +66,8 @@ export function Plans() {
         })}
       </div>
 
-      <div className="rule-top" style={{ display: 'flex', flexDirection: 'column' }}>
+      <div className="rule-top hscroll">
+      <div style={{ display: 'flex', flexDirection: 'column', minWidth: 600 }}>
         <div style={{ display: 'grid', gridTemplateColumns: COMPARE_COLS, gap: 12, padding: '20px 0 14px', borderBottom: '1px solid var(--line-2)' }}>
           <span className="display" style={{ fontSize: 28 }}>Compare</span>
           {TIERS.map(t => <span key={t.id} style={{ fontFamily: 'var(--f-display)', fontWeight: 800, fontSize: 15, color: t.accent, alignSelf: 'end' }}>{t.name}</span>)}
@@ -77,6 +80,7 @@ export function Plans() {
             ))}
           </div>
         ))}
+      </div>
       </div>
     </main>
   );

@@ -1,3 +1,5 @@
+'use client';
+
 import { kpScale, nowStats } from '../data';
 import { KpOutlookChart, PolarOval } from '../components/Charts';
 import { useStore } from '../store';
@@ -5,13 +7,13 @@ import { useStore } from '../store';
 export function Home() {
   const { planIndex, go } = useStore();
   return (
-    <main data-screen-label="Now" className="wrap" style={{ padding: '40px 32px 48px', display: 'flex', flexDirection: 'column', gap: 36 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(420px,1fr))', gap: 40, alignItems: 'center' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <main data-screen-label="Now" className="wrap" style={{ padding: '40px var(--gutter) 48px', display: 'flex', flexDirection: 'column', gap: 36 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(420px,100%),1fr))', gap: 40, alignItems: 'center' }}>
+        <div className="hero-copy">
           <div className="kicker" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green)' }} />LIVE · UPDATED 2 MIN AGO
           </div>
-          <h1 className="display" style={{ fontSize: 80, lineHeight: .88 }}>
+          <h1 className="display" style={{ fontSize: 'clamp(36px, 12cqi, 80px)', lineHeight: .88 }}>
             G1 Storm<br /><span className="hl" style={{ whiteSpace: 'nowrap' }}>In progress</span>
           </h1>
           <p style={{ margin: 0, maxWidth: 540, fontSize: 18, lineHeight: 1.45, color: 'var(--soft)', textWrap: 'pretty' }}>
@@ -25,9 +27,9 @@ export function Home() {
               </div>
             ))}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)' }}>
+          <div className="now-stats">
             {nowStats.map(s => (
-              <div key={s.label} style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 4, borderRight: '1px solid var(--line)' }}>
+              <div key={s.label} className="now-stat">
                 <span className="label">{s.label}</span>
                 <span className="stat-value" style={{ fontSize: 32 }}>
                   {s.value}<span style={{ fontSize: 14, fontWeight: 600, color: 'var(--muted)', marginLeft: 4 }}>{s.unit}</span>
@@ -48,16 +50,16 @@ export function Home() {
 
       <div className="rule-top" style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 24, flexWrap: 'wrap' }}>
-          <h2 className="display" style={{ fontSize: 40, lineHeight: 1 }}>Geomagnetic <span className="hl">outlook</span></h2>
+          <h2 className="display" style={{ fontSize: 'var(--h-section)', lineHeight: 1 }}>Geomagnetic <span className="hl">outlook</span></h2>
           <span style={{ fontSize: 13, color: 'var(--muted)' }}>Observed Kp · NOAA 3-day forecast</span>
         </div>
-        <KpOutlookChart />
+        <div className="hscroll"><div style={{ minWidth: 640 }}><KpOutlookChart /></div></div>
       </div>
 
       {planIndex === 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', gap: 24, alignItems: 'center', padding: '28px 32px', border: '1px solid var(--line-2)', borderRadius: 16, background: 'radial-gradient(120% 140% at 100% 100%,rgba(89,255,58,.18),rgba(0,0,0,0) 60%)' }}>
+        <div className="cta-banner" style={{ border: '1px solid var(--line-2)', borderRadius: 16, background: 'radial-gradient(120% 140% at 100% 100%,rgba(89,255,58,.18),rgba(0,0,0,0) 60%)' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <span className="display" style={{ fontSize: 36, lineHeight: 1 }}>Never miss <span className="hl">a night</span></span>
+            <span className="display" style={{ fontSize: 'var(--h-section)', lineHeight: 1 }}>Never miss <span className="hl">a night</span></span>
             <span style={{ fontSize: 16, color: 'var(--soft)' }}>Instant alerts when the oval reaches your sky, with clouds and darkness taken into account.</span>
           </div>
           <button type="button" className="btn pill pill-primary" onClick={() => go('plans')} style={{ fontSize: 15, padding: '14px 22px', whiteSpace: 'nowrap' }}>See memberships</button>

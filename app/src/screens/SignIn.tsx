@@ -1,3 +1,5 @@
+'use client';
+
 import { useStore } from '../store';
 import { Field } from '../components/Field';
 
@@ -8,8 +10,8 @@ export function SignIn() {
     <main data-screen-label="Sign in" style={{ position: 'relative', overflow: 'hidden', minHeight: 'calc(100vh - 72px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 24px' }}>
       <div aria-hidden="true" style={{ position: 'absolute', left: '50%', bottom: '-62vh', width: '120vh', height: '120vh', transform: 'translateX(-50%)', borderRadius: '50%', border: '60px solid rgba(89,255,58,.55)', filter: 'blur(50px)' }} />
       <form onSubmit={e => { e.preventDefault(); signIn(); }}
-        style={{ position: 'relative', width: '100%', maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 18, padding: '36px 32px', background: 'rgba(0,0,0,.82)', border: '1px solid var(--line-2)', borderRadius: 20 }}>
-        <h1 className="display" style={{ fontSize: 52, lineHeight: .9 }}>Welcome<br /><span className="hl">back</span></h1>
+        style={{ position: 'relative', width: '100%', maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 18, padding: '36px clamp(20px, 6vw, 32px)', background: 'rgba(0,0,0,.82)', border: '1px solid var(--line-2)', borderRadius: 20 }}>
+        <h1 className="display" style={{ fontSize: 'clamp(40px, 12vw, 52px)', lineHeight: .9 }}>Welcome<br /><span className="hl">back</span></h1>
         <Field label="EMAIL" placeholder="you@example.com" type="email" autoComplete="email" />
         <Field label="PASSWORD" placeholder="••••••••" type="password" autoComplete="current-password" />
         <button type="submit" className="btn pill pill-primary" style={{ fontSize: 16, padding: 15 }}>Sign in</button>
