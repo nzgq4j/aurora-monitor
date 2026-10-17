@@ -67,7 +67,7 @@ function Outlook({ data }: { data: NowData }) {
   const view = picked ?? (can.hour ? 'hour' : 'day');
   const daily = dailyPeaks(data.series);
   const chart = {
-    hour: <KpBarChart unit="hour" minBar={34} now={data.fetchedAt} bars={data.series.map(p => ({ t: p.t, kp: p.kp, past: p.kind !== 'predicted' }))} label="Kp index in 3-hour blocks, observed and forecast" />,
+    hour: <KpBarChart unit="hour" minBar={28} now={data.fetchedAt} bars={data.series.map(p => ({ t: p.t, kp: p.kp, past: p.kind !== 'predicted' }))} label="Kp index in 3-hour blocks, observed and forecast" />,
     day: <KpBarChart unit="day" now={data.fetchedAt} bars={daily} label="Highest Kp each day, observed and forecast" />,
     month: <KpBarChart unit="day" minBar={46} now={data.fetchedAt} bars={data.outlook.map(d => ({ t: d.t, kp: d.kp, past: false }))} label="NOAA 27-day outlook of the largest Kp each day" />,
   };

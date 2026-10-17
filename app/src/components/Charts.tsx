@@ -148,6 +148,13 @@ export function KpBarChart({ bars, unit, now, minBar = 0, label }: { bars: KpBar
             </g>
           ))}
           {days.slice(1).map(d => <line key={d.t} x1={f(X0 + d.i0 * bw)} x2={f(X0 + d.i0 * bw)} y1={TOP - 10} y2={H - 4} style={{ stroke: '#fff', strokeOpacity: .14 }} />)}
+          {/* Drawn first so bars and their values sit on top of the line. */}
+          {nowX !== null && (
+            <>
+              <line x1={f(nowX)} x2={f(nowX)} y1={TOP - 8} y2={Y1 + 2} style={{ stroke: '#fff', strokeWidth: 2, strokeDasharray: '6 4' }} />
+              <text x={f(nowX)} y={TOP - 12} style={{ fill: '#fff', font: "700 11px 'Barlow'", textAnchor: 'middle' }}>NOW</text>
+            </>
+          )}
           {bars.map((b, i) => {
             const x = X0 + i * bw, h = Math.max(1.5, b.kp * U);
             return (
@@ -170,12 +177,6 @@ export function KpBarChart({ bars, unit, now, minBar = 0, label }: { bars: KpBar
           {days.map(d => (
             <text key={d.t} x={f(X0 + ((d.i0 + d.i1 + 1) / 2) * bw)} y={Y1 + 44} style={{ fill: C.soft, font: "600 13px 'Barlow'", textAnchor: 'middle' }}>{`${weekday(d.t)} ${dayLabel(d.t)}`}</text>
           ))}
-          {nowX !== null && (
-            <>
-              <line x1={f(nowX)} x2={f(nowX)} y1={TOP - 8} y2={Y1 + 2} style={{ stroke: '#fff', strokeWidth: 2, strokeDasharray: '6 4' }} />
-              <text x={f(nowX)} y={TOP - 12} style={{ fill: '#fff', font: "700 11px 'Barlow'", textAnchor: 'middle' }}>NOW</text>
-            </>
-          )}
         </svg>
       )}
     </div>
