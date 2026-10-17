@@ -1,6 +1,8 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { FEATS } from '../data';
+import { PAYMENTS, useAuth } from '../lib/auth';
 import { Field } from '../components/Field';
 import { useRouter } from 'next/navigation';
 import { useStore } from '../store';
@@ -10,6 +12,14 @@ export function Checkout() {
   const { s, pending, pendingIndex, go, confirm, live, signedIn } = useStore();
   const router = useRouter();
   const { t, money, date } = useI18n();
+  const { profile } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const [cancelled, setCancelled] = useState(false);
+  // Back from Stripe without paying.
+  useEffect(() => { setCancelled(new URLSearchParams(window.location.search).get('checkout') === 'cancelled'); }, []);
+  // Card payments: one free trial per account (a trial already used means paying from today).
+  const stripe = live && PAYMENTS;
+  const trial = !stripe || !profile?.trialEndsAt;
   const trialEnd = date(Date.now() + 14 * 864e5, { month: 'short', day: 'numeric', year: 'numeric' });
   const cycle = s.annual ? t('plans.annual') : t('plans.monthly');
   const price = money(s.annual ? pending.y : pending.m);
@@ -19,16 +29,21 @@ export function Checkout() {
 
   return (
     <main data-screen-label="Checkout" style={{ maxWidth: 1080, margin: '0 auto', padding: '48px var(--gutter) 56px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(360px,100%),1fr))', gap: 40, alignItems: 'start' }}>
-      <form style={{ display: 'flex', flexDirection: 'column', gap: 22 }} onSubmit={e => { e.preventDefault(); confirm(); }}>
+      <form style={{ display: 'flex', flexDirection: 'column', gap: 22 }} onSubmit={async e => { e.preventDefault(); setBusy(true); await confirm(); setBusy(false); }}>
         <button type="button" className="btn mono" onClick={() => go('plans')} style={{ fontSize: 12, color: 'var(--muted)', alignSelf: 'flex-start' }}>{t('checkout.back')}</button>
         <h1 className="display" style={{ fontSize: 'clamp(40px, 11vw, 60px)', lineHeight: .9, overflowWrap: 'anywhere' }}>{t('checkout.joinAs')}<br /><span className="hl">{name}</span></h1>
         {live ? (
           <>
-            <p style={{ margin: 0, fontSize: 16, lineHeight: 1.5, color: 'var(--soft)' }}>{t('checkout.liveBody')}</p>
+            <p style={{ margin: 0, fontSize: 16, lineHeight: 1.5, color: 'var(--soft)' }}>
+              {!stripe ? t('checkout.liveBody') : trial ? t('checkout.stripeTrial', { date: trialEnd }) : t('checkout.stripeNoTrial')}
+            </p>
+            {cancelled && <span role="status" style={{ fontSize: 14, color: 'var(--amber)' }}>{t('checkout.cancelled')}</span>}
             {signedIn
-              ? <button type="submit" className="btn pill pill-primary" style={{ fontSize: 16, padding: 16 }}>{t('checkout.start')}</button>
+              ? <button type="submit" disabled={busy} className="btn pill pill-primary" style={{ fontSize: 16, padding: 16, opacity: busy ? .6 : 1 }}>
+                  {busy ? t('common.oneMoment') : !stripe ? t('checkout.start') : trial ? t('checkout.startStripe') : t('checkout.subscribe')}
+                </button>
               : <button type="button" className="btn pill pill-primary" onClick={() => router.push('/signin?next=/checkout')} style={{ fontSize: 16, padding: 16 }}>{t('checkout.signInToStart')}</button>}
-            <span style={{ fontSize: 13, color: 'var(--muted)', textAlign: 'center' }}>{t('checkout.trialEnds', { date: trialEnd })}</span>
+            <span style={{ fontSize: 13, color: 'var(--muted)', textAlign: 'center' }}>{stripe ? t('checkout.secure') : t('checkout.trialEnds', { date: trialEnd })}</span>
           </>
         ) : (
           <>
@@ -58,12 +73,13 @@ export function Checkout() {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, borderTop: '1px solid var(--line-2)', paddingTop: 16, fontSize: 15 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--muted)' }}>{t('checkout.cyclePrice', { cycle })}</span><span className="mono">{price}</span></div>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--muted)' }}>{t('checkout.freeTrial')}</span><span className="mono">{t('checkout.days14')}</span></div>
+          {trial && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--muted)' }}>{t('checkout.freeTrial')}</span><span className="mono">{t('checkout.days14')}</span></div>}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderTop: '1px solid var(--line-2)', paddingTop: 12 }}>
             <span style={{ fontWeight: 700 }}>{t('checkout.dueToday')}</span>
-            <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 32 }}>{money(0)}</span>
+            <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 32 }}>{trial ? money(0) : price}</span>
           </div>
-          <span style={{ fontSize: 13, color: 'var(--muted)' }}>{live ? t('checkout.thenLive', { price, per }) : t('checkout.thenDemo', { price, per, date: trialEnd })}</span>
+          <span style={{ fontSize: 13, color: 'var(--muted)' }}>{stripe ? (trial ? t('checkout.thenStripe', { price, per, date: trialEnd }) : t('checkout.taxNote'))
+            : live ? t('checkout.thenLive', { price, per }) : t('checkout.thenDemo', { price, per, date: trialEnd })}</span>
         </div>
       </aside>
     </main>

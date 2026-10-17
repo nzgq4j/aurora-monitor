@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { initials, useAuth } from '../lib/auth';
+import { PAYMENTS, initials, useAuth } from '../lib/auth';
 import { C, CHANNEL_DEFS, TIERS, TRIGGER_DEFS, f, kpBarColor, kpColor } from '../data';
 import { G_SCALE, kpNeeded, moon } from '../lib/astro';
 import type { AccountData } from '../lib/history';
@@ -27,6 +27,20 @@ export function Account({ data }: { data: AccountData }) {
   const { t } = useI18n();
   // With real accounts, the Dashboard needs a signed-in user.
   useEffect(() => { if (live && auth.ready && !auth.user) router.replace('/signin?next=/dashboard'); }, [live, auth.ready, auth.user, router]);
+  // Back from Stripe Checkout: the webhook updates the plan within seconds, so re-read the profile until it has.
+  const userId = auth.user?.id;
+  const { refreshProfile } = auth;
+  useEffect(() => {
+    if (!live || !userId || new URLSearchParams(window.location.search).get('checkout') !== 'success') return;
+    window.history.replaceState(null, '', '/dashboard');
+    set({ tab: 'overview', toast: t('toast.checkoutDone') });
+    let tries = 0;
+    const id = setInterval(async () => {
+      const p = await refreshProfile();
+      if (++tries >= 10 || p?.subscriptionStatus) clearInterval(id);
+    }, 2000);
+    return () => clearInterval(id);
+  }, [live, userId]); // eslint-disable-line react-hooks/exhaustive-deps -- run once per sign-in
   if (live && !auth.user) {
     return <main className="wrap" style={{ padding: '64px var(--gutter)', color: 'var(--muted)' }}>{auth.ready ? t('dash.redirecting') : t('dash.loading')}</main>;
   }
@@ -76,6 +90,15 @@ function usePlanLine() {
   const price = (annual: boolean) => (annual ? t('dash.perYear', { price: money(plan.y) }) : t('dash.perMonth', { price: money(plan.m) }));
   if (live) {
     if (planIndex === 0) return trialExpired ? t('dash.trialEnded') : t('dash.freeLine');
+    const sub = profile?.subscriptionStatus;
+    if (sub && profile?.currentPeriodEnd) {
+      const when = date(profile.currentPeriodEnd, { month: 'short', day: 'numeric', year: 'numeric' });
+      const state = sub === 'past_due' ? t('dash.pastDue')
+        : profile.cancelAtPeriodEnd ? t('dash.endsOn', { date: when })
+        : sub === 'trialing' ? t('dash.trialEnds', { date: when })
+        : t('dash.renewsOn', { date: when });
+      return `${price(profile.billingCycle === 'annual')} · ${state}`;
+    }
     const trial = profile?.trialEndsAt ? ` · ${t('dash.trialEnds', { date: date(profile.trialEndsAt, { month: 'short', day: 'numeric', year: 'numeric' }) })}` : '';
     return price(profile?.billingCycle === 'annual') + trial;
   }
@@ -490,12 +513,14 @@ function Language() {
 }
 
 function Billing() {
-  const { s, plan, planIndex, go, cancelPlan, live } = useStore();
+  const { s, plan, planIndex, go, cancelPlan, openBilling, live } = useStore();
   const { profile } = useAuth();
   const { t, money } = useI18n();
+  const [opening, setOpening] = useState(false);
   const planName = t(`tier.${plan.id}`);
   const planLine = usePlanLine();
   const annual = live ? profile?.billingCycle === 'annual' : s.annual;
+  const stripeCustomer = live && PAYMENTS && !!profile?.hasBilling;
   return (
     <section aria-labelledby="billing-h" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <h2 id="billing-h" className="display" style={h2}>{t('dash.billing')}</h2>
@@ -510,10 +535,26 @@ function Billing() {
         </div>
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 22 }}>
           <span className="label">{t('billing.payment')}</span>
-          <span style={{ fontWeight: 700, fontSize: 18 }}>{t('billing.noMethod')}</span>
-          <span style={{ fontSize: 14, color: 'var(--soft)' }}>
-            {planIndex ? t('billing.after', { plan: planName, price: annual ? t('billing.aYear', { price: money(plan.y) }) : t('billing.aMonth', { price: money(plan.m) }) }) : t('billing.freeNever')}
-          </span>
+          {stripeCustomer ? (
+            <>
+              <span style={{ fontWeight: 700, fontSize: 18 }}>{t('billing.stripe')}</span>
+              {profile?.subscriptionStatus === 'past_due' && <span role="status" style={{ fontSize: 14, fontWeight: 600, color: C.amber }}>{t('billing.pastDue')}</span>}
+              <span style={{ fontSize: 14, color: 'var(--soft)' }}>{t('billing.manageBody')}</span>
+              <button type="button" className="btn" disabled={opening} onClick={async () => { setOpening(true); await openBilling(); setOpening(false); }}
+                style={{ fontWeight: 700, fontSize: 14, color: 'var(--green)', marginTop: 6, alignSelf: 'flex-start', opacity: opening ? .6 : 1 }}>
+                {opening ? t('common.oneMoment') : `${t('billing.manage')} →`}
+              </button>
+            </>
+          ) : (
+            <>
+              <span style={{ fontWeight: 700, fontSize: 18 }}>{t('billing.noMethod')}</span>
+              <span style={{ fontSize: 14, color: 'var(--soft)' }}>
+                {!planIndex ? t('billing.freeNever')
+                  : live && PAYMENTS ? t('billing.noCardNeeded')
+                  : t('billing.after', { plan: planName, price: annual ? t('billing.aYear', { price: money(plan.y) }) : t('billing.aMonth', { price: money(plan.m) }) })}
+              </span>
+            </>
+          )}
         </div>
       </div>
       {planIndex > 0 && (

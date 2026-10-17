@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { TIERS, type ChannelKey, type Tier, type TierId, type TriggerKey } from './data';
-import { useAuth } from './lib/auth';
+import { PAYMENTS, useAuth } from './lib/auth';
 import { supabase } from './lib/supabase';
 import { useI18n } from './i18n/I18n';
 import { LOCALES } from './i18n/config';
@@ -65,6 +65,8 @@ interface Store {
   signIn: () => void;
   signOut: () => Promise<void>;
   cancelPlan: () => Promise<void>;
+  /** Open Stripe's billing portal (card, invoices, plan changes, cancellation). */
+  openBilling: () => Promise<void>;
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -114,7 +116,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const planIndex = Math.max(0, TIERS.findIndex(t => t.id === planId));
     const pendingIndex = Math.max(1, TIERS.findIndex(t => t.id === s.pending));
     const pending = TIERS[pendingIndex];
+    const openBilling = async () => {
+      const r = await auth.openBillingPortal();
+      if (r.url) window.location.assign(r.url);
+      else set({ toast: t('toast.billingFailed') });
+    };
+    // A Stripe subscription is changed or cancelled in Stripe's portal, never by flipping the plan here.
+    const stripeManaged = ['trialing', 'active', 'past_due'].includes(auth.profile?.subscriptionStatus ?? '');
     const cancel = async () => {
+      if (live && stripeManaged) { await openBilling(); return; }
       if (live) {
         const { error } = await auth.cancelMembership();
         set({ tab: 'overview', toast: error ? t('toast.cancelFailed', { error: tx(error) }) : t('toast.cancelled') });
@@ -136,6 +146,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       confirm: async () => {
         if (live) {
           if (!auth.user) { go('signin'); return; }
+          if (PAYMENTS) {
+            const r = await auth.startCheckout(pending.id, s.annual ? 'annual' : 'monthly');
+            if (r.url) { window.location.assign(r.url); return; }
+            if (r.error === 'already_subscribed') { await openBilling(); return; }
+            set({ toast: t('toast.checkoutFailed') });
+            return;
+          }
           const { error } = await auth.startTrial(pending.id, s.annual ? 'annual' : 'monthly');
           if (error) { set({ toast: t('toast.trialFailed', { error: tx(error) }) }); return; }
           go('account', { tab: 'overview', toast: t('toast.welcome', { plan: t(`tier.${pending.id}`) }) });
@@ -149,6 +166,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         go('home', { signedIn: false, toast: '' });
       },
       cancelPlan: cancel,
+      openBilling,
     };
   }, [s, screen, router, live, auth, t, tx]);
 
