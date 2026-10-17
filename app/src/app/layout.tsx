@@ -7,13 +7,16 @@ import { kpNow } from '../lib/feeds';
 import { AuthProvider } from '../lib/auth';
 import { LocationsProvider } from '../lib/locations';
 import { StoreProvider } from '../store';
+import { SITE } from '../lib/site';
 import { ServiceWorker } from '../components/ServiceWorker';
 
 export const metadata: Metadata = {
-  title: 'OVAL · Aurora monitor',
+  metadataBase: new URL(SITE.url),
+  title: { default: `${SITE.name} · ${SITE.tagline}`, template: `%s · ${SITE.name}` },
   description: 'Live aurora forecasts, the auroral oval, and alerts for your sky.',
-  applicationName: 'OVAL',
-  appleWebApp: { capable: true, title: 'OVAL', statusBarStyle: 'black' },
+  applicationName: SITE.name,
+  appleWebApp: { capable: true, title: SITE.name, statusBarStyle: 'black' },
+  openGraph: { type: 'website', siteName: SITE.name, url: '/', images: [{ url: '/icons/icon-512.png', width: 512, height: 512 }] },
   icons: {
     icon: [{ url: '/icons/icon.svg', type: 'image/svg+xml' }, { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }],
     apple: '/icons/apple-touch-icon.png',

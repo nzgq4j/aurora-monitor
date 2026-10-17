@@ -86,7 +86,8 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 .header-account { display: flex; align-items: center; gap: 10px; padding: 4px 4px 4px 14px; border: 1px solid var(--line-2); border-radius: 999px; }
 .header-signin { font-weight: 600; font-size: 15px; color: var(--soft); white-space: nowrap; }
 .header-plan { font-size: 13px; font-weight: 700; color: var(--green); }
-.brand-dot { width: 13px; height: 13px; border-radius: 50%; background: var(--green); box-shadow: 0 0 18px var(--green); }
+.brand-name { text-transform: uppercase; white-space: nowrap; }
+.brand-dot { flex: none; width: 13px; height: 13px; border-radius: 50%; background: var(--green); box-shadow: 0 0 18px var(--green); }
 .nav { display: flex; gap: 26px; font-size: 15px; font-weight: 600; }
 .nav-item { padding: 6px 0; border-bottom: 2px solid transparent; color: var(--muted); }
 .nav-item.on { color: #fff; border-bottom-color: var(--green); }
@@ -127,6 +128,11 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 .account-signout { padding: 11px 14px; font-weight: 600; font-size: 15px; color: var(--muted); margin-top: 12px; border-top: 1px solid var(--line); }
 .night { display: grid; grid-template-columns: 130px 70px minmax(0, 1fr) 52px; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .alert-rule { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 28px; padding: 26px; border: 1px solid var(--line-2); border-radius: 18px; }
+
+@media (max-width: 900px) {
+  .brand-name { display: flex; flex-direction: column; font-size: .74em; line-height: .92; letter-spacing: .02em; }
+  .header-kp { display: none; }
+}
 
 @media (max-width: 860px) {
   /* Sidebar becomes a header row: profile and sign out on top, tabs as a scrollable strip. */
@@ -203,11 +209,13 @@ button.pill-ghost { border: 1px solid var(--line-2); }
   .nav { gap: 11px; font-size: 14px; }
 }
 @media (max-width: 340px) {
-  .header-inner { gap: 8px; }
-  .header-left { gap: 10px; }
-  .brand { font-size: 15px; gap: 6px; }
-  .nav { gap: 9px; font-size: 13px; }
-  .header-signin { font-size: 13px; }
+  .header-inner { gap: 6px; }
+  .header-left { gap: 8px; }
+  .brand { font-size: 14px; gap: 5px; }
+  .brand-dot { width: 8px; height: 8px; }
+  .nav { gap: 8px; font-size: 12.5px; }
+  .header-signin { font-size: 12.5px; }
+  .header-inner { gap: 10px; }
 }
 
 /* Touch screens: every control gets at least a 44 px hit area (Android asks for 48 dp, Apple 44 pt).

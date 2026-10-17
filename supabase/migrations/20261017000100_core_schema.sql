@@ -1,4 +1,4 @@
--- OVAL core schema: user profiles, locations and alert settings (private,
+-- Polar Lights core schema: user profiles, locations and alert settings (private,
 -- row-level security), plus a public archive of space-weather data written
 -- only by the ingest-space-weather edge function (service role).
 

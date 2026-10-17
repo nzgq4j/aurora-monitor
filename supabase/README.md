@@ -1,6 +1,6 @@
 # Supabase
 
-Database for OVAL: saved locations and alert settings (per user, row-level
+Database for Polar Lights: saved locations and alert settings (per user, row-level
 security) plus a public archive of space-weather data.
 
 ## Contents

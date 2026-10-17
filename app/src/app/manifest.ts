@@ -1,11 +1,12 @@
 import type { MetadataRoute } from 'next';
+import { SITE } from '../lib/site';
 
-/** Web app manifest: makes OVAL installable and is the source for the Android (Trusted Web Activity) build. */
+/** Web app manifest: makes Polar Lights installable and is the source for the Android (Trusted Web Activity) build. */
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: '/',
-    name: 'OVAL · Aurora monitor',
-    short_name: 'OVAL',
+    name: `${SITE.name} · ${SITE.tagline}`,
+    short_name: SITE.name,
     description: 'Live aurora forecasts, the auroral oval, cloud cover and alerts for your sky.',
     start_url: '/?source=pwa',
     scope: '/',

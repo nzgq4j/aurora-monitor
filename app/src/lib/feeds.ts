@@ -14,7 +14,7 @@ type Row = Record<string, unknown>;
 
 async function getJson(url: string, revalidate: number): Promise<unknown | null> {
   try {
-    const res = await fetch(url, { next: { revalidate }, headers: { 'User-Agent': 'oval.watch (aurora monitor)' } });
+    const res = await fetch(url, { next: { revalidate }, headers: { 'User-Agent': 'polarlights.io (aurora forecasts)' } });
     if (!res.ok) return null;
     return await res.json();
   } catch {

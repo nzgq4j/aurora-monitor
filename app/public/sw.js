@@ -1,8 +1,8 @@
-// OVAL service worker: keeps the app usable on weak or no signal (common at dark-sky spots).
+// Polar Lights service worker: keeps the app usable on weak or no signal (common at dark-sky spots).
 // - Pages: network first, falling back to the last copy viewed, then to /offline.
 // - Live data (/api/*): network first, falling back to the last response.
 // - Build assets, map geometry and icons: cache first (they are versioned or rarely change).
-const VERSION = 'oval-v1';
+const VERSION = 'polarlights-v1'; // changing this clears older caches (including the pre-rebrand oval-v1-*)
 const PAGES = `${VERSION}-pages`, DATA = `${VERSION}-data`, STATIC = `${VERSION}-static`;
 const PRECACHE = ['/offline', '/icons/icon-192.png', '/icons/icon-512.png', '/geo/countries-50m.json', '/geo/lakes-50m.geo.json'];
 
