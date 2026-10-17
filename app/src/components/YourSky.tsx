@@ -94,10 +94,16 @@ export function YourSky({ kp }: { kp: number | null }) {
   let verdict = '', vc: string = C.muted;
   if (kp !== null && need !== null) {
     if (kp >= need) {
-      if (dark === false) { verdict = `Kp ${kp.toFixed(1)} is enough for this sky (≈ Kp ${need} needed), but it isn’t dark yet.`; vc = C.amber; }
-      else if (cloud !== null && cloud >= 60) { verdict = `Kp ${kp.toFixed(1)} is enough for this sky, but ${cloud}% cloud may hide it.`; vc = C.amber; }
-      else if (m && m.up && m.illumination >= 0.6) { verdict = `Kp ${kp.toFixed(1)} meets the ≈ Kp ${need} this sky needs, but the Moon is ${Math.round(m.illumination * 100)}% lit and will wash out fainter aurora. Look ${look}.`; vc = C.amber; }
-      else { verdict = `Kp ${kp.toFixed(1)} meets the ≈ Kp ${need} this sky needs. Look ${look}.`; vc = C.green; }
+      // Marginal: within one step of this sky's threshold, or Kp below 2 anywhere (any aurora is faint).
+      const marginal = kp < need + 1 || kp < 2;
+      const k = `Kp ${kp.toFixed(1)}`;
+      const lead = marginal ? `${k} is marginal for this sky (≈ Kp ${need} needed)` : `${k} is enough for this sky (≈ Kp ${need} needed)`;
+      const join = marginal ? ', and' : ', but';
+      if (dark === false) { verdict = `${lead}${join} it isn’t dark yet.`; vc = C.amber; }
+      else if (cloud !== null && cloud >= 60) { verdict = `${lead}${join} ${cloud}% cloud may hide it.`; vc = C.amber; }
+      else if (m && m.up && m.illumination >= 0.6) { verdict = `${lead}${join} the Moon (${Math.round(m.illumination * 100)}% lit) will wash out fainter aurora. Look ${look}.`; vc = C.amber; }
+      else if (marginal) { verdict = `${lead}: any aurora will likely be faint and low on the ${look}ern horizon.`; vc = C.amber; }
+      else { verdict = `${lead}. Look ${look}.`; vc = C.green; }
     } else verdict = `Kp ${kp.toFixed(1)} is below the ≈ Kp ${need} needed here.`;
   }
 
