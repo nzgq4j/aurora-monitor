@@ -158,7 +158,7 @@ export function Home({ data }: { data: NowData }) {
             {updated ? t('home.live', { time: hhmm(updated) }) : t('home.liveUnavailable')}
           </div>
           <h1 className="display" style={{ fontSize: 'clamp(36px, 12cqi, 80px)', lineHeight: .88 }}>
-            {l1}<br /><span className="hl" style={{ whiteSpace: 'nowrap' }}>{l2}</span>
+            {l1}<br /><span className="hl">{l2}</span>
           </h1>
           <p style={{ margin: 0, maxWidth: 540, fontSize: 18, lineHeight: 1.45, color: 'var(--soft)', textWrap: 'pretty' }}>{summary(data, i18n)}</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(9,1fr)', gap: 4, maxWidth: 520 }} aria-label={t('home.scale', { level: kp === null ? '—' : num(kp, 2) })}>

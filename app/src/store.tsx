@@ -6,6 +6,7 @@ import { TIERS, type ChannelKey, type Tier, type TierId, type TriggerKey } from 
 import { useAuth } from './lib/auth';
 import { supabase } from './lib/supabase';
 import { useI18n } from './i18n/I18n';
+import { LOCALES } from './i18n/config';
 
 export type Screen = 'home' | 'map' | 'plans' | 'checkout' | 'signin' | 'account';
 export type Tab = 'overview' | 'alerts' | 'locations' | 'plans' | 'account';
@@ -19,8 +20,12 @@ export const PATHS: Record<Screen, string> = {
   account: '/dashboard',
 };
 
-const screenFromPath = (path: string): Screen =>
-  (Object.keys(PATHS) as Screen[]).find(s => s !== 'home' && path.startsWith(PATHS[s])) ?? 'home';
+// While prerendering, the path still carries the proxy's language prefix (/de/map); in the browser it doesn't.
+const LOCALE_PREFIX = new RegExp(`^/(${LOCALES.join('|')})(?=/|$)`);
+const screenFromPath = (path: string): Screen => {
+  const p = path.replace(LOCALE_PREFIX, '') || '/';
+  return (Object.keys(PATHS) as Screen[]).find(s => s !== 'home' && p.startsWith(PATHS[s])) ?? 'home';
+};
 
 export interface AppState {
   tab: Tab;

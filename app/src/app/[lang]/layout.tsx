@@ -9,6 +9,7 @@ import { LocationsProvider } from '../../lib/locations';
 import { StoreProvider } from '../../store';
 import { SITE } from '../../lib/site';
 import { ServiceWorker } from '../../components/ServiceWorker';
+import { FitHeadings } from '../../components/FitHeadings';
 import { LOCALES } from '../../i18n/config';
 import { I18nProvider } from '../../i18n/I18n';
 import { getI18n, getMessages, routeLocale } from '../../i18n/server';
@@ -66,6 +67,7 @@ export default async function RootLayout({ children, params }: Props & { childre
                   <Footer />
                 </div>
                 <ServiceWorker />
+                <FitHeadings />
               </LocationsProvider>
             </StoreProvider>
           </AuthProvider>
