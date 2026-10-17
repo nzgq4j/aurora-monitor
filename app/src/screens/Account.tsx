@@ -389,10 +389,15 @@ function LocationCard({ loc, paused, index }: { loc: SavedLocation; paused: bool
       </svg>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
         <div style={{ display: 'flex', flexDirection: 'column' }}><span style={mono10}>{t('sky.stat.aurora')}</span><span style={{ ...big, color: ac }}>{aur === null ? '—' : `${aur}%`}</span></div>
-        <div style={{ display: 'flex', flexDirection: 'column' }}><span style={mono10}>{t('sky.stat.cloud')}</span><span style={big}>{cond?.cloud ? `${cond.cloud.now}%` : '—'}</span></div>
+        <div style={{ display: 'flex', flexDirection: 'column' }}><span style={mono10}>{t('sky.stat.cloud')}</span><span style={big}>{cond?.cloud ? `${cond.cloud.aurora}%` : '—'}</span></div>
         <div style={{ display: 'flex', flexDirection: 'column' }}><span style={mono10}>{t('sky.stat.needs')}</span><span style={big}>Kp {cond?.kpNeeded ?? kpNeeded(loc.lat, loc.lon)}</span></div>
       </div>
       <span style={{ fontSize: 13, color: sun?.dark ? C.green : 'var(--muted)', fontWeight: 600 }}>{darkLine}</span>
+      {cond?.cloud && (
+        <span style={{ fontSize: 12, color: 'var(--muted)' }}>
+          {t('sky.cloud.layers', { ...cond.cloud.layers })}{cond.satellite ? ` · ${t('loc.satLine', { pct: cond.satellite.pct })}` : ''}
+        </span>
+      )}
       <div style={{ display: 'flex', gap: 16, borderTop: '1px solid var(--line)', paddingTop: 10 }}>
         {!loc.isHome && <button type="button" className="btn" style={linkBtn} onClick={() => setHome(loc.id)}>{t('loc.makeHome')}</button>}
         <button type="button" className="btn" style={{ ...linkBtn, color: C.red }} onClick={() => remove(loc.id)}>{t('loc.remove')}</button>

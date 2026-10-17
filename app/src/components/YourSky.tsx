@@ -94,7 +94,10 @@ export function YourSky({ kp }: { kp: number | null }) {
   // Verdict: current Kp against what this spot needs, then darkness and cloud.
   const need = cond?.kpNeeded ?? null;
   const dark = cond?.sun.dark ?? null;
-  const cloud = cond?.cloud?.now ?? null;
+  // Cloud that matters for aurora: low and mid in full, thin high cloud at half weight.
+  const cloud = cond?.cloud?.aurora ?? null;
+  const layers = cond?.cloud?.layers ?? null;
+  const sat = cond?.satellite?.pct ?? null;
   const south = !!shown && shown.lat < 0;
   const look = south ? 'south' : 'north';
   let verdict = '', vc: string = C.muted;
@@ -117,7 +120,7 @@ export function YourSky({ kp }: { kp: number | null }) {
   const aur = cond?.aurora?.nearby ?? null;
   const stats = [
     { label: t('sky.stat.aurora'), value: aur === null ? '—' : `${aur}`, unit: aur === null ? '' : '%', note: t(`sky.auroraNote.${look}`), c: aur !== null && aur >= 10 ? C.green : C.soft },
-    { label: t('sky.stat.cloud'), value: cloud === null ? '—' : `${cloud}`, unit: cloud === null ? '' : '%', note: cloud === null ? t('common.noData') : cloud < 30 ? t('sky.cloud.clear') : cloud < 70 ? t('sky.cloud.partly') : t('sky.cloud.overcast'), c: cloud !== null && cloud < 30 ? C.green : C.soft },
+    { label: t('sky.stat.cloud'), value: cloud === null ? '—' : `${cloud}`, unit: cloud === null ? '' : '%', note: !layers ? t('common.noData') : t('sky.cloud.layers', { ...layers }), c: cloud !== null && cloud < 30 ? C.green : C.soft },
     { label: t('sky.stat.dark'), value: dark === null ? '—' : dark ? t('sky.dark.now') : cond?.sun.changesAt ? hhmmUT(cond.sun.changesAt).slice(0, 5) : t('sky.dark.no'), unit: dark === false && cond?.sun.changesAt ? 'UT' : '', note: dark === null ? (loading ? t('sky.checking') : t('common.noData')) : dark ? (cond?.sun.changesAt ? t('sky.dark.until', { time: hhmmUT(cond.sun.changesAt) }) : t('sky.dark.allNight')) : t('sky.dark.rule'), c: dark ? C.green : C.soft },
     { label: t('sky.stat.needs'), value: need === null ? '—' : `Kp ${need}`, unit: '', note: cond ? t('sky.magLat', { lat: num(cond.magLat, 1) }) : t('sky.approx'), c: C.soft },
   ];
@@ -199,6 +202,17 @@ export function YourSky({ kp }: { kp: number | null }) {
               </div>
             ))}
           </div>
+          {sat !== null && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <span className="label">{t('sky.sat.label')}</span>
+              <span style={{ fontWeight: 700, fontSize: 16 }}>
+                {t(sat < 20 ? 'sky.sat.clear' : sat < 60 ? 'sky.sat.some' : 'sky.sat.cloudy', { pct: sat })}
+                <span style={{ fontWeight: 500, color: 'var(--muted)' }}>{' · '}{t('sky.sat.source')}</span>
+              </span>
+              {/* Infrared can't tell low cloud from the ground at night, so say so when the two disagree. */}
+              {layers && layers.low >= 60 && sat < 40 && <span style={{ fontSize: 13, fontWeight: 600, color: C.amber }}>{t('sky.sat.lowNote')}</span>}
+            </div>
+          )}
           {m && effect && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '2px 0 4px' }}>
               <MoonDisc m={m} south={shown.lat < 0} />
@@ -215,6 +229,7 @@ export function YourSky({ kp }: { kp: number | null }) {
             </div>
           )}
           {verdict && <span style={{ fontSize: 16, fontWeight: 600, color: vc }}>{verdict}</span>}
+          {cloud !== null && <span style={{ fontSize: 12, color: 'var(--dim)' }}>{t('sky.cloud.weighting')}</span>}
         </>
       ) : !picking && (
         <span style={{ fontSize: 16, color: 'var(--soft)' }}>{t('sky.empty')}</span>
