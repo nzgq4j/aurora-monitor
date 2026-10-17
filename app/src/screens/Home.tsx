@@ -2,6 +2,7 @@
 
 import { C } from '../data';
 import { KpOutlookChart, PolarOval } from '../components/Charts';
+import { YourSky } from '../components/YourSky';
 import { G_SCALE } from '../lib/astro';
 import { SDO_IMAGES } from '../lib/sdo';
 import type { NowData } from '../lib/now';
@@ -94,6 +95,8 @@ export function Home({ data }: { data: NowData }) {
           </span>
         </div>
       </div>
+
+      <YourSky kp={kp} />
 
       <div className="rule-top" style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 24, flexWrap: 'wrap' }}>
