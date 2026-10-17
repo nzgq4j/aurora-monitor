@@ -4,7 +4,7 @@ import { useStore, type Screen } from '../store';
 
 const NAV: [string, Screen][] = [['Now', 'home'], ['Plans', 'plans'], ['Account', 'account']];
 
-export function Header() {
+export function Header({ kpLabel }: { kpLabel: string }) {
   const { s, screen: current, plan, go, goAccount } = useStore();
   return (
     <header className="header">
@@ -26,7 +26,7 @@ export function Header() {
           </nav>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <span className="mono" style={{ fontSize: 12, color: 'var(--muted)', whiteSpace: 'nowrap' }}>KP 5.33 · G1</span>
+          <span className="mono" style={{ fontSize: 12, color: 'var(--muted)', whiteSpace: 'nowrap' }}>{kpLabel}</span>
           {s.signedIn ? (
             <button type="button" className="btn" onClick={goAccount}
               style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 4px 4px 14px', border: '1px solid var(--line-2)', borderRadius: 999 }}>

@@ -41,11 +41,11 @@ export function magLat(lat: number, lon: number): number {
 /**
  * Rough Kp at which aurora becomes visible low on the poleward horizon.
  * Rule of thumb: the oval's equatorward edge sits near 66° − 2·Kp magnetic
- * latitude, and it can be seen ~2° beyond that.
+ * latitude, and it can be seen low on the horizon from ~3° beyond that.
  */
 export function kpNeeded(lat: number, lon: number): number {
   const m = Math.abs(magLat(lat, lon));
-  return Math.max(0, Math.min(9, Math.ceil((66 - m - 2) / 2)));
+  return Math.max(0, Math.min(9, Math.ceil((66 - m - 3) / 2)));
 }
 
 export const G_SCALE = (kp: number) => (kp >= 9 ? 5 : kp >= 8 ? 4 : kp >= 7 ? 3 : kp >= 6 ? 2 : kp >= 5 ? 1 : 0);

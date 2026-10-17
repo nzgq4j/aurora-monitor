@@ -13,9 +13,15 @@ export interface NowData {
 export async function loadNow(): Promise<NowData> {
   const [kp, series, wind, hemi, oval] = await Promise.all([kpNow(), kpSeries(), solarWind(), hemiPower(), ovation()]);
   const from = Math.floor(Date.now() / 864e5) * 864e5 - 2 * 864e5;
+  let shown = series.filter(p => p.t >= from);
+  // Drop a final UTC day that holds only a stray value or two past the 3-day forecast.
+  if (shown.length) {
+    const lastDay = Math.floor(shown[shown.length - 1].t / 864e5) * 864e5;
+    if (shown.filter(p => p.t >= lastDay).length < 4) shown = shown.filter(p => p.t < lastDay);
+  }
   return {
     kp: kp ?? [...series].reverse().find(p => p.kind !== 'predicted') ?? null,
-    series: series.filter(p => p.t >= from),
+    series: shown,
     wind, hemi,
     oval: oval ? { points: ovalPoints(oval), edge: ovalEdge(oval), observed: oval.observed, forecast: oval.forecast } : null,
     fetchedAt: Date.now(),

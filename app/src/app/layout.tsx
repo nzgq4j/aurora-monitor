@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import './globals.css';
 import { Footer, Header, Toast } from '../components/Chrome';
+import { G_SCALE } from '../lib/astro';
+import { kpNow } from '../lib/feeds';
 import { LocationsProvider } from '../lib/locations';
 import { StoreProvider } from '../store';
 
@@ -12,7 +14,9 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#000000' };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const kp = await kpNow();
+  const kpLabel = kp ? `KP ${kp.kp.toFixed(2)}${G_SCALE(kp.kp) ? ` · G${G_SCALE(kp.kp)}` : ''}` : 'KP —';
   return (
     <html lang="en">
       <head>
@@ -28,7 +32,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <StoreProvider>
           <LocationsProvider>
             <div className="app">
-              <Header />
+              <Header kpLabel={kpLabel} />
               <Toast />
               {children}
               <Footer />

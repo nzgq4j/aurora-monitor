@@ -90,14 +90,26 @@ export async function kpNow(): Promise<{ t: number; kp: number } | null> {
 
 export interface SolarWind { t: number; bz: number | null; bt: number | null; speed: number | null; density: number | null }
 
-/** Latest real-time solar wind at L1 (DSCOVR/ACE), from the 2-hour products. */
+/** First non-empty row set from a list of candidate URLs (SWPC has moved these products before). */
+async function firstRows(urls: string[], revalidate: number): Promise<Row[]> {
+  for (const u of urls) {
+    const r = rows(await getJson(u, revalidate));
+    if (r.length) return r;
+  }
+  return [];
+}
+
+/** Real-time products mix spacecraft; when an "active" flag is present keep only the active source. */
+const activeOnly = (rs: Row[]) => (rs.some(r => 'active' in r) ? rs.filter(r => r.active === true || r.active === 'true' || r.active === 1) : rs);
+
+/** Latest real-time solar wind at L1 (DSCOVR/ACE). */
 export async function solarWind(): Promise<SolarWind | null> {
   const [mag, plasma] = await Promise.all([
-    getJson(`${SWPC}/products/solar-wind/mag-2-hour.json`, FAST).then(rows),
-    getJson(`${SWPC}/products/solar-wind/plasma-2-hour.json`, FAST).then(rows),
+    firstRows([`${SWPC}/products/solar-wind/mag-2-hour.json`, `${SWPC}/products/solar-wind/mag-1-day.json`, `${SWPC}/json/rtsw/rtsw_mag_1m.json`], FAST).then(activeOnly),
+    firstRows([`${SWPC}/products/solar-wind/plasma-2-hour.json`, `${SWPC}/products/solar-wind/plasma-1-day.json`, `${SWPC}/json/rtsw/rtsw_wind_1m.json`], FAST).then(activeOnly),
   ]);
-  const m = latest(mag.map(r => ({ t: parseTime(r.time_tag) ?? 0, bz: num(r.bz_gsm), bt: num(r.bt) })), x => x.t > 0 && x.bz !== null);
-  const p = latest(plasma.map(r => ({ t: parseTime(r.time_tag) ?? 0, speed: num(r.speed), density: num(r.density) })), x => x.t > 0 && x.speed !== null);
+  const m = latest(mag.map(r => ({ t: parseTime(r.time_tag) ?? 0, bz: num(r.bz_gsm ?? r.bz), bt: num(r.bt) })).sort((a, b) => a.t - b.t), x => x.t > 0 && x.bz !== null);
+  const p = latest(plasma.map(r => ({ t: parseTime(r.time_tag) ?? 0, speed: num(r.speed ?? r.proton_speed), density: num(r.density ?? r.proton_density) })).sort((a, b) => a.t - b.t), x => x.t > 0 && x.speed !== null);
   if (!m && !p) return null;
   return { t: Math.max(m?.t ?? 0, p?.t ?? 0), bz: m?.bz ?? null, bt: m?.bt ?? null, speed: p?.speed ?? null, density: p?.density ?? null };
 }
