@@ -74,6 +74,10 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 .header-inner { display: flex; align-items: center; justify-content: space-between; gap: 12px 24px; padding: 18px var(--gutter); flex-wrap: wrap; }
 .header-left { display: flex; align-items: center; gap: 40px; }
 .brand { font-family: var(--f-display); font-weight: 900; font-stretch: 115%; font-size: 24px; display: flex; align-items: center; gap: 8px; }
+.header-right { display: flex; align-items: center; gap: 14px; }
+.header-account { display: flex; align-items: center; gap: 10px; padding: 4px 4px 4px 14px; border: 1px solid var(--line-2); border-radius: 999px; }
+.header-signin { font-weight: 600; font-size: 15px; color: var(--soft); white-space: nowrap; }
+.header-plan { font-size: 13px; font-weight: 700; color: var(--green); }
 .brand-dot { width: 13px; height: 13px; border-radius: 50%; background: var(--green); box-shadow: 0 0 18px var(--green); }
 .nav { display: flex; gap: 26px; font-size: 15px; font-weight: 600; }
 .nav-item { padding: 6px 0; border-bottom: 2px solid transparent; color: var(--muted); }
@@ -131,8 +135,15 @@ button.pill-ghost { border: 1px solid var(--line-2); }
   .now-stat:nth-child(n + 3) { border-top: 1px solid var(--line); }
   .now-stat:nth-child(2n) { border-right: 0; }
   .cta-banner { grid-template-columns: minmax(0, 1fr); padding: 22px 20px; }
-  .header-left { gap: 20px; }
-  .nav { gap: 18px; }
+  /* Header on one line: brand, nav and account; Kp, plan name and the CTA move off the bar. */
+  .header-inner { flex-wrap: nowrap; gap: 12px; padding: 14px var(--gutter); }
+  .header-left { gap: 16px; min-width: 0; }
+  .brand { font-size: 19px; gap: 7px; }
+  .brand-dot { width: 10px; height: 10px; }
+  .nav { gap: 14px; font-size: 15px; }
+  .header-kp, .header-plan, .header-cta { display: none; }
+  .header-account { padding: 3px; }
+  .header-signin { font-size: 14px; }
   /* Date, Kp and chance on one line; the bar and note span the row below. */
   .night { grid-template-columns: minmax(0, 1fr) auto 52px; gap: 6px 14px; }
   .night-bar { grid-column: 1 / -1; grid-row: 2; }
@@ -176,3 +187,17 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 }
 .aurora-map .map-home a { display: flex; align-items: center; justify-content: center; background: #111; color: #fff; border-color: var(--line-2); }
 .aurora-map .map-home a:hover { background: #1d211e; }
+
+/* Narrow phones: tighten the one-line header further. */
+@media (max-width: 380px) {
+  .header-left { gap: 12px; }
+  .brand { font-size: 17px; }
+  .nav { gap: 11px; font-size: 14px; }
+}
+@media (max-width: 340px) {
+  .header-inner { gap: 8px; }
+  .header-left { gap: 10px; }
+  .brand { font-size: 15px; gap: 6px; }
+  .nav { gap: 9px; font-size: 13px; }
+  .header-signin { font-size: 13px; }
+}
