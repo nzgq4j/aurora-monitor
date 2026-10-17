@@ -29,6 +29,8 @@ const probT = (p: number) => (p - 5) / 85;
 const kpT = (k: number) => (k - 1) / 8;
 
 const LAT_MAX = 85;
+/** Longitude offsets of the world copies drawn side by side for seamless wrapping. */
+const COPIES = [-360, 0, 360];
 const rad = (d: number) => (d * Math.PI) / 180;
 const deg = (r: number) => (r * 180) / Math.PI;
 
@@ -107,8 +109,10 @@ export function AuroraMap({ kp }: { kp: number | null }) {
       if (cancelled || !box.current || mapRef.current) return;
       LRef.current = L;
       const map = L.map(box.current, {
-        minZoom: 2, maxZoom: 9, zoomSnap: 0.5, worldCopyJump: false,
-        maxBounds: [[-LAT_MAX, -200], [LAT_MAX, 200]], maxBoundsViscosity: 1, attributionControl: true,
+        // worldCopyJump recentres the view when it crosses ±180°; every layer is drawn
+        // three times (COPIES) so panning left or right is seamless.
+        minZoom: 2, maxZoom: 9, zoomSnap: 0.5, worldCopyJump: true,
+        maxBounds: [[-LAT_MAX, -1e5], [LAT_MAX, 1e5]], maxBoundsViscosity: 1, attributionControl: true,
       }).setView([58, -95], 3);
       mapRef.current = map;
       map.attributionControl.setPrefix(false);
@@ -117,24 +121,30 @@ export function AuroraMap({ kp }: { kp: number | null }) {
       map.createPane('aurora').style.zIndex = '400';
       map.createPane('kplines').style.zIndex = '450';
       map.createPane('labels').style.zIndex = '500';
+      // Canvas keeps three copies of the basemap fast on phones.
+      const landCanvas = L.canvas({ pane: 'land', padding: 0.5 });
+      // GeoJSON layers forward `renderer` to each shape; Leaflet's typings just don't list it.
+      const onCanvas: object = { renderer: landCanvas };
 
       try {
         const world = await (await fetch('/geo/countries-50m.json')).json() as Topology<{ countries: GeometryCollection }>;
         const land = fixPolygons(topo.feature(world, world.objects.countries) as unknown as GeoJSON.FeatureCollection);
         const borders = fixLines(topo.mesh(world, world.objects.countries, (a, b) => a !== b) as GeoJSON.MultiLineString);
-        L.geoJSON(land as never, { pane: 'land', interactive: false, style: { stroke: false, fillColor: '#2b2e2c', fillOpacity: 1 } }).addTo(map);
+        L.geoJSON(repeat(land) as never, { pane: 'land', ...onCanvas, interactive: false, style: { stroke: false, fillColor: '#2b2e2c', fillOpacity: 1 } }).addTo(map);
         // Lakes (Natural Earth 1:50m) are filled like the sea, then borders go on top.
         try {
           const lakes = await (await fetch('/geo/lakes-50m.geo.json')).json() as GeoJSON.FeatureCollection;
-          L.geoJSON(lakes, { pane: 'land', interactive: false, style: { stroke: false, fillColor: '#000', fillOpacity: 1 } }).addTo(map);
+          L.geoJSON(repeatCollection(lakes) as never, { pane: 'land', ...onCanvas, interactive: false, style: { stroke: false, fillColor: '#000', fillOpacity: 1 } }).addTo(map);
         } catch { /* lakes are optional */ }
-        L.geoJSON(borders as never, { pane: 'land', interactive: false, style: { color: '#4a504c', weight: 0.7, fill: false } }).addTo(map);
+        L.geoJSON(repeat(borders) as never, { pane: 'land', ...onCanvas, interactive: false, style: { color: '#4a504c', weight: 0.7, fill: false } }).addTo(map);
       } catch { setStatus('Basemap failed to load.'); }
 
-      L.polyline([[66.563, -180], [66.563, 180]], { pane: 'land', color: C.muted, weight: 1, dashArray: '6 6', interactive: false }).addTo(map);
-      L.marker([66.563, -30], { pane: 'labels', interactive: false, icon: L.divIcon({ className: 'map-label map-label-dim', html: 'Arctic Circle', iconSize: undefined }) }).addTo(map);
-      for (const [name, lat, lon] of MAP_CITIES) {
-        L.marker([lat, lon], { pane: 'labels', interactive: false, icon: L.divIcon({ className: 'map-city', html: `<i></i><span>${name}</span>`, iconSize: undefined }) }).addTo(map);
+      L.polyline([[66.563, -540], [66.563, 540]], { pane: 'land', renderer: landCanvas, color: C.muted, weight: 1, dashArray: '6 6', interactive: false }).addTo(map);
+      for (const dx of COPIES) {
+        L.marker([66.563, -30 + dx], { pane: 'labels', interactive: false, icon: L.divIcon({ className: 'map-label map-label-dim', html: 'Arctic Circle', iconSize: undefined }) }).addTo(map);
+        for (const [name, lat, lon] of MAP_CITIES) {
+          L.marker([lat, lon + dx], { pane: 'labels', interactive: false, icon: L.divIcon({ className: 'map-city', html: `<i></i><span>${name}</span>`, iconSize: undefined }) }).addTo(map);
+        }
       }
 
       // Kp reach lines (both hemispheres), coloured on the same scale.
@@ -142,10 +152,13 @@ export function AuroraMap({ kp }: { kp: number | null }) {
       for (let k = 1; k <= 9; k++) {
         const on = k === current;
         const style = { pane: 'kplines', color: rgb(ramp(kpT(k))), weight: on ? 3 : 1.4, opacity: on ? 1 : 0.75, dashArray: on ? undefined : '3 5', interactive: false };
-        L.polyline(kpLine(k), style).addTo(group);
-        L.polyline(kpLine(k, true), style).addTo(group);
-        const label = kpLine(k).find(p => p[1] === -60);
-        if (label) L.marker(label, { pane: 'labels', interactive: false, icon: L.divIcon({ className: on ? 'map-kp map-kp-on' : 'map-kp', html: `<span style="color:${rgb(ramp(kpT(k)))}">Kp ${k}</span>`, iconSize: undefined }) }).addTo(group);
+        const north = kpLine(k), south = kpLine(k, true);
+        const label = north.find(p => p[1] === -60);
+        for (const dx of COPIES) {
+          L.polyline(north.map(([la, lo]) => [la, lo + dx] as [number, number]), style).addTo(group);
+          L.polyline(south.map(([la, lo]) => [la, lo + dx] as [number, number]), style).addTo(group);
+          if (label) L.marker([label[0], label[1] + dx], { pane: 'labels', interactive: false, icon: L.divIcon({ className: on ? 'map-kp map-kp-on' : 'map-kp', html: `<span style="color:${rgb(ramp(kpT(k)))}">Kp ${k}</span>`, iconSize: undefined }) }).addTo(group);
+        }
       }
       layers.current.kp = group;
 
@@ -154,7 +167,8 @@ export function AuroraMap({ kp }: { kp: number | null }) {
         if (!res.ok) throw new Error();
         const grid = await res.json() as OvalGrid;
         const bytes = Uint8Array.from(atob(grid.data), ch => ch.charCodeAt(0));
-        layers.current.prob = L.imageOverlay(renderOval(bytes), [[-LAT_MAX, -180], [LAT_MAX, 180]], { pane: 'aurora', interactive: false });
+        const url = renderOval(bytes);
+        layers.current.prob = L.layerGroup(COPIES.map(dx => L.imageOverlay(url, [[-LAT_MAX, -180 + dx], [LAT_MAX, 180 + dx]], { pane: 'aurora', interactive: false })));
         setForecast(grid.forecast);
         setStatus('');
       } catch { setStatus('Aurora data is unavailable right now.'); }
@@ -180,10 +194,10 @@ export function AuroraMap({ kp }: { kp: number | null }) {
     layers.current.marker?.remove();
     if (!shownPlace) return;
     const label = shownPlace.isHome ? `${shownPlace.name.split(',')[0]} · Home` : shownPlace.name.split(',')[0];
-    layers.current.marker = L.marker([shownPlace.lat, shownPlace.lon], {
+    layers.current.marker = L.layerGroup(COPIES.map(dx => L.marker([shownPlace.lat, shownPlace.lon + dx], {
       pane: 'labels', keyboard: false,
       icon: L.divIcon({ className: 'map-you', html: `<i class="map-pulse-ring"></i><b></b><span>${escapeHtml(label)}</span>`, iconSize: [0, 0] }),
-    }).addTo(map);
+    }))).addTo(map);
     if (!centred.current) { centred.current = true; map.setView([shownPlace.lat, shownPlace.lon], 4); }
   }, [shownPlace, ready]);
 
@@ -292,6 +306,17 @@ function fixLines(ml: GeoJSON.MultiLineString): GeoJSON.MultiLineString {
     if (cur.length > 1) out.push(cur);
   }
   return { type: 'MultiLineString', coordinates: out };
+}
+
+/** Copies of a geometry shifted by each world offset. */
+function shiftPos(c: unknown, dx: number): unknown {
+  return typeof (c as number[])[0] === 'number' ? [(c as number[])[0] + dx, (c as number[])[1]] : (c as unknown[]).map(x => shiftPos(x, dx));
+}
+function repeat(g: GeoJSON.MultiPolygon | GeoJSON.MultiLineString): GeoJSON.FeatureCollection {
+  return { type: 'FeatureCollection', features: COPIES.map(dx => ({ type: 'Feature', properties: {}, geometry: { ...g, coordinates: shiftPos(g.coordinates, dx) } as GeoJSON.Geometry })) };
+}
+function repeatCollection(fc: GeoJSON.FeatureCollection): GeoJSON.FeatureCollection {
+  return { type: 'FeatureCollection', features: COPIES.flatMap(dx => fc.features.map(f => ({ ...f, geometry: { ...f.geometry, coordinates: shiftPos((f.geometry as GeoJSON.Polygon).coordinates, dx) } as GeoJSON.Geometry }))) };
 }
 
 function escapeHtml(s: string) {
