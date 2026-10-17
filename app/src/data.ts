@@ -108,6 +108,6 @@ export const TRIGGER_DEFS: [TriggerKey, string, string, number][] = [
 
 export const CHANNEL_DEFS: [ChannelKey, string, string, number][] = [
   ['email', 'Email', 'Account email', 0], // replaced by the signed-in user's address
-  ['push', 'Push', 'Pixel 8 · Polar Lights app', 1],
-  ['sms', 'SMS', '+1 (612) •••-4410', 1],
+  ['push', 'Push', 'Not set up', 1],
+  ['sms', 'SMS', 'Not set up', 1],
 ];
