@@ -20,7 +20,7 @@ export function Locked({ tier, title, body, preview }: { tier: number; title: st
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, textAlign: 'center', maxWidth: 420 }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 999, border: `1px solid ${t.accent}`, color: t.accent, fontSize: 12, fontWeight: 700, letterSpacing: '.04em' }}>
             <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M7 11V8a5 5 0 0 1 10 0v3M5.5 11h13v9.5h-13z" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" /></svg>
-            {t.name.toUpperCase()} AND UP
+            {t.name.toUpperCase()} MEMBERSHIP
           </span>
           <span style={{ fontWeight: 800, fontSize: 20 }}>{title}</span>
           <span style={{ fontSize: 14, color: C.soft, lineHeight: 1.45 }}>{body}</span>

@@ -8,7 +8,7 @@
 create table public.profiles (
   id             uuid primary key references auth.users (id) on delete cascade,
   display_name   text check (display_name is null or char_length(display_name) <= 80),
-  plan           text not null default 'free' check (plan in ('free', 'observer', 'chaser', 'observatory')),
+  plan           text not null default 'free' check (plan in ('free', 'chaser')),
   billing_cycle  text not null default 'annual' check (billing_cycle in ('monthly', 'annual')),
   -- Set once, the first time a paid trial starts; switching tiers keeps the same end date.
   trial_ends_at  timestamptz,
@@ -57,7 +57,7 @@ declare
   me public.profiles;
 begin
   if (select auth.uid()) is null then raise exception 'Not signed in'; end if;
-  if tier not in ('observer', 'chaser', 'observatory') then raise exception 'Unknown tier %', tier; end if;
+  if tier not in ('chaser') then raise exception 'Unknown tier %', tier; end if;
   if cycle not in ('monthly', 'annual') then raise exception 'Unknown billing cycle %', cycle; end if;
   select * into me from public.profiles where id = (select auth.uid()) for update;
   if me.trial_ends_at is not null and me.trial_ends_at < now() then
@@ -144,7 +144,7 @@ declare
 begin
   select * into p from public.profiles where id = new.user_id;
   tier := case when p.plan is null or p.plan = 'free' or p.trial_ends_at is null or p.trial_ends_at < now() then 'free' else p.plan end;
-  max_locations := case tier when 'observer' then 3 when 'chaser' then 10 when 'observatory' then 1000 else 1 end;
+  max_locations := case tier when 'chaser' then 10 else 1 end;
   select count(*) into current_count from public.locations where user_id = new.user_id;
   if current_count >= max_locations then
     raise exception 'Location limit reached for the % plan (%).', tier, max_locations using errcode = 'P0001';

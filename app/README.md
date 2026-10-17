@@ -53,7 +53,7 @@ See `../supabase/README.md`.
 
 Demo mode only:
 - Loading `/account` directly starts signed in (the design's "account" starting screen).
-- `?plan=free|observer|chaser|observatory` sets the starting plan, e.g. `/account?plan=observer`.
+- `?plan=free|chaser` sets the starting plan, e.g. `/account?plan=chaser`.
 
 ## Layout
 

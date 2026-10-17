@@ -101,8 +101,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     };
     const signedIn = live ? !!auth.user : s.signedIn;
     const planId = live ? auth.effectivePlan : s.plan;
-    const planIndex = TIERS.findIndex(t => t.id === planId);
-    const pendingIndex = TIERS.findIndex(t => t.id === s.pending);
+    // Unknown ids (e.g. a retired plan name in an old link) fall back to Free / Chaser.
+    const planIndex = Math.max(0, TIERS.findIndex(t => t.id === planId));
+    const pendingIndex = Math.max(1, TIERS.findIndex(t => t.id === s.pending));
     const pending = TIERS[pendingIndex];
     const cancel = async () => {
       if (live) {

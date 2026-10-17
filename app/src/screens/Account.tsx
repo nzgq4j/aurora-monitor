@@ -145,7 +145,7 @@ function Overview({ data }: { data: AccountData }) {
           <span className="display" style={{ position: 'relative', fontSize: 'clamp(34px,4.2vw,60px)', lineHeight: .9, overflowWrap: 'anywhere', color: plan.accent }}>{plan.name}</span>
           <span style={{ position: 'relative', fontSize: 16, color: 'var(--soft)' }}>{planLine}</span>
           <div style={{ position: 'relative', display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 6 }}>
-            <button type="button" className="btn pill pill-primary" onClick={() => go('plans')} style={{ fontSize: 14, padding: '11px 18px' }}>{planIndex === 3 ? 'Change plan' : 'Upgrade'}</button>
+            <button type="button" className="btn pill pill-primary" onClick={() => go('plans')} style={{ fontSize: 14, padding: '11px 18px' }}>{planIndex === TIERS.length - 1 ? 'Change plan' : 'Upgrade'}</button>
             <button type="button" className="btn pill pill-ghost" onClick={() => set({ tab: 'billing' })} style={{ fontSize: 14, padding: '11px 18px', background: '#000' }}>Billing</button>
           </div>
         </div>
@@ -468,7 +468,7 @@ function Billing() {
           <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 32, color: plan.accent }}>{plan.name}</span>
           <span style={{ fontSize: 14, color: 'var(--soft)' }}>{planLine}</span>
           <button type="button" className="btn" onClick={() => go('plans')} style={{ fontWeight: 700, fontSize: 14, color: 'var(--green)', marginTop: 6, alignSelf: 'flex-start' }}>
-            {planIndex === 3 ? 'Change plan' : 'Upgrade'} →
+            {planIndex === TIERS.length - 1 ? 'Change plan' : 'Upgrade'} →
           </button>
         </div>
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 22 }}>
