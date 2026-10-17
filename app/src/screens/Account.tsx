@@ -251,7 +251,10 @@ function ToggleRow({ label, sub, on, need, locked, onClick }: ToggleProps) {
 }
 
 function Alerts({ data }: { data: AccountData }) {
-  const { s, set, planIndex, go } = useStore();
+  const { s, set, planIndex, go, live } = useStore();
+  const { user } = useAuth();
+  // Email alerts go to the address the account signed up with.
+  const accountEmail = live ? user?.email ?? 'Your account email' : 'sam@example.com';
   const { home, need } = useHome();
   const kp = s.kpThreshold;
   const last30 = data.days.slice(-30);
@@ -308,7 +311,7 @@ function Alerts({ data }: { data: AccountData }) {
           <span className="eyebrow" style={{ marginBottom: 8 }}>DELIVER VIA</span>
           {CHANNEL_DEFS.map(([k, label, sub, need]) => {
             const locked = planIndex < need;
-            return <ToggleRow key={k} label={label} sub={sub} need={need} locked={locked} on={s.channels[k]}
+            return <ToggleRow key={k} label={label} sub={k === 'email' ? accountEmail : sub} need={need} locked={locked} on={s.channels[k]}
               onClick={locked ? () => go('plans') : () => set(st => ({ channels: { ...st.channels, [k]: !st.channels[k] } }))} />;
           })}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '14px 0' }}>
