@@ -124,9 +124,6 @@ export function AuroraMap({ kp }: { kp: number | null }) {
   // Start with the legend collapsed on phones so it doesn't cover the map.
   const legend = useRef<HTMLDetailsElement>(null);
   useEffect(() => { if (legend.current && window.matchMedia('(max-width: 640px)').matches) legend.current.open = false; }, []);
-  // Remember the clouds toggle on this device.
-  useEffect(() => { try { if (localStorage.getItem('oval.map.clouds') === '1') setClouds(true); } catch { /* storage unavailable */ } }, []);
-  const toggleClouds = () => setClouds(on => { try { localStorage.setItem('oval.map.clouds', on ? '0' : '1'); } catch { /* storage unavailable */ } return !on; });
 
   // The Home button reads the latest saved locations through this ref.
   const goHome = useRef<() => void>(() => {});
@@ -285,7 +282,7 @@ export function AuroraMap({ kp }: { kp: number | null }) {
 
   const seg = (m: Mode, label: string) => (
     <button type="button" className="btn" aria-pressed={mode === m} onClick={() => setMode(m)}
-      style={{ flex: 1, padding: '10px 12px', borderRadius: 999, fontWeight: 700, fontSize: 14, background: mode === m ? '#3a3f3c' : 'transparent', color: mode === m ? '#fff' : C.soft, whiteSpace: 'nowrap' }}>
+      style={{ flex: 1, padding: '10px 8px', borderRadius: 999, fontWeight: 700, fontSize: 14, background: mode === m ? '#3a3f3c' : 'transparent', color: mode === m ? '#fff' : C.soft, whiteSpace: 'nowrap' }}>
       {label}
     </button>
   );
@@ -294,14 +291,16 @@ export function AuroraMap({ kp }: { kp: number | null }) {
     <main data-screen-label="Aurora map" style={{ display: 'flex', flexDirection: 'column' }}>
       <div className="wrap" style={{ width: '100%', padding: '16px var(--gutter)', display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
         <h1 className="display" style={{ fontSize: 'clamp(28px, 7vw, 40px)', lineHeight: 1 }}>Aurora <span className="hl">map</span></h1>
-        <div role="group" aria-label="Map layers" style={{ display: 'flex', padding: 4, border: '1px solid var(--line-2)', borderRadius: 999, background: '#111', flex: '1 1 320px', maxWidth: 460 }}>
+        <div role="group" aria-label="Map layers" style={{ display: 'flex', alignItems: 'center', padding: 4, border: '1px solid var(--line-2)', borderRadius: 999, background: '#111', flex: '1 1 340px', maxWidth: 560 }}>
           {seg('prob', 'Probability')}{seg('kp', 'Kp reach')}{seg('both', 'Both')}
+          <span aria-hidden="true" style={{ width: 1, height: 22, background: 'var(--line-2)', margin: '0 4px', flex: 'none' }} />
+          {/* Clouds is an overlay that combines with any of the views above, so it toggles on its own. */}
+          <button type="button" className="btn" aria-pressed={clouds} onClick={() => setClouds(on => !on)}
+            style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '10px 8px', borderRadius: 999, fontWeight: 700, fontSize: 14, background: clouds ? '#3a3f3c' : 'transparent', color: clouds ? '#fff' : C.soft, whiteSpace: 'nowrap' }}>
+            <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M7 18.5h10.5a4 4 0 0 0 .4-8A6 6 0 0 0 6.4 9.2 4.7 4.7 0 0 0 7 18.5Z" fill={clouds ? '#fff' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinejoin="round" /></svg>
+            Clouds
+          </button>
         </div>
-        <button type="button" className="btn" aria-pressed={clouds} onClick={toggleClouds}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 999, fontWeight: 700, fontSize: 14, border: '1px solid var(--line-2)', background: clouds ? '#3a3f3c' : '#111', color: clouds ? '#fff' : C.soft, whiteSpace: 'nowrap' }}>
-          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 18.5h10.5a4 4 0 0 0 .4-8A6 6 0 0 0 6.4 9.2 4.7 4.7 0 0 0 7 18.5Z" fill={clouds ? '#fff' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>
-          Clouds
-        </button>
       </div>
       <div style={{ position: 'relative' }}>
         <div ref={box} className="aurora-map" role="application" aria-label="Zoomable aurora map. Drag to pan, scroll or pinch to zoom." />
