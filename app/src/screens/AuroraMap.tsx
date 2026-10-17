@@ -83,22 +83,70 @@ function kpLine(k: number, south = false): [number, number][] {
 
 const hhmm = (t: number) => new Date(t).toISOString().slice(11, 16);
 
+/**
+ * Turn an infrared tile (grey: white = cold cloud tops, dark = warm clear ground) into white
+ * cloud with transparency, so clear sky shows the basemap and thick, high cloud is near-opaque.
+ */
+function cloudify(img: HTMLImageElement, tile: HTMLCanvasElement) {
+  const ctx = tile.getContext('2d', { willReadFrequently: true })!;
+  ctx.drawImage(img, 0, 0, tile.width, tile.height);
+  const d = ctx.getImageData(0, 0, tile.width, tile.height);
+  const px = d.data;
+  for (let o = 0; o < px.length; o += 4) {
+    const t = Math.max(0, Math.min(1, (px[o] - CLOUD_LO) / (CLOUD_HI - CLOUD_LO)));
+    px[o + 3] = px[o + 3] ? Math.round(255 * CLOUD_MAX * t * t * (3 - 2 * t)) : 0;
+    px[o] = 236; px[o + 1] = 241; px[o + 2] = 246;
+  }
+  ctx.putImageData(d, 0, 0);
+}
+/** Grey levels treated as clear (≤ LO) and as solid cloud (≥ HI), and the strongest cloud opacity. */
+const CLOUD_LO = 105, CLOUD_HI = 205, CLOUD_MAX = 0.82;
+/** Imagery refreshes hourly; a 15-minute stamp keeps tiles current without refetching on every visit. */
+const cloudStamp = () => Math.floor(Date.now() / 9e5);
+
+const HOUSE = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5M5.5 9.5V20h5v-6h3v6h5V9.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+
 export function AuroraMap({ kp }: { kp: number | null }) {
   const box = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Leaflet.Map | null>(null);
-  const layers = useRef<{ prob?: Leaflet.Layer; kp?: Leaflet.LayerGroup; marker?: Leaflet.Layer }>({});
+  const layers = useRef<{ prob?: Leaflet.Layer; kp?: Leaflet.LayerGroup; marker?: Leaflet.Layer; clouds?: Leaflet.GridLayer }>({});
   const LRef = useRef<typeof Leaflet | null>(null);
   const [mode, setMode] = useState<Mode>('prob');
   const [status, setStatus] = useState<string>('Loading map…');
   const [forecast, setForecast] = useState<number | null>(null);
   const [ready, setReady] = useState(false);
-  const { shownPlace, load } = useLocations();
+  const [clouds, setClouds] = useState(false);
+  const [notice, setNotice] = useState('');
+  const { shownPlace, locations, load } = useLocations();
   const current = kp === null ? null : Math.max(1, Math.min(9, Math.round(kp)));
 
   useEffect(() => { load(); }, [load]);
   // Start with the legend collapsed on phones so it doesn't cover the map.
   const legend = useRef<HTMLDetailsElement>(null);
   useEffect(() => { if (legend.current && window.matchMedia('(max-width: 640px)').matches) legend.current.open = false; }, []);
+  // Remember the clouds toggle on this device.
+  useEffect(() => { try { if (localStorage.getItem('oval.map.clouds') === '1') setClouds(true); } catch { /* storage unavailable */ } }, []);
+  const toggleClouds = () => setClouds(on => { try { localStorage.setItem('oval.map.clouds', on ? '0' : '1'); } catch { /* storage unavailable */ } return !on; });
+
+  // The Home button reads the latest saved locations through this ref.
+  const goHome = useRef<() => void>(() => {});
+  const noticeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  goHome.current = () => {
+    const map = mapRef.current;
+    if (!map) return;
+    const home = locations.find(l => l.isHome);
+    clearTimeout(noticeTimer.current);
+    if (!home) {
+      setNotice('No Home location yet. Set one on the Now page.');
+      noticeTimer.current = setTimeout(() => setNotice(''), 4000);
+      return;
+    }
+    setNotice('');
+    // Fly to the copy of Home nearest the current view, so the map doesn't sweep across the world.
+    const lon = home.lon + 360 * Math.round((map.getCenter().lng - home.lon) / 360);
+    map.flyTo([home.lat, lon], Math.max(map.getZoom(), 6), { duration: 1.2 });
+  };
+  useEffect(() => () => clearTimeout(noticeTimer.current), []);
 
   // Build the map once.
   useEffect(() => {
@@ -117,7 +165,21 @@ export function AuroraMap({ kp }: { kp: number | null }) {
       mapRef.current = map;
       map.attributionControl.setPrefix(false);
       map.attributionControl.addAttribution('Natural Earth · NOAA SWPC OVATION');
+      const HomeControl = L.Control.extend({
+        onAdd() {
+          const bar = L.DomUtil.create('div', 'leaflet-bar leaflet-control map-home');
+          const a = L.DomUtil.create('a', '', bar);
+          a.href = '#'; a.innerHTML = HOUSE; a.title = 'Zoom to Home location';
+          a.setAttribute('role', 'button'); a.setAttribute('aria-label', 'Zoom to Home location');
+          L.DomEvent.disableClickPropagation(bar);
+          L.DomEvent.on(a, 'click', e => { L.DomEvent.preventDefault(e); goHome.current(); });
+          return bar;
+        },
+      });
+      new HomeControl({ position: 'topleft' }).addTo(map);
       map.createPane('land').style.zIndex = '200';
+      // Clouds sit above the land and below the aurora, so the aurora colours stay readable.
+      map.createPane('clouds').style.zIndex = '350';
       map.createPane('aurora').style.zIndex = '400';
       map.createPane('kplines').style.zIndex = '450';
       map.createPane('labels').style.zIndex = '500';
@@ -162,6 +224,20 @@ export function AuroraMap({ kp }: { kp: number | null }) {
       }
       layers.current.kp = group;
 
+      // GridLayer wraps tile columns itself, so clouds repeat across every world copy.
+      const CloudLayer = L.GridLayer.extend({
+        createTile(coords: Leaflet.Coords, done: Leaflet.DoneCallback) {
+          const tile = document.createElement('canvas');
+          tile.width = tile.height = 256;
+          const img = new Image();
+          img.onload = () => { try { cloudify(img, tile); done(undefined, tile); } catch (e) { done(e as Error, tile); } };
+          img.onerror = () => done(new Error('cloud tile'), tile);
+          img.src = `/api/clouds?z=${coords.z}&x=${coords.x}&y=${coords.y}&t=${cloudStamp()}`;
+          return tile;
+        },
+      });
+      layers.current.clouds = new (CloudLayer as unknown as new (o: Leaflet.GridLayerOptions) => Leaflet.GridLayer)({ pane: 'clouds', maxNativeZoom: 6, attribution: 'EUMETSAT', updateWhenIdle: true });
+
       try {
         const res = await fetch('/api/oval');
         if (!res.ok) throw new Error();
@@ -185,6 +261,12 @@ export function AuroraMap({ kp }: { kp: number | null }) {
     if (prob) { if (mode !== 'kp') prob.addTo(map); else prob.remove(); }
     if (kpl) { if (mode !== 'prob') kpl.addTo(map); else kpl.remove(); }
   }, [mode, ready]);
+
+  useEffect(() => {
+    const map = mapRef.current, layer = layers.current.clouds;
+    if (!map || !ready || !layer) return;
+    if (clouds) layer.addTo(map); else layer.remove();
+  }, [clouds, ready]);
 
   // Marker for the location set on the Now page, and centre on it the first time.
   const centred = useRef(false);
@@ -215,10 +297,15 @@ export function AuroraMap({ kp }: { kp: number | null }) {
         <div role="group" aria-label="Map layers" style={{ display: 'flex', padding: 4, border: '1px solid var(--line-2)', borderRadius: 999, background: '#111', flex: '1 1 320px', maxWidth: 460 }}>
           {seg('prob', 'Probability')}{seg('kp', 'Kp reach')}{seg('both', 'Both')}
         </div>
+        <button type="button" className="btn" aria-pressed={clouds} onClick={toggleClouds}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 999, fontWeight: 700, fontSize: 14, border: '1px solid var(--line-2)', background: clouds ? '#3a3f3c' : '#111', color: clouds ? '#fff' : C.soft, whiteSpace: 'nowrap' }}>
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 18.5h10.5a4 4 0 0 0 .4-8A6 6 0 0 0 6.4 9.2 4.7 4.7 0 0 0 7 18.5Z" fill={clouds ? '#fff' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>
+          Clouds
+        </button>
       </div>
       <div style={{ position: 'relative' }}>
         <div ref={box} className="aurora-map" role="application" aria-label="Zoomable aurora map. Drag to pan, scroll or pinch to zoom." />
-        {status && <div className="map-status">{status}</div>}
+        {(notice || status) && <div className="map-status" role="status">{notice || status}</div>}
         <details className="map-legend" ref={legend} open>
           <summary>Legend</summary>
           {mode !== 'kp' && (
@@ -237,6 +324,14 @@ export function AuroraMap({ kp }: { kp: number | null }) {
                 ))}
               </div>
               <span style={{ display: 'block', fontSize: 11, color: C.muted, marginTop: 4 }}>{kp === null ? 'Current Kp unavailable' : `Now: Kp ${kp.toFixed(2)} (solid line)`}</span>
+            </div>
+          )}
+          {clouds && (
+            <div>
+              <span className="label">CLOUDS · INFRARED</span>
+              <div style={{ height: 10, borderRadius: 5, margin: '6px 0 4px', background: 'linear-gradient(90deg, rgba(236,241,246,0), rgba(236,241,246,.82))', border: '1px solid var(--line-2)' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.muted }}><span>Clear</span><span>Thick, high cloud</span></div>
+              <span style={{ display: 'block', fontSize: 11, color: C.muted, marginTop: 4 }}>EUMETSAT geostationary mosaic, updated hourly. Very cold snow and ice can read as cloud.</span>
             </div>
           )}
         </details>
