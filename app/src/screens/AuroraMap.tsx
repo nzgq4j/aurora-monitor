@@ -86,7 +86,7 @@ export function AuroraMap({ kp }: { kp: number | null }) {
   const mapRef = useRef<Leaflet.Map | null>(null);
   const layers = useRef<{ prob?: Leaflet.Layer; kp?: Leaflet.LayerGroup; marker?: Leaflet.Layer }>({});
   const LRef = useRef<typeof Leaflet | null>(null);
-  const [mode, setMode] = useState<Mode>('both');
+  const [mode, setMode] = useState<Mode>('prob');
   const [status, setStatus] = useState<string>('Loading map…');
   const [forecast, setForecast] = useState<number | null>(null);
   const [ready, setReady] = useState(false);
@@ -123,6 +123,11 @@ export function AuroraMap({ kp }: { kp: number | null }) {
         const land = fixPolygons(topo.feature(world, world.objects.countries) as unknown as GeoJSON.FeatureCollection);
         const borders = fixLines(topo.mesh(world, world.objects.countries, (a, b) => a !== b) as GeoJSON.MultiLineString);
         L.geoJSON(land as never, { pane: 'land', interactive: false, style: { stroke: false, fillColor: '#2b2e2c', fillOpacity: 1 } }).addTo(map);
+        // Lakes (Natural Earth 1:50m) are filled like the sea, then borders go on top.
+        try {
+          const lakes = await (await fetch('/geo/lakes-50m.geo.json')).json() as GeoJSON.FeatureCollection;
+          L.geoJSON(lakes, { pane: 'land', interactive: false, style: { stroke: false, fillColor: '#000', fillOpacity: 1 } }).addTo(map);
+        } catch { /* lakes are optional */ }
         L.geoJSON(borders as never, { pane: 'land', interactive: false, style: { color: '#4a504c', weight: 0.7, fill: false } }).addTo(map);
       } catch { setStatus('Basemap failed to load.'); }
 
