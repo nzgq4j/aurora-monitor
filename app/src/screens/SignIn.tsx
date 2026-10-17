@@ -9,6 +9,12 @@ import { useI18n } from '../i18n/I18n';
 
 type Mode = 'signin' | 'signup' | 'reset';
 
+/** The same-site page to continue to after signing in (?next=), if any. */
+const nextPath = () => {
+  const next = new URLSearchParams(window.location.search).get('next');
+  return next && next.startsWith('/') && !next.startsWith('//') ? next : null;
+};
+
 export function SignIn() {
   const { go, signIn: demoSignIn } = useStore();
   const auth = useAuth();
@@ -22,11 +28,13 @@ export function SignIn() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  // Already signed in (or just signed in): continue to the account.
+  // Links can open straight on account creation (?mode=signup), e.g. from Checkout.
+  useEffect(() => { if (new URLSearchParams(window.location.search).get('mode') === 'signup') setMode('signup'); }, []);
+
+  // Already signed in (or just signed in): continue to where the user was heading.
   useEffect(() => {
     if (!auth.configured || !auth.user) return;
-    const next = new URLSearchParams(window.location.search).get('next');
-    router.replace(next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard');
+    router.replace(nextPath() ?? '/dashboard');
   }, [auth.configured, auth.user, router]);
 
   const alt = { textAlign: 'center' as const, border: '1px solid var(--line-2)', padding: 12, borderRadius: 999, fontWeight: 600, fontSize: 14 };
@@ -40,7 +48,7 @@ export function SignIn() {
       const r = await auth.signIn(email, password);
       if (r.error) setError(r.error);
     } else if (mode === 'signup') {
-      const r = await auth.signUp(email, password, name.trim());
+      const r = await auth.signUp(email, password, name.trim(), nextPath() ?? '/dashboard');
       if (r.error) setError(r.error);
       else if (r.needsConfirmation) setNotice(t('signin.confirmSent', { email }));
     } else {

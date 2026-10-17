@@ -102,7 +102,7 @@ export const de: Messages = {
   'checkout.joinAs': 'Beitreten als',
   'checkout.liveBody': 'Ihr 14-tägiger Testzeitraum beginnt jetzt, ganz ohne Karte. Kartenzahlungen sind noch nicht aktiviert, daher wird am Ende nichts berechnet.',
   'checkout.start': '14 Tage kostenlos testen',
-  'checkout.signInToStart': 'Melden Sie sich an oder erstellen Sie ein Konto, um zu starten',
+  'checkout.createToStart': 'Konto erstellen und starten',
   'checkout.trialEnds': 'Testzeitraum endet am {date}.',
   'checkout.demoNote': 'Heute keine Kosten. Kündigen Sie jederzeit vor dem {date}, dann wird Ihnen nichts berechnet.',
   'checkout.summary': 'BESTELLÜBERSICHT',
