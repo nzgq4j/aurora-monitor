@@ -33,6 +33,11 @@ interface Ctx {
   setHome: (id: string) => Promise<void>;
   /** Ask the device for its position, name it, and save/refresh the single "device" location. */
   detectDevice: (opts?: { silent?: boolean }) => Promise<SavedLocation | null>;
+  /**
+   * Save a place and make it Home. Reuses a matching saved location; at the plan's
+   * location limit it replaces the current Home instead of adding a new one.
+   */
+  saveAsHome: (place: NewLocation, limit: number) => Promise<SavedLocation | null>;
 }
 
 const LocationsCtx = createContext<Ctx | null>(null);
@@ -71,10 +76,18 @@ async function placeName(lat: number, lon: number): Promise<string> {
   return `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? 'N' : 'S'} ${Math.abs(lon).toFixed(2)}°${lon >= 0 ? 'E' : 'W'}`;
 }
 
-function position(): Promise<GeolocationPosition> {
+/** The device's current position and a place name, without saving anything. */
+export async function devicePlace(): Promise<{ name: string; lat: number; lon: number }> {
+  const pos = await position();
+  const lat = Math.round(pos.coords.latitude * 1000) / 1000, lon = Math.round(pos.coords.longitude * 1000) / 1000;
+  return { name: await placeName(lat, lon), lat, lon };
+}
+
+/** `maxAge` 0 forces a fresh fix (explicit button presses); silent refreshes may reuse a recent one. */
+function position(maxAge = 0): Promise<GeolocationPosition> {
   return new Promise((resolve, reject) => {
     if (!('geolocation' in navigator)) return reject(new Error('This device does not provide location.'));
-    navigator.geolocation.getCurrentPosition(resolve, e => reject(new Error(e.code === e.PERMISSION_DENIED ? 'Location permission was denied.' : 'Could not get your location.')), { enableHighAccuracy: false, timeout: 15000, maximumAge: 10 * 60e3 });
+    navigator.geolocation.getCurrentPosition(resolve, e => reject(new Error(e.code === e.PERMISSION_DENIED ? 'Location permission was denied.' : 'Could not get your location.')), { enableHighAccuracy: false, timeout: 15000, maximumAge: maxAge });
   });
 }
 
@@ -166,7 +179,7 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
   const detectDevice = useCallback<Ctx['detectDevice']>(async opts => {
     setDetecting(true);
     try {
-      const pos = await position();
+      const pos = await position(opts?.silent ? 60e3 : 0);
       const lat = Math.round(pos.coords.latitude * 1000) / 1000, lon = Math.round(pos.coords.longitude * 1000) / 1000;
       const existing = list.current.find(l => l.source === 'device');
       if (existing && Math.abs(existing.lat - lat) < 0.01 && Math.abs(existing.lon - lon) < 0.01) return existing;
@@ -186,8 +199,39 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
     }
   }, [remote, sb, add]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const value = useMemo<Ctx>(() => ({ locations, backend, status, error, detecting, load, add, remove, setHome, detectDevice }),
-    [locations, backend, status, error, detecting, load, add, remove, setHome, detectDevice]);
+  const saveAsHome = useCallback<Ctx['saveAsHome']>(async (place, limit) => {
+    setError(null);
+    const near = (l: SavedLocation) => Math.abs(l.lat - place.lat) < 0.01 && Math.abs(l.lon - place.lon) < 0.01;
+    const match = list.current.find(near);
+    if (match) { if (!match.isHome) await setHome(match.id); return list.current.find(l => l.id === match.id) ?? match; }
+    const device = list.current.find(l => l.source === 'device');
+    const replace = async (target: SavedLocation, source: LocationSource) => {
+      const patch = { name: place.name, lat: place.lat, lon: place.lon, source };
+      if (remote) {
+        const { error: e } = await sb!.from('locations').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', target.id);
+        if (e) { setError('Could not save that location.'); return null; }
+      }
+      const updated = { ...target, ...patch };
+      put(list.current.map(l => (l.id === target.id ? updated : l)));
+      if (!updated.isHome) await setHome(updated.id);
+      return list.current.find(l => l.id === updated.id) ?? updated;
+    };
+    // A fresh device position replaces the single device location.
+    if (place.source === 'device' && device) return replace(device, 'device');
+    if (list.current.length < limit) {
+      const saved = await add(place);
+      if (saved && !saved.isHome) await setHome(saved.id);
+      return saved ? list.current.find(l => l.id === saved.id) ?? saved : null;
+    }
+    // At the limit: overwrite the current Home (or the first location).
+    const target = list.current.find(l => l.isHome) ?? list.current[0];
+    if (!target) return null;
+    const source: LocationSource = place.source === 'device' && (!device || device.id === target.id) ? 'device' : 'manual';
+    return replace(target, source);
+  }, [remote, sb, add, setHome]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const value = useMemo<Ctx>(() => ({ locations, backend, status, error, detecting, load, add, remove, setHome, detectDevice, saveAsHome }),
+    [locations, backend, status, error, detecting, load, add, remove, setHome, detectDevice, saveAsHome]);
   return <LocationsCtx.Provider value={value}>{children}</LocationsCtx.Provider>;
 }
 
