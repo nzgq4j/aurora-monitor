@@ -11,28 +11,27 @@ const TABS: [Tab, string][] = [['overview', 'Overview'], ['alerts', 'Alerts'], [
 export function Account() {
   const { s, set, signOut } = useStore();
   return (
-    <main data-screen-label="Account" className="wrap" style={{ padding: '36px 32px 56px', display: 'grid', gridTemplateColumns: '220px minmax(0,1fr)', gap: 40, alignItems: 'start' }}>
-      <aside style={{ position: 'sticky', top: 96, display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0 0 20px' }}>
+    <main data-screen-label="Account" className="wrap account">
+      <aside className="account-aside">
+        <div className="account-profile">
           <span className="avatar" style={{ width: 44, height: 44 }}>SR</span>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span style={{ fontWeight: 700 }}>Sam Rivera</span>
             <span style={{ fontSize: 13, color: 'var(--muted)' }}>sam@example.com</span>
           </div>
         </div>
-        <nav role="tablist" aria-orientation="vertical" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <nav role="tablist" className="account-tabs">
           {TABS.map(([id, label]) => {
             const on = s.tab === id;
             return (
               <button key={id} type="button" role="tab" aria-selected={on} className="btn" onClick={() => set({ tab: id })}
-                style={{ padding: '11px 14px', borderRadius: 10, fontWeight: 600, fontSize: 15, background: on ? C.line : 'transparent', color: on ? '#fff' : C.muted }}>
+                style={{ padding: '11px 14px', borderRadius: 10, fontWeight: 600, fontSize: 15, whiteSpace: 'nowrap', background: on ? C.line : 'transparent', color: on ? '#fff' : C.muted }}>
                 {label}
               </button>
             );
           })}
         </nav>
-        <button type="button" className="btn" onClick={signOut}
-          style={{ padding: '11px 14px', fontWeight: 600, fontSize: 15, color: 'var(--muted)', marginTop: 12, borderTop: '1px solid var(--line)' }}>
+        <button type="button" className="btn account-signout" onClick={signOut}>
           Sign out
         </button>
       </aside>
@@ -54,8 +53,8 @@ function usePlanLine() {
     : `${s.annual ? '$' + plan.y + ' / year' : '$' + plan.m + ' / month'} · trial ends Oct 30, 2026`;
 }
 
-const h2 = { fontSize: 34, lineHeight: 1 };
-const h1 = { fontSize: 56, lineHeight: .9 };
+const h2 = { fontSize: 'clamp(28px, 7.5vw, 34px)', lineHeight: 1 };
+const h1 = { fontSize: 'clamp(40px, 11vw, 56px)', lineHeight: .9 };
 
 function Overview() {
   const { set, plan, planIndex, go } = useStore();
@@ -63,12 +62,12 @@ function Overview() {
   return (
     <div data-screen-label="Account · Overview" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(340px,100%),1fr))', gap: 20 }}>
-        <div style={{ position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 14, padding: 28, border: `1px solid ${plan.accent}`, borderRadius: 18, background: 'var(--panel)' }}>
+        <div style={{ position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 14, padding: 'clamp(20px, 5vw, 28px)', border: `1px solid ${plan.accent}`, borderRadius: 18, background: 'var(--panel)' }}>
           <div aria-hidden="true" style={{ position: 'absolute', right: -90, bottom: -150, width: 340, height: 340, borderRadius: '50%', border: `38px solid ${plan.accent}`, opacity: .45, filter: 'blur(30px)' }} />
           <span className="mono" style={{ position: 'relative', fontSize: 12, letterSpacing: '.08em', color: 'var(--muted)' }}>MEMBERSHIP</span>
           <span className="display" style={{ position: 'relative', fontSize: 'clamp(34px,4.2vw,60px)', lineHeight: .9, overflowWrap: 'anywhere', color: plan.accent }}>{plan.name}</span>
           <span style={{ position: 'relative', fontSize: 16, color: 'var(--soft)' }}>{planLine}</span>
-          <div style={{ position: 'relative', display: 'flex', gap: 10, marginTop: 6 }}>
+          <div style={{ position: 'relative', display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 6 }}>
             <button type="button" className="btn pill pill-primary" onClick={() => go('plans')} style={{ fontSize: 14, padding: '11px 18px' }}>{planIndex === 3 ? 'Change plan' : 'Upgrade'}</button>
             <button type="button" className="btn pill pill-ghost" onClick={() => set({ tab: 'billing' })} style={{ fontSize: 14, padding: '11px 18px', background: '#000' }}>Billing</button>
           </div>
@@ -87,13 +86,13 @@ function Overview() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12 }}>
           <h2 className="display" style={h2}>Your <span className="hl">season</span></h2>
-          <div style={{ display: 'flex', gap: 16, fontSize: 13, color: 'var(--soft)' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 16px', fontSize: 13, color: 'var(--soft)' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 11, height: 11, background: C.darkGreen }} />Max Kp over Minneapolis</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 9, height: 9, borderRadius: '50%', background: '#fff' }} />Alerts sent</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 16, borderTop: `2px dashed ${C.amber}` }} />Visible from home (Kp 5)</span>
           </div>
         </div>
-        <svg viewBox="0 0 900 240" style={{ width: '100%', display: 'block' }} role="img" aria-label="Weekly max Kp and alerts sent this season">
+        <div className="hscroll"><svg viewBox="0 0 900 240" style={{ width: '100%', minWidth: 560, display: 'block' }} role="img" aria-label="Weekly max Kp and alerts sent this season">
           {seasonGrid.map(g => (
             <g key={g.k}>
               <line x1="30" x2="890" y1={g.y} y2={g.y} style={{ stroke: '#fff', strokeOpacity: .07 }} />
@@ -109,16 +108,16 @@ function Overview() {
             </g>
           ))}
           <line x1="30" x2="890" y1="210" y2="210" style={{ stroke: C.muted }} />
-        </svg>
+        </svg></div>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <h2 className="display" style={{ ...h2, margin: '0 0 8px' }}>Best nights <span className="hl">ahead</span></h2>
         {upcoming.map(u => (
-          <div key={u.d} style={{ display: 'grid', gridTemplateColumns: '130px 70px minmax(0,1fr) 52px', alignItems: 'center', gap: 16, padding: '12px 0', borderBottom: '1px solid var(--line)' }}>
+          <div key={u.d} className="night">
             <span style={{ fontWeight: 700, fontSize: 16 }}>{u.d}</span>
             <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 20, color: u.c }}>Kp {u.kp}</span>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            <div className="night-bar" style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
               <div style={{ height: 10, background: '#121512', borderRadius: 2 }}>
                 <div style={{ height: 10, width: u.chance + '%', background: u.c, borderRadius: 2, boxShadow: `0 0 12px ${u.c}` }} />
               </div>
@@ -159,7 +158,7 @@ function Alerts() {
   return (
     <div data-screen-label="Account · Alerts" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
       <h1 className="display" style={h1}>Alert <span className="hl">rules</span></h1>
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,.8fr) minmax(0,1.2fr)', gap: 28, padding: 26, border: '1px solid var(--line-2)', borderRadius: 18 }}>
+      <div className="alert-rule">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <label htmlFor="kp-threshold" className="eyebrow">ALERT ME WHEN KP REACHES</label>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
@@ -184,7 +183,7 @@ function Alerts() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(300px,100%),1fr))', gap: 20 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <span className="eyebrow" style={{ marginBottom: 8 }}>TRIGGERS</span>
           {TRIGGER_DEFS.map(([k, label, sub, need]) => {
@@ -221,7 +220,7 @@ function Locations() {
         <h1 className="display" style={h1}>Saved <span className="hl">skies</span></h1>
         <span className="mono" style={{ fontSize: 13, color: 'var(--muted)' }}>{`${Math.min(3, plan.locs)} OF ${plan.locs > 10 ? '∞' : plan.locs} ACTIVE`}</span>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(260px,100%),1fr))', gap: 16 }}>
         {locations.map((l, i) => {
           const paused = i >= plan.locs;
           const tagC = paused ? C.muted : i === 0 ? C.green : C.soft;
@@ -273,7 +272,7 @@ function Billing() {
   return (
     <div data-screen-label="Account · Billing" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <h1 className="display" style={h1}>Billing</h1>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(280px,100%),1fr))', gap: 16 }}>
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 22 }}>
           <span className="label">PLAN</span>
           <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 32, color: plan.accent }}>{plan.name}</span>
@@ -290,7 +289,7 @@ function Billing() {
       </div>
       {planIndex > 0 && (
         <>
-          <div role="table" style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="hscroll"><div role="table" style={{ display: 'flex', flexDirection: 'column', minWidth: 480 }}>
             <div role="row" className="mono" style={{ display: 'grid', gridTemplateColumns: cols, gap: 12, padding: '10px 0', borderBottom: '1px solid var(--line-2)', fontSize: 11, color: 'var(--muted)' }}>
               <span role="columnheader">DATE</span><span role="columnheader">DESCRIPTION</span><span role="columnheader">AMOUNT</span><span role="columnheader">STATUS</span>
             </div>
@@ -302,7 +301,7 @@ function Billing() {
                 <span role="cell" style={{ fontWeight: 700, color: inv.c }}>{inv.st}</span>
               </div>
             ))}
-          </div>
+          </div></div>
           <button type="button" className="btn" onClick={cancelPlan} style={{ alignSelf: 'flex-start', fontWeight: 600, fontSize: 14, color: C.red }}>Cancel membership</button>
         </>
       )}
