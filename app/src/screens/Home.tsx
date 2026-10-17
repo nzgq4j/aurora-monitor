@@ -1,10 +1,11 @@
 'use client';
 
 import { C } from '../data';
-import { KpOutlookChart, PolarOval } from '../components/Charts';
+import { KpOutlookChart, POLAR_MIN_LAT, PolarOval } from '../components/Charts';
 import { YourSky } from '../components/YourSky';
 import { G_SCALE } from '../lib/astro';
 import { SDO_IMAGES } from '../lib/sdo';
+import { useLocations } from '../lib/locations';
 import type { NowData } from '../lib/now';
 import { useStore } from '../store';
 
@@ -38,6 +39,7 @@ function summary(d: NowData): string {
 
 export function Home({ data }: { data: NowData }) {
   const { planIndex, go } = useStore();
+  const { shownPlace } = useLocations();
   const kp = data.kp?.kp ?? null;
   const [l1, l2] = headline(kp);
   const level = kp === null ? 0 : Math.round(kp);
@@ -88,11 +90,16 @@ export function Home({ data }: { data: NowData }) {
             <span style={{ fontFamily: 'var(--f-display)', fontWeight: 800, fontSize: 14, color: 'var(--green)', letterSpacing: '.04em' }}>AURORAL OVAL · OVATION</span>
             <span className="label">{data.oval?.forecast ? `FORECAST ${hhmm(data.oval.forecast)} UT` : '—'}</span>
           </div>
-          <PolarOval points={data.oval?.points ?? []} edge={data.oval?.edge ?? []} />
+          <PolarOval points={data.oval?.points ?? []} edge={data.oval?.edge ?? []} marker={shownPlace} />
           <span style={{ fontSize: 12, color: 'var(--muted)' }}>
             <span style={{ display: 'inline-block', width: 16, borderTop: `1.5px dashed ${C.red}`, verticalAlign: 'middle', marginRight: 6 }} />
             Equatorward edge of 10% aurora probability
           </span>
+          {shownPlace && shownPlace.lat < POLAR_MIN_LAT && (
+            <span style={{ fontSize: 12, color: 'var(--muted)' }}>
+              {shownPlace.lat < 0 ? `${shownPlace.name} is in the southern hemisphere; this map shows the north.` : `${shownPlace.name} is south of this map, which reaches about ${Math.round(POLAR_MIN_LAT)}°N.`}
+            </span>
+          )}
         </div>
       </div>
 

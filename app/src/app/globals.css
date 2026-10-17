@@ -138,3 +138,8 @@ button.pill-ghost { border: 1px solid var(--line-2); }
   .night-bar { grid-column: 1 / -1; grid-row: 2; }
   .alert-rule { padding: 18px; gap: 20px; }
 }
+
+/* Location marker on the oval map. */
+@keyframes map-pulse { from { r: 7px; opacity: 1; } to { r: 20px; opacity: 0; } }
+.map-pulse { animation: map-pulse 2s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) { .map-pulse { animation: none; } }

@@ -22,16 +22,25 @@ interface PolarProps {
   points: [number, number, number][];
   /** Equatorward 10% edge, [lon, lat] per longitude. */
   edge: [number, number][];
+  /** The user's chosen location, drawn when it falls on the map. */
+  marker?: { name: string; lat: number; lon: number; isHome: boolean } | null;
 }
 
+/** Map radius (226) in degrees of colatitude: the map reaches about 36°N. */
+export const POLAR_MIN_LAT = 90 - 222 / K;
+
 /** Live OVATION aurora probability on a polar map, with the 10% equatorward edge and reference cities. */
-export function PolarOval({ points, edge }: PolarProps) {
+export function PolarOval({ points, edge, marker }: PolarProps) {
   const id = useId().replace(/:/g, '');
   const edgePath = edge.length > 2
     ? edge.map(([lon, lat], i) => { const [x, y] = pol(lat, lon > 180 ? lon - 360 : lon); return `${i ? 'L' : 'M'}${f(x)} ${f(y)}`; }).join(' ') + ' Z'
     : '';
+  const m = marker && marker.lat >= POLAR_MIN_LAT ? (() => { const [x, y] = pol(marker.lat, marker.lon); return { ...marker, x: f(x), y: f(y), right: x < 340 }; })() : null;
+  // Hide reference-city labels the marker would collide with.
+  const cities = m ? polar.cities.filter(c => Math.hypot(c.x - m.x, c.y - m.y) > 26) : polar.cities;
   return (
-    <svg viewBox="0 0 480 480" style={{ width: '100%', display: 'block' }} role="img" aria-label="OVATION aurora probability over the northern hemisphere">
+    <svg viewBox="0 0 480 480" style={{ width: '100%', display: 'block' }} role="img"
+      aria-label={`OVATION aurora probability over the northern hemisphere${m ? `, with ${m.name} marked` : ''}`}>
       <defs>
         <clipPath id={`${id}c`}><circle cx="240" cy="240" r="226" /></clipPath>
         <filter id={`${id}b`} x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" /></filter>
@@ -53,7 +62,7 @@ export function PolarOval({ points, edge }: PolarProps) {
           </g>
         ))}
         {edgePath && <path d={edgePath} style={{ fill: 'none', stroke: C.red, strokeWidth: 1.5, strokeDasharray: '5 5' }} />}
-        {polar.cities.map(c => (
+        {cities.map(c => (
           <g key={c.name}>
             <circle cx={c.x} cy={c.y} r="2.6" style={{ fill: '#fff' }} />
             <text x={c.tx} y={c.ty} style={{ fill: '#fff', font: "600 11.5px 'Barlow'", textAnchor: c.anchor }}>{c.name}</text>
@@ -61,6 +70,17 @@ export function PolarOval({ points, edge }: PolarProps) {
         ))}
       </g>
       <circle cx="240" cy="240" r="226" style={{ fill: 'none', stroke: C.line2 }} />
+      {m && (
+        <g aria-hidden="true">
+          <circle className="map-pulse" cx={m.x} cy={m.y} r="7" style={{ fill: 'none', stroke: C.green, strokeWidth: 2 }} />
+          <circle cx={m.x} cy={m.y} r="11" style={{ fill: 'none', stroke: C.green, strokeWidth: 1.5, opacity: .6 }} />
+          <circle cx={m.x} cy={m.y} r="4.5" style={{ fill: '#fff', stroke: '#000', strokeWidth: 2 }} />
+          <text x={m.right ? m.x + 16 : m.x - 16} y={m.y + 4}
+            style={{ fill: C.green, font: "700 13px 'Barlow'", textAnchor: m.right ? 'start' : 'end', paintOrder: 'stroke', stroke: '#000', strokeWidth: 4, strokeLinejoin: 'round' }}>
+            {m.isHome ? `${m.name.split(',')[0]} · Home` : m.name.split(',')[0]}
+          </text>
+        </g>
+      )}
       {points.length === 0 && <text x="240" y="244" style={{ fill: C.muted, font: "600 13px 'Barlow'", textAnchor: 'middle' }}>Oval data unavailable</text>}
     </svg>
   );
