@@ -2,22 +2,16 @@
 
 import { useEffect, useState, type FormEvent } from 'react';
 import { C } from '../data';
-import { devicePlace, searchPlaces, useLocations, type PlaceResult } from '../lib/locations';
+import { devicePlace, searchPlaces, useLocations, type Place, type PlaceResult } from '../lib/locations';
 import { useConditions } from '../lib/useConditions';
 import { useStore } from '../store';
 
-interface Place { name: string; lat: number; lon: number }
-
-const VIEW_KEY = 'oval.view.v1';
-const readView = (): Place | null => { try { return JSON.parse(sessionStorage.getItem(VIEW_KEY) || 'null'); } catch { return null; } };
-const writeView = (p: Place | null) => { try { if (p) sessionStorage.setItem(VIEW_KEY, JSON.stringify(p)); else sessionStorage.removeItem(VIEW_KEY); } catch { /* storage unavailable */ } };
 const hhmmUT = (t: number) => `${new Date(t).toISOString().slice(11, 16)} UT`;
 
 /** "Your sky" panel on Now: pick a location (device or search), optionally save it as Home, and see its live conditions. */
 export function YourSky({ kp }: { kp: number | null }) {
   const { plan } = useStore();
-  const { locations, load, saveAsHome, error: locError } = useLocations();
-  const [view, setView] = useState<Place | null>(null);
+  const { locations, load, saveAsHome, error: locError, viewPlace: view, setViewPlace, shownPlace: shown } = useLocations();
   const [picking, setPicking] = useState(false);
   const [saveHome, setSaveHome] = useState(true);
   const [q, setQ] = useState('');
@@ -25,11 +19,9 @@ export function YourSky({ kp }: { kp: number | null }) {
   const [busy, setBusy] = useState<'device' | 'search' | 'save' | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
 
-  useEffect(() => { load(); setView(readView()); }, [load]);
+  useEffect(() => { load(); }, [load]);
 
   const home = locations.find(l => l.isHome) ?? null;
-  // An unsaved place chosen this session takes precedence over Home.
-  const shown: (Place & { isHome: boolean }) | null = view ? { ...view, isHome: false } : home ? { ...home, isHome: true } : null;
   const { data: cond, loading } = useConditions(shown?.lat, shown?.lon);
 
   const choose = async (place: Place, source: 'manual' | 'device') => {
@@ -39,9 +31,9 @@ export function YourSky({ kp }: { kp: number | null }) {
       const saved = await saveAsHome({ ...place, source }, plan.locs);
       setBusy(null);
       if (!saved) return;
-      writeView(null); setView(null);
+      setViewPlace(null);
     } else {
-      writeView(place); setView(place);
+      setViewPlace(place);
     }
     setPicking(false); setResults(null); setQ('');
   };
@@ -102,7 +94,7 @@ export function YourSky({ kp }: { kp: number | null }) {
         </div>
         {!picking && (
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            {view && home && <button type="button" className="btn pill pill-ghost" style={pill} onClick={() => { writeView(null); setView(null); }}>Back to Home</button>}
+            {view && home && <button type="button" className="btn pill pill-ghost" style={pill} onClick={() => setViewPlace(null)}>Back to Home</button>}
             <button type="button" className="btn pill pill-primary" style={pill} onClick={openPicker}>{shown ? 'Change location' : 'Set location'}</button>
           </div>
         )}

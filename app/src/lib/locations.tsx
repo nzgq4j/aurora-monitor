@@ -16,6 +16,9 @@ export interface SavedLocation {
   createdAt: string;
 }
 
+/** A point to show conditions for. */
+export interface Place { name: string; lat: number; lon: number }
+
 export interface PlaceResult { name: string; detail: string; lat: number; lon: number }
 
 type NewLocation = Pick<SavedLocation, 'name' | 'lat' | 'lon' | 'source'>;
@@ -38,10 +41,16 @@ interface Ctx {
    * location limit it replaces the current Home instead of adding a new one.
    */
   saveAsHome: (place: NewLocation, limit: number) => Promise<SavedLocation | null>;
+  /** An unsaved place picked on the Now page for this visit (overrides Home there). */
+  viewPlace: Place | null;
+  setViewPlace: (p: Place | null) => void;
+  /** What the Now page shows: the unsaved view if any, else Home. */
+  shownPlace: (Place & { isHome: boolean }) | null;
 }
 
 const LocationsCtx = createContext<Ctx | null>(null);
 const LS_KEY = 'oval.locations.v1';
+const VIEW_KEY = 'oval.view.v1';
 
 const readLocal = (): SavedLocation[] => {
   try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch { return []; }
@@ -101,6 +110,12 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<Ctx['status']>('idle');
   const [error, setError] = useState<string | null>(null);
   const [detecting, setDetecting] = useState(false);
+  const [viewPlace, setView] = useState<Place | null>(null);
+  useEffect(() => { try { setView(JSON.parse(sessionStorage.getItem(VIEW_KEY) || 'null')); } catch { /* storage unavailable */ } }, []);
+  const setViewPlace = useCallback((p: Place | null) => {
+    setView(p);
+    try { if (p) sessionStorage.setItem(VIEW_KEY, JSON.stringify(p)); else sessionStorage.removeItem(VIEW_KEY); } catch { /* storage unavailable */ }
+  }, []);
   const wanted = useRef(false);
   const loadedFor = useRef<string | null>(null);
   const list = useRef<SavedLocation[]>([]);
@@ -230,8 +245,11 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
     return replace(target, source);
   }, [remote, sb, add, setHome]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const value = useMemo<Ctx>(() => ({ locations, backend, status, error, detecting, load, add, remove, setHome, detectDevice, saveAsHome }),
-    [locations, backend, status, error, detecting, load, add, remove, setHome, detectDevice, saveAsHome]);
+  const value = useMemo<Ctx>(() => {
+    const home = locations.find(l => l.isHome) ?? null;
+    const shownPlace = viewPlace ? { ...viewPlace, isHome: false } : home ? { name: home.name, lat: home.lat, lon: home.lon, isHome: true } : null;
+    return { locations, backend, status, error, detecting, load, add, remove, setHome, detectDevice, saveAsHome, viewPlace, setViewPlace, shownPlace };
+  }, [locations, backend, status, error, detecting, load, add, remove, setHome, detectDevice, saveAsHome, viewPlace, setViewPlace]);
   return <LocationsCtx.Provider value={value}>{children}</LocationsCtx.Provider>;
 }
 
