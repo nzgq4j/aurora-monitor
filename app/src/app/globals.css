@@ -174,3 +174,5 @@ button.pill-ghost { border: 1px solid var(--line-2); }
   .map-legend > summary { display: list-item; cursor: pointer; font: 700 13px var(--f-body); color: var(--soft); }
   .map-legend[open] > summary { margin-bottom: 8px; }
 }
+.aurora-map .map-home a { display: flex; align-items: center; justify-content: center; background: #111; color: #fff; border-color: var(--line-2); }
+.aurora-map .map-home a:hover { background: #1d211e; }
