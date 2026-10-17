@@ -6,11 +6,12 @@ import { TIERS, type ChannelKey, type Tier, type TierId, type TriggerKey } from 
 import { useAuth } from './lib/auth';
 import { supabase } from './lib/supabase';
 
-export type Screen = 'home' | 'plans' | 'checkout' | 'signin' | 'account';
+export type Screen = 'home' | 'map' | 'plans' | 'checkout' | 'signin' | 'account';
 export type Tab = 'overview' | 'alerts' | 'locations' | 'billing';
 
 export const PATHS: Record<Screen, string> = {
   home: '/',
+  map: '/map',
   plans: '/plans',
   checkout: '/checkout',
   signin: '/signin',

@@ -95,6 +95,7 @@ export function Home({ data }: { data: NowData }) {
             <span style={{ display: 'inline-block', width: 16, borderTop: `1.5px dashed ${C.red}`, verticalAlign: 'middle', marginRight: 6 }} />
             Equatorward edge of 10% aurora probability
           </span>
+          <button type="button" className="btn" onClick={() => go('map')} style={{ alignSelf: 'flex-start', fontSize: 14, fontWeight: 700, color: 'var(--green)' }}>Open the zoomable map →</button>
           {shownPlace && shownPlace.lat < POLAR_MIN_LAT && (
             <span style={{ fontSize: 12, color: 'var(--muted)' }}>
               {shownPlace.lat < 0 ? `${shownPlace.name} is in the southern hemisphere; this map shows the north.` : `${shownPlace.name} is south of this map, which reaches about ${Math.round(POLAR_MIN_LAT)}°N.`}
