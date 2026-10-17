@@ -7,7 +7,7 @@ import { useAuth } from './lib/auth';
 import { supabase } from './lib/supabase';
 
 export type Screen = 'home' | 'map' | 'plans' | 'checkout' | 'signin' | 'account';
-export type Tab = 'overview' | 'alerts' | 'locations' | 'plans' | 'billing';
+export type Tab = 'overview' | 'alerts' | 'locations' | 'plans' | 'account';
 
 export const PATHS: Record<Screen, string> = {
   home: '/',
