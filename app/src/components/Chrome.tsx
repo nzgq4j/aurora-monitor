@@ -1,11 +1,14 @@
 'use client';
 
+import { initials, useAuth } from '../lib/auth';
 import { useStore, type Screen } from '../store';
 
 const NAV: [string, Screen][] = [['Now', 'home'], ['Plans', 'plans'], ['Account', 'account']];
 
 export function Header({ kpLabel }: { kpLabel: string }) {
-  const { s, screen: current, plan, go, goAccount } = useStore();
+  const { signedIn, live, screen: current, plan, go, goAccount } = useStore();
+  const { user, profile } = useAuth();
+  const avatar = live ? initials(profile?.displayName, user?.email) : 'SR';
   return (
     <header className="header">
       <div className="wrap header-inner">
@@ -27,11 +30,11 @@ export function Header({ kpLabel }: { kpLabel: string }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <span className="mono" style={{ fontSize: 12, color: 'var(--muted)', whiteSpace: 'nowrap' }}>{kpLabel}</span>
-          {s.signedIn ? (
+          {signedIn ? (
             <button type="button" className="btn" onClick={goAccount}
               style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 4px 4px 14px', border: '1px solid var(--line-2)', borderRadius: 999 }}>
               <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--green)' }}>{plan.name}</span>
-              <span className="avatar" style={{ width: 32, height: 32, fontSize: 13 }}>SR</span>
+              <span className="avatar" style={{ width: 32, height: 32, fontSize: 13 }}>{avatar}</span>
             </button>
           ) : (
             <>

@@ -4,6 +4,7 @@ import './globals.css';
 import { Footer, Header, Toast } from '../components/Chrome';
 import { G_SCALE } from '../lib/astro';
 import { kpNow } from '../lib/feeds';
+import { AuthProvider } from '../lib/auth';
 import { LocationsProvider } from '../lib/locations';
 import { StoreProvider } from '../store';
 
@@ -29,16 +30,18 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         />
       </head>
       <body>
-        <StoreProvider>
-          <LocationsProvider>
-            <div className="app">
-              <Header kpLabel={kpLabel} />
-              <Toast />
-              {children}
-              <Footer />
-            </div>
-          </LocationsProvider>
-        </StoreProvider>
+        <AuthProvider>
+          <StoreProvider>
+            <LocationsProvider>
+              <div className="app">
+                <Header kpLabel={kpLabel} />
+                <Toast />
+                {children}
+                <Footer />
+              </div>
+            </LocationsProvider>
+          </StoreProvider>
+        </AuthProvider>
       </body>
     </html>
   );

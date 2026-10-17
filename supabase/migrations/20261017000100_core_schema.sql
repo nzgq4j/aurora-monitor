@@ -1,6 +1,100 @@
--- OVAL core schema: user locations and alert settings (private, row-level
--- security), plus a public archive of space-weather data written only by the
--- ingest-space-weather edge function (service role).
+-- OVAL core schema: user profiles, locations and alert settings (private,
+-- row-level security), plus a public archive of space-weather data written
+-- only by the ingest-space-weather edge function (service role).
+
+-- ---------------------------------------------------------------------------
+-- Profiles (one per auth user, created automatically on sign-up)
+-- ---------------------------------------------------------------------------
+create table public.profiles (
+  id             uuid primary key references auth.users (id) on delete cascade,
+  display_name   text check (display_name is null or char_length(display_name) <= 80),
+  plan           text not null default 'free' check (plan in ('free', 'observer', 'chaser', 'observatory')),
+  billing_cycle  text not null default 'annual' check (billing_cycle in ('monthly', 'annual')),
+  -- Set once, the first time a paid trial starts; switching tiers keeps the same end date.
+  trial_ends_at  timestamptz,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+
+comment on column public.profiles.plan is 'Tier chosen by the user. Paid tiers apply while trial_ends_at is in the future (no payments yet).';
+
+alter table public.profiles enable row level security;
+
+create policy "Users read their own profile" on public.profiles
+  for select to authenticated using ((select auth.uid()) = id);
+create policy "Users update their own profile" on public.profiles
+  for update to authenticated using ((select auth.uid()) = id) with check ((select auth.uid()) = id);
+
+-- Users may only change their display name directly; plan fields change through the functions below.
+revoke update on public.profiles from authenticated, anon;
+grant update (display_name, updated_at) on public.profiles to authenticated;
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  insert into public.profiles (id, display_name)
+  values (new.id, nullif(trim(coalesce(new.raw_user_meta_data ->> 'display_name', new.raw_user_meta_data ->> 'full_name', new.raw_user_meta_data ->> 'name', '')), ''));
+  return new;
+end;
+$$;
+
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+-- Start (or switch tiers within) the one free 14-day trial.
+create or replace function public.start_trial(tier text, cycle text default 'annual')
+returns public.profiles
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  me public.profiles;
+begin
+  if (select auth.uid()) is null then raise exception 'Not signed in'; end if;
+  if tier not in ('observer', 'chaser', 'observatory') then raise exception 'Unknown tier %', tier; end if;
+  if cycle not in ('monthly', 'annual') then raise exception 'Unknown billing cycle %', cycle; end if;
+  select * into me from public.profiles where id = (select auth.uid()) for update;
+  if me.trial_ends_at is not null and me.trial_ends_at < now() then
+    raise exception 'Your free trial has already been used';
+  end if;
+  update public.profiles
+     set plan = tier, billing_cycle = cycle,
+         trial_ends_at = coalesce(trial_ends_at, now() + interval '14 days'),
+         updated_at = now()
+   where id = (select auth.uid())
+  returning * into me;
+  return me;
+end;
+$$;
+
+create or replace function public.cancel_membership()
+returns public.profiles
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  me public.profiles;
+begin
+  if (select auth.uid()) is null then raise exception 'Not signed in'; end if;
+  update public.profiles set plan = 'free', updated_at = now()
+   where id = (select auth.uid())
+  returning * into me;
+  return me;
+end;
+$$;
+
+revoke execute on function public.start_trial(text, text) from public, anon;
+revoke execute on function public.cancel_membership() from public, anon;
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
+grant execute on function public.start_trial(text, text) to authenticated;
+grant execute on function public.cancel_membership() to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Saved locations (manual or detected from the device)
@@ -34,6 +128,36 @@ create policy "Users update their own locations" on public.locations
   for update to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
 create policy "Users delete their own locations" on public.locations
   for delete to authenticated using ((select auth.uid()) = user_id);
+
+-- Enforce the plan's location limit (paid tiers count only while their trial is active).
+create or replace function public.enforce_location_limit()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  p public.profiles;
+  tier text;
+  max_locations int;
+  current_count int;
+begin
+  select * into p from public.profiles where id = new.user_id;
+  tier := case when p.plan is null or p.plan = 'free' or p.trial_ends_at is null or p.trial_ends_at < now() then 'free' else p.plan end;
+  max_locations := case tier when 'observer' then 3 when 'chaser' then 10 when 'observatory' then 1000 else 1 end;
+  select count(*) into current_count from public.locations where user_id = new.user_id;
+  if current_count >= max_locations then
+    raise exception 'Location limit reached for the % plan (%).', tier, max_locations using errcode = 'P0001';
+  end if;
+  return new;
+end;
+$$;
+
+revoke execute on function public.enforce_location_limit() from public, anon, authenticated;
+
+create trigger locations_enforce_limit
+  before insert on public.locations
+  for each row execute function public.enforce_location_limit();
 
 -- Move the home flag atomically (the partial unique index forbids two homes).
 create or replace function public.set_home_location(location_id uuid)

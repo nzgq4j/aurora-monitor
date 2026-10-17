@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
+import { initials, useAuth } from '../lib/auth';
 import { C, CHANNEL_DEFS, KP_NAME, TIERS, TRIGGER_DEFS, f, kpColor } from '../data';
 import { G_SCALE, kpNeeded } from '../lib/astro';
 import type { AccountData } from '../lib/history';
@@ -10,16 +12,27 @@ import { useStore, type Tab } from '../store';
 
 const TABS: [Tab, string][] = [['overview', 'Overview'], ['alerts', 'Alerts'], ['locations', 'Locations'], ['billing', 'Billing']];
 
+const longDate = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
 export function Account({ data }: { data: AccountData }) {
-  const { s, set, signOut } = useStore();
+  const { s, set, signOut, live } = useStore();
+  const auth = useAuth();
+  const router = useRouter();
+  // With real accounts, the Account page needs a signed-in user.
+  useEffect(() => { if (live && auth.ready && !auth.user) router.replace('/signin?next=/account'); }, [live, auth.ready, auth.user, router]);
+  if (live && !auth.user) {
+    return <main className="wrap" style={{ padding: '64px var(--gutter)', color: 'var(--muted)' }}>{auth.ready ? 'Redirecting to sign in…' : 'Loading your account…'}</main>;
+  }
+  const name = live ? auth.profile?.displayName || auth.user?.email?.split('@')[0] || 'Your account' : 'Sam Rivera';
+  const email = live ? auth.user?.email ?? '' : 'sam@example.com';
   return (
     <main data-screen-label="Account" className="wrap account">
       <aside className="account-aside">
         <div className="account-profile">
-          <span className="avatar" style={{ width: 44, height: 44 }}>SR</span>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontWeight: 700 }}>Sam Rivera</span>
-            <span style={{ fontSize: 13, color: 'var(--muted)' }}>sam@example.com</span>
+          <span className="avatar" style={{ width: 44, height: 44, flex: 'none' }}>{live ? initials(auth.profile?.displayName, email) : 'SR'}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+            <span style={{ fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+            <span style={{ fontSize: 13, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{email}</span>
           </div>
         </div>
         <nav role="tablist" className="account-tabs">
@@ -49,10 +62,16 @@ export function Account({ data }: { data: AccountData }) {
 }
 
 function usePlanLine() {
-  const { s, plan, planIndex } = useStore();
+  const { s, plan, planIndex, live } = useStore();
+  const { profile, trialExpired } = useAuth();
+  if (live) {
+    if (planIndex === 0) return trialExpired ? 'Your trial has ended · back on Free' : 'Free forever · 1 location · daily digest';
+    const annual = profile?.billingCycle === 'annual';
+    return `${annual ? '$' + plan.y + ' / year' : '$' + plan.m + ' / month'}${profile?.trialEndsAt ? ` · trial ends ${longDate(profile.trialEndsAt)}` : ''}`;
+  }
   return planIndex === 0
     ? 'Free forever · 1 location · daily digest'
-    : `${s.annual ? '$' + plan.y + ' / year' : '$' + plan.m + ' / month'} · trial ends Oct 30, 2026`;
+    : `${s.annual ? '$' + plan.y + ' / year' : '$' + plan.m + ' / month'} · 14-day trial`;
 }
 
 const h2 = { fontSize: 'clamp(28px, 7.5vw, 34px)', lineHeight: 1 };
@@ -373,7 +392,7 @@ function AddLocation({ disabled }: { disabled: boolean }) {
 }
 
 function Locations() {
-  const { plan } = useStore();
+  const { plan, live } = useStore();
   const { locations, status, load, backend, error, detectDevice } = useLocations();
   useEffect(() => {
     load();
@@ -391,7 +410,7 @@ function Locations() {
         <span className="mono" style={{ fontSize: 13, color: 'var(--muted)' }}>{`${active} OF ${limit > 10 ? '∞' : limit} ACTIVE`}</span>
       </div>
       {error && <span role="status" style={{ fontSize: 14, color: C.amber }}>{error}</span>}
-      {backend === 'local' && <span style={{ fontSize: 13, color: 'var(--muted)' }}>Locations are saved in this browser.</span>}
+      {backend === 'local' && <span style={{ fontSize: 13, color: 'var(--muted)' }}>Locations are saved in this browser{live ? '. Sign in to keep them in your account.' : '.'}</span>}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(260px,100%),1fr))', gap: 16 }}>
         {status !== 'ready' && <span style={{ color: 'var(--muted)' }}>Loading your locations…</span>}
         {locations.map((l, i) => <LocationCard key={l.id} loc={l} index={i} paused={i >= limit} />)}
@@ -405,14 +424,10 @@ function Locations() {
 }
 
 function Billing() {
-  const { s, plan, planIndex, go, cancelPlan } = useStore();
+  const { s, plan, planIndex, go, cancelPlan, live } = useStore();
+  const { profile } = useAuth();
   const planLine = usePlanLine();
-  const cycle = s.annual ? 'annual' : 'monthly';
-  const cols = '1.2fr 1.5fr 1fr 1fr';
-  const invoices = [
-    { d: 'Oct 16, 2026', desc: `${plan.name} · trial started`, amt: '$0.00', st: 'Paid', c: C.green },
-    { d: 'Oct 30, 2026', desc: `${plan.name} · ${cycle}`, amt: '$' + (s.annual ? plan.y : plan.m) + '.00', st: 'Upcoming', c: C.amber },
-  ];
+  const annual = live ? profile?.billingCycle === 'annual' : s.annual;
   return (
     <div data-screen-label="Account · Billing" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <h1 className="display" style={h1}>Billing</h1>
@@ -426,28 +441,15 @@ function Billing() {
           </button>
         </div>
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 22 }}>
-          <span className="label">PAYMENT METHOD</span>
-          <span className="mono" style={{ fontWeight: 600, fontSize: 22 }}>{planIndex ? 'VISA •••• 4242' : 'None on file'}</span>
-          <span style={{ fontSize: 14, color: 'var(--soft)' }}>{planIndex ? 'Expires 08 / 29' : 'Add a card when you upgrade.'}</span>
+          <span className="label">PAYMENT</span>
+          <span style={{ fontWeight: 700, fontSize: 18 }}>No payment method needed yet</span>
+          <span style={{ fontSize: 14, color: 'var(--soft)' }}>
+            {planIndex ? `Your trial is free. After it, ${plan.name} is ${annual ? `$${plan.y} a year` : `$${plan.m} a month`} once card payments are switched on.` : 'Free accounts are never charged.'}
+          </span>
         </div>
       </div>
       {planIndex > 0 && (
-        <>
-          <div className="hscroll"><div role="table" style={{ display: 'flex', flexDirection: 'column', minWidth: 480 }}>
-            <div role="row" className="mono" style={{ display: 'grid', gridTemplateColumns: cols, gap: 12, padding: '10px 0', borderBottom: '1px solid var(--line-2)', fontSize: 11, color: 'var(--muted)' }}>
-              <span role="columnheader">DATE</span><span role="columnheader">DESCRIPTION</span><span role="columnheader">AMOUNT</span><span role="columnheader">STATUS</span>
-            </div>
-            {invoices.map(inv => (
-              <div role="row" key={inv.d} style={{ display: 'grid', gridTemplateColumns: cols, gap: 12, padding: '14px 0', borderBottom: '1px solid var(--line)', fontSize: 15 }}>
-                <span role="cell">{inv.d}</span>
-                <span role="cell" style={{ color: 'var(--soft)' }}>{inv.desc}</span>
-                <span role="cell" className="mono">{inv.amt}</span>
-                <span role="cell" style={{ fontWeight: 700, color: inv.c }}>{inv.st}</span>
-              </div>
-            ))}
-          </div></div>
-          <button type="button" className="btn" onClick={cancelPlan} style={{ alignSelf: 'flex-start', fontWeight: 600, fontSize: 14, color: C.red }}>Cancel membership</button>
-        </>
+        <button type="button" className="btn" onClick={cancelPlan} style={{ alignSelf: 'flex-start', fontWeight: 600, fontSize: 14, color: C.red }}>Cancel membership</button>
       )}
     </div>
   );

@@ -21,8 +21,21 @@ security) plus a public archive of space-weather data.
    select vault.create_secret('https://<ref>.supabase.co', 'project_url');
    select vault.create_secret('<anon or publishable key>', 'publishable_key');
    ```
-5. Authentication → Sign In / Providers → enable **Anonymous sign-ins**. Visitors get an
-   anonymous user the first time they save a location, so their locations follow them
-   across reloads without an account.
+5. Authentication → URL Configuration: set the Site URL to the production domain and add
+   `https://aurora-monitor*-crucible-insight.vercel.app/**` and the production domain with
+   `/**` to Redirect URLs (used by email confirmation, password reset and OAuth).
+6. Optional: Authentication → Sign In / Providers → enable Google and Apple (each needs
+   OAuth credentials from Google Cloud / Apple Developer). Until then those buttons explain
+   that the method isn't switched on.
 
-Until the project is connected, the app keeps saved locations in the browser.
+## Accounts
+
+- Email and password sign-up (with email confirmation), sign-in, password reset.
+- `profiles` row created by trigger on sign-up. Users can edit only `display_name`;
+  `start_trial()` and `cancel_membership()` change the plan. A paid tier applies while
+  `trial_ends_at` is in the future; there is one trial per account and no card payments yet.
+- `locations` and `alert_settings` belong to the signed-in user (RLS). Locations saved in
+  the browser while signed out are moved into the account at the next sign-in.
+
+Until the project is connected, the app runs in demo mode: sign-in is simulated and
+locations are kept in the browser.

@@ -1,6 +1,7 @@
 'use client';
 
-import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useAuth } from './auth';
 import { supabase } from './supabase';
 
 export type LocationSource = 'manual' | 'device';
@@ -21,7 +22,7 @@ type NewLocation = Pick<SavedLocation, 'name' | 'lat' | 'lon' | 'source'>;
 
 interface Ctx {
   locations: SavedLocation[];
-  /** Where saved locations live: the Supabase database, or this browser until it is connected. */
+  /** Where saved locations live: the user's account (signed in), or this browser. */
   backend: 'supabase' | 'local';
   status: 'idle' | 'loading' | 'ready' | 'error';
   error: string | null;
@@ -79,87 +80,101 @@ function position(): Promise<GeolocationPosition> {
 
 export function LocationsProvider({ children }: { children: ReactNode }) {
   const sb = supabase();
+  const { user, ready } = useAuth();
+  // Signed in: the user's rows in Supabase. Signed out (or not connected): this browser.
+  const remote = !!(sb && user);
+  const backend: Ctx['backend'] = remote ? 'supabase' : 'local';
   const [locations, setLocations] = useState<SavedLocation[]>([]);
   const [status, setStatus] = useState<Ctx['status']>('idle');
   const [error, setError] = useState<string | null>(null);
   const [detecting, setDetecting] = useState(false);
-  const [backend, setBackend] = useState<Ctx['backend']>(sb ? 'supabase' : 'local');
-  const loaded = useRef(false);
+  const wanted = useRef(false);
+  const loadedFor = useRef<string | null>(null);
   const list = useRef<SavedLocation[]>([]);
+  const put = (xs: SavedLocation[]) => { list.current = xs; setLocations(xs); if (!remote) writeLocal(xs); };
 
-  /** Supabase needs a user; visitors get an anonymous one the first time they save something. */
-  const ensureUser = useCallback(async () => {
-    if (!sb) return false;
-    const { data } = await sb.auth.getSession();
-    if (data.session) return true;
-    const { error: e } = await sb.auth.signInAnonymously();
-    if (e) { setBackend('local'); setError('Saving to this browser: account storage is not enabled yet.'); return false; }
-    return true;
-  }, [sb]);
+  const fetchAll = useCallback(async () => {
+    const key = remote ? user!.id : 'local';
+    if (loadedFor.current === key) return;
+    loadedFor.current = key;
+    setStatus('loading'); setError(null);
+    if (!remote) { list.current = readLocal(); setLocations(list.current); setStatus('ready'); return; }
+    // First load after signing in: move anything saved in this browser into the account.
+    const local = readLocal();
+    if (local.length) {
+      const { data: existing } = await sb!.from('locations').select('source, is_home');
+      const hasHome = (existing ?? []).some(r => r.is_home);
+      const hasDevice = (existing ?? []).some(r => r.source === 'device');
+      const rows = local.filter(l => !(l.source === 'device' && hasDevice))
+        .map(l => ({ name: l.name, lat: l.lat, lon: l.lon, source: l.source, is_home: l.isHome && !hasHome }));
+      // One at a time, so a plan limit only skips the extras.
+      let skipped = 0;
+      for (const row of rows) {
+        const { error: e } = await sb!.from('locations').insert(row);
+        if (e) skipped++;
+      }
+      writeLocal([]);
+      if (skipped) setError(`${skipped} location${skipped === 1 ? '' : 's'} saved on this device couldn’t be added: your plan’s location limit was reached.`);
+    }
+    const { data, error: e } = await sb!.from('locations').select('*').order('created_at');
+    if (e) { setError('Could not load your saved locations.'); setStatus('error'); return; }
+    list.current = (data as Row[]).map(fromRow); setLocations(list.current); setStatus('ready');
+  }, [remote, sb, user]);
+
+  // Reload when the signed-in user changes (sign in, sign out, switch account).
+  useEffect(() => { if (wanted.current && ready) fetchAll(); }, [ready, fetchAll]);
 
   const load = useCallback(async () => {
-    if (loaded.current) return;
-    loaded.current = true;
-    setStatus('loading');
-    if (sb) {
-      const { data: s } = await sb.auth.getSession();
-      if (s.session) {
-        const { data, error: e } = await sb.from('locations').select('*').order('created_at');
-        if (!e) { list.current = (data as Row[]).map(fromRow); setLocations(list.current); setStatus('ready'); return; }
-        setError('Could not load saved locations.');
-      }
-      // No session yet: show anything saved locally until the first save creates one.
-    }
-    list.current = readLocal(); setLocations(list.current); setStatus('ready');
-  }, [sb]);
+    wanted.current = true;
+    if (ready) await fetchAll();
+  }, [ready, fetchAll]);
 
   const add = useCallback<Ctx['add']>(async loc => {
     const isHome = !list.current.some(l => l.isHome);
-    if (sb && backend === 'supabase' && await ensureUser()) {
-      const { data, error: e } = await sb.from('locations').insert({ name: loc.name, lat: loc.lat, lon: loc.lon, source: loc.source, is_home: isHome }).select().single();
-      if (e) { setError('Could not save that location.'); return null; }
+    if (remote) {
+      const { data, error: e } = await sb!.from('locations').insert({ name: loc.name, lat: loc.lat, lon: loc.lon, source: loc.source, is_home: isHome }).select().single();
+      if (e) { setError(/limit reached/i.test(e.message) ? 'You’ve reached your plan’s location limit.' : 'Could not save that location.'); return null; }
       const saved = fromRow(data as Row);
-      list.current = [...list.current, saved]; setLocations(list.current);
+      put([...list.current, saved]);
       return saved;
     }
     const saved: SavedLocation = { ...loc, id: crypto.randomUUID(), isHome, createdAt: new Date().toISOString() };
-    list.current = [...list.current, saved]; setLocations(list.current); writeLocal(list.current);
+    put([...list.current, saved]);
     return saved;
-  }, [sb, backend, ensureUser]);
+  }, [remote, sb]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const remove = useCallback<Ctx['remove']>(async id => {
     const gone = list.current.find(l => l.id === id);
     let rest = list.current.filter(l => l.id !== id);
     if (gone?.isHome && rest.length) rest = rest.map((l, i) => (i === 0 ? { ...l, isHome: true } : l));
-    if (sb && backend === 'supabase') {
-      await sb.from('locations').delete().eq('id', id);
-      if (gone?.isHome && rest.length) await sb.from('locations').update({ is_home: true }).eq('id', rest[0].id);
+    if (remote) {
+      const { error: e } = await sb!.from('locations').delete().eq('id', id);
+      if (e) { setError('Could not remove that location.'); return; }
+      if (gone?.isHome && rest.length) await sb!.from('locations').update({ is_home: true }).eq('id', rest[0].id);
     }
-    list.current = rest; setLocations(rest); if (!(sb && backend === 'supabase')) writeLocal(rest);
-  }, [sb, backend]);
+    put(rest);
+  }, [remote, sb]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const setHome = useCallback<Ctx['setHome']>(async id => {
-    if (sb && backend === 'supabase') {
-      const { error: e } = await sb.rpc('set_home_location', { location_id: id });
+    if (remote) {
+      const { error: e } = await sb!.rpc('set_home_location', { location_id: id });
       if (e) { setError('Could not change your home location.'); return; }
     }
-    const next = list.current.map(l => ({ ...l, isHome: l.id === id }));
-    list.current = next; setLocations(next); if (!(sb && backend === 'supabase')) writeLocal(next);
-  }, [sb, backend]);
+    put(list.current.map(l => ({ ...l, isHome: l.id === id })));
+  }, [remote, sb]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const detectDevice = useCallback<Ctx['detectDevice']>(async opts => {
     setDetecting(true);
     try {
       const pos = await position();
       const lat = Math.round(pos.coords.latitude * 1000) / 1000, lon = Math.round(pos.coords.longitude * 1000) / 1000;
-      const name = await placeName(lat, lon);
       const existing = list.current.find(l => l.source === 'device');
+      if (existing && Math.abs(existing.lat - lat) < 0.01 && Math.abs(existing.lon - lon) < 0.01) return existing;
+      const name = await placeName(lat, lon);
       if (existing) {
-        if (Math.abs(existing.lat - lat) < 0.01 && Math.abs(existing.lon - lon) < 0.01) return existing;
-        if (sb && backend === 'supabase') await sb.from('locations').update({ name, lat, lon }).eq('id', existing.id);
+        if (remote) await sb!.from('locations').update({ name, lat, lon, updated_at: new Date().toISOString() }).eq('id', existing.id);
         const updated = { ...existing, name, lat, lon };
-        const next = list.current.map(l => (l.id === existing.id ? updated : l));
-        list.current = next; setLocations(next); if (!(sb && backend === 'supabase')) writeLocal(next);
+        put(list.current.map(l => (l.id === existing.id ? updated : l)));
         return updated;
       }
       return await add({ name, lat, lon, source: 'device' });
@@ -169,7 +184,7 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
     } finally {
       setDetecting(false);
     }
-  }, [sb, backend, add]);
+  }, [remote, sb, add]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const value = useMemo<Ctx>(() => ({ locations, backend, status, error, detecting, load, add, remove, setHome, detectDevice }),
     [locations, backend, status, error, detecting, load, add, remove, setHome, detectDevice]);
