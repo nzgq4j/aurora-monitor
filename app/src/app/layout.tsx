@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import './globals.css';
 import { Footer, Header, Toast } from '../components/Chrome';
+import { LocationsProvider } from '../lib/locations';
 import { StoreProvider } from '../store';
 
 export const metadata: Metadata = {
@@ -25,12 +26,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body>
         <StoreProvider>
-          <div className="app">
-            <Header />
-            <Toast />
-            {children}
-            <Footer />
-          </div>
+          <LocationsProvider>
+            <div className="app">
+              <Header />
+              <Toast />
+              {children}
+              <Footer />
+            </div>
+          </LocationsProvider>
         </StoreProvider>
       </body>
     </html>

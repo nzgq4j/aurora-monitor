@@ -1,14 +1,16 @@
 'use client';
 
-import {
-  C, CHANNEL_DEFS, KP_NAME, KP_WHERE, SEASON_VISIBLE_Y, TIERS, TRIGGER_DEFS, f, hist30, locations, overviewStats,
-  season, seasonGrid, upcoming,
-} from '../data';
+import { useEffect, useState, type FormEvent } from 'react';
+import { C, CHANNEL_DEFS, KP_NAME, TIERS, TRIGGER_DEFS, f, kpColor } from '../data';
+import { G_SCALE, kpNeeded } from '../lib/astro';
+import type { AccountData } from '../lib/history';
+import { searchPlaces, useLocations, type PlaceResult, type SavedLocation } from '../lib/locations';
+import { useConditions } from '../lib/useConditions';
 import { useStore, type Tab } from '../store';
 
 const TABS: [Tab, string][] = [['overview', 'Overview'], ['alerts', 'Alerts'], ['locations', 'Locations'], ['billing', 'Billing']];
 
-export function Account() {
+export function Account({ data }: { data: AccountData }) {
   const { s, set, signOut } = useStore();
   return (
     <main data-screen-label="Account" className="wrap account">
@@ -37,8 +39,8 @@ export function Account() {
       </aside>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 28, minWidth: 0 }}>
-        {s.tab === 'overview' && <Overview />}
-        {s.tab === 'alerts' && <Alerts />}
+        {s.tab === 'overview' && <Overview data={data} />}
+        {s.tab === 'alerts' && <Alerts data={data} />}
         {s.tab === 'locations' && <Locations />}
         {s.tab === 'billing' && <Billing />}
       </div>
@@ -56,9 +58,43 @@ function usePlanLine() {
 const h2 = { fontSize: 'clamp(28px, 7.5vw, 34px)', lineHeight: 1 };
 const h1 = { fontSize: 'clamp(40px, 11vw, 56px)', lineHeight: .9 };
 
-function Overview() {
+const DAY = 864e5;
+const shortDate = (t: number) => new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+const weekday = (t: number) => new Date(t).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+
+/** Home location (loaded on demand) and the Kp it needs, defaulting to Kp 5 when none is saved. */
+function useHome() {
+  const { locations, load } = useLocations();
+  useEffect(() => { load(); }, [load]);
+  const home = locations.find(l => l.isHome) ?? null;
+  return { home, need: home ? kpNeeded(home.lat, home.lon) : 5, count: locations.length };
+}
+
+function Overview({ data }: { data: AccountData }) {
   const { set, plan, planIndex, go } = useStore();
   const planLine = usePlanLine();
+  const { home, need, count } = useHome();
+  const days = data.days;
+  const strongest = days.reduce<typeof days[number] | null>((m, d) => (!m || d.kpMax > m.kpMax ? d : m), null);
+  const nights = days.filter(d => d.kpMax >= need).length;
+  const kp = data.kp?.kp ?? null;
+  const stats = [
+    { label: 'KP NOW', value: kp === null ? '—' : `Kp ${kp.toFixed(1)}`, note: kp === null ? 'Unavailable' : G_SCALE(kp) ? `G${G_SCALE(kp)} storm` : KP_NAME[Math.max(2, Math.min(9, Math.round(kp)))], c: kp !== null && kp >= 5 ? C.red : C.soft },
+    { label: `DAYS KP ≥ ${need}`, value: days.length ? String(nights) : '—', note: `Last ${days.length || 90} days`, c: C.green },
+    { label: 'STRONGEST', value: strongest ? `Kp ${strongest.kpMax.toFixed(1)}` : '—', note: strongest ? `${shortDate(strongest.t)}${G_SCALE(strongest.kpMax) ? ` · G${G_SCALE(strongest.kpMax)}` : ''}` : 'No data', c: C.red },
+    { label: 'SAVED SKIES', value: String(count), note: home ? `Home: ${home.name}` : 'No home set', c: C.soft },
+  ];
+
+  // Twelve 7-day buckets ending today.
+  const end = Math.floor(data.fetchedAt / DAY) * DAY + DAY;
+  const weeks = [...Array(12)].map((_, i) => {
+    const from = end - (12 - i) * 7 * DAY;
+    const inWeek = days.filter(d => d.t >= from && d.t < from + 7 * DAY);
+    return { from, kp: inWeek.length ? Math.max(...inWeek.map(d => d.kpMax)) : null };
+  });
+  const w = 860 / 12;
+  const visY = 210 - need * 20;
+
   return (
     <div data-screen-label="Account · Overview" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(340px,100%),1fr))', gap: 20 }}>
@@ -73,11 +109,11 @@ function Overview() {
           </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'var(--line)', border: '1px solid var(--line)', borderRadius: 18, overflow: 'hidden' }}>
-          {overviewStats.map(st => (
-            <div key={st.label} style={{ background: '#000', padding: 18, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {stats.map(st => (
+            <div key={st.label} style={{ background: '#000', padding: 18, display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
               <span className="label">{st.label}</span>
               <span className="stat-value" style={{ fontSize: 30, whiteSpace: 'nowrap' }}>{st.value}</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: st.c }}>{st.note}</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: st.c, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{st.note}</span>
             </div>
           ))}
         </div>
@@ -87,45 +123,57 @@ function Overview() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12 }}>
           <h2 className="display" style={h2}>Your <span className="hl">season</span></h2>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 16px', fontSize: 13, color: 'var(--soft)' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 11, height: 11, background: C.darkGreen }} />Max Kp over Minneapolis</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 9, height: 9, borderRadius: '50%', background: '#fff' }} />Alerts sent</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 16, borderTop: `2px dashed ${C.amber}` }} />Visible from home (Kp 5)</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 11, height: 11, background: C.darkGreen }} />Weekly max Kp · GFZ Potsdam</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 16, borderTop: `2px dashed ${C.amber}` }} />{home ? `Visible from ${home.name}` : 'Typical mid-latitude view'} (≈ Kp {need})</span>
           </div>
         </div>
-        <div className="hscroll"><svg viewBox="0 0 900 240" style={{ width: '100%', minWidth: 560, display: 'block' }} role="img" aria-label="Weekly max Kp and alerts sent this season">
-          {seasonGrid.map(g => (
-            <g key={g.k}>
-              <line x1="30" x2="890" y1={g.y} y2={g.y} style={{ stroke: '#fff', strokeOpacity: .07 }} />
-              <text x="20" y={g.ty} style={{ fill: C.muted, font: "10px 'JetBrains Mono'", textAnchor: 'end' }}>{g.k}</text>
+        <div className="hscroll"><svg viewBox="0 0 900 240" style={{ width: '100%', minWidth: 560, display: 'block' }} role="img" aria-label="Weekly maximum Kp over the last 12 weeks">
+          {[0, 3, 6, 9].map(k => (
+            <g key={k}>
+              <line x1="30" x2="890" y1={210 - k * 20} y2={210 - k * 20} style={{ stroke: '#fff', strokeOpacity: .07 }} />
+              <text x="20" y={214 - k * 20} style={{ fill: C.muted, font: "10px 'JetBrains Mono'", textAnchor: 'end' }}>{k}</text>
             </g>
           ))}
-          <line x1="30" x2="890" y1={SEASON_VISIBLE_Y} y2={SEASON_VISIBLE_Y} style={{ stroke: C.amber, strokeWidth: 1.5, strokeDasharray: '6 4' }} />
-          {season.map(w => (
-            <g key={w.lbl}>
-              <rect x={w.x} y={w.y} width={w.w} height={w.h} style={{ fill: w.fill }} />
-              {w.dots.map((d, j) => <circle key={j} cx={d.x} cy={d.y} r="4" style={{ fill: '#fff' }} />)}
-              <text x={w.cx} y="230" style={{ fill: C.soft, font: "600 11px 'Barlow'", textAnchor: 'middle' }}>{w.lbl}</text>
-            </g>
-          ))}
+          <line x1="30" x2="890" y1={visY} y2={visY} style={{ stroke: C.amber, strokeWidth: 1.5, strokeDasharray: '6 4' }} />
+          {weeks.map((wk, i) => {
+            const x = 30 + i * w;
+            return (
+              <g key={wk.from}>
+                {wk.kp !== null && <rect x={f(x + 10)} y={f(210 - wk.kp * 20)} width={f(w - 20)} height={f(wk.kp * 20)} style={{ fill: kpColor(wk.kp) }}><title>{`Week of ${shortDate(wk.from)}: max Kp ${wk.kp.toFixed(2)}`}</title></rect>}
+                <text x={f(x + w / 2)} y="230" style={{ fill: C.soft, font: "600 11px 'Barlow'", textAnchor: 'middle' }}>{shortDate(wk.from)}</text>
+              </g>
+            );
+          })}
           <line x1="30" x2="890" y1="210" y2="210" style={{ stroke: C.muted }} />
+          {days.length === 0 && <text x="460" y="120" style={{ fill: C.muted, font: "600 14px 'Barlow'", textAnchor: 'middle' }}>Kp history unavailable</text>}
         </svg></div>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <h2 className="display" style={{ ...h2, margin: '0 0 8px' }}>Best nights <span className="hl">ahead</span></h2>
-        {upcoming.map(u => (
-          <div key={u.d} className="night">
-            <span style={{ fontWeight: 700, fontSize: 16 }}>{u.d}</span>
-            <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 20, color: u.c }}>Kp {u.kp}</span>
-            <div className="night-bar" style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-              <div style={{ height: 10, background: '#121512', borderRadius: 2 }}>
-                <div style={{ height: 10, width: u.chance + '%', background: u.c, borderRadius: 2, boxShadow: `0 0 12px ${u.c}` }} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12, marginBottom: 8 }}>
+          <h2 className="display" style={h2}>Best nights <span className="hl">ahead</span></h2>
+          <span style={{ fontSize: 13, color: 'var(--muted)' }}>Largest predicted Kp · NOAA 27-day outlook</span>
+        </div>
+        {(() => {
+          const best = [...data.outlook].sort((a, b) => b.kp - a.kp || a.t - b.t).slice(0, 5).sort((a, b) => a.t - b.t);
+          if (!best.length) return <span style={{ fontSize: 15, color: 'var(--muted)', padding: '12px 0' }}>The 27-day outlook is unavailable right now.</span>;
+          return best.map(u => {
+            const c = u.kp >= need ? C.green : u.kp >= need - 1 ? C.darkGreen : C.amber;
+            return (
+              <div key={u.t} className="night">
+                <span style={{ fontWeight: 700, fontSize: 16 }}>{weekday(u.t)}</span>
+                <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 20, color: c }}>Kp {u.kp}</span>
+                <div className="night-bar" style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  <div style={{ height: 10, background: '#121512', borderRadius: 2 }}>
+                    <div style={{ height: 10, width: `${(u.kp / 9) * 100}%`, background: c, borderRadius: 2, boxShadow: `0 0 12px ${c}` }} />
+                  </div>
+                  <span style={{ fontSize: 13, color: 'var(--muted)' }}>{u.kp >= need ? `Reaches your ≈ Kp ${need} threshold` : 'Below your threshold'} · 10.7 cm flux {u.flux}</span>
+                </div>
+                <span className="mono" style={{ fontSize: 14, textAlign: 'right' }}>Ap {u.ap}</span>
               </div>
-              <span style={{ fontSize: 13, color: 'var(--muted)' }}>{u.note}</span>
-            </div>
-            <span className="mono" style={{ fontSize: 14, textAlign: 'right' }}>{u.chance}%</span>
-          </div>
-        ))}
+            );
+          });
+        })()}
       </div>
     </div>
   );
@@ -150,11 +198,18 @@ function ToggleRow({ label, sub, on, need, locked, onClick }: ToggleProps) {
   );
 }
 
-function Alerts() {
+function Alerts({ data }: { data: AccountData }) {
   const { s, set, planIndex, go } = useStore();
+  const { home, need } = useHome();
   const kp = s.kpThreshold;
-  const hits = hist30.filter(v => v >= kp).length;
+  const last30 = data.days.slice(-30);
+  const hits = last30.filter(d => d.kpMax >= kp).length;
   const thY = f(170 - kp * 17);
+  const where = !home ? `Add a location to see what Kp ${kp} means for your sky.`
+    : kp >= need + 2 ? `At Kp ${kp}, aurora is likely overhead or high in the sky from ${home.name}.`
+    : kp >= need ? `At Kp ${kp}, aurora should be visible low on the poleward horizon from ${home.name}.`
+    : `At Kp ${kp}, aurora is unlikely to be visible from ${home.name} (≈ Kp ${need} needed).`;
+  const bw = 450 / Math.max(30, last30.length);
   return (
     <div data-screen-label="Account · Alerts" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
       <h1 className="display" style={h1}>Alert <span className="hl">rules</span></h1>
@@ -166,19 +221,24 @@ function Alerts() {
             <span style={{ fontFamily: 'var(--f-display)', fontWeight: 800, fontSize: 22, color: kp >= 5 ? C.red : kp === 4 ? C.amber : C.darkGreen }}>{KP_NAME[kp]}</span>
           </div>
           <input id="kp-threshold" type="range" min={2} max={9} step={1} value={kp} onChange={e => set({ kpThreshold: +e.target.value })} style={{ width: '100%' }} />
-          <span style={{ fontSize: 15, color: 'var(--soft)', textWrap: 'pretty' }}>At Kp {kp}, aurora is {KP_WHERE[kp]} from Minneapolis.</span>
+          <span style={{ fontSize: 15, color: 'var(--soft)', textWrap: 'pretty' }}>{where}</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <span style={{ fontSize: 14, color: 'var(--muted)' }}>Last 30 nights · max Kp</span>
-            <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 22 }}><span className="hl">{hits}</span> alerts</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
+            <span style={{ fontSize: 14, color: 'var(--muted)' }}>Last 30 days · daily max Kp (GFZ)</span>
+            <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 22, whiteSpace: 'nowrap' }}><span className="hl">{hits}</span> {hits === 1 ? 'alert' : 'alerts'}</span>
           </div>
-          <svg viewBox="0 0 450 190" style={{ width: '100%', display: 'block' }} role="img" aria-label={`${hits} of the last 30 nights reached Kp ${kp}`}>
+          <svg viewBox="0 0 450 190" style={{ width: '100%', display: 'block' }} role="img" aria-label={`${hits} of the last ${last30.length} days reached Kp ${kp}`}>
             <line x1="0" x2="450" y1={thY} y2={thY} style={{ stroke: C.green, strokeWidth: 1.5, strokeDasharray: '5 4' }} />
-            {hist30.map((v, i) => <rect key={i} x={f(i * 15)} y={f(170 - v * 17)} width="11" height={f(v * 17)} style={{ fill: v >= kp ? C.green : C.line2 }} />)}
+            {last30.map((d, i) => (
+              <rect key={d.t} x={f(i * bw)} y={f(170 - d.kpMax * 17)} width={f(bw - 4)} height={f(d.kpMax * 17)} style={{ fill: d.kpMax >= kp ? C.green : C.line2 }}>
+                <title>{`${shortDate(d.t)}: max Kp ${d.kpMax.toFixed(2)}`}</title>
+              </rect>
+            ))}
             <line x1="0" x2="450" y1="170" y2="170" style={{ stroke: C.muted }} />
-            <text x="0" y="186" style={{ fill: C.muted, font: "10px 'JetBrains Mono'" }}>SEP 16</text>
-            <text x="450" y="186" style={{ fill: C.muted, font: "10px 'JetBrains Mono'", textAnchor: 'end' }}>TONIGHT</text>
+            {last30.length > 0 && <text x="0" y="186" style={{ fill: C.muted, font: "10px 'JetBrains Mono'" }}>{shortDate(last30[0].t).toUpperCase()}</text>}
+            <text x="450" y="186" style={{ fill: C.muted, font: "10px 'JetBrains Mono'", textAnchor: 'end' }}>TODAY</text>
+            {last30.length === 0 && <text x="225" y="90" style={{ fill: C.muted, font: "600 13px 'Barlow'", textAnchor: 'middle' }}>Kp history unavailable</text>}
           </svg>
         </div>
       </div>
@@ -209,53 +269,137 @@ function Alerts() {
   );
 }
 
-function Locations() {
-  const { set, plan, go } = useStore();
-  const canAdd = plan.locs > 3;
+const hhmmUT = (t: number) => `${new Date(t).toISOString().slice(11, 16)} UT`;
+const coords = (l: { lat: number; lon: number }) => `${Math.abs(l.lat).toFixed(2)}°${l.lat >= 0 ? 'N' : 'S'} ${Math.abs(l.lon).toFixed(2)}°${l.lon >= 0 ? 'E' : 'W'}`;
+
+function LocationCard({ loc, paused, index }: { loc: SavedLocation; paused: boolean; index: number }) {
+  const { setHome, remove } = useLocations();
+  const { data: cond, loading } = useConditions(loc.lat, loc.lon);
+  const aur = cond?.aurora?.nearby ?? null;
+  const tag = paused ? 'PAUSED' : loc.isHome ? 'HOME' : loc.source === 'device' ? 'DEVICE' : 'SAVED';
+  const tagC = paused ? C.muted : loc.isHome ? C.green : loc.source === 'device' ? '#9CFF6E' : C.soft;
+  const ac = aur === null ? C.soft : aur >= 30 ? C.green : aur >= 10 ? C.amber : C.soft;
   const mono10 = { fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)' };
   const big = { fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 24 };
+  const glow = aur ?? 0;
+  const sun = cond?.sun;
+  const darkLine = !sun ? (loading ? 'Checking sky…' : 'Conditions unavailable')
+    : sun.dark ? `Dark now${sun.changesAt ? ` · until ${hhmmUT(sun.changesAt)}` : ''}`
+    : sun.changesAt ? `Dark from ${hhmmUT(sun.changesAt)}` : 'No darkness (midnight sun)';
+  const linkBtn = { fontSize: 13, fontWeight: 700, color: 'var(--muted)' };
+  return (
+    <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 20, opacity: paused ? .45 : 1 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+          <span style={{ fontWeight: 700, fontSize: 18, overflowWrap: 'anywhere' }}>{loc.name}</span>
+          <span className="label">{coords(loc)}</span>
+        </div>
+        <span style={{ flex: 'none', fontSize: 11, fontWeight: 700, padding: '4px 8px', borderRadius: 999, border: `1px solid ${tagC}`, color: tagC }}>{tag}</span>
+      </div>
+      <svg viewBox="0 0 240 90" style={{ width: '100%', display: 'block', borderRadius: 10, background: '#050806' }} aria-hidden="true">
+        <defs><filter id={`lb${index}`} x="-30%" y="-80%" width="160%" height="260%"><feGaussianBlur stdDeviation="9" /></filter></defs>
+        <ellipse cx="120" cy="72" rx="110" ry={f(8 + glow * .45)} style={{ fill: '#59FF3A', opacity: f(Math.min(.9, .08 + glow / 70)), filter: `url(#lb${index})` }} />
+        <line x1="0" x2="240" y1="72" y2="72" style={{ stroke: '#fff' }} />
+        <rect x="0" y="72" width="240" height="18" style={{ fill: '#000' }} />
+        <text x="120" y="86" style={{ fill: C.muted, font: "700 10px 'Barlow'", textAnchor: 'middle' }}>{loc.lat >= 0 ? 'N' : 'S'}</text>
+      </svg>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column' }}><span style={mono10}>AURORA</span><span style={{ ...big, color: ac }}>{aur === null ? '—' : `${aur}%`}</span></div>
+        <div style={{ display: 'flex', flexDirection: 'column' }}><span style={mono10}>CLOUD</span><span style={big}>{cond?.cloud ? `${cond.cloud.now}%` : '—'}</span></div>
+        <div style={{ display: 'flex', flexDirection: 'column' }}><span style={mono10}>NEEDS</span><span style={big}>Kp {cond?.kpNeeded ?? kpNeeded(loc.lat, loc.lon)}</span></div>
+      </div>
+      <span style={{ fontSize: 13, color: sun?.dark ? C.green : 'var(--muted)', fontWeight: 600 }}>{darkLine}</span>
+      <div style={{ display: 'flex', gap: 16, borderTop: '1px solid var(--line)', paddingTop: 10 }}>
+        {!loc.isHome && <button type="button" className="btn" style={linkBtn} onClick={() => setHome(loc.id)}>Make home</button>}
+        <button type="button" className="btn" style={{ ...linkBtn, color: C.red }} onClick={() => remove(loc.id)}>Remove</button>
+      </div>
+    </div>
+  );
+}
+
+function AddLocation({ disabled }: { disabled: boolean }) {
+  const { plan, go } = useStore();
+  const { add, detectDevice, detecting } = useLocations();
+  const [q, setQ] = useState('');
+  const [results, setResults] = useState<PlaceResult[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  if (disabled) {
+    return (
+      <button type="button" className="btn" onClick={() => go('plans')}
+        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 240, padding: 20, border: '1px dashed var(--line-3)', borderRadius: 16, textAlign: 'center' }}>
+        <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 40, color: 'var(--green)', lineHeight: 1 }}>+</span>
+        <span style={{ fontWeight: 700, fontSize: 16 }}>Add a location</span>
+        <span style={{ fontSize: 13, color: 'var(--muted)' }}>Your {plan.name} plan includes {plan.locs}. Upgrade for more.</span>
+      </button>
+    );
+  }
+  const search = async (e: FormEvent) => {
+    e.preventDefault();
+    setBusy(true); setMsg(null);
+    try { const r = await searchPlaces(q); setResults(r); if (!r.length) setMsg('No places found.'); }
+    catch { setMsg('Search is unavailable right now.'); }
+    finally { setBusy(false); }
+  };
+  const pick = async (r: PlaceResult) => {
+    const saved = await add({ name: r.detail ? `${r.name}, ${r.detail.split(', ')[0]}` : r.name, lat: r.lat, lon: r.lon, source: 'manual' });
+    if (saved) { setQ(''); setResults(null); }
+  };
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minHeight: 240, padding: 20, border: '1px dashed var(--line-3)', borderRadius: 16 }}>
+      <span style={{ fontWeight: 700, fontSize: 16 }}>Add a location</span>
+      <button type="button" className="btn pill pill-primary" disabled={detecting} onClick={async () => { setMsg(null); if (!(await detectDevice())) setMsg(null); }}
+        style={{ fontSize: 14, padding: '11px 16px', opacity: detecting ? .6 : 1 }}>
+        {detecting ? 'Finding you…' : 'Use my current location'}
+      </button>
+      <form onSubmit={search} style={{ display: 'flex', gap: 8 }}>
+        <input className="input" value={q} onChange={e => setQ(e.target.value)} placeholder="Search a town" aria-label="Search a town" style={{ padding: 11 }} />
+        <button type="submit" className="btn pill pill-ghost" disabled={busy || q.trim().length < 2} style={{ fontSize: 14, padding: '0 16px', flex: 'none' }}>{busy ? '…' : 'Search'}</button>
+      </form>
+      {results && results.length > 0 && (
+        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column' }}>
+          {results.map(r => (
+            <li key={`${r.lat},${r.lon}`}>
+              <button type="button" className="btn" onClick={() => pick(r)} style={{ width: '100%', display: 'flex', justifyContent: 'space-between', gap: 8, padding: '10px 0', borderTop: '1px solid var(--line)' }}>
+                <span style={{ fontWeight: 700 }}>{r.name}</span><span style={{ fontSize: 13, color: 'var(--muted)', textAlign: 'right' }}>{r.detail}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {msg && <span style={{ fontSize: 13, color: 'var(--muted)' }}>{msg}</span>}
+    </div>
+  );
+}
+
+function Locations() {
+  const { plan } = useStore();
+  const { locations, status, load, backend, error, detectDevice } = useLocations();
+  useEffect(() => {
+    load();
+    // If location access was granted before, refresh the device location without prompting.
+    navigator.permissions?.query({ name: 'geolocation' as PermissionName })
+      .then(p => { if (p.state === 'granted') detectDevice({ silent: true }); })
+      .catch(() => {});
+  }, [load, detectDevice]);
+  const limit = plan.locs;
+  const active = Math.min(locations.length, limit);
   return (
     <div data-screen-label="Account · Locations" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' }}>
         <h1 className="display" style={h1}>Saved <span className="hl">skies</span></h1>
-        <span className="mono" style={{ fontSize: 13, color: 'var(--muted)' }}>{`${Math.min(3, plan.locs)} OF ${plan.locs > 10 ? '∞' : plan.locs} ACTIVE`}</span>
+        <span className="mono" style={{ fontSize: 13, color: 'var(--muted)' }}>{`${active} OF ${limit > 10 ? '∞' : limit} ACTIVE`}</span>
       </div>
+      {error && <span role="status" style={{ fontSize: 14, color: C.amber }}>{error}</span>}
+      {backend === 'local' && <span style={{ fontSize: 13, color: 'var(--muted)' }}>Locations are saved in this browser.</span>}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(260px,100%),1fr))', gap: 16 }}>
-        {locations.map((l, i) => {
-          const paused = i >= plan.locs;
-          const tagC = paused ? C.muted : i === 0 ? C.green : C.soft;
-          const c = l.chance >= 70 ? C.green : l.chance >= 40 ? C.amber : C.red;
-          return (
-            <div key={l.name} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 20, opacity: paused ? .45 : 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <span style={{ fontWeight: 700, fontSize: 18 }}>{l.name}</span>
-                  <span className="label">{l.coords}</span>
-                </div>
-                <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 8px', borderRadius: 999, border: `1px solid ${tagC}`, color: tagC }}>{paused ? 'PAUSED' : l.tag}</span>
-              </div>
-              <svg viewBox="0 0 240 90" style={{ width: '100%', display: 'block', borderRadius: 10, background: '#050806' }} aria-hidden="true">
-                <defs><filter id={`lb${i}`} x="-30%" y="-80%" width="160%" height="260%"><feGaussianBlur stdDeviation="9" /></filter></defs>
-                <ellipse cx="120" cy="72" rx="110" ry={f(10 + l.chance * .35)} style={{ fill: '#59FF3A', opacity: f(.25 + l.chance / 160), filter: `url(#lb${i})` }} />
-                <line x1="0" x2="240" y1="72" y2="72" style={{ stroke: '#fff' }} />
-                <rect x="0" y="72" width="240" height="18" style={{ fill: '#000' }} />
-                <text x="120" y="86" style={{ fill: C.muted, font: "700 10px 'Barlow'", textAnchor: 'middle' }}>N</text>
-              </svg>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-                <div style={{ display: 'flex', flexDirection: 'column' }}><span style={mono10}>TONIGHT</span><span style={{ ...big, color: c }}>{l.chance}%</span></div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}><span style={mono10}>CLOUD</span><span style={big}>{l.cloud}%</span></div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}><span style={mono10}>NEEDS</span><span style={big}>Kp {l.need}</span></div>
-              </div>
-            </div>
-          );
-        })}
-        <button type="button" className="btn" onClick={canAdd ? () => set({ toast: 'Location search would open here.' }) : () => go('plans')}
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 240, padding: 20, border: '1px dashed var(--line-3)', borderRadius: 16, textAlign: 'center' }}>
-          <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 40, color: 'var(--green)', lineHeight: 1 }}>+</span>
-          <span style={{ fontWeight: 700, fontSize: 16 }}>Add a location</span>
-          <span style={{ fontSize: 13, color: 'var(--muted)' }}>{canAdd ? 'Search a town or drop a pin' : `Your ${plan.name} plan includes ${plan.locs}. Upgrade for more.`}</span>
-        </button>
+        {status !== 'ready' && <span style={{ color: 'var(--muted)' }}>Loading your locations…</span>}
+        {locations.map((l, i) => <LocationCard key={l.id} loc={l} index={i} paused={i >= limit} />)}
+        <AddLocation disabled={locations.length >= limit} />
       </div>
+      <span style={{ fontSize: 12, color: 'var(--dim)' }}>
+        Aurora: highest OVATION probability overhead or up to ~6° poleward. Cloud: Open-Meteo. Needs: approximate Kp for aurora low on the horizon, from geomagnetic latitude.
+      </span>
     </div>
   );
 }
