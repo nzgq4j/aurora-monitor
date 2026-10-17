@@ -28,18 +28,17 @@ export function Header({ kpLabel }: { kpLabel: string }) {
             })}
           </nav>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <span className="mono" style={{ fontSize: 12, color: 'var(--muted)', whiteSpace: 'nowrap' }}>{kpLabel}</span>
+        <div className="header-right">
+          <span className="mono header-kp" style={{ fontSize: 12, color: 'var(--muted)', whiteSpace: 'nowrap' }}>{kpLabel}</span>
           {signedIn ? (
-            <button type="button" className="btn" onClick={goAccount}
-              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 4px 4px 14px', border: '1px solid var(--line-2)', borderRadius: 999 }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--green)' }}>{plan.name}</span>
+            <button type="button" className="btn header-account" onClick={goAccount} aria-label={`Account, ${plan.name} plan`}>
+              <span className="header-plan">{plan.name}</span>
               <span className="avatar" style={{ width: 32, height: 32, fontSize: 13 }}>{avatar}</span>
             </button>
           ) : (
             <>
-              <button type="button" className="btn" onClick={() => go('signin')} style={{ fontWeight: 600, fontSize: 15, color: 'var(--soft)' }}>Sign in</button>
-              <button type="button" className="btn pill pill-primary" onClick={() => go('plans')} style={{ fontSize: 14, padding: '10px 18px' }}>Get alerts</button>
+              <button type="button" className="btn header-signin" onClick={() => go('signin')}>Sign in</button>
+              <button type="button" className="btn pill pill-primary header-cta" onClick={() => go('plans')} style={{ fontSize: 14, padding: '10px 18px' }}>Get alerts</button>
             </>
           )}
         </div>
