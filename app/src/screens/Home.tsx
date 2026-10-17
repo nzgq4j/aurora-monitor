@@ -89,7 +89,7 @@ function Outlook({ data }: { data: NowData }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', fontSize: 13, color: 'var(--muted)' }}>
         <span>{OUTLOOK_NOTE[view]}</span>
         <span style={{ display: 'inline-flex', gap: 12 }}>
-          {([[2, 'Below 3'], [3, '3'], [4, '4 and up']] as const).map(([k, l]) => (
+          {([[2, 'Below 3'], [3, '3'], [4, '4'], [5, '5 and up']] as const).map(([k, l]) => (
             <span key={k} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><i style={{ width: 10, height: 10, borderRadius: 2, background: kpBarColor(k) }} />{l}</span>
           ))}
         </span>

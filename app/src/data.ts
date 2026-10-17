@@ -61,6 +61,7 @@ export const C = {
   green: '#6CFF2B',
   darkGreen: '#2FA84A',
   amber: '#E6B800',
+  orange: '#FF9A3C',
   red: '#F06A6A',
   muted: '#9AA39D',
   soft: '#C9D0CB',
@@ -74,8 +75,8 @@ export const f = (n: number) => +n.toFixed(1);
 export const kpColor = (k: number, observed = false) =>
   k >= 5 ? (observed ? '#C04F52' : C.red) : k >= 4 ? (observed ? '#B08F0C' : C.amber) : (observed ? '#1F6B33' : C.darkGreen);
 
-/** Bar colour for a Kp value: green below 3, yellow from 3, red from 4. */
-export const kpBarColor = (k: number) => (k >= 4 ? C.red : k >= 3 ? C.amber : C.darkGreen);
+/** Bar colour for a Kp value: green below 3, yellow from 3, orange from 4, red from 5 (G1 storm). */
+export const kpBarColor = (k: number) => (k >= 5 ? C.red : k >= 4 ? C.orange : k >= 3 ? C.amber : C.darkGreen);
 
 // ---- Polar auroral-oval map ----
 const K = 4.2, CTR = 240;
