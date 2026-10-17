@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- OVAL app icon: the auroral oval as a tilted ring around a glowing point. Art stays inside the
+       maskable safe zone (radius 205), so the same drawing works for adaptive icons. -->
+  <defs>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#B6FF94"/><stop offset=".5" stop-color="#6CFF2B"/><stop offset="1" stop-color="#2FA84A"/>
+    </linearGradient>
+    <radialGradient id="dot"><stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#B6FF94"/><stop offset="1" stop-color="#6CFF2B" stop-opacity="0"/></radialGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+  <rect class="bg" width="512" height="512" fill="#000"/>
+  <g transform="translate(256 256) rotate(-22)">
+    <ellipse class="glow" rx="158" ry="100" fill="none" stroke="#6CFF2B" stroke-width="30" opacity=".55" filter="url(#glow)"/>
+    <ellipse class="ring" rx="158" ry="100" fill="none" stroke="url(#ring)" stroke-width="24"/>
+  </g>
+  <circle class="halo" cx="256" cy="256" r="58" fill="url(#dot)"/>
+  <circle class="core" cx="256" cy="256" r="20" fill="#ffffff"/>
+</svg>

@@ -32,6 +32,14 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); font-family: var(--f-body); color: #fff; }
+/* App-like touch behaviour: no grey tap flash, no font inflation, no pull-to-refresh bounce
+   revealing white behind the page, and no 300 ms double-tap delay on controls. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; background: var(--bg); }
+body { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
+button, a, input, select, label { touch-action: manipulation; }
+/* Keep content clear of notches and the gesture bar when installed full-screen. */
+.header { padding-top: env(safe-area-inset-top); padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+footer { padding-bottom: env(safe-area-inset-bottom); }
 a { color: var(--green); }
 a:hover { color: var(--green-hover); }
 input::placeholder { color: var(--placeholder); }
@@ -200,4 +208,15 @@ button.pill-ghost { border: 1px solid var(--line-2); }
   .brand { font-size: 15px; gap: 6px; }
   .nav { gap: 9px; font-size: 13px; }
   .header-signin { font-size: 13px; }
+}
+
+/* Touch screens: every control gets at least a 44 px hit area (Android asks for 48 dp, Apple 44 pt).
+   Header items grow their padding and give it back with negative margins, so the layout doesn't move. */
+@media (pointer: coarse) {
+  button.btn { min-height: 44px; }
+  .map-legend:not([open]) { padding-top: 0; padding-bottom: 0; }
+  .map-legend > summary { padding: 14px 0; }
+  .brand, .nav-item, .header-signin { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; padding: 0 5px; margin: 0 -5px; }
+  .header-account .avatar { width: 36px !important; height: 36px !important; }
+  .aurora-map.leaflet-touch .leaflet-bar a { width: 44px; height: 44px; line-height: 44px; }
 }
