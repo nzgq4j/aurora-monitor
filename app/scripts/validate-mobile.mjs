@@ -10,7 +10,7 @@ process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS = '1';
 const require = createRequire(process.env.PW_ROOT ? process.env.PW_ROOT + '/' : import.meta.url);
 const { chromium, devices } = require('playwright');
 const BASE = process.env.BASE ?? 'http://localhost:3000';
-const ROUTES = ['/', '/map', '/plans', '/checkout', '/signin', '/account', '/reset-password', '/offline'];
+const ROUTES = ['/', '/map', '/plans', '/checkout', '/signin', '/dashboard', '/reset-password', '/offline'];
 const MIN_TAP = 44; // CSS px; Android's guideline is 48 dp, Apple's 44 pt.
 
 const fails = [], warns = [];

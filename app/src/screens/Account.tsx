@@ -9,8 +9,9 @@ import type { AccountData } from '../lib/history';
 import { searchPlaces, useLocations, type PlaceResult, type SavedLocation } from '../lib/locations';
 import { useConditions } from '../lib/useConditions';
 import { useStore, type Tab } from '../store';
+import { Plans } from './Plans';
 
-const TABS: [Tab, string][] = [['overview', 'Overview'], ['alerts', 'Alerts'], ['locations', 'Locations'], ['billing', 'Billing']];
+const TABS: [Tab, string][] = [['overview', 'Overview'], ['alerts', 'Alerts'], ['locations', 'Locations'], ['plans', 'Plans'], ['billing', 'Billing']];
 
 const longDate = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
@@ -18,15 +19,15 @@ export function Account({ data }: { data: AccountData }) {
   const { s, set, signOut, live } = useStore();
   const auth = useAuth();
   const router = useRouter();
-  // With real accounts, the Account page needs a signed-in user.
-  useEffect(() => { if (live && auth.ready && !auth.user) router.replace('/signin?next=/account'); }, [live, auth.ready, auth.user, router]);
+  // With real accounts, the Dashboard needs a signed-in user.
+  useEffect(() => { if (live && auth.ready && !auth.user) router.replace('/signin?next=/dashboard'); }, [live, auth.ready, auth.user, router]);
   if (live && !auth.user) {
     return <main className="wrap" style={{ padding: '64px var(--gutter)', color: 'var(--muted)' }}>{auth.ready ? 'Redirecting to sign in…' : 'Loading your account…'}</main>;
   }
   const name = live ? auth.profile?.displayName || auth.user?.email?.split('@')[0] || 'Your account' : 'Sam Rivera';
   const email = live ? auth.user?.email ?? '' : 'sam@example.com';
   return (
-    <main data-screen-label="Account" className="wrap account">
+    <main data-screen-label="Dashboard" className="wrap account">
       <aside className="account-aside">
         <div className="account-profile">
           <span className="avatar" style={{ width: 44, height: 44, flex: 'none' }}>{live ? initials(auth.profile?.displayName, email) : 'SR'}</span>
@@ -55,6 +56,7 @@ export function Account({ data }: { data: AccountData }) {
         {s.tab === 'overview' && <Overview data={data} />}
         {s.tab === 'alerts' && <Alerts data={data} />}
         {s.tab === 'locations' && <Locations />}
+        {s.tab === 'plans' && <Plans embedded />}
         {s.tab === 'billing' && <Billing />}
       </div>
     </main>
@@ -137,7 +139,7 @@ function Overview({ data }: { data: AccountData }) {
   const visY = 210 - need * 20;
 
   return (
-    <div data-screen-label="Account · Overview" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+    <div data-screen-label="Dashboard · Overview" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(340px,100%),1fr))', gap: 20 }}>
         <div style={{ position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 14, padding: 'clamp(20px, 5vw, 28px)', border: `1px solid ${plan.accent}`, borderRadius: 18, background: 'var(--panel)' }}>
           <div aria-hidden="true" style={{ position: 'absolute', right: -90, bottom: -150, width: 340, height: 340, borderRadius: '50%', border: `38px solid ${plan.accent}`, opacity: .45, filter: 'blur(30px)' }} />
@@ -261,7 +263,7 @@ function Alerts({ data }: { data: AccountData }) {
     : `At Kp ${kp}, aurora is unlikely to be visible from ${home.name} (≈ Kp ${need} needed).`;
   const bw = 450 / Math.max(30, last30.length);
   return (
-    <div data-screen-label="Account · Alerts" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+    <div data-screen-label="Dashboard · Alerts" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
       <h1 className="display" style={h1}>Alert <span className="hl">rules</span></h1>
       <div className="alert-rule">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -435,7 +437,7 @@ function Locations() {
   const limit = plan.locs;
   const active = Math.min(locations.length, limit);
   return (
-    <div data-screen-label="Account · Locations" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div data-screen-label="Dashboard · Locations" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' }}>
         <h1 className="display" style={h1}>Saved <span className="hl">skies</span></h1>
         <span className="mono" style={{ fontSize: 13, color: 'var(--muted)' }}>{`${active} OF ${limit > 10 ? '∞' : limit} ACTIVE`}</span>
@@ -460,7 +462,7 @@ function Billing() {
   const planLine = usePlanLine();
   const annual = live ? profile?.billingCycle === 'annual' : s.annual;
   return (
-    <div data-screen-label="Account · Billing" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div data-screen-label="Dashboard · Billing" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <h1 className="display" style={h1}>Billing</h1>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(280px,100%),1fr))', gap: 16 }}>
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 22 }}>

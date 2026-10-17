@@ -17,7 +17,7 @@ export function ResetPassword() {
     setBusy(true); setError(null);
     const r = await updatePassword(password);
     setBusy(false);
-    if (r.error) setError(r.error); else router.replace('/account');
+    if (r.error) setError(r.error); else router.replace('/dashboard');
   };
   return (
     <main style={{ minHeight: 'calc(100vh - 72px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 24px' }}>

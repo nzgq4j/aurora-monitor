@@ -7,7 +7,7 @@ import { useAuth } from './lib/auth';
 import { supabase } from './lib/supabase';
 
 export type Screen = 'home' | 'map' | 'plans' | 'checkout' | 'signin' | 'account';
-export type Tab = 'overview' | 'alerts' | 'locations' | 'billing';
+export type Tab = 'overview' | 'alerts' | 'locations' | 'plans' | 'billing';
 
 export const PATHS: Record<Screen, string> = {
   home: '/',
@@ -15,7 +15,7 @@ export const PATHS: Record<Screen, string> = {
   plans: '/plans',
   checkout: '/checkout',
   signin: '/signin',
-  account: '/account',
+  account: '/dashboard',
 };
 
 const screenFromPath = (path: string): Screen =>
@@ -70,7 +70,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const auth = useAuth();
   const live = auth.configured;
 
-  // Demo mode only: landing directly on /account starts signed in, like the design's "account" starting screen.
+  // Demo mode only: landing directly on /dashboard starts signed in, like the design's "account" starting screen.
   const [s, setState] = useState<AppState>(() => ({
     tab: 'overview',
     plan: 'free',
@@ -95,11 +95,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const store = useMemo<Store>(() => {
     const set: Store['set'] = patch =>
       setState(prev => ({ ...prev, ...(typeof patch === 'function' ? patch(prev) : patch) }));
+    const signedIn = live ? !!auth.user : s.signedIn;
     const go: Store['go'] = (to, patch) => {
+      // Signed-in members see plans inside the Dashboard; /plans stays the public pricing page.
+      if (to === 'plans' && signedIn) { to = 'account'; patch = { ...patch, tab: 'plans' }; }
       if (patch) set(patch);
       if (to !== screen) router.push(PATHS[to]);
     };
-    const signedIn = live ? !!auth.user : s.signedIn;
     const planId = live ? auth.effectivePlan : s.plan;
     // Unknown ids (e.g. a retired plan name in an old link) fall back to Free / Chaser.
     const planIndex = Math.max(0, TIERS.findIndex(t => t.id === planId));
