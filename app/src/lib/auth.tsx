@@ -16,10 +16,30 @@ export interface Profile {
   createdAt: string;
   /** Chosen language; null until the user (or their first visit) sets one. */
   locale: Locale | null;
+  /** Stripe subscription status (trialing, active, past_due, canceled, …); null without one. */
+  subscriptionStatus: string | null;
+  /** When the current paid period (or Stripe trial) ends. */
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
+  /** True once the user has a Stripe customer, so the billing portal can open. */
+  hasBilling: boolean;
 }
 
-interface ProfileRow { id: string; display_name: string | null; plan: TierId; billing_cycle: 'monthly' | 'annual'; trial_ends_at: string | null; created_at: string; locale: string | null }
-const fromRow = (r: ProfileRow): Profile => ({ id: r.id, displayName: r.display_name, plan: r.plan, billingCycle: r.billing_cycle, trialEndsAt: r.trial_ends_at, createdAt: r.created_at, locale: isLocale(r.locale) ? r.locale : null });
+/** Card payments are on once the Stripe keys are configured (the publishable key doubles as the switch). */
+export const PAYMENTS = !!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+
+/** Subscription statuses that keep the paid plan in force (matches public.effective_plan in SQL). */
+const PAID = ['trialing', 'active', 'past_due'];
+
+interface ProfileRow {
+  id: string; display_name: string | null; plan: TierId; billing_cycle: 'monthly' | 'annual'; trial_ends_at: string | null; created_at: string; locale: string | null;
+  stripe_customer_id: string | null; subscription_status: string | null; current_period_end: string | null; cancel_at_period_end: boolean;
+}
+const fromRow = (r: ProfileRow): Profile => ({
+  id: r.id, displayName: r.display_name, plan: r.plan, billingCycle: r.billing_cycle, trialEndsAt: r.trial_ends_at, createdAt: r.created_at,
+  locale: isLocale(r.locale) ? r.locale : null,
+  subscriptionStatus: r.subscription_status, currentPeriodEnd: r.current_period_end, cancelAtPeriodEnd: !!r.cancel_at_period_end, hasBilling: !!r.stripe_customer_id,
+});
 
 type Result = { error: string | null };
 
@@ -30,9 +50,11 @@ interface AuthCtx {
   ready: boolean;
   user: User | null;
   profile: Profile | null;
-  /** Plan in force: a paid tier while its trial is running, otherwise Free. */
+  /** Plan in force: a paid tier while its Stripe subscription (or pre-Stripe trial) is current, otherwise Free. */
   effectivePlan: TierId;
   trialExpired: boolean;
+  /** Re-read the profile (e.g. while waiting for Stripe's webhook after checkout). */
+  refreshProfile: () => Promise<Profile | null>;
   signUp: (email: string, password: string, name: string) => Promise<Result & { needsConfirmation: boolean }>;
   signIn: (email: string, password: string) => Promise<Result>;
   signInWithProvider: (provider: Extract<Provider, 'google' | 'apple'>) => Promise<Result>;
@@ -44,6 +66,9 @@ interface AuthCtx {
   signOut: () => Promise<void>;
   startTrial: (tier: TierId, cycle: 'monthly' | 'annual') => Promise<Result>;
   cancelMembership: () => Promise<Result>;
+  /** Stripe Checkout (url) or Billing Portal (url); `error` is an API error code. */
+  startCheckout: (tier: TierId, cycle: 'monthly' | 'annual') => Promise<{ url?: string; error?: string }>;
+  openBillingPortal: () => Promise<{ url?: string; error?: string }>;
 }
 
 const Ctx = createContext<AuthCtx | null>(null);
@@ -68,9 +93,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { locale } = useI18n();
 
   const loadProfile = useCallback(async (u: User | null) => {
-    if (!sb || !u) { setProfile(null); return; }
+    if (!sb || !u) { setProfile(null); return null; }
     const { data } = await sb.from('profiles').select('*').eq('id', u.id).maybeSingle();
-    setProfile(data ? fromRow(data as ProfileRow) : null);
+    const p = data ? fromRow(data as ProfileRow) : null;
+    setProfile(p);
+    return p;
   }, [sb]);
 
   useEffect(() => {
@@ -106,11 +133,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AuthCtx>(() => {
     const none = { error: 'err.notConnected' };
     const origin = typeof window === 'undefined' ? '' : window.location.origin;
-    const trialExpired = !!profile && profile.plan !== 'free' && !!profile.trialEndsAt && Date.parse(profile.trialEndsAt) < Date.now();
+    const subscribed = PAID.includes(profile?.subscriptionStatus ?? '');
+    const trialExpired = !!profile && profile.plan !== 'free' && !subscribed && !!profile.trialEndsAt && Date.parse(profile.trialEndsAt) < Date.now();
+    // Calls to our Stripe routes carry the Supabase access token so the server knows who is paying.
+    const billing = async (path: string, body?: object): Promise<{ url?: string; error?: string }> => {
+      const token = (await sb?.auth.getSession())?.data.session?.access_token;
+      if (!token) return { error: 'signed_out' };
+      try {
+        const res = await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` }, body: JSON.stringify(body ?? {}) });
+        return await res.json();
+      } catch { return { error: 'network' }; }
+    };
     return {
       configured: !!sb, ready, user, profile,
       effectivePlan: profile && !trialExpired ? profile.plan : 'free',
       trialExpired,
+      refreshProfile: () => loadProfile(user),
       signUp: async (email, password, name) => {
         if (!sb) return { ...none, needsConfirmation: false };
         const { data, error } = await sb.auth.signUp({ email, password, options: { data: { display_name: name, locale }, emailRedirectTo: `${origin}/dashboard` } });
@@ -163,6 +201,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!error) await loadProfile(user);
         return { error: error?.message ?? null };
       },
+      startCheckout: (tier, cycle) => billing('/api/stripe/checkout', { tier, cycle }),
+      openBillingPortal: () => billing('/api/stripe/portal'),
     };
   }, [sb, ready, user, profile, loadProfile, locale]);
 
