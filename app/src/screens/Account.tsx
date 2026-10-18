@@ -9,6 +9,8 @@ import type { AccountData } from '../lib/history';
 import { searchPlaces, useLocations, type PlaceResult, type SavedLocation } from '../lib/locations';
 import { useConditions } from '../lib/useConditions';
 import { ALERT_LEVELS, type AlertRules } from '../lib/alerts';
+import { disablePush, enablePush, pushState, type PushState } from '../lib/push';
+import { INSTALL_EVENT } from '../components/InstallPrompt';
 import { useStore, type Tab } from '../store';
 import { Field } from '../components/Field';
 import { Plans } from './Plans';
@@ -354,6 +356,7 @@ function Alerts({ data }: { data: AccountData }) {
           <span className="eyebrow" style={{ marginBottom: 8 }}>{t('alerts.deliver')}</span>
           {CHANNEL_DEFS.map(([k, need]) => {
             const locked = planIndex < need;
+            if (k === 'push') return <PushRow key={k} need={need} locked={locked} />;
             return <ToggleRow key={k} label={t(`channel.${k}`)} sub={k === 'email' ? accountEmail : soon(t(`channel.${k}.sub`))} need={need} locked={locked} on={s.channels[k]}
               onClick={locked ? () => go('plans') : () => set(st => ({ channels: { ...st.channels, [k]: !st.channels[k] } }))} />;
           })}
@@ -366,6 +369,38 @@ function Alerts({ data }: { data: AccountData }) {
       </div>
     </div>
   );
+}
+
+/**
+ * Push for this device: subscribing needs a tap (permission prompt), and iPhones only allow it once
+ * Polar Lights is on the home screen, so that case opens the install steps instead.
+ */
+function PushRow({ need, locked }: { need: number; locked: boolean }) {
+  const { set, go } = useStore();
+  const { t } = useI18n();
+  const [state, setState] = useState<PushState | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  useEffect(() => { pushState().then(setState).catch(() => setState('unsupported')); }, []);
+  const sub = err || (state === null ? t('channel.push.sub')
+    : state === 'unconfigured' ? `${t('channel.push.sub')} · ${t('alerts.comingSoon')}`
+    : state === 'on' ? t('push.sub.on') : state === 'off' ? t('channel.push.sub') : t(`push.sub.${state === 'needs-install' ? 'needsInstall' : state}`));
+  const toggle = async () => {
+    if (locked) return go('plans');
+    if (state === 'needs-install') return window.dispatchEvent(new Event(INSTALL_EVENT));
+    if (state !== 'on' && state !== 'off') return;
+    setBusy(true); setErr('');
+    try {
+      const next = state === 'on' ? await disablePush() : await enablePush();
+      setState(next);
+      set(st => ({ channels: { ...st.channels, push: next === 'on' } }));
+    } catch {
+      setErr(t('push.error'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return <ToggleRow label={t('channel.push')} sub={sub} need={need} locked={locked} on={state === 'on' && !busy} onClick={toggle} />;
 }
 
 const hhmmUT = (t: number) => `${new Date(t).toISOString().slice(11, 16)} UT`;

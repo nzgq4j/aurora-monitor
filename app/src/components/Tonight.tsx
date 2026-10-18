@@ -11,6 +11,7 @@ import { hourlyScores, verdict, type HourScore, type Level } from '../lib/tonigh
 import { useConditions } from '../lib/useConditions';
 import { INTL_TAG } from '../i18n/config';
 import { useI18n } from '../i18n/I18n';
+import { USEFUL_EVENT } from './InstallPrompt';
 
 const LEVEL_COLOR: Record<Level, string> = { goNow: C.green, goLater: C.green, maybe: C.amber, no: C.muted };
 const scoreColor = (s: number) => (s >= 50 ? C.green : s >= 20 ? C.amber : '#3a403c');
@@ -66,6 +67,10 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
     });
     return { hours, v: verdict(hours, cond.kpNeeded), m };
   }, [shownPlace, cond, now, kp, series]);
+
+  // A promising verdict is a good moment to suggest adding the app to the home screen (InstallPrompt).
+  const useful = !!result && result.v.level !== 'no';
+  useEffect(() => { if (useful) window.dispatchEvent(new Event(USEFUL_EVENT)); }, [useful]);
 
   const time = (x: number) => new Date(x).toLocaleTimeString(INTL_TAG[locale], { hour: '2-digit', minute: '2-digit' });
   const hourLabel = (x: number) => new Date(x).toLocaleTimeString(INTL_TAG[locale], { hour: '2-digit', hourCycle: 'h23' }).replace(/\D+$/, '');

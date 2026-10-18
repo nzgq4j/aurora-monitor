@@ -56,3 +56,29 @@ self.addEventListener('fetch', event => {
   else if (url.pathname.startsWith('/api/')) event.respondWith(networkFirst(request, DATA));
   else if (url.pathname.startsWith('/_next/static/') || url.pathname.startsWith('/geo/') || url.pathname.startsWith('/icons/')) event.respondWith(cacheFirst(request));
 });
+
+// Push alerts from the alert engine: { title, body, url, tag }.
+self.addEventListener('push', event => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch { data = { body: event.data && event.data.text() }; }
+  event.waitUntil(self.registration.showNotification(data.title || 'Polar Lights', {
+    body: data.body || '',
+    tag: data.tag || 'aurora',
+    renotify: true,
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-monochrome-512.png',
+    data: { url: data.url || '/' },
+  }));
+});
+
+// Tapping a notification focuses an open Polar Lights window, or opens one.
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const url = new URL((event.notification.data && event.notification.data.url) || '/', self.location.origin).href;
+  event.waitUntil((async () => {
+    for (const client of await self.clients.matchAll({ type: 'window', includeUncontrolled: true })) {
+      if (new URL(client.url).origin === self.location.origin && 'focus' in client) { await client.focus(); if ('navigate' in client) await client.navigate(url); return; }
+    }
+    await self.clients.openWindow(url);
+  })());
+});
