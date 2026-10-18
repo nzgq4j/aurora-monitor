@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type * as THREE from 'three';
 import { subsolarPoint } from '../lib/astro';
 import { cloudify } from '../lib/cloudify';
+import { createTileLayer } from '../lib/globeTiles';
 import { kpColor, kpLine } from '../lib/kpLines';
 import { OVAL_H, OVAL_W, smoothOval } from '../lib/ovalSmooth';
 import type { Place } from '../lib/locations';
@@ -73,13 +74,18 @@ const EARTH_FRAG = /* glsl */ `
   uniform sampler2D dayMap;
   uniform sampler2D nightMap;
   uniform vec3 sunDir;
+  // Part of each image this surface shows (offset xy, size zw): the whole image for the Earth,
+  // a sub-rectangle for zoom tiles (see lib/globeTiles).
+  uniform vec4 dayRect;
+  uniform vec4 nightRect;
   varying vec2 vUv;
   varying vec3 vNormal;
   void main() {
     float d = dot(normalize(vNormal), sunDir);
     float day = smoothstep(-0.1, 0.1, d);
-    vec3 dayCol = texture2D(dayMap, vUv).rgb * (0.75 + 0.6 * max(d, 0.0));
-    vec3 nightCol = texture2D(nightMap, vUv).rgb * vec3(1.1, 0.95, 0.75) + texture2D(dayMap, vUv).rgb * 0.012;
+    vec3 tex = texture2D(dayMap, dayRect.xy + vUv * dayRect.zw).rgb;
+    vec3 dayCol = tex * (0.75 + 0.6 * max(d, 0.0));
+    vec3 nightCol = texture2D(nightMap, nightRect.xy + vUv * nightRect.zw).rgb * vec3(1.1, 0.95, 0.75) + tex * 0.012;
     gl_FragColor = vec4(mix(nightCol, dayCol, day), 1.0);
     #include <colorspace_fragment>
   }`;
@@ -196,11 +202,17 @@ export function Globe({ clouds, aurora, kpLines, kp, place, home, onStatus, onFo
       if (disposed) return;
       if (!day || !night) { onStatus('map.basemapFailed'); return; }
       const sphere = (r: number) => new T.SphereGeometry(r, 128, 64);
-      const earthMat = new T.ShaderMaterial({ uniforms: { dayMap: { value: day }, nightMap: { value: night }, sunDir: { value: sunDir } }, vertexShader: VERT, fragmentShader: EARTH_FRAG });
+      const earthMat = new T.ShaderMaterial({ uniforms: { dayMap: { value: day }, nightMap: { value: night }, sunDir: { value: sunDir }, dayRect: { value: new T.Vector4(0, 0, 1, 1) }, nightRect: { value: new T.Vector4(0, 0, 1, 1) } }, vertexShader: VERT, fragmentShader: EARTH_FRAG });
       scene.add(new T.Mesh(sphere(1), earthMat));
       // Desktop (fine pointer, wide screen): swap in 4K imagery once it has loaded. Phones keep the 2K
       // images, which are sharp at their size and save the download.
-      if (window.matchMedia('(pointer: fine) and (min-width: 900px)').matches && renderer.capabilities.maxTextureSize >= 4096) {
+      const desktop = window.matchMedia('(pointer: fine) and (min-width: 900px)').matches;
+      // Desktop: NASA zoom tiles for sharper detail as the user zooms in (see lib/globeTiles).
+      const tileLayer = desktop
+        ? createTileLayer(T, { scene, vertexShader: VERT, fragmentShader: EARTH_FRAG, nightMap: earthMat.uniforms.nightMap, sunDir: earthMat.uniforms.sunDir, anisotropy: renderer.capabilities.getMaxAnisotropy() })
+        : null;
+      if (tileLayer) cleanups.push(() => tileLayer.dispose());
+      if (desktop && renderer.capabilities.maxTextureSize >= 4096) {
         Promise.all([loadTex('/globe/earth-day-4k.jpg'), loadTex('/globe/earth-night-4k.jpg')]).then(([day4, night4]) => {
           if (disposed) { day4.dispose(); night4.dispose(); return; }
           for (const t of [day4, night4]) t.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -312,7 +324,10 @@ export function Globe({ clouds, aurora, kpLines, kp, place, home, onStatus, onFo
       controls.enablePan = false;
       controls.rotateSpeed = 0.45;
       controls.zoomSpeed = 0.7;
-      controls.minDistance = 1.35;
+      // Desktop can zoom close to the ground, where the zoom tiles carry the detail (and the near plane
+      // has to come in so the surface isn't clipped).
+      controls.minDistance = desktop ? 1.06 : 1.35;
+      if (desktop) { camera.near = 0.01; camera.updateProjectionMatrix(); }
       controls.maxDistance = 7;
       // Keep the view off the poles, where turning the globe spins it in place.
       controls.minPolarAngle = (12 * Math.PI) / 180;
@@ -360,6 +375,7 @@ export function Globe({ clouds, aurora, kpLines, kp, place, home, onStatus, onFo
 
       const tmp = new T.Vector3();
       let frame = 0;
+      let tilesAt = 0;
       const tick = (now: number) => {
         frame = requestAnimationFrame(tick);
         if (document.hidden) return;
@@ -370,7 +386,13 @@ export function Globe({ clouds, aurora, kpLines, kp, place, home, onStatus, onFo
           camera.position.copy(flight.from).normalize().lerp(tmp.copy(flight.to).normalize(), e).normalize().multiplyScalar(len);
           if (k >= 1) flight = null;
         }
+        // Desktop: turning slows as the camera nears the ground, so a drag moves the view a similar distance.
+        if (desktop) controls.rotateSpeed = 0.45 * Math.max(0.04, Math.min(1, (camera.position.length() - 1) / 1.5));
         controls.update();
+        if (tileLayer && now - tilesAt > 150) {
+          tilesAt = now;
+          tileLayer.update(camera, viewH, renderer.getPixelRatio(), 360 / ((earthMat.uniforms.dayMap.value as THREE.Texture).image as { width: number }).width);
+        }
         // At the opening zoom the globe is cropped, so shift it away from the pole facing the viewer
         // to keep the auroral oval on screen. Fades out on zooming in; the orbit stays centred.
         const len = camera.position.length();
