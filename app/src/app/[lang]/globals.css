@@ -161,8 +161,6 @@ button.pill-ghost { border: 1px solid var(--line-2); }
   /* Date, Kp and chance on one line; the bar and note span the row below. */
   .night { grid-template-columns: minmax(0, 1fr) auto 52px; gap: 6px 14px; }
   .night-bar { grid-column: 1 / -1; grid-row: 2; }
-  /* Now headline: two lines on phones; FitHeadings shrinks it to fit rather than wrapping a third. */
-  .hero-line { white-space: nowrap; }
   .alert-rule { padding: 18px; gap: 20px; }
 }
 
@@ -290,6 +288,9 @@ button.pill-ghost { border: 1px solid var(--line-2); }
   .map-logo { display: block; }
   .map-status { top: 64px; }
 }
+
+/* Now headline: always two lines; FitHeadings shrinks it to fit rather than wrapping a third. */
+.hero-line { white-space: nowrap; }
 
 /* ---- Tonight: verdict card and 12-hour strip at the top of Now. One column on phones and tablets;
    on wide screens the verdict and the timeline sit side by side. ---- */
