@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import type * as Leaflet from 'leaflet';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import { C } from '../data';
-import { magLat } from '../lib/astro';
+import { kpColor, kpLine, rgb } from '../lib/kpLines';
 import { useLocations } from '../lib/locations';
 import { cloudify } from '../lib/cloudify';
 import { Globe } from '../components/Globe';
@@ -16,21 +16,6 @@ import { useI18n } from '../i18n/I18n';
 import type { MessageKey } from '../i18n/core';
 
 type Mode = 'prob' | 'kp' | 'both';
-
-// Light blue → green → yellow → red, for the Kp reach lines (the aurora itself uses lib/auroraColor).
-const STOPS: [number, [number, number, number]][] = [
-  [0, [127, 212, 255]], [0.33, [89, 255, 58]], [0.66, [255, 225, 77]], [1, [255, 77, 77]],
-];
-function ramp(t: number): [number, number, number] {
-  const x = Math.max(0, Math.min(1, t));
-  for (let i = 1; i < STOPS.length; i++) {
-    const [t1, c1] = STOPS[i], [t0, c0] = STOPS[i - 1];
-    if (x <= t1) { const k = (x - t0) / (t1 - t0); return [0, 1, 2].map(j => Math.round(c0[j] + (c1[j] - c0[j]) * k)) as [number, number, number]; }
-  }
-  return STOPS[STOPS.length - 1][1];
-}
-const rgb = (c: [number, number, number]) => `rgb(${c[0]},${c[1]},${c[2]})`;
-const kpT = (k: number) => (k - 1) / 8;
 
 const LAT_MAX = 85;
 /** Longitude offsets of the world copies drawn side by side for seamless wrapping. */
@@ -64,21 +49,6 @@ function renderOval(grid: Uint8Array): string {
   }
   ctx.putImageData(img, 0, 0);
   return canvas.toDataURL('image/png');
-}
-
-/** Geographic line where geomagnetic latitude equals the oval's equatorward edge for this Kp (≈ 66° − 2·Kp). */
-function kpLine(k: number, south = false): [number, number][] {
-  const target = (66 - 2 * k) * (south ? -1 : 1);
-  const pts: [number, number][] = [];
-  for (let lon = -180; lon <= 180; lon += 2) {
-    let lo = south ? -89.9 : 0, hi = south ? 0 : 89.9;
-    for (let n = 0; n < 40; n++) {
-      const mid = (lo + hi) / 2;
-      if (magLat(mid, lon) < target) lo = mid; else hi = mid;
-    }
-    pts.push([(lo + hi) / 2, lon]);
-  }
-  return pts;
 }
 
 const hhmm = (t: number) => new Date(t).toISOString().slice(11, 16);
@@ -208,13 +178,13 @@ export function AuroraMap({ kp }: { kp: number | null }) {
       const group = L.layerGroup();
       for (let k = 1; k <= 9; k++) {
         const on = k === current;
-        const style = { pane: 'kplines', color: rgb(ramp(kpT(k))), weight: on ? 3 : 1.4, opacity: on ? 1 : 0.75, dashArray: on ? undefined : '3 5', interactive: false };
+        const style = { pane: 'kplines', color: rgb(kpColor(k)), weight: on ? 3 : 1.4, opacity: on ? 1 : 0.75, dashArray: on ? undefined : '3 5', interactive: false };
         const north = kpLine(k), south = kpLine(k, true);
         const label = north.find(p => p[1] === -60);
         for (const dx of COPIES) {
           L.polyline(north.map(([la, lo]) => [la, lo + dx] as [number, number]), style).addTo(group);
           L.polyline(south.map(([la, lo]) => [la, lo + dx] as [number, number]), style).addTo(group);
-          if (label) L.marker([label[0], label[1] + dx], { pane: 'labels', interactive: false, keyboard: false, icon: L.divIcon({ className: on ? 'map-kp map-kp-on' : 'map-kp', html: `<span style="color:${rgb(ramp(kpT(k)))}">Kp ${k}</span>`, iconSize: undefined }) }).addTo(group);
+          if (label) L.marker([label[0], label[1] + dx], { pane: 'labels', interactive: false, keyboard: false, icon: L.divIcon({ className: on ? 'map-kp map-kp-on' : 'map-kp', html: `<span style="color:${rgb(kpColor(k))}">Kp ${k}</span>`, iconSize: undefined }) }).addTo(group);
         }
       }
       layers.current.kp = group;
@@ -304,15 +274,12 @@ export function AuroraMap({ kp }: { kp: number | null }) {
             ))}
           </div>
         </div>
-        <div role="group" aria-label={t('map.layers')} style={{ display: 'flex', alignItems: 'center', padding: 4, border: '1px solid var(--line-2)', borderRadius: 999, background: '#111', flex: view === '2d' ? '1 1 340px' : 'none', maxWidth: 560 }}>
-          {/* The globe shows probability only; Kp reach lines are a 2D-map view. */}
-          {view === '2d' && <>
-            {seg('prob', t('map.mode.prob'))}{seg('kp', t('map.mode.kp'))}{seg('both', t('map.mode.both'))}
-            <span aria-hidden="true" style={{ width: 1, height: 22, background: 'var(--line-2)', margin: '0 4px', flex: 'none' }} />
-          </>}
+        <div role="group" aria-label={t('map.layers')} style={{ display: 'flex', alignItems: 'center', padding: 4, border: '1px solid var(--line-2)', borderRadius: 999, background: '#111', flex: '1 1 340px', maxWidth: 560 }}>
+          {seg('prob', t('map.mode.prob'))}{seg('kp', t('map.mode.kp'))}{seg('both', t('map.mode.both'))}
+          <span aria-hidden="true" style={{ width: 1, height: 22, background: 'var(--line-2)', margin: '0 4px', flex: 'none' }} />
           {/* Clouds is an overlay that combines with any of the views above, so it toggles on its own. */}
           <button type="button" className="btn" aria-pressed={clouds} onClick={() => setClouds(on => !on)}
-            style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: view === '2d' ? '10px 8px' : '10px 16px', borderRadius: 999, fontWeight: 700, fontSize: 14, background: clouds ? '#3a3f3c' : 'transparent', color: clouds ? '#fff' : C.soft, whiteSpace: 'nowrap' }}>
+            style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '10px 8px', borderRadius: 999, fontWeight: 700, fontSize: 14, background: clouds ? '#3a3f3c' : 'transparent', color: clouds ? '#fff' : C.soft, whiteSpace: 'nowrap' }}>
             <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M7 18.5h10.5a4 4 0 0 0 .4-8A6 6 0 0 0 6.4 9.2 4.7 4.7 0 0 0 7 18.5Z" fill={clouds ? '#fff' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinejoin="round" /></svg>
             {t('map.clouds')}
           </button>
@@ -320,24 +287,24 @@ export function AuroraMap({ kp }: { kp: number | null }) {
       </div>
       <div style={{ position: 'relative' }}>
         <div ref={box} className="aurora-map" role="application" aria-label={t('map.aria')} style={view === '3d' ? { display: 'none' } : undefined} />
-        {view === '3d' && <Globe clouds={clouds} place={shownPlace} home={locations.find(l => l.isHome) ?? null} onStatus={setGlobeStatus} onForecast={setForecast} />}
+        {view === '3d' && <Globe clouds={clouds} aurora={mode !== 'kp'} kpLines={mode !== 'prob'} kp={kp} place={shownPlace} home={locations.find(l => l.isHome) ?? null} onStatus={setGlobeStatus} onForecast={setForecast} />}
         {view === '2d' && (notice || status) && <div className="map-status" role="status">{t((notice || status) as MessageKey)}</div>}
         {view === '3d' && globeStatus && <div className="map-status" role="status">{t(globeStatus)}</div>}
         <details className="map-legend" ref={legend} open>
           <summary>{t('map.legend')}</summary>
-          {(mode !== 'kp' || view === '3d') && (
+          {mode !== 'kp' && (
             <div>
               <span className="label">{t('map.legend.prob')}{forecast ? ` · ${hhmm(forecast)} UT` : ''}</span>
               <div style={{ height: 10, borderRadius: 5, margin: '6px 0 4px', background: AURORA_RAMP }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.muted }}><span>5%</span><span>30%</span><span>60%</span><span>90%</span></div>
             </div>
           )}
-          {mode !== 'prob' && view === '2d' && (
+          {mode !== 'prob' && (
             <div>
               <span className="label">{t('map.legend.kp')}</span>
               <div style={{ display: 'flex', gap: 4, marginTop: 6 }}>
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(k => (
-                  <span key={k} style={{ flex: 1, textAlign: 'center', fontSize: 11, fontWeight: 700, padding: '3px 0', borderRadius: 4, color: '#000', background: rgb(ramp(kpT(k))), outline: k === current ? '2px solid #fff' : 'none' }}>{k}</span>
+                  <span key={k} style={{ flex: 1, textAlign: 'center', fontSize: 11, fontWeight: 700, padding: '3px 0', borderRadius: 4, color: '#000', background: rgb(kpColor(k)), outline: k === current ? '2px solid #fff' : 'none' }}>{k}</span>
                 ))}
               </div>
               <span style={{ display: 'block', fontSize: 11, color: C.muted, marginTop: 4 }}>{kp === null ? t('map.legend.kpUnavailable') : t('map.legend.kpNow', { kp: num(kp, 2) })}</span>
