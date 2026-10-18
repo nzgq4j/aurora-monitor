@@ -23,7 +23,8 @@ const FRAME_R = 1.15;
  */
 function fitDistance(fovDeg: number, aspect: number) {
   const half = Math.min(fovDeg / 2, (Math.atan(Math.tan(((fovDeg / 2) * Math.PI) / 180) * aspect) * 180) / Math.PI);
-  return (FRAME_R / Math.sin((half * Math.PI) / 180)) * 0.72;
+  // Portrait screens (phones) open closer still, so the aurora zone fills the width.
+  return (FRAME_R / Math.sin((half * Math.PI) / 180)) * (aspect < 1 ? 0.55 : 0.72);
 }
 
 /**
@@ -363,7 +364,7 @@ export function Globe({ clouds, aurora, kpLines, kp, place, home, onStatus, onFo
         // to keep the auroral oval on screen. Fades out on zooming in; the orbit stays centred.
         const len = camera.position.length();
         const zoom = Math.max(0, Math.min(1, (len - controls.minDistance) / (fit - controls.minDistance)));
-        const shift = Math.round(0.14 * viewH * zoom * Math.max(-1, Math.min(1, (camera.position.y / len) * 3)));
+        const shift = Math.round((camera.aspect < 1 ? 0.17 : 0.14) * viewH * zoom * Math.max(-1, Math.min(1, (camera.position.y / len) * 3)));
         if (shift !== lastShift) {
           lastShift = shift;
           camera.setViewOffset(el.clientWidth, viewH, 0, -shift, el.clientWidth, viewH);
