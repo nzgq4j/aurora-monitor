@@ -236,7 +236,13 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 .map-saved { position: relative; }
 .map-saved b { position: absolute; left: -5px; top: -5px; width: 10px; height: 10px; border-radius: 50%; background: #000; border: 2px solid var(--green); box-sizing: border-box; cursor: pointer; }
 .map-saved span { position: absolute; left: 10px; top: -9px; white-space: nowrap; color: var(--soft); font: 600 12px var(--f-body); text-shadow: 0 0 3px #000, 0 0 3px #000, 0 0 3px #000; cursor: pointer; }
-.map-toggles { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; flex: 1 1 420px; }
+/* Layer toggles above the map: a row of their own under the title, on one line; icons only when narrow. */
+.map-toggles { display: flex; flex-wrap: nowrap; gap: 6px; flex: 1 1 100%; min-width: 0; }
+/* 1000 px: the longest labels (Spanish) need about 900 px of row. */
+@media (max-width: 1000px) {
+  .map-toggle-label { display: none; }
+  .map-toggle { padding: 9px 11px; }
+}
 .map-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line-2); background: #111; color: var(--soft); font-size: 13px; font-weight: 700; white-space: nowrap; }
 .map-toggle[aria-pressed="true"] { border-color: var(--green); background: rgba(108, 255, 43, .1); color: #fff; }
 .map-toggle[aria-pressed="true"] svg { color: var(--green); }

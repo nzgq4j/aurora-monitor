@@ -476,8 +476,9 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
   const layerRow = (
     <div className="map-toggles" role="group" aria-label={t('map.layers')}>
       {ORDER.filter(id => id !== 'globe').map(id => (
-        <button key={id} type="button" className="btn map-toggle" aria-pressed={pressed(id)} onClick={() => press(id)}>
-          {icon(id, 15)}{t(LABEL[id])}
+        // The label hides on narrower screens (icon only), so the name is also the button's accessible name and tooltip.
+        <button key={id} type="button" className="btn map-toggle" aria-pressed={pressed(id)} onClick={() => press(id)} aria-label={t(LABEL[id])} title={t(LABEL[id])}>
+          {icon(id, 15)}<span className="map-toggle-label">{t(LABEL[id])}</span>
         </button>
       ))}
     </div>
