@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { C } from '../data';
 import { moon } from '../lib/astro';
 import type { KpPoint } from '../lib/feeds';
 import { useLocations } from '../lib/locations';
+import { shareCardBlob } from '../lib/shareCard';
+import { SITE } from '../lib/site';
 import { hourlyScores, verdict, type HourScore, type Level } from '../lib/tonight';
 import { useConditions } from '../lib/useConditions';
 import { INTL_TAG } from '../i18n/config';
@@ -67,6 +69,49 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
 
   const time = (x: number) => new Date(x).toLocaleTimeString(INTL_TAG[locale], { hour: '2-digit', minute: '2-digit' });
   const hourLabel = (x: number) => new Date(x).toLocaleTimeString(INTL_TAG[locale], { hour: '2-digit', hourCycle: 'h23' }).replace(/\D+$/, '');
+
+  // The share text, and the share image drawn ahead of time: Safari only opens the share sheet straight
+  // from a tap, so nothing slow can happen between the tap and navigator.share.
+  const shareText = result && shownPlace
+    ? [t('tonight.shareText', { place: shownPlace.name.split(',')[0], verdict: t(`tonight.level.${result.v.level}`), score: result.v.score }),
+      result.v.window ? t('tonight.shareWindow', { from: time(result.v.window.from), to: time(result.v.window.to) }) : ''].filter(Boolean).join(' ')
+    : '';
+  const shareFile = useRef<File | null>(null);
+  const [shareMsg, setShareMsg] = useState('');
+  useEffect(() => {
+    shareFile.current = null;
+    if (!result || !shownPlace || typeof navigator === 'undefined' || !navigator.canShare) return;
+    let live = true;
+    const { v, hours } = result;
+    shareCardBlob({
+      place: shownPlace.name.split(',')[0], kicker: t('tonight.h'), verdict: t(`tonight.level.${v.level}`), verdictColor: LEVEL_COLOR[v.level],
+      score: v.score, scoreLabel: t('tonight.score'),
+      line: v.window ? t('tonight.best', { from: time(v.window.from), to: time(v.window.to) }) : t('tonight.noWindow'),
+      barsLabel: t('tonight.next12'), bars: hours.map(h => ({ label: hourLabel(h.t), score: h.score, color: scoreColor(h.score) })), site: SITE.domain,
+    }).then(blob => {
+      if (!live || !blob) return;
+      const file = new File([blob], 'polar-lights-tonight.png', { type: 'image/png' });
+      if (navigator.canShare({ files: [file] })) shareFile.current = file;
+    });
+    return () => { live = false; };
+  }, [result, shownPlace, locale]); // eslint-disable-line react-hooks/exhaustive-deps -- t/time follow locale
+
+  const share = async () => {
+    const url = SITE.url;
+    setShareMsg('');
+    try {
+      if (navigator.share) {
+        const file = shareFile.current;
+        await navigator.share(file ? { files: [file], title: SITE.name, text: `${shareText} ${url}` } : { title: SITE.name, text: shareText, url });
+      } else {
+        await navigator.clipboard.writeText(`${shareText} ${url}`);
+        setShareMsg(t('tonight.copied'));
+      }
+    } catch (e) {
+      if ((e as Error).name !== 'AbortError') setShareMsg(t('tonight.shareFailed'));
+    }
+  };
+
   const card: CSSProperties = { border: '1px solid var(--line-2)', borderRadius: 18, padding: 18, background: 'radial-gradient(120% 120% at 100% 0%, #0f1a12, #050605 60%)' };
 
   if (!shownPlace) {
@@ -99,7 +144,14 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
           <span>{shownPlace.name.split(',')[0]}</span>
           <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </button>
-        {now !== null && <span className="label" style={{ fontSize: 11 }}>{t('tonight.updated', { time: time(now) })}</span>}
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {now !== null && <span className="label" style={{ fontSize: 11 }}>{t('tonight.updated', { time: time(now) })}</span>}
+          {result && (
+            <button type="button" className="btn tonight-share" onClick={share} aria-label={t('tonight.share')}>
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </button>
+          )}
+        </span>
       </div>
 
       {!v || !h0 ? (
@@ -150,6 +202,7 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
               </span>
             )}
             <span style={{ fontSize: 11, color: 'var(--dim)' }}>{t('tonight.note')}</span>
+            {shareMsg && <span role="status" style={{ fontSize: 13, color: 'var(--green)' }}>{shareMsg}</span>}
           </div>
         </>
       )}
