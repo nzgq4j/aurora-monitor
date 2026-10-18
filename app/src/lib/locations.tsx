@@ -157,6 +157,28 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
   // Reload when the signed-in user changes (sign in, sign out, switch account).
   useEffect(() => { if (wanted.current && ready) fetchAll(); }, [ready, fetchAll]);
 
+  /** Read the account's locations again, e.g. after another device changed them. */
+  const refetch = useCallback(async () => {
+    if (!remote) return;
+    const { data, error: e } = await sb!.from('locations').select('*').order('created_at');
+    if (e || !data) return;
+    list.current = (data as Row[]).map(fromRow); setLocations(list.current);
+  }, [remote, sb]);
+
+  // An installed app or a tab can stay open for hours; catch up when it comes back to the front.
+  useEffect(() => {
+    if (!remote) return;
+    let last = Date.now();
+    const back = () => {
+      if (document.visibilityState !== 'visible' || !wanted.current || Date.now() - last < 30e3) return;
+      last = Date.now();
+      void refetch();
+    };
+    document.addEventListener('visibilitychange', back);
+    window.addEventListener('focus', back);
+    return () => { document.removeEventListener('visibilitychange', back); window.removeEventListener('focus', back); };
+  }, [remote, refetch]);
+
   const load = useCallback(async () => {
     wanted.current = true;
     if (ready) await fetchAll();
@@ -165,16 +187,26 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
   const add = useCallback<Ctx['add']>(async loc => {
     const isHome = !list.current.some(l => l.isHome);
     if (remote) {
-      const { data, error: e } = await sb!.from('locations').insert({ name: loc.name, lat: loc.lat, lon: loc.lon, source: loc.source, is_home: isHome }).select().single();
-      if (e) { setError(/limit reached/i.test(e.message) ? t('loc.err.limit') : t('loc.err.save')); return null; }
+      const insert = (is_home: boolean) => sb!.from('locations').insert({ name: loc.name, lat: loc.lat, lon: loc.lon, source: loc.source, is_home }).select().single();
+      let { data, error: e } = await insert(isHome);
+      // 23505: the account already has a Home (or a device location) this copy of the list didn't know about.
+      // Save it as an ordinary location instead, then catch up with the account's list.
+      const stale = e?.code === '23505';
+      if (stale && isHome) ({ data, error: e } = await insert(false));
+      if (e) {
+        if (stale) await refetch();
+        setError(/limit reached/i.test(e.message) ? t('loc.err.limit') : t('loc.err.save'));
+        return null;
+      }
       const saved = fromRow(data as Row);
+      if (stale) { await refetch(); return list.current.find(l => l.id === saved.id) ?? saved; }
       put([...list.current, saved]);
       return saved;
     }
     const saved: SavedLocation = { ...loc, id: crypto.randomUUID(), isHome, createdAt: new Date().toISOString() };
     put([...list.current, saved]);
     return saved;
-  }, [remote, sb]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [remote, sb, refetch]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const remove = useCallback<Ctx['remove']>(async id => {
     const gone = list.current.find(l => l.id === id);
