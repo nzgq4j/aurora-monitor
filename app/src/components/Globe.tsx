@@ -12,6 +12,7 @@ import type { OvalGrid } from '../app/api/oval/route';
 import { useI18n } from '../i18n/I18n';
 import type { MessageKey } from '../i18n/core';
 
+const NO_POINTS: { lat: number; lon: number }[] = [];
 const HOUSE = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5M5.5 9.5V20h5v-6h3v6h5V9.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>';
 
 /** Shell radii (Earth = 1): Kp lines on the ground, clouds just above, the aurora above them. */
@@ -140,6 +141,8 @@ interface Props {
   frame?: Uint8Array | null;
   /** Best places now: light-blue dots with name labels that hide round the back; tap one to pick it. */
   places: { name: string; country: string; lat: number; lon: number }[];
+  /** Recent "I saw it" reports: small warm-yellow dots. */
+  sightings?: { lat: number; lon: number }[];
   /** Show the OVATION aurora. */
   aurora: boolean;
   /** Show the Kp reach lines; the line for the current Kp is drawn bold. */
@@ -158,14 +161,14 @@ interface Props {
 }
 
 /** Interactive 3D Earth with the live OVATION aurora, the day/night line, satellite clouds and your location. */
-export function Globe({ clouds, night, lights, best, saved, places, frame = null, aurora, kpLines, kp, place, home, pick = null, onPick, onStatus, onForecast }: Props) {
+export function Globe({ clouds, night, lights, best, saved, places, sightings = NO_POINTS, frame = null, aurora, kpLines, kp, place, home, pick = null, onPick, onStatus, onForecast }: Props) {
   const { t } = useI18n();
   const box = useRef<HTMLDivElement>(null);
   const label = useRef<HTMLDivElement>(null);
-  const api = useRef<{ setClouds: (on: boolean) => void; setAurora: (on: boolean) => void; setKp: (on: boolean, kp: number | null) => void; setPlace: (p: Place | null) => void; setPick: (p: { lat: number; lon: number } | null) => void; setShade: (night: boolean, lights: boolean) => void; setBest: (c: HTMLCanvasElement | null) => void; setSaved: (s: Place[]) => void; setPlaces: (p: { lat: number; lon: number }[]) => void; setFrame: (f: Uint8Array | null) => void; flyTo: (p: Place) => void } | null>(null);
+  const api = useRef<{ setClouds: (on: boolean) => void; setAurora: (on: boolean) => void; setKp: (on: boolean, kp: number | null) => void; setPlace: (p: Place | null) => void; setPick: (p: { lat: number; lon: number } | null) => void; setShade: (night: boolean, lights: boolean) => void; setBest: (c: HTMLCanvasElement | null) => void; setSaved: (s: Place[]) => void; setPlaces: (p: { lat: number; lon: number }[]) => void; setFrame: (f: Uint8Array | null) => void; setSightings: (s: { lat: number; lon: number }[]) => void; flyTo: (p: Place) => void } | null>(null);
   // Latest layer choices, applied once the scene is built (props can change while it loads).
-  const latest = useRef({ aurora, kpLines, kp, pick, onPick, night, lights, best, saved, places, frame });
-  latest.current = { aurora, kpLines, kp, pick, onPick, night, lights, best, saved, places, frame };
+  const latest = useRef({ aurora, kpLines, kp, pick, onPick, night, lights, best, saved, places, frame, sightings });
+  latest.current = { aurora, kpLines, kp, pick, onPick, night, lights, best, saved, places, frame, sightings };
   const placeLabels = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
   const [notice, setNotice] = useState('');
@@ -386,6 +389,15 @@ export function Globe({ clouds, night, lights, best, saved, places, frame = null
         for (const p of ps) { const m = new T.Mesh(dotGeo, placeMat); m.position.copy(toVector(T, p.lat, p.lon, R.marker)); placeGroup.add(m); }
       };
 
+      // Sightings: warm-yellow dots, apart from saved spots (green) and best places (blue).
+      const sightGroup = new T.Group();
+      scene.add(sightGroup);
+      const sightMat = new T.MeshBasicMaterial({ color: 0xffd166 });
+      const setSightings = (ps: { lat: number; lon: number }[]) => {
+        sightGroup.clear();
+        for (const p of ps) { const m = new T.Mesh(dotGeo, sightMat); m.position.copy(toVector(T, p.lat, p.lon, R.marker)); sightGroup.add(m); }
+      };
+
       // Camera: face the marked place (or the North Atlantic aurora zone) from mid-latitudes, so the
       // auroral oval sits on the upper part of the globe instead of being seen from over the pole.
       const start = place ?? { lat: 62, lon: -20 };
@@ -530,8 +542,10 @@ export function Globe({ clouds, night, lights, best, saved, places, frame = null
         setSaved,
         setPlaces,
         setFrame,
+        setSightings,
         flyTo,
       };
+      setSightings(latest.current.sightings);
       if (latest.current.frame) setFrame(latest.current.frame);
       setPlaces(latest.current.places);
       setShade(latest.current.night, latest.current.lights);
@@ -568,6 +582,7 @@ export function Globe({ clouds, night, lights, best, saved, places, frame = null
   useEffect(() => { api.current?.setSaved(saved); }, [saved]);
   useEffect(() => { api.current?.setPlaces(places); }, [places]);
   useEffect(() => { api.current?.setFrame(frame); }, [frame]);
+  useEffect(() => { api.current?.setSightings(sightings); }, [sightings]);
 
   const goHome = () => {
     if (!home) { setNotice(t('map.noHome')); setTimeout(() => setNotice(''), 4000); return; }

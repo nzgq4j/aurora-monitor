@@ -11,6 +11,7 @@ import type { KpPoint } from '../lib/feeds';
 import { MapPanel } from '../components/MapPanel';
 import { TimeSlider } from '../components/TimeSlider';
 import type { Frame } from '../lib/ovalFrames';
+import { recentSightings, type Sighting } from '../lib/sightings';
 import { bestCandidates, loadPlaces, spacingKm, thinPlaces, type BestPlace, type PlaceRow } from '../lib/bestPlaces';
 import { cloudify } from '../lib/cloudify';
 import { Globe } from '../components/Globe';
@@ -68,7 +69,7 @@ const NO_PLACES: Place[] = [];
 export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[] }) {
   const box = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Leaflet.Map | null>(null);
-  const layers = useRef<{ prob?: Leaflet.Layer; kp?: Leaflet.LayerGroup; marker?: Leaflet.Layer; pin?: Leaflet.Layer; clouds?: Leaflet.GridLayer; lights?: Leaflet.TileLayer; night?: Leaflet.Layer; best?: Leaflet.Layer; places?: Leaflet.Layer; saved?: Leaflet.Layer }>({});
+  const layers = useRef<{ prob?: Leaflet.Layer; kp?: Leaflet.LayerGroup; marker?: Leaflet.Layer; pin?: Leaflet.Layer; clouds?: Leaflet.GridLayer; lights?: Leaflet.TileLayer; night?: Leaflet.Layer; best?: Leaflet.Layer; places?: Leaflet.Layer; saved?: Leaflet.Layer; sightings?: Leaflet.Layer }>({});
   // Smoothed OVATION field, kept for the best-spots layer.
   const oval = useRef<Float32Array | null>(null);
   const LRef = useRef<typeof Leaflet | null>(null);
@@ -77,7 +78,7 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
   const [on, setOn] = useState<Layers>(DEFAULT_LAYERS);
   useEffect(() => { setOn(readLayers()); }, []);
   const toggle = (id: LayerId) => setOn(prev => { const next = { ...prev, [id]: !prev[id] }; writeLayers(next); return next; });
-  const { t, num } = useI18n();
+  const { t, tn, num } = useI18n();
   // A point tapped on the map (2D or 3D); the panel shows its verdict. Named by coordinates until
   // reverse geocoding answers.
   const [pick, setPick] = useState<Place | null>(null);
@@ -407,6 +408,28 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
     }))).addTo(map);
   }, [pick, ready]);
 
+  // Sightings ("I saw it", #67) from the last 3 hours, refreshed every five minutes while shown.
+  const [sightings, setSightings] = useState<Sighting[]>([]);
+  useEffect(() => {
+    if (!on.sightings) { setSightings([]); return; }
+    let live = true;
+    const load = () => recentSightings(3).then(s => { if (live) setSightings(s); });
+    load();
+    const id = setInterval(load, 3e5);
+    return () => { live = false; clearInterval(id); };
+  }, [on.sightings]);
+  useEffect(() => {
+    const map = mapRef.current, L = LRef.current;
+    layers.current.sightings?.remove();
+    layers.current.sightings = undefined;
+    if (!map || !L || !ready || !sightings.length) return;
+    layers.current.sightings = L.layerGroup(sightings.flatMap(s => COPIES.map(dx => L.marker([s.lat, s.lon + dx], {
+      pane: 'labels', keyboard: false, interactive: false,
+      icon: L.divIcon({ className: 'map-sight', html: '<b></b>', iconSize: [0, 0] }),
+    })))).addTo(map);
+  }, [sightings, ready]);
+  const globeSightings = useMemo(() => sightings.map(s => ({ lat: s.lat, lon: s.lon })), [sightings]);
+
   // Saved locations (other than the one already marked): small dots with names; tap one for its verdict.
   // Memoised, so re-renders (e.g. a tap) don't make the globe rebuild its saved-spot dots.
   const others = useMemo(() => locations.filter(l => !shownPlace || Math.abs(l.lat - shownPlace.lat) > 0.01 || Math.abs(l.lon - shownPlace.lon) > 0.01), [locations, shownPlace]);
@@ -425,15 +448,16 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
     clouds: 'M7 18.5h10.5a4 4 0 0 0 .4-8A6 6 0 0 0 6.4 9.2 4.7 4.7 0 0 0 7 18.5Z',
     night: 'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z',
     best: 'm12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6-4.5-4.2 6.1-.7L12 3Z',
+    sightings: 'M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Zm10 3a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
     saved: 'M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Zm0-8.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
     lights: 'M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3Z',
     globe: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm-9 9h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z',
   };
   const LABEL: Record<LayerId | 'globe', MessageKey> = {
     aurora: 'map.layer.aurora', kp: 'map.layer.kp', clouds: 'map.clouds', night: 'map.layer.night',
-    best: 'map.layer.best', saved: 'map.layer.saved', lights: 'map.layer.lights', globe: 'map.layer.globe',
+    best: 'map.layer.best', sightings: 'map.layer.sightings', saved: 'map.layer.saved', lights: 'map.layer.lights', globe: 'map.layer.globe',
   };
-  const ORDER: (LayerId | 'globe')[] = ['aurora', 'clouds', 'night', 'best', 'kp', 'saved', 'lights', 'globe'];
+  const ORDER: (LayerId | 'globe')[] = ['aurora', 'clouds', 'night', 'best', 'sightings', 'kp', 'saved', 'lights', 'globe'];
   const pressed = (id: LayerId | 'globe') => (id === 'globe' ? view === '3d' : on[id]);
   const press = (id: LayerId | 'globe') => (id === 'globe' ? chooseView(view === '3d' ? '2d' : '3d') : toggle(id));
   const icon = (id: LayerId | 'globe', size: number) => (
@@ -506,6 +530,12 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
           <span style={{ display: 'block', fontSize: 11, color: C.muted, marginTop: 4 }}>{cands.length ? t('map.legend.places') : t('map.legend.noPlaces')}</span>
         </div>
       )}
+      {on.sightings && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span className="map-sight-key" aria-hidden="true" />
+          <span style={{ fontSize: 11, color: C.muted }}>{sightings.length ? tn('map.legend.sightings', sightings.length) : t('map.legend.sightingsNone')}</span>
+        </div>
+      )}
       {on.lights && <span style={{ display: 'block', fontSize: 11, color: C.muted }}>{t('map.legend.lights')}</span>}
       {view === '3d' && on.night && on.lights && <span style={{ display: 'block', fontSize: 11, color: C.muted }}>{t('globe.legend')}</span>}
     </>
@@ -533,7 +563,7 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
         {/* Phones have no header, so the map carries the logo. */}
         <img className="map-logo" src="/icons/logo.svg" alt={SITE.name} width={56} height={43} />
         <div ref={box} className="aurora-map" role="application" aria-label={t('map.aria')} style={view === '3d' ? { display: 'none' } : undefined} />
-        {view === '3d' && <Globe clouds={on.clouds} night={on.night} lights={on.lights} best={bestGlobe} saved={on.saved ? others : NO_PLACES} places={globePlaces} aurora={on.aurora} kpLines={on.kp} kp={kp} place={shownPlace} home={locations.find(l => l.isHome) ?? null}
+        {view === '3d' && <Globe clouds={on.clouds} night={on.night} lights={on.lights} best={bestGlobe} saved={on.saved ? others : NO_PLACES} places={globePlaces} sightings={globeSightings} aurora={on.aurora} kpLines={on.kp} kp={kp} place={shownPlace} home={locations.find(l => l.isHome) ?? null}
           frame={frames[fi] ? frameBytes : null} pick={pick} onPick={(la, lo, name) => (name ? setPick({ name, lat: la, lon: lo }) : pickAt.current(la, lo))} onStatus={setGlobeStatus} onForecast={setForecast} />}
         {view === '2d' && (notice || status) && <div className="map-status" role="status">{t((notice || status) as MessageKey)}</div>}
         {view === '3d' && globeStatus && <div className="map-status" role="status">{t(globeStatus)}</div>}
