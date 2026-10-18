@@ -26,6 +26,9 @@
   --h-section: clamp(30px, 8vw, 40px);
 }
 
+/* Red night mode (components/NightMode): everything, including the map and globe canvases, as dim red. */
+html.red-mode { filter: url(#pl-night); }
+
 @media (max-width: 640px) {
   :root { --gutter: 16px; }
 }
@@ -357,6 +360,8 @@ button.pill-ghost { border: 1px solid var(--line-2); }
     border-radius: 16px; border: 1px solid var(--line-2); background: #0a0c0b; box-shadow: 0 -10px 30px rgba(0,0,0,.6);
   }
   .tabbar-sheet-item { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 12px; border-radius: 10px; color: var(--soft); font: 600 16px var(--f-body); text-align: left; }
+  .tabbar-night { border-top: 1px solid var(--line); border-radius: 0 0 10px 10px; margin-top: 4px; }
+  .tabbar-night small { margin-left: auto; font-size: 13px; color: var(--muted); }
   /* Dashboard: the name, email and Sign out move to Account under More. */
   .account-profile, .account-signout { display: none !important; }
   .tabbar-sheet-item.on { color: var(--green); background: rgba(108, 255, 43, .08); }

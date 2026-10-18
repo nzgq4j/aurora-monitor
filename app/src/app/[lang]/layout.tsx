@@ -6,6 +6,7 @@ import { InstallPrompt } from '../../components/InstallPrompt';
 import { G_SCALE } from '../../lib/astro';
 import { kpNow } from '../../lib/feeds';
 import { AuthProvider } from '../../lib/auth';
+import { NIGHT_BOOT, NightFilter, NightModeProvider } from '../../components/NightMode';
 import { LocationsProvider } from '../../lib/locations';
 import { StoreProvider } from '../../store';
 import { SITE } from '../../lib/site';
@@ -46,8 +47,10 @@ export default async function RootLayout({ children, params }: Props & { childre
   const [kp, messages, { num }] = await Promise.all([kpNow(), getMessages(locale), getI18n(locale)]);
   const kpLabel = kp ? `KP ${num(kp.kp, 2)}${G_SCALE(kp.kp) ? ` · G${G_SCALE(kp.kp)}` : ''}` : 'KP —';
   return (
-    <html lang={locale}>
+    <html lang={locale} suppressHydrationWarning>
       <head>
+        {/* Red night mode, applied before the first paint when it's switched on (components/NightMode). */}
+        <script dangerouslySetInnerHTML={{ __html: NIGHT_BOOT }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         {/* Loaded as a stylesheet (not next/font) so the SVG charts can reference the families by name. */}
@@ -57,10 +60,12 @@ export default async function RootLayout({ children, params }: Props & { childre
         />
       </head>
       <body>
+        <NightFilter />
         <I18nProvider locale={locale} messages={messages}>
           <AuthProvider>
             <StoreProvider>
               <LocationsProvider>
+                <NightModeProvider>
                 <div className="app">
                   <Header kpLabel={kpLabel} />
                   <PhoneBrand />
@@ -72,6 +77,7 @@ export default async function RootLayout({ children, params }: Props & { childre
                 <ServiceWorker />
                 <InstallPrompt />
                 <FitHeadings />
+                </NightModeProvider>
               </LocationsProvider>
             </StoreProvider>
           </AuthProvider>
