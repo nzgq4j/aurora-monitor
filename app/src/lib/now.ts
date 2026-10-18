@@ -8,7 +8,7 @@ export interface NowData {
   outlook: OutlookDay[];
   wind: SolarWind | null;
   hemi: { t: number; north: number } | null;
-  oval: { points: [number, number, number][]; edge: [number, number][]; observed: number | null; forecast: number | null } | null;
+  oval: { points: [number, number, number][]; edge: [number, number][][]; observed: number | null; forecast: number | null } | null;
   fetchedAt: number;
 }
 

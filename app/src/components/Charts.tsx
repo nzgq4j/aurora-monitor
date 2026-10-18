@@ -20,8 +20,8 @@ const f = (n: number) => Math.round(n * 10) / 10;
 interface PolarProps {
   /** [lon 0..359 east, lat, probability %] */
   points: [number, number, number][];
-  /** Equatorward 10% edge, [lon, lat] per longitude. */
-  edge: [number, number][];
+  /** Equatorward 10% edge as runs of [lon, lat]; a gap ends a run instead of cutting across. */
+  edge: [number, number][][];
   /** The user's chosen location, drawn when it falls on the map. */
   marker?: { name: string; lat: number; lon: number; isHome: boolean } | null;
 }
@@ -33,9 +33,9 @@ export const POLAR_MIN_LAT = 90 - 222 / K;
 export function PolarOval({ points, edge, marker }: PolarProps) {
   const id = useId().replace(/:/g, '');
   const { t } = useI18n();
-  const edgePath = edge.length > 2
-    ? edge.map(([lon, lat], i) => { const [x, y] = pol(lat, lon > 180 ? lon - 360 : lon); return `${i ? 'L' : 'M'}${f(x)} ${f(y)}`; }).join(' ') + ' Z'
-    : '';
+  const edgePath = edge
+    .map(run => run.map(([lon, lat], i) => { const [x, y] = pol(lat, lon > 180 ? lon - 360 : lon); return `${i ? 'L' : 'M'}${f(x)} ${f(y)}`; }).join(' '))
+    .join(' ');
   const m = marker && marker.lat >= POLAR_MIN_LAT ? (() => { const [x, y] = pol(marker.lat, marker.lon); return { ...marker, x: f(x), y: f(y), right: x < 340 }; })() : null;
   // Hide reference-city labels the marker would collide with.
   const cities = m ? polar.cities.filter(c => Math.hypot(c.x - m.x, c.y - m.y) > 26) : polar.cities;
