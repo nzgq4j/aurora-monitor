@@ -135,20 +135,23 @@ interface Props {
   place: Place | null;
   /** Home location for the zoom-to-Home button; null shows a hint instead. */
   home: Place | null;
+  /** Point picked on the map (shown with a pin), and a tap on the Earth to pick one. */
+  pick?: { lat: number; lon: number } | null;
+  onPick?: (lat: number, lon: number) => void;
   /** Called with a message key while something is loading or unavailable, '' when ready. */
   onStatus: (status: MessageKey | '') => void;
   onForecast: (t: number | null) => void;
 }
 
 /** Interactive 3D Earth with the live OVATION aurora, the day/night line, satellite clouds and your location. */
-export function Globe({ clouds, aurora, kpLines, kp, place, home, onStatus, onForecast }: Props) {
+export function Globe({ clouds, aurora, kpLines, kp, place, home, pick = null, onPick, onStatus, onForecast }: Props) {
   const { t } = useI18n();
   const box = useRef<HTMLDivElement>(null);
   const label = useRef<HTMLDivElement>(null);
-  const api = useRef<{ setClouds: (on: boolean) => void; setAurora: (on: boolean) => void; setKp: (on: boolean, kp: number | null) => void; setPlace: (p: Place | null) => void; flyTo: (p: Place) => void } | null>(null);
+  const api = useRef<{ setClouds: (on: boolean) => void; setAurora: (on: boolean) => void; setKp: (on: boolean, kp: number | null) => void; setPlace: (p: Place | null) => void; setPick: (p: { lat: number; lon: number } | null) => void; flyTo: (p: Place) => void } | null>(null);
   // Latest layer choices, applied once the scene is built (props can change while it loads).
-  const latest = useRef({ aurora, kpLines, kp });
-  latest.current = { aurora, kpLines, kp };
+  const latest = useRef({ aurora, kpLines, kp, pick, onPick });
+  latest.current = { aurora, kpLines, kp, pick, onPick };
   const [failed, setFailed] = useState(false);
   const [notice, setNotice] = useState('');
 
@@ -314,6 +317,17 @@ export function Globe({ clouds, aurora, kpLines, kp, place, home, onStatus, onFo
         if (label.current) label.current.textContent = markerName;
       };
 
+      // Picked point: a white pin, so it reads apart from the green location marker.
+      const pin = new T.Group();
+      pin.add(new T.Mesh(new T.SphereGeometry(0.011, 16, 8), new T.MeshBasicMaterial({ color: 0xffffff })));
+      pin.add(new T.Mesh(new T.SphereGeometry(0.026, 16, 8), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.22, depthWrite: false })));
+      pin.visible = false;
+      scene.add(pin);
+      const setPick = (p: { lat: number; lon: number } | null) => {
+        pin.visible = !!p;
+        if (p) pin.position.copy(toVector(T, p.lat, p.lon, R.marker));
+      };
+
       // Camera: face the marked place (or the North Atlantic aurora zone) from mid-latitudes, so the
       // auroral oval sits on the upper part of the globe instead of being seen from over the pole.
       const start = place ?? { lat: 62, lon: -20 };
@@ -370,6 +384,26 @@ export function Globe({ clouds, aurora, kpLines, kp, place, home, onStatus, onFo
       resize();
       cleanups.push(() => ro.disconnect());
 
+      // A tap (not a drag) on the Earth picks that point: cast a ray from the camera to the unit sphere.
+      const ray = new T.Raycaster(), earth = new T.Sphere(new T.Vector3(), 1), hit = new T.Vector3(), ndc = new T.Vector2();
+      let down: { x: number; y: number; t: number } | null = null;
+      const onDown = (e: PointerEvent) => { down = e.isPrimary ? { x: e.clientX, y: e.clientY, t: performance.now() } : null; };
+      const onUp = (e: PointerEvent) => {
+        const d = down; down = null;
+        if (!d || !latest.current.onPick || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6 || performance.now() - d.t > 600) return;
+        const r = renderer.domElement.getBoundingClientRect();
+        ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+        ray.setFromCamera(ndc, camera);
+        if (!ray.ray.intersectSphere(earth, hit)) return;
+        hit.normalize();
+        const lat = 90 - (Math.acos(Math.max(-1, Math.min(1, hit.y))) * 180) / Math.PI;
+        const lon = ((((Math.atan2(hit.z, -hit.x) * 180) / Math.PI - 180) % 360) + 540) % 360 - 180;
+        latest.current.onPick(lat, lon);
+      };
+      renderer.domElement.addEventListener('pointerdown', onDown);
+      renderer.domElement.addEventListener('pointerup', onUp);
+      cleanups.push(() => { renderer.domElement.removeEventListener('pointerdown', onDown); renderer.domElement.removeEventListener('pointerup', onUp); });
+
       const sunTimer = setInterval(updateSun, 6e4);
       cleanups.push(() => clearInterval(sunTimer));
 
@@ -422,9 +456,11 @@ export function Globe({ clouds, aurora, kpLines, kp, place, home, onStatus, onFo
         setAurora,
         setKp,
         setPlace,
+        setPick,
         flyTo,
       };
       setPlace(place);
+      setPick(latest.current.pick);
       setClouds(clouds);
       setAurora(latest.current.aurora);
       setKp(latest.current.kpLines, latest.current.kp);
@@ -448,6 +484,7 @@ export function Globe({ clouds, aurora, kpLines, kp, place, home, onStatus, onFo
   useEffect(() => { api.current?.setAurora(aurora); }, [aurora]);
   useEffect(() => { api.current?.setKp(kpLines, kp); }, [kpLines, kp]);
   useEffect(() => { api.current?.setPlace(place); }, [place]);
+  useEffect(() => { api.current?.setPick(pick); }, [pick]);
 
   const goHome = () => {
     if (!home) { setNotice(t('map.noHome')); setTimeout(() => setNotice(''), 4000); return; }
