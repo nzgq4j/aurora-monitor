@@ -289,8 +289,15 @@ button.pill-ghost { border: 1px solid var(--line-2); }
   .map-status { top: 64px; }
 }
 
-/* ---- Tonight: verdict card and 12-hour strip, phones only (top of Now). ---- */
-.tonight { display: none; flex-direction: column; gap: 14px; }
+/* ---- Tonight: verdict card and 12-hour strip at the top of Now. One column on phones and tablets;
+   on wide screens the verdict and the timeline sit side by side. ---- */
+.tonight { display: flex; flex-direction: column; gap: 14px; }
+.tonight-body, .tonight-main, .tonight-timeline { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.tonight-timeline { gap: 8px; padding-top: 14px; border-top: 1px solid var(--line); }
+/* Sizes live here, not inline: FitHeadings resets inline font sizes on .display headings. */
+.tonight-word { font-size: clamp(30px, 9vw, 40px); line-height: .95; margin: 0; }
+.tonight-score { font-size: 30px; }
+.tonight-scene { flex: none; display: block; width: 120px; height: 80px; border-radius: 12px; }
 .tonight-place { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line-2); background: #0b0d0c; color: #fff; font: 600 15px var(--f-body); }
 .tonight-share { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 999px; border: 1px solid var(--line-2); background: #0b0d0c; color: #fff; }
 .tonight-share:active { border-color: var(--green); color: var(--green); }
@@ -306,5 +313,14 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 @keyframes tonight-glow { 0%, 100% { text-shadow: 0 0 6px rgba(108, 255, 43, .25); } 50% { text-shadow: 0 0 18px rgba(108, 255, 43, .7); } }
 .tonight-glow { animation: tonight-glow 3s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .tonight-glow { animation: none; } }
-@media (max-width: 640px) { .tonight { display: flex; } }
+@media (min-width: 900px) {
+  .tonight { padding: 24px 28px !important; }
+  .tonight-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 36px; align-items: center; }
+  .tonight-timeline { padding: 0 0 0 32px; border-top: 0; border-left: 1px solid var(--line); }
+  .tonight-bar { height: 110px; }
+  .tonight-word { font-size: 52px; }
+  .tonight-score { font-size: 40px; }
+  .tonight-scene { width: 210px; height: 140px; }
+  .tonight-bars { gap: 6px; }
+}
 

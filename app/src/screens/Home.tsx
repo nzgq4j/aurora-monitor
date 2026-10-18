@@ -152,7 +152,7 @@ export function Home({ data }: { data: NowData }) {
 
   return (
     <main data-screen-label="Now" className="wrap" style={{ padding: '40px var(--gutter) 48px', display: 'flex', flexDirection: 'column', gap: 36 }}>
-      {/* Phones: the answer for your location first (see components/Tonight). */}
+      {/* The answer for your location first (see components/Tonight). */}
       <Tonight kp={kp} series={data.series} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(420px,100%),1fr))', gap: 40, alignItems: 'center' }}>
         <div className="hero-copy">
