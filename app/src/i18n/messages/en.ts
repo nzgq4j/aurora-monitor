@@ -459,6 +459,8 @@ export const en = {
   'map.legend.dark': 'Dark',
   'map.legend.best': 'Aurora likely, dark and clear now',
   'map.legend.bestNoCloud': 'Aurora likely and dark now (cloud unavailable)',
+  'map.legend.places': 'Named places: the best chance now. Tap one for details.',
+  'map.legend.noPlaces': 'No named places reach a good chance right now.',
   'map.legend.lights': 'City lights: NASA Black Marble (2016). Bright areas wash out faint aurora.',
   'map.panel.label': 'Spot details',
   'map.panel.title': 'Tap the map',

@@ -459,6 +459,8 @@ export const fr: Messages = {
   'map.legend.dark': 'Nuit noire',
   'map.legend.best': 'Aurore probable, ciel noir et dégagé maintenant',
   'map.legend.bestNoCloud': 'Aurore probable et ciel noir maintenant (nuages indisponibles)',
+  'map.legend.places': 'Lieux : les meilleures chances maintenant. Touchez-en un pour les détails.',
+  'map.legend.noPlaces': 'Aucun lieu n’atteint une bonne chance pour le moment.',
   'map.legend.lights': 'Lumières des villes : NASA Black Marble (2016). Les zones éclairées masquent les aurores faibles.',
   'map.panel.label': 'Détails du lieu',
   'map.panel.title': 'Touchez la carte',

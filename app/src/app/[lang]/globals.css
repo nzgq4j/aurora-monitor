@@ -237,6 +237,10 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 .map-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line-2); background: #111; color: var(--soft); font-size: 13px; font-weight: 700; white-space: nowrap; }
 .map-toggle[aria-pressed="true"] { border-color: var(--green); background: rgba(108, 255, 43, .1); color: #fff; }
 .map-toggle[aria-pressed="true"] svg { color: var(--green); }
+.map-best { position: relative; }
+.map-best b { position: absolute; left: -4px; top: -4px; width: 8px; height: 8px; border-radius: 50%; background: #7fd4ff; box-shadow: 0 0 6px rgba(127, 212, 255, .8); cursor: pointer; }
+.map-best span { position: absolute; left: 9px; top: -9px; white-space: nowrap; color: #bfe8ff; font: 700 12px var(--f-body); text-shadow: 0 0 3px #000, 0 0 3px #000, 0 0 3px #000; cursor: pointer; }
+.globe-place { position: absolute; left: 0; top: 0; z-index: 5; padding: 0; white-space: nowrap; color: #bfe8ff; font: 700 12px var(--f-body); text-shadow: 0 0 3px #000, 0 0 3px #000, 0 0 3px #000; visibility: hidden; will-change: transform; }
 .map-pick b { position: absolute; left: -7px; top: -7px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px #000, 0 0 0 5px rgba(255, 255, 255, .25); }
 
 /* Map panel (components/MapPanel): a card in the corner on larger screens, a pull-up sheet on phones. */
