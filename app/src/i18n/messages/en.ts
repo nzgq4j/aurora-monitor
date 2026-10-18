@@ -10,6 +10,7 @@ export const en = {
   'nav.dashboardPlan': 'Dashboard, {plan} plan',
   'nav.signIn': 'Sign in',
   'nav.getAlerts': 'Get alerts',
+  'nav.main': 'Main navigation',
   'common.dismiss': 'DISMISS',
   'footer.sources': 'Data: NOAA SWPC, GFZ Potsdam, NASA/SDO. Times in UT.',
   'meta.tagline': 'Aurora forecasts',

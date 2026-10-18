@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import './globals.css';
-import { Footer, Header, Toast } from '../../components/Chrome';
+import { Footer, Header, TabBar, Toast } from '../../components/Chrome';
 import { G_SCALE } from '../../lib/astro';
 import { kpNow } from '../../lib/feeds';
 import { AuthProvider } from '../../lib/auth';
@@ -65,6 +65,7 @@ export default async function RootLayout({ children, params }: Props & { childre
                   <Toast />
                   {children}
                   <Footer />
+                  <TabBar />
                 </div>
                 <ServiceWorker />
                 <FitHeadings />
