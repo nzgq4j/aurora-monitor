@@ -10,6 +10,7 @@ import { useLocations } from '../lib/locations';
 import { cloudify } from '../lib/cloudify';
 import { Globe } from '../components/Globe';
 import { AURORA_RAMP, auroraColor } from '../lib/auroraColor';
+import { sampleOval, smoothOval } from '../lib/ovalSmooth';
 import type { OvalGrid } from '../app/api/oval/route';
 import { useI18n } from '../i18n/I18n';
 import type { MessageKey } from '../i18n/core';
@@ -37,7 +38,7 @@ const COPIES = [-360, 0, 360];
 const rad = (d: number) => (d * Math.PI) / 180;
 const deg = (r: number) => (r * 180) / Math.PI;
 
-/** Render the OVATION grid into a Web-Mercator canvas so it lines up with Leaflet. */
+/** Render the smoothed OVATION field into a Web-Mercator canvas so it lines up with Leaflet. */
 function renderOval(grid: Uint8Array): string {
   const W = 1440;
   const yMax = Math.log(Math.tan(Math.PI / 4 + rad(LAT_MAX) / 2));
@@ -46,16 +47,13 @@ function renderOval(grid: Uint8Array): string {
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d')!;
   const img = ctx.createImageData(W, H);
-  const at = (i: number, j: number) => grid[Math.max(0, Math.min(180, i)) * 360 + (((j % 360) + 360) % 360)];
+  const field = smoothOval(grid);
   for (let py = 0; py < H; py++) {
     const y = yMax - ((py + 0.5) / H) * 2 * yMax;
     const lat = deg(2 * Math.atan(Math.exp(y)) - Math.PI / 2);
     if (Math.abs(lat) < 30) continue; // OVATION never reaches this far from the poles
-    const fi = lat + 90, i0 = Math.floor(fi), di = fi - i0;
     for (let px = 0; px < W; px++) {
-      const lon = -180 + ((px + 0.5) / W) * 360;
-      const fj = (lon + 360) % 360, j0 = Math.floor(fj), dj = fj - j0;
-      const p = (at(i0, j0) * (1 - dj) + at(i0, j0 + 1) * dj) * (1 - di) + (at(i0 + 1, j0) * (1 - dj) + at(i0 + 1, j0 + 1) * dj) * di;
+      const p = sampleOval(field, lat, -180 + ((px + 0.5) / W) * 360);
       if (p < 1.5) continue;
       // Same colour scale as the globe: the colour at an opacity that grows with probability.
       const { rgb: [r, g, b], alpha } = auroraColor(p);
