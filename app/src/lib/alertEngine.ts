@@ -205,3 +205,21 @@ ${lines.map(l => `<tr><td style="padding:0 0 20px"><div style="font-size:20px;fo
   const text = [...lines.map(l => `${l.subject}\n${l.body}${l.look ? `\n${l.look}.` : ''}`), url, footer].join('\n\n');
   return { subject: lines[0].subject, html, text };
 }
+
+/**
+ * A one-off test alert to one account, by email and push (every saved device), whatever its channel
+ * switches say, so the delivery path can be checked end to end. Clearly labelled as a test; nothing
+ * is written to alert_log. Push still needs Chaser, as for real alerts.
+ */
+export async function sendTestAlert(admin: SupabaseClient, userId: string): Promise<{ email: string; push: string }> {
+  const { data: p } = await admin.from('profiles').select('id, plan, subscription_status, trial_ends_at, locale').eq('id', userId).maybeSingle();
+  const profile = (p ?? undefined) as Profile | undefined;
+  const { cta, footer } = await alertTexts(isLocale(profile?.locale) ? profile!.locale as Locale : 'en', []);
+  const texts: AlertTexts = {
+    lines: [{ kind: 'aurora', subject: `Test alert from ${SITE.name}`, body: 'This is a test of your aurora alerts. When aurora reaches your level at one of your locations, the alert arrives like this.', look: '' }],
+    url: SITE.url, cta, footer,
+  };
+  const s: Settings = { user_id: userId, kp_threshold: 0, rules: null, time_zone: null, channels: { email: true, push: true } };
+  const [email, push] = await Promise.all([deliverEmail(admin, s, texts), deliverPush(admin, s, isChaser(profile, Date.now()), texts)]);
+  return { email, push };
+}
