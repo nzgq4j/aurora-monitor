@@ -9,13 +9,14 @@ import { magLat } from '../lib/astro';
 import { useLocations } from '../lib/locations';
 import { cloudify } from '../lib/cloudify';
 import { Globe } from '../components/Globe';
+import { AURORA_RAMP, auroraColor } from '../lib/auroraColor';
 import type { OvalGrid } from '../app/api/oval/route';
 import { useI18n } from '../i18n/I18n';
 import type { MessageKey } from '../i18n/core';
 
 type Mode = 'prob' | 'kp' | 'both';
 
-// Light blue → green → yellow → red, used for both probability and Kp.
+// Light blue → green → yellow → red, for the Kp reach lines (the aurora itself uses lib/auroraColor).
 const STOPS: [number, [number, number, number]][] = [
   [0, [127, 212, 255]], [0.33, [89, 255, 58]], [0.66, [255, 225, 77]], [1, [255, 77, 77]],
 ];
@@ -28,8 +29,6 @@ function ramp(t: number): [number, number, number] {
   return STOPS[STOPS.length - 1][1];
 }
 const rgb = (c: [number, number, number]) => `rgb(${c[0]},${c[1]},${c[2]})`;
-/** Probability (%) → gradient position: 5% is light blue, 90% and above is red. */
-const probT = (p: number) => (p - 5) / 85;
 const kpT = (k: number) => (k - 1) / 8;
 
 const LAT_MAX = 85;
@@ -58,12 +57,11 @@ function renderOval(grid: Uint8Array): string {
       const fj = (lon + 360) % 360, j0 = Math.floor(fj), dj = fj - j0;
       const p = (at(i0, j0) * (1 - dj) + at(i0, j0 + 1) * dj) * (1 - di) + (at(i0 + 1, j0) * (1 - dj) + at(i0 + 1, j0 + 1) * dj) * di;
       if (p < 1.5) continue;
-      const [r, g, b] = ramp(probT(p));
+      // Same colour scale as the globe: the colour at an opacity that grows with probability.
+      const { rgb: [r, g, b], alpha } = auroraColor(p);
+      if (alpha < 0.01) continue;
       const o = (py * W + px) * 4;
-      // Fade in over the faintest values so the oval's outer edge is soft rather than stepped.
-      const fade = Math.min(1, (p - 1.5) / 8);
-      img.data[o] = r; img.data[o + 1] = g; img.data[o + 2] = b;
-      img.data[o + 3] = Math.round(255 * fade * Math.min(0.8, 0.36 + 0.44 * Math.max(0, probT(p))));
+      img.data[o] = r; img.data[o + 1] = g; img.data[o + 2] = b; img.data[o + 3] = Math.round(255 * alpha);
     }
   }
   ctx.putImageData(img, 0, 0);
@@ -93,8 +91,6 @@ const cloudStamp = () => Math.floor(Date.now() / 9e5);
 const HOUSE = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5M5.5 9.5V20h5v-6h3v6h5V9.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>';
 
 const VIEW_KEY = 'pl.map.view';
-/** The globe's aurora colours (see AURORA_FRAG in Globe): faint green, green, yellow, red. */
-const GLOBE_RAMP = 'linear-gradient(90deg, rgba(89,255,58,.25), #59ff3a 35%, #ffe14d 65%, #ff4d4d)';
 
 export function AuroraMap({ kp }: { kp: number | null }) {
   const box = useRef<HTMLDivElement>(null);
@@ -334,7 +330,7 @@ export function AuroraMap({ kp }: { kp: number | null }) {
           {(mode !== 'kp' || view === '3d') && (
             <div>
               <span className="label">{t('map.legend.prob')}{forecast ? ` · ${hhmm(forecast)} UT` : ''}</span>
-              <div style={{ height: 10, borderRadius: 5, margin: '6px 0 4px', background: view === '3d' ? GLOBE_RAMP : `linear-gradient(90deg, ${STOPS.map(([t, c]) => `${rgb(c)} ${t * 100}%`).join(', ')})` }} />
+              <div style={{ height: 10, borderRadius: 5, margin: '6px 0 4px', background: AURORA_RAMP }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.muted }}><span>5%</span><span>30%</span><span>60%</span><span>90%</span></div>
             </div>
           )}

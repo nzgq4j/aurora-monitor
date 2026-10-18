@@ -13,10 +13,13 @@ const HOUSE = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true
 
 /** Shell radii (Earth = 1): clouds just above the ground, the aurora above them, then the atmosphere glow. */
 const R = { clouds: 1.006, aurora: 1.014, auroraGlow: 1.03, atmosphere: 1.12, marker: 1.016 };
-/** Camera distance that fits the globe and its glow in the view, with a little margin, for this aspect ratio. */
+/**
+ * Opening camera distance for this aspect ratio: close enough that the globe fills the view
+ * (its edges just outside it), so the aurora zone is large; zoom out to see the whole Earth.
+ */
 function fitDistance(fovDeg: number, aspect: number) {
   const half = Math.min(fovDeg / 2, (Math.atan(Math.tan(((fovDeg / 2) * Math.PI) / 180) * aspect) * 180) / Math.PI);
-  return (R.atmosphere * 1.03) / Math.sin((half * Math.PI) / 180) * 1.08;
+  return ((R.atmosphere * 1.03) / Math.sin((half * Math.PI) / 180)) * 0.72;
 }
 
 /**
@@ -28,10 +31,27 @@ function toVector(T: typeof THREE, lat: number, lon: number, r = 1) {
   return new T.Vector3(-Math.cos(phi) * Math.sin(theta) * r, Math.cos(theta) * r, Math.sin(phi) * Math.sin(theta) * r);
 }
 
-/** OVATION grid (row = latitude −90…90, column = longitude 0…359 °E) re-laid out as an equirectangular texture. */
+/**
+ * OVATION grid (row = latitude −90…90, column = longitude 0…359 °E) re-laid out as an equirectangular
+ * texture, lightly smoothed (two 3×3 passes, wrapping in longitude) so the 1° cells don't show as steps.
+ */
 function ovalTexture(T: typeof THREE, grid: Uint8Array) {
-  const data = new Uint8Array(360 * 181);
-  for (let row = 0; row < 181; row++) for (let c = 0; c < 360; c++) data[row * 360 + c] = grid[row * 360 + ((c + 180) % 360)];
+  let cur = new Float32Array(360 * 181);
+  for (let row = 0; row < 181; row++) for (let c = 0; c < 360; c++) cur[row * 360 + c] = grid[row * 360 + ((c + 180) % 360)];
+  for (let pass = 0; pass < 2; pass++) {
+    const next = new Float32Array(cur.length);
+    for (let row = 0; row < 181; row++) for (let c = 0; c < 360; c++) {
+      let sum = 0, n = 0;
+      for (let dr = -1; dr <= 1; dr++) {
+        const r = row + dr;
+        if (r < 0 || r > 180) continue;
+        for (let dc = -1; dc <= 1; dc++) { sum += cur[r * 360 + ((c + dc + 360) % 360)]; n++; }
+      }
+      next[row * 360 + c] = sum / n;
+    }
+    cur = next;
+  }
+  const data = Uint8Array.from(cur, v => Math.round(v));
   const tex = new T.DataTexture(data, 360, 181, T.RedFormat, T.UnsignedByteType);
   tex.magFilter = tex.minFilter = T.LinearFilter;
   tex.wrapS = T.RepeatWrapping;
@@ -51,7 +71,9 @@ const VERT = /* glsl */ `
     gl_Position = projectionMatrix * viewMatrix * world;
   }`;
 
-// Day imagery lit by the Sun, city lights on the night side, a soft twilight band between.
+// Day imagery lit by the Sun, city lights on a dark night side, a soft twilight band between.
+// Textures are sRGB and decoded to linear when sampled, so each shader ends by converting back
+// (colorspace_fragment); without it everything renders far too dark.
 const EARTH_FRAG = /* glsl */ `
   uniform sampler2D dayMap;
   uniform sampler2D nightMap;
@@ -60,10 +82,11 @@ const EARTH_FRAG = /* glsl */ `
   varying vec3 vNormal;
   void main() {
     float d = dot(normalize(vNormal), sunDir);
-    float day = smoothstep(-0.12, 0.12, d);
-    vec3 dayCol = texture2D(dayMap, vUv).rgb * (0.45 + 0.75 * max(d, 0.0));
-    vec3 nightCol = texture2D(nightMap, vUv).rgb * vec3(1.15, 1.0, 0.8) * 1.4 + texture2D(dayMap, vUv).rgb * 0.05;
+    float day = smoothstep(-0.1, 0.1, d);
+    vec3 dayCol = texture2D(dayMap, vUv).rgb * (0.75 + 0.6 * max(d, 0.0));
+    vec3 nightCol = texture2D(nightMap, vUv).rgb * vec3(1.1, 0.95, 0.75) + texture2D(dayMap, vUv).rgb * 0.012;
     gl_FragColor = vec4(mix(nightCol, dayCol, day), 1.0);
+    #include <colorspace_fragment>
   }`;
 
 // OVATION probability (0–100 %) as aurora light: green, through yellow, to red at the strongest.
@@ -82,6 +105,7 @@ const AURORA_FRAG = /* glsl */ `
     col = mix(col, vec3(1.0, 0.3, 0.3), smoothstep(65.0, 95.0, p));
     float night = 1.0 - smoothstep(-0.1, 0.15, dot(normalize(vNormal), sunDir));
     gl_FragColor = vec4(col * a * strength * mix(0.35, 1.0, night), 1.0);
+    #include <colorspace_fragment>
   }`;
 
 const CLOUD_FRAG = /* glsl */ `
@@ -93,15 +117,20 @@ const CLOUD_FRAG = /* glsl */ `
     vec4 c = texture2D(clouds, vUv);
     float lit = mix(0.3, 1.0, smoothstep(-0.15, 0.2, dot(normalize(vNormal), sunDir)));
     gl_FragColor = vec4(c.rgb * lit, c.a * 0.9);
+    #include <colorspace_fragment>
   }`;
 
-// Thin blue rim, brighter towards the limb.
+// Thin blue rim, brighter towards the limb and on the sunlit side.
 const ATMOS_FRAG = /* glsl */ `
+  uniform vec3 sunDir;
   varying vec3 vNormal;
   varying vec3 vView;
   void main() {
-    float rim = pow(clamp(1.0 - abs(dot(normalize(vNormal), normalize(vView))), 0.0, 1.0), 3.0);
-    gl_FragColor = vec4(vec3(0.35, 0.6, 1.0) * rim, rim);
+    vec3 n = normalize(vNormal);
+    float rim = pow(clamp(1.0 - abs(dot(n, normalize(vView))), 0.0, 1.0), 3.0);
+    float lit = mix(0.25, 1.0, smoothstep(-0.3, 0.4, dot(-n, sunDir)));
+    gl_FragColor = vec4(vec3(0.35, 0.6, 1.0) * rim * lit, rim * lit);
+    #include <colorspace_fragment>
   }`;
 
 interface Props {
@@ -217,7 +246,7 @@ export function Globe({ clouds, place, home, onStatus, onForecast }: Props) {
         onStatus('map.auroraUnavailable');
       }
 
-      scene.add(new T.Mesh(sphere(R.atmosphere), new T.ShaderMaterial({ vertexShader: VERT, fragmentShader: ATMOS_FRAG, transparent: true, depthWrite: false, side: T.BackSide, blending: T.AdditiveBlending })));
+      scene.add(new T.Mesh(sphere(R.atmosphere), new T.ShaderMaterial({ uniforms: { sunDir: { value: sunDir } }, vertexShader: VERT, fragmentShader: ATMOS_FRAG, transparent: true, depthWrite: false, side: T.BackSide, blending: T.AdditiveBlending })));
 
       // Location marker: a bright dot with a soft halo; its label is an HTML overlay that hides on the far side.
       const marker = new T.Group();
@@ -270,7 +299,7 @@ export function Globe({ clouds, place, home, onStatus, onForecast }: Props) {
         camera.updateProjectionMatrix();
         // Keep the whole globe in view until the user has zoomed themselves.
         const fit = fitDistance(camera.fov, camera.aspect);
-        controls.maxDistance = Math.max(7, fit * 1.4);
+        controls.maxDistance = Math.max(7, fit * 2);
         if (!touched && !flight) camera.position.setLength(fit);
       };
       const ro = new ResizeObserver(resize);
