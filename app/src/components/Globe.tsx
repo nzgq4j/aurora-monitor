@@ -36,33 +36,64 @@ const viewLat = (lat: number) => Math.max(-48, Math.min(48, lat * 0.72));
 
 /**
  * OVATION grid (row = latitude −90…90, column = longitude 0…359 °E) re-laid out as an equirectangular
- * texture, smoothed so the 1° cells don't show as steps. The longitude blur widens towards the poles,
- * where a degree of longitude is short, so the smoothing covers about the same ground everywhere.
+ * texture at 4× the resolution and blurred over a fixed distance on the ground (about 130 km), so the
+ * 1° cells don't show. The longitude blur widens towards the poles, where a degree of longitude is short.
+ * Stored as 0–255 for 0–100 % so the edge of the oval doesn't step through few grey levels.
  */
+const OVAL_SCALE = 4, OVAL_W = 360 * OVAL_SCALE, OVAL_H = 180 * OVAL_SCALE + 1, OVAL_SIGMA_DEG = 1.2;
+
 function ovalTexture(T: typeof THREE, grid: Uint8Array) {
-  let cur = new Float32Array(360 * 181);
-  for (let row = 0; row < 181; row++) for (let c = 0; c < 360; c++) cur[row * 360 + c] = grid[row * 360 + ((c + 180) % 360)];
+  const W = OVAL_W, H = OVAL_H, S = OVAL_SCALE;
+  const at = (row: number, c: number) => grid[row * 360 + ((c + 180) % 360)];
+  // Bilinear upsample (u = 0 at 180° W, wrapping in longitude).
+  let cur = new Float32Array(W * H);
+  for (let y = 0; y < H; y++) {
+    const r0 = Math.min(180, Math.floor(y / S)), r1 = Math.min(180, r0 + 1), ty = y / S - r0;
+    for (let x = 0; x < W; x++) {
+      const c0 = Math.floor(x / S), c1 = (c0 + 1) % 360, tx = x / S - c0;
+      const top = at(r0, c0) * (1 - tx) + at(r0, c1) * tx, bot = at(r1, c0) * (1 - tx) + at(r1, c1) * tx;
+      cur[y * W + x] = top * (1 - ty) + bot * ty;
+    }
+  }
+  // Three box passes approximate a Gaussian; running sums keep each pass linear in the texture size.
+  const boxRadius = (sigmaPx: number) => Math.max(1, Math.round((Math.sqrt(4 * sigmaPx * sigmaPx + 1) - 1) / 2));
+  const latR = boxRadius(OVAL_SIGMA_DEG * S);
+  const lonR = Array.from({ length: H }, (_, y) => {
+    const cos = Math.cos(((y / S - 90) * Math.PI) / 180);
+    return cos < 0.01 ? W : boxRadius((OVAL_SIGMA_DEG * S) / cos);
+  });
+  const next = new Float32Array(W * H);
   for (let pass = 0; pass < 3; pass++) {
-    const along = new Float32Array(cur.length);
-    for (let row = 0; row < 181; row++) {
-      const span = Math.min(30, Math.round(1.5 / Math.max(0.05, Math.cos(((row - 90) * Math.PI) / 180))));
-      for (let c = 0; c < 360; c++) {
-        let sum = 0;
-        for (let dc = -span; dc <= span; dc++) sum += cur[row * 360 + ((c + dc + 360) % 360)];
-        along[row * 360 + c] = sum / (2 * span + 1);
+    for (let y = 0; y < H; y++) {
+      const o = y * W, r = lonR[y];
+      if (2 * r + 1 >= W) {
+        let mean = 0;
+        for (let x = 0; x < W; x++) mean += cur[o + x];
+        next.fill(mean / W, o, o + W);
+        continue;
+      }
+      let sum = 0;
+      for (let k = -r; k <= r; k++) sum += cur[o + ((k + W) % W)];
+      for (let x = 0; x < W; x++) {
+        next[o + x] = sum / (2 * r + 1);
+        sum += cur[o + ((x + r + 1) % W)] - cur[o + ((x - r + W) % W)];
       }
     }
-    const next = new Float32Array(cur.length);
-    for (let row = 0; row < 181; row++) for (let c = 0; c < 360; c++) {
-      let sum = 0, n = 0;
-      for (let r = Math.max(0, row - 1); r <= Math.min(180, row + 1); r++) { sum += along[r * 360 + c]; n++; }
-      next[row * 360 + c] = sum / n;
+    for (let x = 0; x < W; x++) {
+      const row = (y: number) => next[Math.max(0, Math.min(H - 1, y)) * W + x];
+      let sum = 0;
+      for (let k = -latR; k <= latR; k++) sum += row(k);
+      for (let y = 0; y < H; y++) {
+        cur[y * W + x] = sum / (2 * latR + 1);
+        sum += row(y + latR + 1) - row(y - latR);
+      }
     }
-    cur = next;
   }
-  const data = Uint8Array.from(cur, v => Math.round(v));
-  const tex = new T.DataTexture(data, 360, 181, T.RedFormat, T.UnsignedByteType);
-  tex.magFilter = tex.minFilter = T.LinearFilter;
+  const data = Uint8Array.from(cur, v => Math.round(Math.min(100, v) * 2.55));
+  const tex = new T.DataTexture(data, W, H, T.RedFormat, T.UnsignedByteType);
+  tex.magFilter = T.LinearFilter;
+  tex.minFilter = T.LinearMipmapLinearFilter;
+  tex.generateMipmaps = true;
   tex.wrapS = T.RepeatWrapping;
   tex.needsUpdate = true;
   return tex;
@@ -107,7 +138,9 @@ const AURORA_FRAG = /* glsl */ `
   varying vec2 vUv;
   varying vec3 vNormal;
   void main() {
-    float p = texture2D(oval, vUv).r * 255.0;
+    // Sub-level dither hides the 8-bit steps as faint contour rings in the dim edge of the oval.
+    float dither = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5;
+    float p = texture2D(oval, vUv).r * 100.0 + dither * 0.4;
     float a = smoothstep(3.0, 30.0, p);
     if (a <= 0.001) discard;
     vec3 col = mix(vec3(0.35, 1.0, 0.23), vec3(1.0, 0.88, 0.3), smoothstep(35.0, 65.0, p));
