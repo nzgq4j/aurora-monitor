@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState, type R
 import { usePathname, useRouter } from 'next/navigation';
 import { TIERS, type ChannelKey, type Tier, type TierId, type TriggerKey } from './data';
 import { PAYMENTS, useAuth } from './lib/auth';
+import { DEFAULT_RULES, DEFAULT_STORM_KP, type AlertRules } from './lib/alerts';
 import { supabase } from './lib/supabase';
 import { useI18n } from './i18n/I18n';
 import { LOCALES } from './i18n/config';
@@ -37,7 +38,9 @@ export interface AppState {
   /** Demo-mode sign-in flag; with accounts connected this comes from the session. */
   signedIn: boolean;
   toast: string;
+  /** Storm alert Kp (alert_settings.kp_threshold). */
   kpThreshold: number;
+  alertRules: AlertRules;
   channels: Record<ChannelKey, boolean>;
   triggers: Record<TriggerKey, boolean>;
 }
@@ -87,7 +90,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     annual: true,
     signedIn: !live && screen === 'account',
     toast: '',
-    kpThreshold: 5,
+    kpThreshold: DEFAULT_STORM_KP,
+    alertRules: DEFAULT_RULES,
     channels: { email: true, push: true, sms: false },
     triggers: { kp: true, cme: true, clear: true, bz: false, sub: false },
   }));
@@ -195,7 +199,7 @@ function useAlertSettingsSync(s: AppState, setState: (f: (p: AppState) => AppSta
     if (!sb || !userId || requested.current === userId) return;
     requested.current = userId;
     sb.from('alert_settings').select('*').eq('user_id', userId).maybeSingle().then(({ data, error }) => {
-      if (data) setState(p => ({ ...p, kpThreshold: data.kp_threshold, triggers: { ...p.triggers, ...data.triggers }, channels: { ...p.channels, ...data.channels } }));
+      if (data) setState(p => ({ ...p, kpThreshold: data.kp_threshold, alertRules: { ...DEFAULT_RULES, ...data.rules }, triggers: { ...p.triggers, ...data.triggers }, channels: { ...p.channels, ...data.channels } }));
       if (!error) setLoadedFor(userId);
     });
   }, [userId, setState]);
@@ -203,10 +207,12 @@ function useAlertSettingsSync(s: AppState, setState: (f: (p: AppState) => AppSta
     const sb = supabase();
     if (!sb || !userId || loadedFor !== userId) return;
     const t = setTimeout(() => {
-      sb.from('alert_settings').upsert({ user_id: userId, kp_threshold: s.kpThreshold, triggers: s.triggers, channels: s.channels, updated_at: new Date().toISOString() });
+      // Quiet hours are read in the browser's time zone, saved alongside the rules.
+      const time_zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      sb.from('alert_settings').upsert({ user_id: userId, kp_threshold: s.kpThreshold, rules: s.alertRules, time_zone, triggers: s.triggers, channels: s.channels, updated_at: new Date().toISOString() });
     }, 800);
     return () => clearTimeout(t);
-  }, [userId, loadedFor, s.kpThreshold, s.triggers, s.channels]);
+  }, [userId, loadedFor, s.kpThreshold, s.alertRules, s.triggers, s.channels]);
 }
 
 export function useStore(): Store {

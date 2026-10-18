@@ -8,6 +8,7 @@ import { G_SCALE, kpNeeded, moon } from '../lib/astro';
 import type { AccountData } from '../lib/history';
 import { searchPlaces, useLocations, type PlaceResult, type SavedLocation } from '../lib/locations';
 import { useConditions } from '../lib/useConditions';
+import { ALERT_LEVELS, type AlertRules } from '../lib/alerts';
 import { useStore, type Tab } from '../store';
 import { Field } from '../components/Field';
 import { Plans } from './Plans';
@@ -283,31 +284,38 @@ function Alerts({ data }: { data: AccountData }) {
   const shortDate = (d: number) => date(d, { month: 'short', day: 'numeric', timeZone: 'UTC' });
   // Email alerts go to the address the account signed up with.
   const accountEmail = live ? user?.email ?? t('dash.accountEmail') : 'sam@example.com';
-  const { home, need } = useHome();
+  const { home } = useHome();
+  const chaser = planIndex >= 1;
+  const r = s.alertRules;
+  const setRules = (patch: Partial<AlertRules>) => set(st => ({ alertRules: { ...st.alertRules, ...patch } }));
+  // The storm alert's Kp; the history chart shows how often it was reached.
   const kp = s.kpThreshold;
   const last30 = data.days.slice(-30);
   const hits = last30.filter(d => d.kpMax >= kp).length;
   const thY = f(170 - kp * 17);
-  const where = !home ? t('alerts.where.none', { kp })
-    : t(kp >= need + 2 ? 'alerts.where.high' : kp >= need ? 'alerts.where.low' : 'alerts.where.unlikely', { kp, place: home.name, need });
   const bw = 450 / Math.max(30, last30.length);
+  const soon = (sub: string) => `${sub} · ${t('alerts.comingSoon')}`;
   return (
     <div data-screen-label="Dashboard · Alerts" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
       <h1 className="display" style={h1}>{t('alerts.h1a')} <span className="hl">{t('alerts.h1b')}</span></h1>
       <div className="alert-rule">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <label htmlFor="kp-threshold" className="eyebrow">{t('alerts.threshold')}</label>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-            <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontStretch: '112%', fontSize: 96, lineHeight: .85 }}>{kp}</span>
-            <span style={{ fontFamily: 'var(--f-display)', fontWeight: 800, fontSize: 22, color: kp >= 5 ? C.red : kp === 4 ? C.amber : C.darkGreen }}>{kpName(t, kp)}</span>
-          </div>
-          <input id="kp-threshold" type="range" min={2} max={9} step={1} value={kp} onChange={e => set({ kpThreshold: +e.target.value })} style={{ width: '100%' }} />
-          <span style={{ fontSize: 15, color: 'var(--soft)', textWrap: 'pretty' }}>{where}</span>
+          <ToggleRow label={t('alerts.aurora')} sub={home ? t(chaser ? 'alerts.aurora.sub' : 'alerts.aurora.subFree', { place: home.name.split(',')[0] }) : t('alerts.aurora.noHome')}
+            need={0} locked={false} on={r.aurora} onClick={() => setRules({ aurora: !r.aurora })} />
+          <fieldset className="alert-levels" disabled={!r.aurora}>
+            <legend>{t('alerts.level.h')}</legend>
+            {ALERT_LEVELS.map(l => (
+              <label key={l} className={'alert-level alert-level-' + l}>
+                <input type="radio" name="alert-level" checked={r.level === l} onChange={() => setRules({ level: l })} />
+                <span><b>{t(`alerts.level.${l}`)}</b><small>{t(`alerts.level.${l}.sub`)}</small></span>
+              </label>
+            ))}
+          </fieldset>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
             <span style={{ fontSize: 14, color: 'var(--muted)' }}>{t('alerts.last30')}</span>
-            <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 22, whiteSpace: 'nowrap' }}><span className="hl">{hits}</span> {tn('alerts.count', hits)}</span>
+            <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 22, whiteSpace: 'nowrap' }}><span className="hl">{hits}</span> {tn('alerts.days', hits, { kp })}</span>
           </div>
           <svg viewBox="0 0 450 190" style={{ width: '100%', display: 'block' }} role="img" aria-label={t('alerts.aria', { hits, days: last30.length, kp })}>
             <line x1="0" x2="450" y1={thY} y2={thY} style={{ stroke: C.green, strokeWidth: 1.5, strokeDasharray: '5 4' }} />
@@ -326,10 +334,19 @@ function Alerts({ data }: { data: AccountData }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(300px,100%),1fr))', gap: 20 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span className="eyebrow" style={{ marginBottom: 8 }}>{t('alerts.triggers')}</span>
-          {TRIGGER_DEFS.map(([k, need]) => {
+          <span className="eyebrow" style={{ marginBottom: 8 }}>{t('alerts.types')}</span>
+          <ToggleRow label={t('alerts.storm')} sub={t('alerts.storm.sub')} need={0} locked={false} on={r.storm} onClick={() => setRules({ storm: !r.storm })} />
+          <label className="alert-kp" aria-disabled={!r.storm}>
+            <span>{t('alerts.stormKp')}</span>
+            <select value={kp} disabled={!r.storm} onChange={e => set({ kpThreshold: +e.target.value })}>
+              {[5, 6, 7, 8, 9].map(k => <option key={k} value={k}>{`Kp ${k}+ · ${kpName(t, k)}`}</option>)}
+            </select>
+          </label>
+          <ToggleRow label={t('alerts.forecast')} sub={t('alerts.forecast.sub')} need={1} locked={!chaser} on={r.forecast}
+            onClick={!chaser ? () => go('plans') : () => setRules({ forecast: !r.forecast })} />
+          {TRIGGER_DEFS.filter(([k]) => k === 'bz' || k === 'sub').map(([k, need]) => {
             const locked = planIndex < need;
-            return <ToggleRow key={k} label={t(`trigger.${k}`)} sub={t(`trigger.${k}.sub`)} need={need} locked={locked} on={s.triggers[k]}
+            return <ToggleRow key={k} label={t(`trigger.${k}`)} sub={soon(t(`trigger.${k}.sub`))} need={need} locked={locked} on={s.triggers[k]}
               onClick={locked ? () => go('plans') : () => set(st => ({ triggers: { ...st.triggers, [k]: !st.triggers[k] } }))} />;
           })}
         </div>
@@ -337,12 +354,13 @@ function Alerts({ data }: { data: AccountData }) {
           <span className="eyebrow" style={{ marginBottom: 8 }}>{t('alerts.deliver')}</span>
           {CHANNEL_DEFS.map(([k, need]) => {
             const locked = planIndex < need;
-            return <ToggleRow key={k} label={t(`channel.${k}`)} sub={k === 'email' ? accountEmail : t(`channel.${k}.sub`)} need={need} locked={locked} on={s.channels[k]}
+            return <ToggleRow key={k} label={t(`channel.${k}`)} sub={k === 'email' ? accountEmail : soon(t(`channel.${k}.sub`))} need={need} locked={locked} on={s.channels[k]}
               onClick={locked ? () => go('plans') : () => set(st => ({ channels: { ...st.channels, [k]: !st.channels[k] } }))} />;
           })}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '14px 0' }}>
-            <span style={{ fontWeight: 700, fontSize: 16 }}>{t('alerts.quiet')}</span>
-            <span style={{ fontSize: 13, color: 'var(--muted)' }}>{t('alerts.quietSub')}</span>
+          <ToggleRow label={t('alerts.quiet')} sub={t('alerts.quietSub')} need={0} locked={false} on={r.quiet} onClick={() => setRules({ quiet: !r.quiet })} />
+          <div className="alert-quiet" aria-disabled={!r.quiet}>
+            <label><span>{t('alerts.quiet.from')}</span><input type="time" value={r.quietFrom} disabled={!r.quiet} onChange={e => setRules({ quietFrom: e.target.value || r.quietFrom })} /></label>
+            <label><span>{t('alerts.quiet.to')}</span><input type="time" value={r.quietTo} disabled={!r.quiet} onChange={e => setRules({ quietTo: e.target.value || r.quietTo })} /></label>
           </div>
         </div>
       </div>
