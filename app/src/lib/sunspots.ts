@@ -1,7 +1,7 @@
 /**
  * Sunspot regions (#41): NOAA SWPC's active-region list placed on the solar disc. Positions are
- * heliographic latitude and distance from the central meridian at NOAA's report time (00 UT on the
- * observed date); they are rotated forward to now with the Sun's differential rotation and projected
+ * heliographic latitude and distance from the central meridian at NOAA's report time (24:00 UT on
+ * the observed date); they are rotated forward to now with the Sun's differential rotation and projected
  * with the Sun's tilt towards Earth (B0). SDO's browse images have solar north up, west to the right.
  */
 
@@ -11,7 +11,7 @@ export interface Region {
   lat: number;
   /** Distance from the central meridian at report time, ° (west positive). */
   cmd: number;
-  /** Report time (ms): 00 UT on NOAA's observed date. */
+  /** Report time (ms): 24:00 UT on NOAA's observed date. */
   at: number;
   spots: number | null;
   /** NOAA magnetic class: A, B, BG, BGD, BD, G, GD… */
