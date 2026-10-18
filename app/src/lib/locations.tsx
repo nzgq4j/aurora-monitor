@@ -78,7 +78,7 @@ export async function searchPlaces(q: string): Promise<PlaceResult[]> {
 }
 
 /** Name for a coordinate (BigDataCloud client-side reverse geocoding, no key required). */
-async function placeName(lat: number, lon: number): Promise<string> {
+export async function placeName(lat: number, lon: number): Promise<string> {
   try {
     const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=${pageLang()}`);
     const j = await res.json();

@@ -22,6 +22,8 @@ export function useConditions(lat: number | undefined, lon: number | undefined) 
   useEffect(() => {
     if (lat === undefined || lon === undefined) return;
     let live = true;
+    // A new point: drop the last one's conditions rather than show them under the new name.
+    setData(null);
     setLoading(true);
     get(lat, lon).then(d => { if (live) { setData(d); setLoading(false); } });
     return () => { live = false; };

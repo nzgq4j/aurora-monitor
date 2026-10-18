@@ -230,6 +230,39 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 .map-you span { position: absolute; left: 14px; top: -10px; white-space: nowrap; color: var(--green); font: 700 13px var(--f-body); text-shadow: 0 0 3px #000, 0 0 3px #000, 0 0 3px #000; }
 @keyframes map-ring { from { transform: scale(1); opacity: 1; } to { transform: scale(2.6); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .map-you .map-pulse-ring { animation: none; } }
+.map-pick b { position: absolute; left: -7px; top: -7px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px #000, 0 0 0 5px rgba(255, 255, 255, .25); }
+
+/* Map panel (components/MapPanel): a card in the corner on larger screens, a pull-up sheet on phones. */
+.map-card { position: absolute; right: 12px; bottom: 28px; z-index: 820; width: min(340px, calc(100% - 24px)); display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: 14px; background: rgba(0, 0, 0, .82); border: 1px solid var(--line-2); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.map-panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding-right: 34px; min-width: 0; }
+.map-panel-place { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.map-panel-place svg { flex: none; align-self: center; }
+.map-panel-place b { font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.map-panel-place small { flex: none; padding: 2px 7px; border: 1px solid var(--green); border-radius: 999px; font: 700 11px var(--f-body); color: var(--green); }
+.map-panel-verdict { flex: none; font: 800 17px var(--f-body); white-space: nowrap; }
+.map-panel-verdict .mono { margin-left: 4px; font-size: 14px; color: var(--soft); }
+.map-panel-line { font-size: 13px; color: var(--soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.map-panel-clear { position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: #1a1d1b; border: 1px solid var(--line-2); color: #fff; font-size: 20px; line-height: 1; }
+.map-panel-section { display: flex; flex-direction: column; gap: 8px; }
+.map-panel-section .tonight-bar { height: 48px; }
+.tonight-bars > span { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.map-panel-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.map-panel-actions .pill { font-size: 14px; padding: 11px 16px; }
+.map-panel-msg { font-size: 13px; color: var(--green); }
+.map-panel-note { font-size: 11px; color: var(--dim); }
+.map-panel-legend > div + div { margin-top: 12px; }
+.map-sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1100; display: flex; flex-direction: column; border-radius: 18px 18px 0 0; border-top: 1px solid var(--line-2); background: rgba(8, 10, 9, .97); box-shadow: 0 -10px 30px rgba(0, 0, 0, .5); overflow: hidden; transition: height .25s ease; }
+.map-sheet.dragging { transition: none; }
+.map-sheet .map-panel-clear { top: 26px; right: 12px; }
+.map-sheet-grip { flex: none; display: flex; flex-direction: column; gap: 4px; padding: 0 16px 12px; touch-action: none; cursor: grab; }
+.map-sheet-handle { align-self: center; display: grid; place-items: center; width: 64px; height: 22px; padding: 0; }
+.map-sheet-handle i { width: 40px; height: 5px; border-radius: 3px; background: #4a504c; }
+.map-sheet-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 18px; padding: 4px 16px 20px; }
+.map-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.map-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 72px; padding: 8px 4px; border-radius: 12px; border: 1px solid var(--line-2); background: #0d100e; color: var(--soft); font-size: 12px; font-weight: 700; text-align: center; }
+.map-tile[aria-pressed="true"] { border-color: var(--green); background: rgba(108, 255, 43, .08); color: #fff; }
+.map-tile[aria-pressed="true"] svg { color: var(--green); }
+@media (prefers-reduced-motion: reduce) { .map-sheet { transition: none; } }
 .map-status { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 800; padding: 8px 14px; border-radius: 999px; background: rgba(0,0,0,.8); border: 1px solid var(--line-2); font-size: 13px; color: var(--soft); }
 .map-legend { position: absolute; left: 12px; bottom: 28px; z-index: 800; width: min(300px, calc(100% - 24px)); padding: 12px 14px; border-radius: 12px; background: rgba(0,0,0,.78); border: 1px solid var(--line-2); backdrop-filter: blur(6px); }
 .map-legend[open] > div + div { margin-top: 12px; }
@@ -281,16 +314,6 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 /* Logo over the phone map, centred between the Home and Layers buttons. */
 .map-logo { display: none; position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 850; height: 44px; width: auto; pointer-events: none; }
 /* Phone layers menu on the map (shown only in the phone layout below). */
-.map-menu { display: none; position: absolute; top: 12px; right: 12px; z-index: 900; }
-.map-menu-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line-2); background: rgba(17,17,17,.92); color: #fff; font-weight: 700; font-size: 14px; }
-.map-menu-btn[aria-expanded="true"] { border-color: var(--green); color: var(--green); }
-.map-menu-panel { position: absolute; top: calc(100% + 8px); right: 0; width: min(260px, calc(100vw - 24px)); padding: 6px 0; border-radius: 14px; border: 1px solid var(--line-2); background: rgba(10,12,11,.97); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 12px 30px rgba(0,0,0,.6); }
-.map-menu-panel fieldset { margin: 0; padding: 6px 14px 8px; border: 0; }
-.map-menu-panel fieldset + fieldset { border-top: 1px solid var(--line); }
-.map-menu-panel legend { padding: 6px 0 2px; font: 600 11px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-.map-menu-panel label { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 15px; font-weight: 600; color: var(--soft); cursor: pointer; }
-.map-menu-panel input { width: 18px; height: 18px; margin: 0; accent-color: var(--green); }
-.map-menu-panel input:checked + span { color: #fff; }
 
 /* ---- Phone app bar: on phone widths the header gives way to a tab bar along the bottom. ---- */
 .tabbar { display: none; }
@@ -325,8 +348,10 @@ button.pill-ghost { border: 1px solid var(--line-2); }
   /* Map page: no title row; the map fills the screen above the tab bar and layers live in a menu. */
   .map-head { position: absolute; width: 1px !important; height: 1px; padding: 0 !important; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .aurora-map { height: calc(100svh - 64px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); min-height: 360px; }
-  .map-menu { display: block; }
   .map-logo { display: block; }
+  /* The panel takes over the legend, and the map's bottom controls sit above its collapsed height. */
+  .map-legend { display: none; }
+  .aurora-map .leaflet-bottom { bottom: 96px; }
   .map-status { top: 64px; }
 }
 

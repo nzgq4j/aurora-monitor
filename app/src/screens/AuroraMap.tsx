@@ -6,7 +6,9 @@ import type * as Leaflet from 'leaflet';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import { C } from '../data';
 import { kpColor, kpLine, rgb } from '../lib/kpLines';
-import { useLocations } from '../lib/locations';
+import { placeName, useLocations, type Place } from '../lib/locations';
+import type { KpPoint } from '../lib/feeds';
+import { MapPanel } from '../components/MapPanel';
 import { cloudify } from '../lib/cloudify';
 import { Globe } from '../components/Globe';
 import { AURORA_RAMP, auroraColor } from '../lib/auroraColor';
@@ -61,25 +63,25 @@ const HOUSE = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true
 
 const VIEW_KEY = 'pl.map.view';
 
-export function AuroraMap({ kp }: { kp: number | null }) {
+export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[] }) {
   const box = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Leaflet.Map | null>(null);
-  const layers = useRef<{ prob?: Leaflet.Layer; kp?: Leaflet.LayerGroup; marker?: Leaflet.Layer; clouds?: Leaflet.GridLayer }>({});
+  const layers = useRef<{ prob?: Leaflet.Layer; kp?: Leaflet.LayerGroup; marker?: Leaflet.Layer; pin?: Leaflet.Layer; clouds?: Leaflet.GridLayer }>({});
   const LRef = useRef<typeof Leaflet | null>(null);
   const cityMarkers = useRef<{ lat: number; lon: number; m: Leaflet.Marker }[]>([]);
   const [mode, setMode] = useState<Mode>('prob');
-  // Phone layers menu: closes on Escape or a tap outside it.
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!menuOpen) return;
-    const away = (e: PointerEvent) => { if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false); };
-    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuOpen(false); };
-    document.addEventListener('pointerdown', away);
-    document.addEventListener('keydown', esc);
-    return () => { document.removeEventListener('pointerdown', away); document.removeEventListener('keydown', esc); };
-  }, [menuOpen]);
   const { t, num } = useI18n();
+  // A point tapped on the map (2D or 3D); the panel shows its verdict. Named by coordinates until
+  // reverse geocoding answers.
+  const [pick, setPick] = useState<Place | null>(null);
+  const pickAt = useRef<(lat: number, lon: number) => void>(() => {});
+  pickAt.current = (lat, lon) => {
+    lat = Math.round(lat * 1000) / 1000;
+    lon = Math.round((((lon + 540) % 360) - 180) * 1000) / 1000;
+    const coords = `${num(Math.abs(lat), 2)}°${t(lat >= 0 ? 'dir.N' : 'dir.S')} ${num(Math.abs(lon), 2)}°${t(lon >= 0 ? 'dir.E' : 'dir.W')}`;
+    setPick({ name: coords, lat, lon });
+    placeName(lat, lon).then(name => setPick(p => (p && p.lat === lat && p.lon === lon && !/°/.test(name) ? { ...p, name } : p)));
+  };
   // Status and notice hold message keys; '' hides them.
   const [status, setStatus] = useState<MessageKey | ''>('map.loading');
   const [forecast, setForecast] = useState<number | null>(null);
@@ -153,6 +155,7 @@ export function AuroraMap({ kp }: { kp: number | null }) {
         },
       });
       new HomeControl({ position: 'topleft' }).addTo(map);
+      map.on('click', e => pickAt.current(e.latlng.lat, e.latlng.lng));
       map.createPane('land').style.zIndex = '200';
       // Clouds sit above the land and below the aurora, so the aurora colours stay readable.
       map.createPane('clouds').style.zIndex = '350';
@@ -265,11 +268,73 @@ export function AuroraMap({ kp }: { kp: number | null }) {
     if (!centred.current) { centred.current = true; map.setView([shownPlace.lat, shownPlace.lon], 4); }
   }, [shownPlace, ready]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Pin for the tapped point.
+  useEffect(() => {
+    const map = mapRef.current, L = LRef.current;
+    if (!map || !L || !ready) return;
+    layers.current.pin?.remove();
+    if (!pick) return;
+    layers.current.pin = L.layerGroup(COPIES.map(dx => L.marker([pick.lat, pick.lon + dx], {
+      pane: 'labels', keyboard: false, interactive: false,
+      icon: L.divIcon({ className: 'map-pick', html: '<b></b>', iconSize: [0, 0] }),
+    }))).addTo(map);
+  }, [pick, ready]);
+
+  // Aurora and Kp lines are two switches over the three modes; at least one stays on.
+  const auroraOn = mode !== 'kp', kpOn = mode !== 'prob';
+  const setLayers = (a: boolean, k: boolean) => { if (a || k) setMode(a && k ? 'both' : a ? 'prob' : 'kp'); };
+  const tile = (key: string, label: string, on: boolean, onClick: () => void, icon: string) => (
+    <button key={key} type="button" className="btn map-tile" aria-pressed={on} onClick={onClick}>
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d={icon} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      <span>{label}</span>
+    </button>
+  );
+  const layerTiles = (
+    <div className="map-tiles" role="group" aria-label={t('map.layers')}>
+      {tile('aurora', t('map.layer.aurora'), auroraOn, () => setLayers(!auroraOn, kpOn), 'M3 17c3-7 6-10 9-10s6 3 9 10M6 17c1.8-3.8 3.8-6 6-6s4.2 2.2 6 6')}
+      {tile('kp', t('map.layer.kp'), kpOn, () => setLayers(auroraOn, !kpOn), 'M3 8c4-2 14-2 18 0M3 13c4-2 14-2 18 0M3 18c4-2 14-2 18 0')}
+      {tile('clouds', t('map.clouds'), clouds, () => setClouds(c => !c), 'M7 18.5h10.5a4 4 0 0 0 .4-8A6 6 0 0 0 6.4 9.2 4.7 4.7 0 0 0 7 18.5Z')}
+      {tile('globe', t('map.layer.globe'), view === '3d', () => chooseView(view === '3d' ? '2d' : '3d'), 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm-9 9h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z')}
+    </div>
+  );
+
   const seg = (m: Mode, label: string) => (
     <button type="button" className="btn" aria-pressed={mode === m} onClick={() => setMode(m)}
       style={{ flex: 1, padding: '10px 8px', borderRadius: 999, fontWeight: 700, fontSize: 14, background: mode === m ? '#3a3f3c' : 'transparent', color: mode === m ? '#fff' : C.soft, whiteSpace: 'nowrap' }}>
       {label}
     </button>
+  );
+
+  const legendBody = (
+    <>
+      {mode !== 'kp' && (
+        <div>
+          <span className="label">{t('map.legend.prob')}{forecast ? ` · ${hhmm(forecast)} UT` : ''}</span>
+          <div style={{ height: 10, borderRadius: 5, margin: '6px 0 4px', background: AURORA_RAMP }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.muted }}><span>5%</span><span>30%</span><span>60%</span><span>90%</span></div>
+        </div>
+      )}
+      {mode !== 'prob' && (
+        <div>
+          <span className="label">{t('map.legend.kp')}</span>
+          <div style={{ display: 'flex', gap: 4, marginTop: 6 }}>
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(k => (
+              <span key={k} style={{ flex: 1, textAlign: 'center', fontSize: 11, fontWeight: 700, padding: '3px 0', borderRadius: 4, color: '#000', background: rgb(kpColor(k)), outline: k === current ? '2px solid #fff' : 'none' }}>{k}</span>
+            ))}
+          </div>
+          <span style={{ display: 'block', fontSize: 11, color: C.muted, marginTop: 4 }}>{kp === null ? t('map.legend.kpUnavailable') : t('map.legend.kpNow', { kp: num(kp, 2) })}</span>
+        </div>
+      )}
+      {clouds && (
+        <div>
+          <span className="label">{t('map.legend.clouds')}</span>
+          <div style={{ height: 10, borderRadius: 5, margin: '6px 0 4px', background: 'linear-gradient(90deg, rgba(236,241,246,0), rgba(236,241,246,.82))', border: '1px solid var(--line-2)' }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.muted }}><span>{t('map.legend.clear')}</span><span>{t('map.legend.thick')}</span></div>
+          <span style={{ display: 'block', fontSize: 11, color: C.muted, marginTop: 4 }}>{t('map.legend.cloudNote')}</span>
+        </div>
+      )}
+      {view === '3d' && <span style={{ display: 'block', fontSize: 11, color: C.muted }}>{t('globe.legend')}</span>}
+    </>
   );
 
   return (
@@ -301,66 +366,17 @@ export function AuroraMap({ kp }: { kp: number | null }) {
       <div style={{ position: 'relative' }}>
         {/* Phones have no header, so the map carries the logo. */}
         <img className="map-logo" src="/icons/logo.svg" alt={SITE.name} width={56} height={43} />
-        <div className="map-menu" ref={menuRef}>
-          <button type="button" className="btn map-menu-btn" aria-expanded={menuOpen} aria-controls="map-menu" onClick={() => setMenuOpen(o => !o)}>
-            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>
-            {t('map.layersButton')}
-          </button>
-          {menuOpen && (
-            <div id="map-menu" className="map-menu-panel" role="group" aria-label={t('map.layers')}>
-              <fieldset>
-                <legend>{t('map.view')}</legend>
-                {(['2d', '3d'] as const).map(v => (
-                  <label key={v}><input type="radio" name="map-view" checked={view === v} onChange={() => chooseView(v)} /><span>{v.toUpperCase()}</span></label>
-                ))}
-              </fieldset>
-              <fieldset>
-                <legend>{t('map.aurora')}</legend>
-                {([['prob', 'map.mode.prob'], ['kp', 'map.mode.kp'], ['both', 'map.mode.both']] as const).map(([m, key]) => (
-                  <label key={m}><input type="radio" name="map-mode" checked={mode === m} onChange={() => setMode(m)} /><span>{t(key)}</span></label>
-                ))}
-              </fieldset>
-              <fieldset>
-                <legend>{t('map.overlays')}</legend>
-                <label><input type="checkbox" checked={clouds} onChange={e => setClouds(e.target.checked)} /><span>{t('map.clouds')}</span></label>
-              </fieldset>
-            </div>
-          )}
-        </div>
         <div ref={box} className="aurora-map" role="application" aria-label={t('map.aria')} style={view === '3d' ? { display: 'none' } : undefined} />
-        {view === '3d' && <Globe clouds={clouds} aurora={mode !== 'kp'} kpLines={mode !== 'prob'} kp={kp} place={shownPlace} home={locations.find(l => l.isHome) ?? null} onStatus={setGlobeStatus} onForecast={setForecast} />}
+        {view === '3d' && <Globe clouds={clouds} aurora={mode !== 'kp'} kpLines={mode !== 'prob'} kp={kp} place={shownPlace} home={locations.find(l => l.isHome) ?? null}
+          pick={pick} onPick={(la, lo) => pickAt.current(la, lo)} onStatus={setGlobeStatus} onForecast={setForecast} />}
         {view === '2d' && (notice || status) && <div className="map-status" role="status">{t((notice || status) as MessageKey)}</div>}
         {view === '3d' && globeStatus && <div className="map-status" role="status">{t(globeStatus)}</div>}
         <details className="map-legend" ref={legend} open>
           <summary>{t('map.legend')}</summary>
-          {mode !== 'kp' && (
-            <div>
-              <span className="label">{t('map.legend.prob')}{forecast ? ` · ${hhmm(forecast)} UT` : ''}</span>
-              <div style={{ height: 10, borderRadius: 5, margin: '6px 0 4px', background: AURORA_RAMP }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.muted }}><span>5%</span><span>30%</span><span>60%</span><span>90%</span></div>
-            </div>
-          )}
-          {mode !== 'prob' && (
-            <div>
-              <span className="label">{t('map.legend.kp')}</span>
-              <div style={{ display: 'flex', gap: 4, marginTop: 6 }}>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(k => (
-                  <span key={k} style={{ flex: 1, textAlign: 'center', fontSize: 11, fontWeight: 700, padding: '3px 0', borderRadius: 4, color: '#000', background: rgb(kpColor(k)), outline: k === current ? '2px solid #fff' : 'none' }}>{k}</span>
-                ))}
-              </div>
-              <span style={{ display: 'block', fontSize: 11, color: C.muted, marginTop: 4 }}>{kp === null ? t('map.legend.kpUnavailable') : t('map.legend.kpNow', { kp: num(kp, 2) })}</span>
-            </div>
-          )}
-          {clouds && (
-            <div>
-              <span className="label">{t('map.legend.clouds')}</span>
-              <div style={{ height: 10, borderRadius: 5, margin: '6px 0 4px', background: 'linear-gradient(90deg, rgba(236,241,246,0), rgba(236,241,246,.82))', border: '1px solid var(--line-2)' }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.muted }}><span>{t('map.legend.clear')}</span><span>{t('map.legend.thick')}</span></div>
-              <span style={{ display: 'block', fontSize: 11, color: C.muted, marginTop: 4 }}>{t('map.legend.cloudNote')}</span>
-            </div>
-          )}
-          {view === '3d' && <span style={{ display: 'block', fontSize: 11, color: C.muted }}>{t('globe.legend')}</span>}
+          {legendBody}
         </details>
+        <MapPanel kp={kp} series={series} pick={pick} onClear={() => setPick(null)} layers={layerTiles}
+          legend={<div className="map-panel-section map-panel-legend"><span className="label">{t('map.legend')}</span>{legendBody}</div>} />
       </div>
     </main>
   );

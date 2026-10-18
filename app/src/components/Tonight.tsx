@@ -1,20 +1,19 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { C } from '../data';
-import { moon } from '../lib/astro';
 import type { KpPoint } from '../lib/feeds';
 import { useLocations } from '../lib/locations';
 import { shareCardBlob } from '../lib/shareCard';
 import { SITE } from '../lib/site';
-import { hourlyScores, verdict, type HourScore, type Level } from '../lib/tonight';
-import { useConditions } from '../lib/useConditions';
+import type { HourScore, Level } from '../lib/tonight';
+import { usePointVerdict } from '../lib/usePointVerdict';
 import { INTL_TAG } from '../i18n/config';
 import { useI18n } from '../i18n/I18n';
 import { USEFUL_EVENT } from './InstallPrompt';
 
-const LEVEL_COLOR: Record<Level, string> = { goNow: C.green, goLater: C.green, maybe: C.amber, no: C.muted };
-const scoreColor = (s: number) => (s >= 50 ? C.green : s >= 20 ? C.amber : '#3a403c');
+export const LEVEL_COLOR: Record<Level, string> = { goNow: C.green, goLater: C.green, maybe: C.amber, no: C.muted };
+export const scoreColor = (s: number) => (s >= 50 ? C.green : s >= 20 ? C.amber : '#3a403c');
 
 /** Open the location picker in "Your sky" further down the page. */
 const toYourSky = () => document.getElementById('your-sky')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -51,22 +50,8 @@ function SkyScene({ look, strength, cloud, light }: { look: 'low' | 'high' | 'ov
 export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }) {
   const { t, num, locale } = useI18n();
   const { shownPlace } = useLocations();
-  const { data: cond, loading } = useConditions(shownPlace?.lat, shownPlace?.lon);
-  // Client clock only (the page is prerendered); refreshed every five minutes.
-  const [now, setNow] = useState<number | null>(null);
-  useEffect(() => { setNow(Date.now()); const id = setInterval(() => setNow(Date.now()), 3e5); return () => clearInterval(id); }, []);
+  const { cond, loading, now, result } = usePointVerdict(shownPlace, kp, series);
   const [picked, setPicked] = useState(0);
-
-  const result = useMemo(() => {
-    if (!shownPlace || !cond || now === null) return null;
-    const m = moon(now, shownPlace.lat, shownPlace.lon);
-    const hours = hourlyScores({
-      lat: shownPlace.lat, lon: shownPlace.lon, need: cond.kpNeeded, kpNow: kp, series,
-      ovationNearby: cond.aurora?.nearby ?? null, cloudNow: cond.cloud?.aurora ?? null, cloudHourly: cond.cloud?.next12h ?? [],
-      moonIllumination: m.illumination, now,
-    });
-    return { hours, v: verdict(hours, cond.kpNeeded), m };
-  }, [shownPlace, cond, now, kp, series]);
 
   // A promising verdict is a good moment to suggest adding the app to the home screen (InstallPrompt).
   const useful = !!result && result.v.level !== 'no';
