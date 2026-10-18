@@ -198,6 +198,17 @@ export function Globe({ clouds, aurora, kpLines, kp, place, home, onStatus, onFo
       const sphere = (r: number) => new T.SphereGeometry(r, 128, 64);
       const earthMat = new T.ShaderMaterial({ uniforms: { dayMap: { value: day }, nightMap: { value: night }, sunDir: { value: sunDir } }, vertexShader: VERT, fragmentShader: EARTH_FRAG });
       scene.add(new T.Mesh(sphere(1), earthMat));
+      // Desktop (fine pointer, wide screen): swap in 4K imagery once it has loaded. Phones keep the 2K
+      // images, which are sharp at their size and save the download.
+      if (window.matchMedia('(pointer: fine) and (min-width: 900px)').matches && renderer.capabilities.maxTextureSize >= 4096) {
+        Promise.all([loadTex('/globe/earth-day-4k.jpg'), loadTex('/globe/earth-night-4k.jpg')]).then(([day4, night4]) => {
+          if (disposed) { day4.dispose(); night4.dispose(); return; }
+          for (const t of [day4, night4]) t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+          earthMat.uniforms.dayMap.value = day4;
+          earthMat.uniforms.nightMap.value = night4;
+          day.dispose(); night.dispose();
+        }, () => { /* keep the 2K imagery */ });
+      }
 
       // Clouds (loaded the first time they're switched on).
       const cloudMat = new T.ShaderMaterial({ uniforms: { clouds: { value: null }, sunDir: { value: sunDir } }, vertexShader: VERT, fragmentShader: CLOUD_FRAG, transparent: true, depthWrite: false });
