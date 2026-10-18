@@ -19,6 +19,16 @@ export function writeLayers(l: Layers) {
   try { localStorage.setItem(KEY, JSON.stringify(l)); } catch { /* storage unavailable */ }
 }
 
+/**
+ * Run heavy drawing (a world overlay is up to ~1 M pixels) after the browser has painted the current
+ * update, so a tap shows its result at once instead of waiting for it. Returns a cancel function.
+ */
+export function afterPaint(fn: () => void): () => void {
+  let timer = 0;
+  const frame = requestAnimationFrame(() => { timer = window.setTimeout(fn, 0); });
+  return () => { cancelAnimationFrame(frame); clearTimeout(timer); };
+}
+
 /** NASA Black Marble 2016 night lights (GIBS, public domain), Web-Mercator tiles to zoom 8. */
 export const LIGHTS_URL = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_Black_Marble/default/2016-01-01/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png';
 
