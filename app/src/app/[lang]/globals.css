@@ -289,3 +289,20 @@ button.pill-ghost { border: 1px solid var(--line-2); }
   .map-status { top: 64px; }
 }
 
+/* ---- Tonight: verdict card and 12-hour strip, phones only (top of Now). ---- */
+.tonight { display: none; flex-direction: column; gap: 14px; }
+.tonight-place { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line-2); background: #0b0d0c; color: #fff; font: 600 15px var(--f-body); }
+.tonight-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.tonight-badges span { padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line-2); background: #0e110f; font-size: 13px; font-weight: 600; color: var(--soft); white-space: nowrap; }
+.tonight-bars { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 4px; }
+.tonight-bars .btn { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 0; min-height: 0; }
+.tonight-bar { position: relative; display: block; width: 100%; height: 64px; border-radius: 6px; background: #0d100e; overflow: hidden; }
+.tonight-bar i { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 6px; }
+.tonight-bars .btn[aria-pressed="true"] .tonight-bar { outline: 2px solid #fff; outline-offset: 1px; }
+.tonight-bars .mono { font-size: 11px; color: var(--muted); }
+.tonight-bars .btn[aria-pressed="true"] .mono { color: #fff; }
+@keyframes tonight-glow { 0%, 100% { text-shadow: 0 0 6px rgba(108, 255, 43, .25); } 50% { text-shadow: 0 0 18px rgba(108, 255, 43, .7); } }
+.tonight-glow { animation: tonight-glow 3s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .tonight-glow { animation: none; } }
+@media (max-width: 640px) { .tonight { display: flex; } }
+

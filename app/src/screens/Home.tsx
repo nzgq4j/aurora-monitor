@@ -7,6 +7,7 @@ import { Locked } from '../components/Locked';
 import { SolarActivity } from '../components/SolarActivity';
 import type { KpPoint } from '../lib/feeds';
 import { YourSky } from '../components/YourSky';
+import { Tonight } from '../components/Tonight';
 import { G_SCALE } from '../lib/astro';
 import { SDO_IMAGES } from '../lib/sdo';
 import { useLocations } from '../lib/locations';
@@ -151,6 +152,8 @@ export function Home({ data }: { data: NowData }) {
 
   return (
     <main data-screen-label="Now" className="wrap" style={{ padding: '40px var(--gutter) 48px', display: 'flex', flexDirection: 'column', gap: 36 }}>
+      {/* Phones: the answer for your location first (see components/Tonight). */}
+      <Tonight kp={kp} series={data.series} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(420px,100%),1fr))', gap: 40, alignItems: 'center' }}>
         <div className="hero-copy">
           <div className="kicker" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
