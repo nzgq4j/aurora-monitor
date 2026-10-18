@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { layoutLabels, magGreek, magRisk, project, solarB0, type Region } from '../lib/sunspots';
+import { layoutLabels, magGreek, magRisk, project, solarB0, type PlacedLabel, type Region } from '../lib/sunspots';
 import { useI18n } from '../i18n/I18n';
 
 interface Data { observed: string; regions: Region[] }
@@ -18,6 +18,17 @@ export function useSunspots() {
 
 /** Label size, as a fraction of the image width (about 15 px on a 420 px disc). */
 const LABEL = 0.036;
+
+/**
+ * Leader line from a label to its spot: starts just off the label's near edge and stops short of the
+ * spot so it never covers it.
+ */
+function leader(l: PlacedLabel) {
+  const x1 = l.anchor === 'start' ? l.lx - LABEL * 0.2 : l.lx + LABEL * 0.2, y1 = l.ly;
+  const dx = l.x - x1, dy = l.y - y1, d = Math.hypot(dx, dy) || 1;
+  const k = Math.max(0, d - LABEL * 0.45) / d;
+  return { x1, y1, x2: x1 + dx * k, y2: y1 + dy * k };
+}
 
 const pct = (v: number | null) => (v === null ? '—' : `${v}%`);
 
@@ -88,8 +99,7 @@ export function SunspotRegions() {
               const color = RISK_COLOR[magRisk(r.mag) ?? 'low'];
               return (
                 <g key={l.id}>
-                  <circle cx={l.x} cy={l.y} r={0.014} fill="none" stroke={color} strokeWidth={0.004} />
-                  {l.moved && <line x1={l.x} y1={l.y} x2={l.lx} y2={l.ly} stroke={color} strokeWidth={0.002} opacity={0.8} />}
+                  <line {...leader(l)} stroke={color} strokeWidth={0.003} strokeLinecap="round" />
                   <text x={l.lx} y={l.ly + LABEL * 0.36} fontSize={LABEL} fontWeight={800} fill={color} textAnchor={l.anchor}
                     stroke="#000" strokeWidth={0.008} paintOrder="stroke">{l.id}</text>
                 </g>
