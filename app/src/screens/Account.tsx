@@ -8,7 +8,8 @@ import { G_SCALE, kpNeeded, moon } from '../lib/astro';
 import type { AccountData } from '../lib/history';
 import { searchPlaces, useLocations, type PlaceResult, type SavedLocation } from '../lib/locations';
 import { useConditions } from '../lib/useConditions';
-import { ALERT_LEVELS, type AlertRules } from '../lib/alerts';
+import { ALERT_LEVELS, type AlertKind, type AlertLevel, type AlertRules } from '../lib/alerts';
+import { supabase } from '../lib/supabase';
 import { disablePush, enablePush, pushState, type PushState } from '../lib/push';
 import { INSTALL_EVENT } from '../components/InstallPrompt';
 import { useStore, type Tab } from '../store';
@@ -134,7 +135,7 @@ function useHome() {
   const { locations, load } = useLocations();
   useEffect(() => { load(); }, [load]);
   const home = locations.find(l => l.isHome) ?? null;
-  return { home, need: home ? kpNeeded(home.lat, home.lon) : 5, count: locations.length };
+  return { home, locations, need: home ? kpNeeded(home.lat, home.lon) : 5, count: locations.length };
 }
 
 function Overview({ data }: { data: AccountData }) {
@@ -286,10 +287,9 @@ function Alerts({ data }: { data: AccountData }) {
   const shortDate = (d: number) => date(d, { month: 'short', day: 'numeric', timeZone: 'UTC' });
   // Email alerts go to the address the account signed up with.
   const accountEmail = live ? user?.email ?? t('dash.accountEmail') : 'sam@example.com';
-  const { home } = useHome();
   const chaser = planIndex >= 1;
   const r = s.alertRules;
-  const setRules = (patch: Partial<AlertRules>) => set(st => ({ alertRules: { ...st.alertRules, ...patch } }));
+  const setRules = (patch: Partial<AlertRules>) => patchRules(set, patch);
   // The storm alert's Kp; the history chart shows how often it was reached.
   const kp = s.kpThreshold;
   const last30 = data.days.slice(-30);
@@ -300,20 +300,39 @@ function Alerts({ data }: { data: AccountData }) {
   return (
     <div data-screen-label="Dashboard · Alerts" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
       <h1 className="display" style={h1}>{t('alerts.h1a')} <span className="hl">{t('alerts.h1b')}</span></h1>
-      <div className="alert-rule">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <ToggleRow label={t('alerts.aurora')} sub={home ? t(chaser ? 'alerts.aurora.sub' : 'alerts.aurora.subFree', { place: home.name.split(',')[0] }) : t('alerts.aurora.noHome')}
-            need={0} locked={false} on={r.aurora} onClick={() => setRules({ aurora: !r.aurora })} />
-          <fieldset className="alert-levels" disabled={!r.aurora}>
-            <legend>{t('alerts.level.h')}</legend>
-            {ALERT_LEVELS.map(l => (
-              <label key={l} className={'alert-level alert-level-' + l}>
-                <input type="radio" name="alert-level" checked={r.level === l} onChange={() => setRules({ level: l })} />
-                <span><b>{t(`alerts.level.${l}`)}</b><small>{t(`alerts.level.${l}.sub`)}</small></span>
-              </label>
-            ))}
-          </fieldset>
+      <AlertStatus />
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(300px,100%),1fr))', gap: 20, alignItems: 'start' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <span className="eyebrow" style={{ marginBottom: 8 }}>{t('alerts.quick')}</span>
+          <ToggleRow label={t('alerts.storm')} sub={t('alerts.storm.sub')} need={0} locked={false} on={r.storm} onClick={() => setRules({ storm: !r.storm })} />
+          <label className="alert-kp" aria-disabled={!r.storm}>
+            <span>{t('alerts.stormKp')}</span>
+            <select value={kp} disabled={!r.storm} onChange={e => set({ kpThreshold: +e.target.value })}>
+              {[5, 6, 7, 8, 9].map(k => <option key={k} value={k}>{`Kp ${k}+ · ${kpName(t, k)}`}</option>)}
+            </select>
+          </label>
+          <ToggleRow label={t('alerts.forecast')} sub={t('alerts.forecast.sub')} need={1} locked={!chaser} on={r.forecast}
+            onClick={!chaser ? () => go('plans') : () => setRules({ forecast: !r.forecast })} />
+          <ToggleRow label={t('alerts.quiet')} sub={t('alerts.quietSub')} need={0} locked={false} on={r.quiet} onClick={() => setRules({ quiet: !r.quiet })} />
+          <div className="alert-quiet" aria-disabled={!r.quiet}>
+            <label><span>{t('alerts.quiet.from')}</span><input type="time" value={r.quietFrom} disabled={!r.quiet} onChange={e => setRules({ quietFrom: e.target.value || r.quietFrom })} /></label>
+            <label><span>{t('alerts.quiet.to')}</span><input type="time" value={r.quietTo} disabled={!r.quiet} onChange={e => setRules({ quietTo: e.target.value || r.quietTo })} /></label>
+          </div>
         </div>
+        <RecentAlerts />
+      </div>
+
+      <div className="alert-rule">
+        <fieldset className="alert-levels" disabled={!r.aurora}>
+          <legend>{t('alerts.level.h')}</legend>
+          {ALERT_LEVELS.map(l => (
+            <label key={l} className={'alert-level alert-level-' + l}>
+              <input type="radio" name="alert-level" checked={r.level === l} onChange={() => setRules({ level: l })} />
+              <span><b>{t(`alerts.level.${l}`)}</b><small>{t(`alerts.level.${l}.sub`)}</small></span>
+            </label>
+          ))}
+        </fieldset>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
             <span style={{ fontSize: 14, color: 'var(--muted)' }}>{t('alerts.last30')}</span>
@@ -336,23 +355,6 @@ function Alerts({ data }: { data: AccountData }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(300px,100%),1fr))', gap: 20 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span className="eyebrow" style={{ marginBottom: 8 }}>{t('alerts.types')}</span>
-          <ToggleRow label={t('alerts.storm')} sub={t('alerts.storm.sub')} need={0} locked={false} on={r.storm} onClick={() => setRules({ storm: !r.storm })} />
-          <label className="alert-kp" aria-disabled={!r.storm}>
-            <span>{t('alerts.stormKp')}</span>
-            <select value={kp} disabled={!r.storm} onChange={e => set({ kpThreshold: +e.target.value })}>
-              {[5, 6, 7, 8, 9].map(k => <option key={k} value={k}>{`Kp ${k}+ · ${kpName(t, k)}`}</option>)}
-            </select>
-          </label>
-          <ToggleRow label={t('alerts.forecast')} sub={t('alerts.forecast.sub')} need={1} locked={!chaser} on={r.forecast}
-            onClick={!chaser ? () => go('plans') : () => setRules({ forecast: !r.forecast })} />
-          {TRIGGER_DEFS.filter(([k]) => k === 'bz' || k === 'sub').map(([k, need]) => {
-            const locked = planIndex < need;
-            return <ToggleRow key={k} label={t(`trigger.${k}`)} sub={soon(t(`trigger.${k}.sub`))} need={need} locked={locked} on={s.triggers[k]}
-              onClick={locked ? () => go('plans') : () => set(st => ({ triggers: { ...st.triggers, [k]: !st.triggers[k] } }))} />;
-          })}
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <span className="eyebrow" style={{ marginBottom: 8 }}>{t('alerts.deliver')}</span>
           {CHANNEL_DEFS.map(([k, need]) => {
             const locked = planIndex < need;
@@ -360,13 +362,132 @@ function Alerts({ data }: { data: AccountData }) {
             return <ToggleRow key={k} label={t(`channel.${k}`)} sub={k === 'email' ? accountEmail : soon(t(`channel.${k}.sub`))} need={need} locked={locked} on={s.channels[k]}
               onClick={locked ? () => go('plans') : () => set(st => ({ channels: { ...st.channels, [k]: !st.channels[k] } }))} />;
           })}
-          <ToggleRow label={t('alerts.quiet')} sub={t('alerts.quietSub')} need={0} locked={false} on={r.quiet} onClick={() => setRules({ quiet: !r.quiet })} />
-          <div className="alert-quiet" aria-disabled={!r.quiet}>
-            <label><span>{t('alerts.quiet.from')}</span><input type="time" value={r.quietFrom} disabled={!r.quiet} onChange={e => setRules({ quietFrom: e.target.value || r.quietFrom })} /></label>
-            <label><span>{t('alerts.quiet.to')}</span><input type="time" value={r.quietTo} disabled={!r.quiet} onChange={e => setRules({ quietTo: e.target.value || r.quietTo })} /></label>
-          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <span className="eyebrow" style={{ marginBottom: 8 }}>{t('alerts.moreTypes')}</span>
+          {TRIGGER_DEFS.filter(([k]) => k === 'bz' || k === 'sub').map(([k, need]) => {
+            const locked = planIndex < need;
+            return <ToggleRow key={k} label={t(`trigger.${k}`)} sub={soon(t(`trigger.${k}.sub`))} need={need} locked={locked} on={s.triggers[k]}
+              onClick={locked ? () => go('plans') : () => set(st => ({ triggers: { ...st.triggers, [k]: !st.triggers[k] } }))} />;
+          })}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Whether aurora alerts are on, where they watch, the level they wait for and how they arrive. */
+function AlertStatus() {
+  const { s, set, planIndex, go } = useStore();
+  const { t } = useI18n();
+  const { home, locations } = useHome();
+  const r = s.alertRules;
+  const chaser = planIndex >= 1;
+  // Free alerts watch the home location; Chaser watches every saved location.
+  const watched = chaser ? [...locations].sort((a, b) => +b.isHome - +a.isHome) : home ? [home] : [];
+  const names = watched.slice(0, 3).map(l => l.name.split(',')[0]).join(' · ');
+  const places = watched.length > 3 ? `${names} ${t('alerts.status.more', { n: watched.length - 3 })}` : names;
+  const channels = CHANNEL_DEFS.filter(([k, need]) => k !== 'sms' && planIndex >= need && s.channels[k]).map(([k]) => t(`channel.${k}`));
+  const on = r.aurora && watched.length > 0;
+  return (
+    <section className={'alert-status' + (on ? ' on' : '')} aria-label={t('alerts.aurora')}>
+      <ToggleRow label={t(on ? 'alerts.status.on' : 'alerts.status.off')} need={0} locked={false} on={r.aurora}
+        sub={watched.length ? t(chaser ? 'alerts.aurora.sub' : 'alerts.aurora.subFree', { place: home?.name.split(',')[0] ?? '' }) : t('alerts.aurora.noHome')}
+        onClick={() => patchRules(set, { aurora: !r.aurora })} />
+      <dl className="alert-status-facts">
+        <div>
+          <dt>{t('alerts.status.places')}</dt>
+          <dd>{watched.length ? places : <button type="button" className="btn hl" onClick={() => go('account', { tab: 'locations' })}>{t('alerts.status.addHome')}</button>}</dd>
+        </div>
+        <div><dt>{t('alerts.status.level')}</dt><dd>{t(`alerts.level.${r.level}`)}</dd></div>
+        <div><dt>{t('alerts.status.via')}</dt><dd>{channels.length ? channels.join(' · ') : t('alerts.status.noChannel')}</dd></div>
+      </dl>
+    </section>
+  );
+}
+
+const patchRules = (set: ReturnType<typeof useStore>['set'], patch: Partial<AlertRules>) =>
+  set(st => ({ alertRules: { ...st.alertRules, ...patch } }));
+
+interface LogRow { id: number; kind: AlertKind; level: AlertLevel | null; score: number | null; kp: number | null; place: string | null; created_at: string }
+
+/** The last alerts the engine sent this account (alert_log; read-own under RLS). */
+function RecentAlerts() {
+  const { live } = useStore();
+  const { user } = useAuth();
+  const { t, num, date } = useI18n();
+  const [rows, setRows] = useState<LogRow[] | null>(null);
+  const userId = user?.id;
+  useEffect(() => {
+    const sb = live && userId ? supabase() : null;
+    if (!sb) { setRows([]); return; }
+    let stale = false;
+    sb.from('alert_log').select('id,kind,level,score,kp,place,created_at').order('created_at', { ascending: false }).limit(8)
+      .then(({ data }) => { if (!stale) setRows((data as LogRow[] | null) ?? []); });
+    return () => { stale = true; };
+  }, [live, userId]);
+  const when = (iso: string) => date(Date.parse(iso), { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  const title = (a: LogRow) => {
+    const place = (a.place ?? '').split(',')[0];
+    if (a.kind === 'storm') return t('alerts.recent.storm', { kp: num(a.kp ?? 0, 1) });
+    const level = t(`alerts.level.${a.level ?? 'visible'}`);
+    return t(a.kind === 'forecast' ? 'alerts.recent.forecast' : 'alerts.recent.aurora', { level, place });
+  };
+  return (
+    <section className="alert-recent" aria-labelledby="alert-recent-h">
+      <span id="alert-recent-h" className="eyebrow" style={{ marginBottom: 8 }}>{t('alerts.recent.h')}</span>
+      {rows === null ? null : rows.length === 0 ? (
+        <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)' }}>{t('alerts.recent.none')}</p>
+      ) : (
+        <ol>
+          {rows.map(a => (
+            <li key={a.id} className={'alert-recent-' + a.kind}>
+              <span className="alert-recent-dot" aria-hidden="true" />
+              <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                <b>{title(a)}</b>
+                <small>{when(a.created_at)}</small>
+              </span>
+              {a.kind !== 'storm' && a.score != null && <span className="mono alert-recent-score">{a.score}</span>}
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
+  );
+}
+
+/** /alerts: the phone Alerts tab. Signed in, the alert settings; signed out, what alerts do and how to get them. */
+export function AlertsPage({ data }: { data: AccountData }) {
+  const { signedIn, live } = useStore();
+  const auth = useAuth();
+  const { t } = useI18n();
+  if (live && !auth.ready) return <main className="wrap" style={{ padding: '64px var(--gutter)', color: 'var(--muted)' }}>{t('dash.loading')}</main>;
+  return (
+    <main data-screen-label="Alerts" className="wrap alerts-page">
+      {signedIn ? <Alerts data={data} /> : <AlertsIntro />}
+    </main>
+  );
+}
+
+function AlertsIntro() {
+  const { go } = useStore();
+  const router = useRouter();
+  const { t } = useI18n();
+  const points: [string, MessageKey][] = [['email', 'alerts.intro.1'], ['push', 'alerts.intro.2'], ['storm', 'alerts.intro.3']];
+  return (
+    <div className="alerts-intro">
+      <h1 className="display" style={h1}>{t('alerts.intro.h1a')} <span className="hl">{t('alerts.intro.h1b')}</span></h1>
+      <p style={{ margin: 0, fontSize: 17, lineHeight: 1.45, color: 'var(--soft)' }}>{t('alerts.intro.body')}</p>
+      <ul>
+        {points.map(([id, key]) => <li key={id}><span className="alert-recent-dot" aria-hidden="true" />{t(key)}</li>)}
+      </ul>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+        <button type="button" className="btn pill pill-primary" onClick={() => router.push('/signin?mode=signup&next=/alerts')}>{t('alerts.intro.cta')}</button>
+        <button type="button" className="btn pill pill-ghost" onClick={() => go('plans')}>{t('alerts.intro.plans')}</button>
+      </div>
+      <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)' }}>
+        {t('alerts.intro.have')} <button type="button" className="btn hl" style={{ fontWeight: 700 }} onClick={() => router.push('/signin?next=/alerts')}>{t('nav.signIn')}</button>
+      </p>
     </div>
   );
 }

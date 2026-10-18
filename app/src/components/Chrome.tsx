@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { initials, useAuth } from '../lib/auth';
-import { useStore, type Screen, type Tab } from '../store';
+import { useStore, type Screen } from '../store';
 import { SITE } from '../lib/site';
 import { useI18n } from '../i18n/I18n';
 import type { MessageKey } from '../i18n/core';
@@ -98,15 +98,13 @@ export function TabBar() {
     document.addEventListener('keydown', esc);
     return () => { document.removeEventListener('pointerdown', away); document.removeEventListener('keydown', esc); };
   }, [open]);
-  // Alerts and Locations open those Dashboard tabs; signed out, they lead to plans and sign-in.
-  const dash = (tab: Tab) => () => (signedIn ? go('account', { tab }) : tab === 'alerts' ? go('plans') : go('signin'));
+  // Locations opens that Dashboard tab; signed out, it leads to sign-in.
   const inDash = screen === 'account' || screen === 'checkout' || (screen === 'plans' && signedIn);
   const more: { id: string; label: string; on: boolean; onClick: () => void }[] = [
-    { id: 'alerts', label: t('dash.tab.alerts'), on: (inDash && s.tab === 'alerts') || (!signedIn && screen === 'plans'), onClick: dash('alerts') },
-    { id: 'locations', label: t('dash.tab.locations'), on: inDash && s.tab === 'locations', onClick: dash('locations') },
+    { id: 'locations', label: t('dash.tab.locations'), on: inDash && s.tab === 'locations', onClick: signedIn ? () => go('account', { tab: 'locations' }) : () => go('signin') },
     {
       id: 'dashboard', label: signedIn ? t('nav.dashboard') : t('nav.signIn'),
-      on: screen === 'signin' || (inDash && (s.tab === 'overview' || s.tab === 'plans')),
+      on: screen === 'signin' || (inDash && (s.tab === 'overview' || s.tab === 'plans' || s.tab === 'alerts')) || (!signedIn && screen === 'plans'),
       onClick: signedIn ? () => go('account', { tab: 'overview' }) : goAccount,
     },
     // Phones don't show the name and Sign out above the Dashboard, so Account (with Sign out) is here.
@@ -122,6 +120,7 @@ export function TabBar() {
     <nav className="tabbar" aria-label={t('nav.main')}>
       {tab('now', t('nav.now'), screen === 'home', () => { setOpen(false); go('home'); })}
       {tab('map', t('nav.map'), screen === 'map', () => { setOpen(false); go('map'); })}
+      {tab('alerts', t('nav.alerts'), screen === 'alerts', () => { setOpen(false); go('alerts'); })}
       <div className="tabbar-more" ref={moreRef}>
         <button type="button" className={'btn tabbar-item' + (moreOn || open ? ' on' : '')} aria-expanded={open} aria-controls="tabbar-more" onClick={() => setOpen(o => !o)}>
           <Icon id="more" bold /><span>{t('nav.more')}</span>
