@@ -28,6 +28,8 @@ export interface TileLayerOptions {
   /** Shared with the base Earth material, so a later swap of the night image reaches the tiles. */
   nightMap: { value: THREE.Texture | null };
   sunDir: { value: THREE.Vector3 };
+  /** Night shading and city lights switches (x, y: 0 or 1), shared with the base Earth material. */
+  shade: { value: THREE.Vector2 };
   anisotropy: number;
 }
 
@@ -57,6 +59,7 @@ export function createTileLayer(T: typeof THREE, o: TileLayerOptions) {
         dayMap: { value: tex },
         nightMap: o.nightMap,
         sunDir: o.sunDir,
+        shade: o.shade,
         // The patch's part of the tile image, and of the whole-Earth night image.
         dayRect: { value: new T.Vector4(0, (south - (north - s)) / s, (east - west) / s, (north - south) / s) },
         nightRect: { value: new T.Vector4((west + 180) / 360, (south + 90) / 180, (east - west) / 360, (north - south) / 180) },
