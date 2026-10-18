@@ -9,6 +9,8 @@ import { kpColor, kpLine, rgb } from '../lib/kpLines';
 import { placeName, useLocations, type Place } from '../lib/locations';
 import type { KpPoint } from '../lib/feeds';
 import { MapPanel } from '../components/MapPanel';
+import { TimeSlider } from '../components/TimeSlider';
+import type { Frame } from '../lib/ovalFrames';
 import { bestCandidates, loadPlaces, spacingKm, thinPlaces, type BestPlace, type PlaceRow } from '../lib/bestPlaces';
 import { cloudify } from '../lib/cloudify';
 import { Globe } from '../components/Globe';
@@ -90,6 +92,50 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
   const [status, setStatus] = useState<MessageKey | ''>('map.loading');
   const [forecast, setForecast] = useState<number | null>(null);
   const [ready, setReady] = useState(false);
+  // Time slider (#43): saved half-hourly frames from the last day, and which one is shown (frames.length = Live).
+  const liveOval = useRef<{ url: string; forecast: number | null } | null>(null);
+  const [frames, setFrames] = useState<Frame[]>([]);
+  const [fi, setFi] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const [frameBytes, setFrameBytes] = useState<Uint8Array | null>(null);
+  useEffect(() => {
+    fetch('/api/oval/frames').then(r => (r.ok ? r.json() : { frames: [] })).then((j: { frames: Frame[] }) => {
+      // Drop a frame that is the live oval itself.
+      const fs = j.frames.filter(f => f.forecast !== liveOval.current?.forecast);
+      setFrames(fs); setFi(fs.length);
+    }).catch(() => {});
+  }, []);
+  const frameCache = useRef(new Map<number, Promise<Uint8Array | null>>());
+  const getBytes = (t: number) => {
+    let p = frameCache.current.get(t);
+    if (!p) {
+      p = fetch(`/api/oval?t=${t}`).then(r => (r.ok ? r.json() : null)).then((g: OvalGrid | null) => (g ? Uint8Array.from(atob(g.data), ch => ch.charCodeAt(0)) : null)).catch(() => null);
+      frameCache.current.set(t, p);
+    }
+    return p;
+  };
+  const urlCache = useRef(new Map<number, string>());
+  useEffect(() => {
+    const f = frames[fi];
+    if (!f) { setFrameBytes(null); return; }
+    let live = true;
+    getBytes(f.forecast).then(b => { if (live) setFrameBytes(b); });
+    if (playing && frames[fi + 1]) void getBytes(frames[fi + 1].forecast);
+    return () => { live = false; };
+  }, [fi, frames, playing]); // eslint-disable-line react-hooks/exhaustive-deps
+  // 2D: swap the aurora image for the frame's (rendered once per frame and kept).
+  useEffect(() => {
+    const prob = layers.current.prob as Leaflet.LayerGroup | undefined;
+    const f = frames[fi];
+    if (!prob || !liveOval.current) return;
+    let url = liveOval.current.url;
+    if (f && frameBytes) {
+      url = urlCache.current.get(f.forecast) ?? renderOval(smoothOval(frameBytes));
+      urlCache.current.set(f.forecast, url);
+    }
+    prob.eachLayer(l => (l as Leaflet.ImageOverlay).setUrl(url));
+    setForecast(f ? f.forecast : liveOval.current.forecast);
+  }, [frameBytes, ready]); // eslint-disable-line react-hooks/exhaustive-deps
   const [notice, setNotice] = useState<MessageKey | ''>('');
   // 2D map or 3D globe; the last choice is remembered on this device.
   const [view, setView] = useState<'2d' | '3d'>('2d');
@@ -237,6 +283,7 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
         oval.current = smoothOval(bytes);
         const url = renderOval(oval.current);
         layers.current.prob = L.layerGroup(COPIES.map(dx => L.imageOverlay(url, [[-LAT_MAX, -180 + dx], [LAT_MAX, 180 + dx]], { pane: 'aurora', interactive: false })));
+        liveOval.current = { url, forecast: grid.forecast };
         setForecast(grid.forecast);
         setStatus('');
       } catch { setStatus('map.auroraUnavailable'); }
@@ -401,6 +448,8 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
     </div>
   );
 
+  const timeSlider = <TimeSlider frames={frames} index={fi} onIndex={setFi} playing={playing} onPlaying={setPlaying} />;
+
   const legendBody = (
     <>
       {on.aurora && (
@@ -467,20 +516,21 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
           </div>
         </div>
         {layerRow}
+        {frames.length > 0 && <div className="map-head-time">{timeSlider}</div>}
       </div>
       <div style={{ position: 'relative' }}>
         {/* Phones have no header, so the map carries the logo. */}
         <img className="map-logo" src="/icons/logo.svg" alt={SITE.name} width={56} height={43} />
         <div ref={box} className="aurora-map" role="application" aria-label={t('map.aria')} style={view === '3d' ? { display: 'none' } : undefined} />
         {view === '3d' && <Globe clouds={on.clouds} night={on.night} lights={on.lights} best={bestGlobe} saved={on.saved ? others : []} places={globePlaces} aurora={on.aurora} kpLines={on.kp} kp={kp} place={shownPlace} home={locations.find(l => l.isHome) ?? null}
-          pick={pick} onPick={(la, lo, name) => (name ? setPick({ name, lat: la, lon: lo }) : pickAt.current(la, lo))} onStatus={setGlobeStatus} onForecast={setForecast} />}
+          frame={frames[fi] ? frameBytes : null} pick={pick} onPick={(la, lo, name) => (name ? setPick({ name, lat: la, lon: lo }) : pickAt.current(la, lo))} onStatus={setGlobeStatus} onForecast={setForecast} />}
         {view === '2d' && (notice || status) && <div className="map-status" role="status">{t((notice || status) as MessageKey)}</div>}
         {view === '3d' && globeStatus && <div className="map-status" role="status">{t(globeStatus)}</div>}
         <details className="map-legend" ref={legend} open>
           <summary>{t('map.legend')}</summary>
           {legendBody}
         </details>
-        <MapPanel kp={kp} series={series} pick={pick} onClear={() => setPick(null)} layers={layerTiles}
+        <MapPanel kp={kp} series={series} pick={pick} onClear={() => setPick(null)} layers={layerTiles} slider={frames.length > 0 ? timeSlider : null}
           legend={<div className="map-panel-section map-panel-legend"><span className="label">{t('map.legend')}</span>{legendBody}</div>} />
       </div>
     </main>

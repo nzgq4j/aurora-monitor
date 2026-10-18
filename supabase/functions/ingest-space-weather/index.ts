@@ -106,7 +106,7 @@ Deno.serve(async () => {
     detail.solar_wind = error ? error.message : wind.size;
   } else detail.solar_wind = 'no data';
 
-  // 4. OVATION summary: max probability and 10% equatorward edge (northern hemisphere).
+  // 4. OVATION: max probability, the 10% equatorward edge (northern hemisphere) and the full grid.
   const ov = await json(`${SWPC}/json/ovation_aurora_latest.json`) as Row | null;
   const coords = Array.isArray(ov?.coordinates) ? ov!.coordinates as number[][] : [];
   if (coords.length) {
@@ -125,10 +125,17 @@ Deno.serve(async () => {
       const m = line.trim().match(/^\d{4}-\d\d-\d\d_\d\d:\d\d\s+\S+\s+(\d+)\s+(\d+)/);
       if (m) north = +m[1];
     }
+    // The whole grid (both hemispheres) for the map's time slider, in /api/oval's layout.
+    const bytes = new Uint8Array(181 * 360);
+    for (const [lon, lat, v] of coords) {
+      if (lat >= -90 && lat <= 90 && lon >= 0 && lon < 360) bytes[(Math.round(lat) + 90) * 360 + (Math.round(lon) % 360)] = Math.max(0, Math.min(100, Math.round(v)));
+    }
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode(...bytes.subarray(i, i + 8192));
     const forecast = iso(ov?.['Forecast Time']);
     if (forecast) {
       const { error } = await sb.from('ovation_snapshots').upsert({
-        forecast_time: forecast, observation_time: iso(ov?.['Observation Time']), hemi_power_north: north, max_probability: Math.round(max), edge,
+        forecast_time: forecast, observation_time: iso(ov?.['Observation Time']), hemi_power_north: north, max_probability: Math.round(max), edge, grid: btoa(bin),
       });
       detail.ovation = error ? error.message : { forecast, max: Math.round(max), edge: edge.length };
     }
