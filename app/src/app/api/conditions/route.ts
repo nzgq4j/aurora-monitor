@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { darkness, kpNeeded, magLat, sunAltitude } from '../../../lib/astro';
 import { ovalAt, ovation } from '../../../lib/feeds';
+import { CLOUD_HI, CLOUD_LO } from '../../../lib/cloudify';
 
 export interface CloudLayers { low: number; mid: number; high: number }
 
@@ -49,8 +50,6 @@ async function cloudCover(lat: number, lon: number): Promise<Conditions['cloud']
 
 // The same infrared mosaic as the map's Clouds layer, read at a point (GetFeatureInfo gives the grey level).
 const WMS = 'https://view.eumetsat.int/geoserver/ows?service=WMS&version=1.3.0&request=GetFeatureInfo&layers=mumi:worldcloudmap_ir108&query_layers=mumi:worldcloudmap_ir108&styles=&crs=EPSG:4326&width=3&height=3&i=1&j=1&info_format=application/json';
-/** Grey levels read as clear (≤ LO) and solid cloud (≥ HI); matches the map's cloud rendering. */
-const GREY_LO = 105, GREY_HI = 205;
 
 async function greyAt(lat: number, lon: number): Promise<number | null> {
   const d = 0.02;
@@ -70,7 +69,7 @@ async function satelliteCloud(lat: number, lon: number): Promise<Conditions['sat
   const points: [number, number][] = [[lat, lon], [lat + dLat, lon], [lat - dLat, lon], [lat, lon + dLon], [lat, lon - dLon]];
   const greys = (await Promise.all(points.map(([a, o]) => greyAt(Math.max(-89, Math.min(89, a)), ((o + 540) % 360) - 180)))).filter((g): g is number => g !== null);
   if (!greys.length) return null;
-  const cover = greys.map(g => { const t = Math.max(0, Math.min(1, (g - GREY_LO) / (GREY_HI - GREY_LO))); return t * t * (3 - 2 * t); });
+  const cover = greys.map(g => { const t = Math.max(0, Math.min(1, (g - CLOUD_LO) / (CLOUD_HI - CLOUD_LO))); return t * t * (3 - 2 * t); });
   return { pct: Math.round((100 * cover.reduce((a, b) => a + b, 0)) / cover.length) };
 }
 

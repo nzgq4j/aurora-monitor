@@ -414,6 +414,11 @@ export const en = {
   'map.legend.clear': 'Clear',
   'map.legend.thick': 'Thick, high cloud',
   'map.legend.cloudNote': 'EUMETSAT geostationary mosaic, updated hourly. Very cold snow and ice can read as cloud.',
+  'map.view': 'Map view',
+  'globe.aria': 'Interactive 3D globe showing the live aurora oval, day and night, and your location. Drag to turn, scroll or pinch to zoom.',
+  'globe.loading': 'Loading globe…',
+  'globe.noWebgl': 'This browser can’t show the 3D globe. Switch to 2D.',
+  'globe.legend': 'Night side shaded with city lights; aurora dims in daylight. Imagery: NASA.',
 
   // ---- Dashboard ----
   'dash.redirecting': 'Redirecting to sign in…',

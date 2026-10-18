@@ -414,6 +414,11 @@ export const fr: Messages = {
   'map.legend.clear': 'Dégagé',
   'map.legend.thick': 'Nuages épais et élevés',
   'map.legend.cloudNote': 'Mosaïque géostationnaire EUMETSAT, mise à jour toutes les heures. La neige et la glace très froides peuvent apparaître comme des nuages.',
+  'map.view': 'Vue de la carte',
+  'globe.aria': 'Globe 3D interactif montrant l’ovale auroral en direct, le jour et la nuit, et votre position. Faites glisser pour tourner ; faites défiler ou pincez pour zoomer.',
+  'globe.loading': 'Chargement du globe…',
+  'globe.noWebgl': 'Ce navigateur ne peut pas afficher le globe 3D. Passez en 2D.',
+  'globe.legend': 'Côté nuit ombré avec les lumières des villes ; l’aurore s’atténue en plein jour. Images : NASA.',
 
   // ---- Dashboard ----
   'dash.redirecting': 'Redirection vers la connexion…',

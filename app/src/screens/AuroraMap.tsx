@@ -7,6 +7,8 @@ import type { Topology, GeometryCollection } from 'topojson-specification';
 import { C } from '../data';
 import { magLat } from '../lib/astro';
 import { useLocations } from '../lib/locations';
+import { cloudify } from '../lib/cloudify';
+import { Globe } from '../components/Globe';
 import type { OvalGrid } from '../app/api/oval/route';
 import { useI18n } from '../i18n/I18n';
 import type { MessageKey } from '../i18n/core';
@@ -85,28 +87,14 @@ function kpLine(k: number, south = false): [number, number][] {
 
 const hhmm = (t: number) => new Date(t).toISOString().slice(11, 16);
 
-/**
- * Turn an infrared tile (grey: white = cold cloud tops, dark = warm clear ground) into white
- * cloud with transparency, so clear sky shows the basemap and thick, high cloud is near-opaque.
- */
-function cloudify(img: HTMLImageElement, tile: HTMLCanvasElement) {
-  const ctx = tile.getContext('2d', { willReadFrequently: true })!;
-  ctx.drawImage(img, 0, 0, tile.width, tile.height);
-  const d = ctx.getImageData(0, 0, tile.width, tile.height);
-  const px = d.data;
-  for (let o = 0; o < px.length; o += 4) {
-    const t = Math.max(0, Math.min(1, (px[o] - CLOUD_LO) / (CLOUD_HI - CLOUD_LO)));
-    px[o + 3] = px[o + 3] ? Math.round(255 * CLOUD_MAX * t * t * (3 - 2 * t)) : 0;
-    px[o] = 236; px[o + 1] = 241; px[o + 2] = 246;
-  }
-  ctx.putImageData(d, 0, 0);
-}
-/** Grey levels treated as clear (≤ LO) and as solid cloud (≥ HI), and the strongest cloud opacity. */
-const CLOUD_LO = 105, CLOUD_HI = 205, CLOUD_MAX = 0.82;
 /** Imagery refreshes hourly; a 15-minute stamp keeps tiles current without refetching on every visit. */
 const cloudStamp = () => Math.floor(Date.now() / 9e5);
 
 const HOUSE = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5M5.5 9.5V20h5v-6h3v6h5V9.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+
+const VIEW_KEY = 'pl.map.view';
+/** The globe's aurora colours (see AURORA_FRAG in Globe): faint green, green, yellow, red. */
+const GLOBE_RAMP = 'linear-gradient(90deg, rgba(89,255,58,.25), #59ff3a 35%, #ffe14d 65%, #ff4d4d)';
 
 export function AuroraMap({ kp }: { kp: number | null }) {
   const box = useRef<HTMLDivElement>(null);
@@ -122,6 +110,16 @@ export function AuroraMap({ kp }: { kp: number | null }) {
   const [ready, setReady] = useState(false);
   const [clouds, setClouds] = useState(false);
   const [notice, setNotice] = useState<MessageKey | ''>('');
+  // 2D map or 3D globe; the last choice is remembered on this device.
+  const [view, setView] = useState<'2d' | '3d'>('2d');
+  const [globeStatus, setGlobeStatus] = useState<MessageKey | ''>('globe.loading');
+  useEffect(() => { try { if (localStorage.getItem(VIEW_KEY) === '3d') setView('3d'); } catch { /* storage unavailable */ } }, []);
+  const chooseView = (v: '2d' | '3d') => {
+    setView(v);
+    try { localStorage.setItem(VIEW_KEY, v); } catch { /* storage unavailable */ }
+  };
+  // Leaflet measures its container, so it needs a nudge after being hidden.
+  useEffect(() => { if (view === '2d') setTimeout(() => mapRef.current?.invalidateSize(), 0); }, [view]);
   const { shownPlace, locations, load } = useLocations();
   const current = kp === null ? null : Math.max(1, Math.min(9, Math.round(kp)));
 
@@ -301,31 +299,46 @@ export function AuroraMap({ kp }: { kp: number | null }) {
   return (
     <main data-screen-label="Aurora map" style={{ display: 'flex', flexDirection: 'column' }}>
       <div className="wrap" style={{ width: '100%', padding: '16px var(--gutter)', display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-        <h1 className="display" style={{ fontSize: 'clamp(28px, 7vw, 40px)', lineHeight: 1 }}>{t('map.h1a')} <span className="hl">{t('map.h1b')}</span></h1>
-        <div role="group" aria-label={t('map.layers')} style={{ display: 'flex', alignItems: 'center', padding: 4, border: '1px solid var(--line-2)', borderRadius: 999, background: '#111', flex: '1 1 340px', maxWidth: 560 }}>
-          {seg('prob', t('map.mode.prob'))}{seg('kp', t('map.mode.kp'))}{seg('both', t('map.mode.both'))}
-          <span aria-hidden="true" style={{ width: 1, height: 22, background: 'var(--line-2)', margin: '0 4px', flex: 'none' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <h1 className="display" style={{ fontSize: 'clamp(28px, 7vw, 40px)', lineHeight: 1 }}>{t('map.h1a')} <span className="hl">{t('map.h1b')}</span></h1>
+          <div role="group" aria-label={t('map.view')} style={{ display: 'flex', padding: 3, border: '1px solid var(--line-2)', borderRadius: 999, background: '#111', flex: 'none' }}>
+            {(['2d', '3d'] as const).map(v => (
+              <button key={v} type="button" className="btn mono" aria-pressed={view === v} onClick={() => chooseView(v)}
+                style={{ minWidth: 44, padding: '7px 11px', borderRadius: 999, fontWeight: 700, fontSize: 13, background: view === v ? '#fff' : 'transparent', color: view === v ? '#000' : C.soft }}>
+                {v.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div role="group" aria-label={t('map.layers')} style={{ display: 'flex', alignItems: 'center', padding: 4, border: '1px solid var(--line-2)', borderRadius: 999, background: '#111', flex: view === '2d' ? '1 1 340px' : 'none', maxWidth: 560 }}>
+          {/* The globe shows probability only; Kp reach lines are a 2D-map view. */}
+          {view === '2d' && <>
+            {seg('prob', t('map.mode.prob'))}{seg('kp', t('map.mode.kp'))}{seg('both', t('map.mode.both'))}
+            <span aria-hidden="true" style={{ width: 1, height: 22, background: 'var(--line-2)', margin: '0 4px', flex: 'none' }} />
+          </>}
           {/* Clouds is an overlay that combines with any of the views above, so it toggles on its own. */}
           <button type="button" className="btn" aria-pressed={clouds} onClick={() => setClouds(on => !on)}
-            style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '10px 8px', borderRadius: 999, fontWeight: 700, fontSize: 14, background: clouds ? '#3a3f3c' : 'transparent', color: clouds ? '#fff' : C.soft, whiteSpace: 'nowrap' }}>
+            style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: view === '2d' ? '10px 8px' : '10px 16px', borderRadius: 999, fontWeight: 700, fontSize: 14, background: clouds ? '#3a3f3c' : 'transparent', color: clouds ? '#fff' : C.soft, whiteSpace: 'nowrap' }}>
             <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M7 18.5h10.5a4 4 0 0 0 .4-8A6 6 0 0 0 6.4 9.2 4.7 4.7 0 0 0 7 18.5Z" fill={clouds ? '#fff' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinejoin="round" /></svg>
             {t('map.clouds')}
           </button>
         </div>
       </div>
       <div style={{ position: 'relative' }}>
-        <div ref={box} className="aurora-map" role="application" aria-label={t('map.aria')} />
-        {(notice || status) && <div className="map-status" role="status">{t((notice || status) as MessageKey)}</div>}
+        <div ref={box} className="aurora-map" role="application" aria-label={t('map.aria')} style={view === '3d' ? { display: 'none' } : undefined} />
+        {view === '3d' && <Globe clouds={clouds} place={shownPlace} home={locations.find(l => l.isHome) ?? null} onStatus={setGlobeStatus} onForecast={setForecast} />}
+        {view === '2d' && (notice || status) && <div className="map-status" role="status">{t((notice || status) as MessageKey)}</div>}
+        {view === '3d' && globeStatus && <div className="map-status" role="status">{t(globeStatus)}</div>}
         <details className="map-legend" ref={legend} open>
           <summary>{t('map.legend')}</summary>
-          {mode !== 'kp' && (
+          {(mode !== 'kp' || view === '3d') && (
             <div>
               <span className="label">{t('map.legend.prob')}{forecast ? ` · ${hhmm(forecast)} UT` : ''}</span>
-              <div style={{ height: 10, borderRadius: 5, margin: '6px 0 4px', background: `linear-gradient(90deg, ${STOPS.map(([t, c]) => `${rgb(c)} ${t * 100}%`).join(', ')})` }} />
+              <div style={{ height: 10, borderRadius: 5, margin: '6px 0 4px', background: view === '3d' ? GLOBE_RAMP : `linear-gradient(90deg, ${STOPS.map(([t, c]) => `${rgb(c)} ${t * 100}%`).join(', ')})` }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.muted }}><span>5%</span><span>30%</span><span>60%</span><span>90%</span></div>
             </div>
           )}
-          {mode !== 'prob' && (
+          {mode !== 'prob' && view === '2d' && (
             <div>
               <span className="label">{t('map.legend.kp')}</span>
               <div style={{ display: 'flex', gap: 4, marginTop: 6 }}>
@@ -344,6 +357,7 @@ export function AuroraMap({ kp }: { kp: number | null }) {
               <span style={{ display: 'block', fontSize: 11, color: C.muted, marginTop: 4 }}>{t('map.legend.cloudNote')}</span>
             </div>
           )}
+          {view === '3d' && <span style={{ display: 'block', fontSize: 11, color: C.muted }}>{t('globe.legend')}</span>}
         </details>
       </div>
     </main>
