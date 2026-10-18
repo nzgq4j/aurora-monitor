@@ -31,22 +31,31 @@ function toVector(T: typeof THREE, lat: number, lon: number, r = 1) {
   return new T.Vector3(-Math.cos(phi) * Math.sin(theta) * r, Math.cos(theta) * r, Math.sin(phi) * Math.sin(theta) * r);
 }
 
+/** Latitude the camera looks from for a place: well towards the equator, but on the place's side of it. */
+const viewLat = (lat: number) => Math.max(-48, Math.min(48, lat * 0.72));
+
 /**
  * OVATION grid (row = latitude −90…90, column = longitude 0…359 °E) re-laid out as an equirectangular
- * texture, lightly smoothed (two 3×3 passes, wrapping in longitude) so the 1° cells don't show as steps.
+ * texture, smoothed so the 1° cells don't show as steps. The longitude blur widens towards the poles,
+ * where a degree of longitude is short, so the smoothing covers about the same ground everywhere.
  */
 function ovalTexture(T: typeof THREE, grid: Uint8Array) {
   let cur = new Float32Array(360 * 181);
   for (let row = 0; row < 181; row++) for (let c = 0; c < 360; c++) cur[row * 360 + c] = grid[row * 360 + ((c + 180) % 360)];
-  for (let pass = 0; pass < 2; pass++) {
+  for (let pass = 0; pass < 3; pass++) {
+    const along = new Float32Array(cur.length);
+    for (let row = 0; row < 181; row++) {
+      const span = Math.min(30, Math.round(1.5 / Math.max(0.05, Math.cos(((row - 90) * Math.PI) / 180))));
+      for (let c = 0; c < 360; c++) {
+        let sum = 0;
+        for (let dc = -span; dc <= span; dc++) sum += cur[row * 360 + ((c + dc + 360) % 360)];
+        along[row * 360 + c] = sum / (2 * span + 1);
+      }
+    }
     const next = new Float32Array(cur.length);
     for (let row = 0; row < 181; row++) for (let c = 0; c < 360; c++) {
       let sum = 0, n = 0;
-      for (let dr = -1; dr <= 1; dr++) {
-        const r = row + dr;
-        if (r < 0 || r > 180) continue;
-        for (let dc = -1; dc <= 1; dc++) { sum += cur[r * 360 + ((c + dc + 360) % 360)]; n++; }
-      }
+      for (let r = Math.max(0, row - 1); r <= Math.min(180, row + 1); r++) { sum += along[r * 360 + c]; n++; }
       next[row * 360 + c] = sum / n;
     }
     cur = next;
@@ -262,9 +271,10 @@ export function Globe({ clouds, place, home, onStatus, onForecast }: Props) {
         if (label.current) label.current.textContent = markerName;
       };
 
-      // Camera: start over the marked place (or the North Atlantic aurora zone), tilted a little north.
+      // Camera: face the marked place (or the North Atlantic aurora zone) from mid-latitudes, so the
+      // auroral oval sits on the upper part of the globe instead of being seen from over the pole.
       const start = place ?? { lat: 62, lon: -20 };
-      camera.position.copy(toVector(T, Math.min(80, start.lat + 8), start.lon, 4));
+      camera.position.copy(toVector(T, viewLat(start.lat), start.lon, 4));
       const controls = new OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
       controls.dampingFactor = 0.08;
@@ -273,6 +283,9 @@ export function Globe({ clouds, place, home, onStatus, onForecast }: Props) {
       controls.zoomSpeed = 0.7;
       controls.minDistance = 1.35;
       controls.maxDistance = 7;
+      // Keep the view off the poles, where turning the globe spins it in place.
+      controls.minPolarAngle = (12 * Math.PI) / 180;
+      controls.maxPolarAngle = (168 * Math.PI) / 180;
       // A slow turn until the first touch, unless the user prefers reduced motion.
       controls.autoRotate = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       controls.autoRotateSpeed = 0.35;
@@ -286,9 +299,10 @@ export function Globe({ clouds, place, home, onStatus, onForecast }: Props) {
         controls.autoRotate = false;
         touched = true;
         const dist = Math.min(camera.position.length(), 2.6);
-        flight = { from: camera.position.clone(), to: toVector(T, Math.min(80, p.lat + 6), p.lon, dist), t0: performance.now() };
+        flight = { from: camera.position.clone(), to: toVector(T, viewLat(p.lat), p.lon, dist), t0: performance.now() };
       };
 
+      let fit = 4, viewH = 0, lastShift = NaN;
       const resize = () => {
         const w = el.clientWidth, h = el.clientHeight;
         if (!w || !h) return;
@@ -297,8 +311,10 @@ export function Globe({ clouds, place, home, onStatus, onForecast }: Props) {
         renderer.domElement.style.height = '100%';
         camera.aspect = w / h;
         camera.updateProjectionMatrix();
+        viewH = h;
+        lastShift = NaN;
         // Keep the whole globe in view until the user has zoomed themselves.
-        const fit = fitDistance(camera.fov, camera.aspect);
+        fit = fitDistance(camera.fov, camera.aspect);
         controls.maxDistance = Math.max(7, fit * 2);
         if (!touched && !flight) camera.position.setLength(fit);
       };
@@ -323,6 +339,15 @@ export function Globe({ clouds, place, home, onStatus, onForecast }: Props) {
           if (k >= 1) flight = null;
         }
         controls.update();
+        // At the opening zoom the globe is cropped, so shift it away from the pole facing the viewer
+        // to keep the auroral oval on screen. Fades out on zooming in; the orbit stays centred.
+        const len = camera.position.length();
+        const zoom = Math.max(0, Math.min(1, (len - controls.minDistance) / (fit - controls.minDistance)));
+        const shift = Math.round(0.14 * viewH * zoom * Math.max(-1, Math.min(1, (camera.position.y / len) * 3)));
+        if (shift !== lastShift) {
+          lastShift = shift;
+          camera.setViewOffset(el.clientWidth, viewH, 0, -shift, el.clientWidth, viewH);
+        }
         renderer.render(scene, camera);
         // Label follows the marker; hidden when the marker is round the back of the Earth.
         const lab = label.current;
