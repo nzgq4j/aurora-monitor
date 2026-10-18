@@ -253,6 +253,7 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 
 /* ---- Phone app bar: on phone widths the header gives way to a tab bar along the bottom. ---- */
 .tabbar { display: none; }
+.phone-brand { display: none; }
 @media (max-width: 640px) {
   .header { display: none; }
   .app { padding-top: env(safe-area-inset-top); padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
@@ -267,6 +268,17 @@ button.pill-ghost { border: 1px solid var(--line-2); }
   }
   .tabbar-item span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .tabbar-item.on { color: var(--green); background: rgba(108, 255, 43, .08); }
+  .tabbar-more { position: relative; flex: 1 1 0; min-width: 0; display: flex; }
+  .tabbar-sheet {
+    position: absolute; right: 0; bottom: calc(100% + 12px); width: min(240px, calc(100vw - 24px)); padding: 6px;
+    border-radius: 16px; border: 1px solid var(--line-2); background: #0a0c0b; box-shadow: 0 -10px 30px rgba(0,0,0,.6);
+  }
+  .tabbar-sheet-item { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 12px; border-radius: 10px; color: var(--soft); font: 600 16px var(--f-body); text-align: left; }
+  .tabbar-sheet-item.on { color: var(--green); background: rgba(108, 255, 43, .08); }
+  /* Logo at the top of every page except the map, which shows it over the map. */
+  .phone-brand { display: flex; justify-content: center; padding: 10px var(--gutter) 0; }
+  .phone-brand .btn { display: inline-flex; padding: 2px 6px; }
+  .phone-brand img { height: 40px; width: auto; display: block; }
   /* Map page: no title row; the map fills the screen above the tab bar and layers live in a menu. */
   .map-head { position: absolute; width: 1px !important; height: 1px; padding: 0 !important; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .aurora-map { height: calc(100svh - 64px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); min-height: 360px; }

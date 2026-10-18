@@ -11,6 +11,7 @@ export const nl: Messages = {
   'nav.signIn': 'Inloggen',
   'nav.getAlerts': 'Meldingen aan',
   'nav.main': 'Hoofdnavigatie',
+  'nav.more': 'Meer',
   'common.dismiss': 'SLUITEN',
   'footer.sources': 'Data: NOAA SWPC, GFZ Potsdam, NASA/SDO. Tijden in UT.',
   'meta.tagline': 'Poollichtverwachtingen',
