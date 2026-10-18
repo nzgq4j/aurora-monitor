@@ -88,7 +88,7 @@ const EARTH_FRAG = /* glsl */ `
     vec3 tex = texture2D(dayMap, dayRect.xy + vUv * dayRect.zw).rgb;
     vec3 dayCol = tex * mix(1.05, 0.75 + 0.6 * max(d, 0.0), shade.x);
     vec3 lights = texture2D(nightMap, nightRect.xy + vUv * nightRect.zw).rgb * vec3(1.1, 0.95, 0.75);
-    vec3 nightCol = mix(tex * 0.025, lights + tex * 0.012, shade.y);
+    vec3 nightCol = mix(tex * 0.16, lights + tex * 0.07, shade.y);
     gl_FragColor = vec4(mix(nightCol, dayCol, day), 1.0);
     #include <colorspace_fragment>
   }`;
