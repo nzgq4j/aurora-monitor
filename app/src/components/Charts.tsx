@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import { useI18n } from '../i18n/I18n';
+import { auroraColor } from '../lib/auroraColor';
 import { C, kpBarColor, polar } from '../data';
 
 const monoText = (size: number) => ({ fill: C.muted, font: `${size}px 'JetBrains Mono'` });
@@ -15,7 +16,6 @@ const pol = (lat: number, lon: number): [number, number] => {
 const f = (n: number) => Math.round(n * 10) / 10;
 
 /** Colour ramp for OVATION probability: green, then yellow, then red at high values. */
-const ovalColor = (v: number) => (v >= 50 ? '#F06A6A' : v >= 25 ? '#E6B800' : '#59FF3A');
 
 interface PolarProps {
   /** [lon 0..359 east, lat, probability %] */
@@ -51,8 +51,10 @@ export function PolarOval({ points, edge, marker }: PolarProps) {
       <g clipPath={`url(#${id}c)`}>
         <g style={{ filter: `url(#${id}b)` }}>
           {points.map(([lon, lat, v]) => {
+            const { rgb, alpha } = auroraColor(v);
+            if (alpha < 0.02) return null;
             const [x, y] = pol(lat, lon > 180 ? lon - 360 : lon);
-            return <circle key={`${lon},${lat}`} cx={f(x)} cy={f(y)} r="6" style={{ fill: ovalColor(v), opacity: Math.min(1, 0.15 + v / 40) }} />;
+            return <circle key={`${lon},${lat}`} cx={f(x)} cy={f(y)} r="6" style={{ fill: `rgb(${rgb.join(',')})`, opacity: alpha }} />;
           })}
         </g>
         {polar.meridians.map((m, i) => <line key={i} x1="240" y1="240" x2={m.x} y2={m.y} style={{ stroke: '#fff', strokeOpacity: .08 }} />)}
