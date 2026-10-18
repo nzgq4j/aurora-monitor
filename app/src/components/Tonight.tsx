@@ -12,6 +12,7 @@ import { INTL_TAG } from '../i18n/config';
 import { useI18n } from '../i18n/I18n';
 import { USEFUL_EVENT } from './InstallPrompt';
 import { MoonIcon, useNightMode } from './NightMode';
+import { Sighting } from './Sighting';
 
 export const LEVEL_COLOR: Record<Level, string> = { goNow: C.green, goLater: C.green, maybe: C.amber, no: C.muted };
 export const scoreColor = (s: number) => (s >= 50 ? C.green : s >= 20 ? C.amber : '#3a403c');
@@ -180,6 +181,7 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
             <span>{cond?.sun.dark ? t('tonight.badge.dark') : lightUntil ? t('tonight.badge.light', { time: time(lightUntil) }) : t('tonight.badge.lightNone')}</span>
             <span>{result.m.up ? t('tonight.badge.moonUp', { pct: Math.round(result.m.illumination * 100) }) : t('tonight.badge.moonDown')}</span>
           </div>
+          <Sighting key={`${shownPlace.lat},${shownPlace.lon}`} lat={shownPlace.lat} lon={shownPlace.lon} score={h0.score} dark={!!cond?.sun.dark} />
           </div>
 
           <div className="tonight-timeline">

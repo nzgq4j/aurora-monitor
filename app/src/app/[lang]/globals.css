@@ -244,6 +244,8 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 .map-best b { position: absolute; left: -4px; top: -4px; width: 8px; height: 8px; border-radius: 50%; background: #7fd4ff; box-shadow: 0 0 6px rgba(127, 212, 255, .8); cursor: pointer; }
 .map-best span { position: absolute; left: 9px; top: -9px; white-space: nowrap; color: #bfe8ff; font: 700 12px var(--f-body); text-shadow: 0 0 3px #000, 0 0 3px #000, 0 0 3px #000; cursor: pointer; }
 .globe-place { position: absolute; left: 0; top: 0; z-index: 5; padding: 0; white-space: nowrap; color: #bfe8ff; font: 700 12px var(--f-body); text-shadow: 0 0 3px #000, 0 0 3px #000, 0 0 3px #000; visibility: hidden; will-change: transform; }
+.map-sight b { position: absolute; left: -5px; top: -5px; width: 10px; height: 10px; border-radius: 50%; background: #ffd166; box-shadow: 0 0 8px rgba(255, 209, 102, .8); }
+.map-sight-key { flex: none; width: 10px; height: 10px; border-radius: 50%; background: #ffd166; box-shadow: 0 0 6px rgba(255, 209, 102, .8); }
 .map-pick b { position: absolute; left: -7px; top: -7px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px #000, 0 0 0 5px rgba(255, 255, 255, .25); }
 
 /* Map panel (components/MapPanel): a card in the corner on larger screens, a pull-up sheet on phones. */
@@ -280,7 +282,7 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 .map-time-label b { font-size: 13px; white-space: nowrap; }
 .map-time-label small { font-size: 11px; color: var(--muted); }
 .map-head-time { flex: 1 1 100%; }
-.map-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.map-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .map-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 72px; padding: 8px 4px; border-radius: 12px; border: 1px solid var(--line-2); background: #0d100e; color: var(--soft); font-size: 12px; font-weight: 700; text-align: center; }
 .map-tile[aria-pressed="true"] { border-color: var(--green); background: rgba(108, 255, 43, .08); color: #fff; }
 .map-tile[aria-pressed="true"] svg { color: var(--green); }
@@ -396,6 +398,15 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 .tonight-share { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 999px; border: 1px solid var(--line-2); background: #0b0d0c; color: #fff; }
 .tonight-share:active { border-color: var(--green); color: var(--green); }
 .tonight-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+/* "I saw it" (components/Sighting). */
+.sighting { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+.sighting small { font-size: 13px; color: var(--muted); }
+.sighting-btn { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; padding: 10px 18px; border: 1px solid var(--green); color: var(--green); background: rgba(108, 255, 43, .06); }
+.sighting-btn:disabled { border-color: var(--line-2); color: var(--muted); background: transparent; cursor: not-allowed; }
+.sighting-done { flex-direction: column; align-items: flex-start; font-size: 15px; font-weight: 600; color: var(--green); }
+.sighting-levels { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.sighting-levels .btn { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line-2); font-size: 13px; font-weight: 700; color: var(--soft); }
+.sighting-levels .btn[aria-pressed="true"] { border-color: var(--green); color: var(--green); }
 .tonight-badges span { padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line-2); background: #0e110f; font-size: 13px; font-weight: 600; color: var(--soft); white-space: nowrap; }
 /* Now page detail cards (components/DetailCard): title and one-line summary; folded on phones until opened. */
 .detail-card { display: flex; flex-direction: column; gap: 14px; padding-top: 24px; }
