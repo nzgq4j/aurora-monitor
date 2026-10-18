@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type * as THREE from 'three';
 import { subsolarPoint } from '../lib/astro';
 import { cloudify } from '../lib/cloudify';
+import { OVAL_H, OVAL_W, smoothOval } from '../lib/ovalSmooth';
 import type { Place } from '../lib/locations';
 import type { OvalGrid } from '../app/api/oval/route';
 import { useI18n } from '../i18n/I18n';
@@ -37,60 +38,12 @@ function toVector(T: typeof THREE, lat: number, lon: number, r = 1) {
 const viewLat = (lat: number) => Math.max(-48, Math.min(48, lat * 0.72));
 
 /**
- * OVATION grid (row = latitude −90…90, column = longitude 0…359 °E) re-laid out as an equirectangular
- * texture at 4× the resolution and blurred over a fixed distance on the ground (about 130 km), so the
- * 1° cells don't show. The longitude blur widens towards the poles, where a degree of longitude is short.
- * Stored as 0–255 for 0–100 % so the edge of the oval doesn't step through few grey levels.
+ * The smoothed OVATION field as a texture, stored as 0–255 for 0–100 % so the edge of the oval
+ * doesn't step through few grey levels.
  */
-const OVAL_SCALE = 4, OVAL_W = 360 * OVAL_SCALE, OVAL_H = 180 * OVAL_SCALE + 1, OVAL_SIGMA_DEG = 1.2;
-
 function ovalTexture(T: typeof THREE, grid: Uint8Array) {
-  const W = OVAL_W, H = OVAL_H, S = OVAL_SCALE;
-  const at = (row: number, c: number) => grid[row * 360 + ((c + 180) % 360)];
-  // Bilinear upsample (u = 0 at 180° W, wrapping in longitude).
-  let cur = new Float32Array(W * H);
-  for (let y = 0; y < H; y++) {
-    const r0 = Math.min(180, Math.floor(y / S)), r1 = Math.min(180, r0 + 1), ty = y / S - r0;
-    for (let x = 0; x < W; x++) {
-      const c0 = Math.floor(x / S), c1 = (c0 + 1) % 360, tx = x / S - c0;
-      const top = at(r0, c0) * (1 - tx) + at(r0, c1) * tx, bot = at(r1, c0) * (1 - tx) + at(r1, c1) * tx;
-      cur[y * W + x] = top * (1 - ty) + bot * ty;
-    }
-  }
-  // Three box passes approximate a Gaussian; running sums keep each pass linear in the texture size.
-  const boxRadius = (sigmaPx: number) => Math.max(1, Math.round((Math.sqrt(4 * sigmaPx * sigmaPx + 1) - 1) / 2));
-  const latR = boxRadius(OVAL_SIGMA_DEG * S);
-  const lonR = Array.from({ length: H }, (_, y) => {
-    const cos = Math.cos(((y / S - 90) * Math.PI) / 180);
-    return cos < 0.01 ? W : boxRadius((OVAL_SIGMA_DEG * S) / cos);
-  });
-  const next = new Float32Array(W * H);
-  for (let pass = 0; pass < 3; pass++) {
-    for (let y = 0; y < H; y++) {
-      const o = y * W, r = lonR[y];
-      if (2 * r + 1 >= W) {
-        let mean = 0;
-        for (let x = 0; x < W; x++) mean += cur[o + x];
-        next.fill(mean / W, o, o + W);
-        continue;
-      }
-      let sum = 0;
-      for (let k = -r; k <= r; k++) sum += cur[o + ((k + W) % W)];
-      for (let x = 0; x < W; x++) {
-        next[o + x] = sum / (2 * r + 1);
-        sum += cur[o + ((x + r + 1) % W)] - cur[o + ((x - r + W) % W)];
-      }
-    }
-    for (let x = 0; x < W; x++) {
-      const row = (y: number) => next[Math.max(0, Math.min(H - 1, y)) * W + x];
-      let sum = 0;
-      for (let k = -latR; k <= latR; k++) sum += row(k);
-      for (let y = 0; y < H; y++) {
-        cur[y * W + x] = sum / (2 * latR + 1);
-        sum += row(y + latR + 1) - row(y - latR);
-      }
-    }
-  }
+  const W = OVAL_W, H = OVAL_H;
+  const cur = smoothOval(grid);
   const data = Uint8Array.from(cur, v => Math.round(Math.min(100, v) * 2.55));
   const tex = new T.DataTexture(data, W, H, T.RedFormat, T.UnsignedByteType);
   tex.magFilter = T.LinearFilter;
