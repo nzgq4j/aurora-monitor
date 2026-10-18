@@ -9,12 +9,13 @@ import { supabase } from './lib/supabase';
 import { useI18n } from './i18n/I18n';
 import { LOCALES } from './i18n/config';
 
-export type Screen = 'home' | 'map' | 'plans' | 'checkout' | 'signin' | 'account';
+export type Screen = 'home' | 'map' | 'alerts' | 'plans' | 'checkout' | 'signin' | 'account';
 export type Tab = 'overview' | 'alerts' | 'locations' | 'plans' | 'account';
 
 export const PATHS: Record<Screen, string> = {
   home: '/',
   map: '/map',
+  alerts: '/alerts',
   plans: '/plans',
   checkout: '/checkout',
   signin: '/signin',
