@@ -101,6 +101,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   useAlertSettingsSync(s, setState, auth.user?.id ?? null);
 
+  // Someone who left Checkout to create an account (or sign in) comes back to it once signed in,
+  // whichever page the confirmation email lands them on.
+  const profileId = auth.profile?.id;
+  const onFree = auth.effectivePlan === 'free';
+  useEffect(() => {
+    if (!live || !profileId) return;
+    const intent = takeCheckoutIntent();
+    if (!intent || !onFree) return;
+    setState(prev => ({ ...prev, pending: intent.tier, annual: intent.annual, toast: '' }));
+    if (screen !== 'checkout') router.push(PATHS.checkout);
+  }, [live, profileId]); // eslint-disable-line react-hooks/exhaustive-deps -- once per sign-in
+
   const store = useMemo<Store>(() => {
     const set: Store['set'] = patch =>
       setState(prev => ({ ...prev, ...(typeof patch === 'function' ? patch(prev) : patch) }));
@@ -201,6 +213,25 @@ export function useStore(): Store {
   const v = useContext(Ctx);
   if (!v) throw new Error('useStore must be used inside StoreProvider');
   return v;
+}
+
+const INTENT_KEY = 'pl.checkout.intent';
+interface CheckoutIntent { tier: TierId; annual: boolean; at: number }
+
+/** Remember that the visitor left Checkout to sign up or sign in, so they can be brought back. */
+export function rememberCheckoutIntent(tier: TierId, annual: boolean) {
+  try { localStorage.setItem(INTENT_KEY, JSON.stringify({ tier, annual, at: Date.now() } satisfies CheckoutIntent)); } catch { /* storage unavailable */ }
+}
+
+/** Read and clear a remembered Checkout visit; ignored after a day (or if the plan no longer exists). */
+function takeCheckoutIntent(): CheckoutIntent | null {
+  try {
+    const raw = localStorage.getItem(INTENT_KEY);
+    if (!raw) return null;
+    localStorage.removeItem(INTENT_KEY);
+    const v = JSON.parse(raw) as CheckoutIntent;
+    return Date.now() - v.at < 864e5 && TIERS.some(t => t.id === v.tier && t.m > 0) ? v : null;
+  } catch { return null; }
 }
 
 /** Displayed per-month price for a tier under the current billing cycle, formatted by `money`. */
