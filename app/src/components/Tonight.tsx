@@ -23,7 +23,7 @@ function SkyScene({ look, strength, cloud, light }: { look: 'low' | 'high' | 'ov
   const top = look === 'overhead' ? 6 : look === 'high' ? 22 : 40;
   const a = Math.max(0.12, Math.min(1, strength / 80));
   return (
-    <svg viewBox="0 0 120 80" width="120" height="80" aria-hidden="true" style={{ flex: 'none', borderRadius: 12, display: 'block' }}>
+    <svg viewBox="0 0 120 80" className="tonight-scene" aria-hidden="true">
       <defs>
         <linearGradient id="tn-sky" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor={light ? '#24324a' : '#05070d'} /><stop offset="1" stopColor={light ? '#46597a' : '#0d1626'} />
@@ -44,7 +44,7 @@ function SkyScene({ look, strength, cloud, light }: { look: 'low' | 'high' | 'ov
 }
 
 /**
- * The answer first, for phones: should you go out, when, and where to look, for your location, with
+ * The answer first: should you go out, when, and where to look, for your location, with
  * the next 12 hours as a strip of bars. Scores come from lib/tonight.
  */
 export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }) {
@@ -157,15 +157,16 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
       {!v || !h0 ? (
         <span style={{ color: 'var(--muted)', minHeight: 120 }}>{loading || !cond ? t('sky.checking') : t('common.noData')}</span>
       ) : (
-        <>
+        <div className="tonight-body">
+          <div className="tonight-main">
           <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0, flex: 1 }}>
               <span className="eyebrow">{t('tonight.h')}</span>
-              <h2 className={'display tonight-word' + (v.level === 'goNow' ? ' tonight-glow' : '')} style={{ color: LEVEL_COLOR[v.level], fontSize: 'clamp(30px, 9vw, 40px)', lineHeight: 0.95, margin: 0 }}>
+              <h2 className={'display tonight-word' + (v.level === 'goNow' ? ' tonight-glow' : '')} style={{ color: LEVEL_COLOR[v.level] }}>
                 {t(`tonight.level.${v.level}`)}
               </h2>
               <span style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                <span className="stat-value" style={{ fontSize: 30 }}>{v.score}</span>
+                <span className="stat-value tonight-score">{v.score}</span>
                 <span style={{ fontSize: 13, color: 'var(--muted)' }}>/100 {t('tonight.score')}</span>
               </span>
             </div>
@@ -184,9 +185,10 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
             <span>{cond?.sun.dark ? t('tonight.badge.dark') : lightUntil ? t('tonight.badge.light', { time: time(lightUntil) }) : t('tonight.badge.lightNone')}</span>
             <span>{result.m.up ? t('tonight.badge.moonUp', { pct: Math.round(result.m.illumination * 100) }) : t('tonight.badge.moonDown')}</span>
           </div>
+          </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 4, borderTop: '1px solid var(--line)' }}>
-            <span className="label" style={{ paddingTop: 10 }}>{t('tonight.next12')}</span>
+          <div className="tonight-timeline">
+            <span className="label">{t('tonight.next12')}</span>
             <div className="tonight-bars" role="group" aria-label={t('tonight.aria.bars')}>
               {result.hours.map((h, i) => (
                 <button key={h.t} type="button" className="btn" aria-pressed={picked === i} onClick={() => setPicked(i)}
@@ -204,7 +206,7 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
             <span style={{ fontSize: 11, color: 'var(--dim)' }}>{t('tonight.note')}</span>
             {shareMsg && <span role="status" style={{ fontSize: 13, color: 'var(--green)' }}>{shareMsg}</span>}
           </div>
-        </>
+        </div>
       )}
     </section>
   );
