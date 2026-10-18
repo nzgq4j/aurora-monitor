@@ -15,7 +15,9 @@ export async function GET() {
     if (!res.ok) throw new Error(String(res.status));
     const rows = await res.json() as Row[];
     const latest = rows.reduce((m, r) => (String(r.observed_date) > m ? String(r.observed_date) : m), '');
-    const at = Date.parse(`${latest}T00:00:00Z`);
+    // Positions are valid at the end of the observed day (24:00 UT): NOAA's Carrington longitudes match
+    // the central meridian then, and regions numbered during the day are already listed.
+    const at = Date.parse(`${latest}T00:00:00Z`) + 864e5;
     const regions: Region[] = rows.filter(r => r.observed_date === latest && num(r.latitude) !== null && num(r.longitude) !== null).map(r => ({
       region: Number(r.region),
       lat: num(r.latitude)!,
