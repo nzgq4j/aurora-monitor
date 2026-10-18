@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { C, ENTITLEMENTS, kpBarColor } from '../data';
 import { KpBarChart, POLAR_MIN_LAT, PolarOval, type KpBar } from '../components/Charts';
 import { Locked } from '../components/Locked';
-import { SolarActivity } from '../components/SolarActivity';
+import { SolarActivity, useSolarData } from '../components/SolarActivity';
+import { DetailCard } from '../components/DetailCard';
+import { outlookLine, solarLine, spaceLine, type Line } from '../lib/detailSummaries';
 import type { KpPoint } from '../lib/feeds';
 import { YourSky } from '../components/YourSky';
 import { Tonight } from '../components/Tonight';
@@ -58,7 +60,8 @@ type OutlookView = 'hour' | 'day' | 'month';
 
 function Outlook({ data }: { data: NowData }) {
   const { planIndex } = useStore();
-  const { t } = useI18n();
+  const i18n = useI18n();
+  const { t, date } = i18n;
   const [picked, setPicked] = useState<OutlookView | null>(null);
   const can = { hour: planIndex >= ENTITLEMENTS.kp3h, day: true, month: planIndex >= ENTITLEMENTS.outlook27 };
   const view = picked ?? (can.hour ? 'hour' : 'day');
@@ -75,10 +78,11 @@ function Outlook({ data }: { data: NowData }) {
       {label}
     </button>
   );
+  const line = outlookLine(data.series, data.fetchedAt);
   return (
-    <div className="rule-top" style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' }}>
-        <h2 className="display" style={{ fontSize: 'var(--h-section)', lineHeight: 1 }}>{t('outlook.h2a')} <span className="hl">{t('outlook.h2b')}</span></h2>
+    <DetailCard id="outlook" title={<>{t('outlook.h2a')} <span className="hl">{t('outlook.h2b')}</span></>}
+      summary={summaryText(i18n, line, line.at !== undefined ? date(line.at, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }) : undefined)}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <div role="group" aria-label={t('outlook.detail')} style={{ display: 'flex', padding: 4, border: '1px solid var(--line-2)', borderRadius: 999, background: '#111', flex: '1 1 300px', maxWidth: 420 }}>
           {tab('hour', t('outlook.tab.hour'))}{tab('day', t('outlook.tab.day'))}{tab('month', t('outlook.tab.month'))}
         </div>
@@ -96,27 +100,36 @@ function Outlook({ data }: { data: NowData }) {
           title={view === 'hour' ? t('feat.kp3h') : t('feat.outlook27')}
           body={view === 'hour' ? t('outlook.locked.hour') : t('outlook.locked.month')} />
       )}
-    </div>
+    </DetailCard>
   );
 }
 
 function SolarSection() {
   const { planIndex } = useStore();
   const can = planIndex >= ENTITLEMENTS.solarGraphs;
-  const { t } = useI18n();
+  const i18n = useI18n();
+  const { t } = i18n;
+  const { data } = useSolarData(can);
+  // Client clock only, so the server and browser renders agree.
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => setNow(Date.now()), [data]);
+  const summary = !can ? t('detail.solar.locked') : data && now !== null ? summaryText(i18n, solarLine(data.wind, now)) : t('detail.loading');
   return (
-    <div className="rule-top" style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 24, flexWrap: 'wrap' }}>
-        <h2 className="display" style={{ fontSize: 'var(--h-section)', lineHeight: 1 }}>{t('solar.h2a')} <span className="hl">{t('solar.h2b')}</span></h2>
-        <span style={{ fontSize: 13, color: 'var(--muted)' }}>{t('solar.source')}</span>
-      </div>
+    <DetailCard id="solar" title={<>{t('solar.h2a')} <span className="hl">{t('solar.h2b')}</span></>} summary={summary}>
+      <span style={{ fontSize: 13, color: 'var(--muted)' }}>{t('solar.source')}</span>
       {can ? <SolarActivity /> : (
         <Locked tier={ENTITLEMENTS.solarGraphs} title={t('feat.solarGraphs')}
           body={t('solar.locked')}
           preview={<FakeLines />} />
       )}
-    </div>
+    </DetailCard>
   );
+}
+
+/** A card summary's message (`detail.{key}`), numbers in the page's format, with an optional formatted day. */
+function summaryText({ t, num }: Pick<I18n, 't' | 'num'>, line: Line, day?: string) {
+  const vars = Object.fromEntries(Object.entries(line.vars ?? {}).map(([k, v]) => [k, typeof v === 'number' ? num(v, Number.isInteger(v) ? 0 : 1) : v]));
+  return t(`detail.${line.key}`, { ...vars, ...(day ? { day } : {}) });
 }
 
 /** Decorative placeholder lines behind the locked solar panel (no real data). */
@@ -172,17 +185,6 @@ export function Home({ data }: { data: NowData }) {
               </div>
             ))}
           </div>
-          <div className="now-stats">
-            {stats.map(s => (
-              <div key={s.label} className="now-stat">
-                <span className="label">{s.label}</span>
-                <span className="stat-value" style={{ fontSize: 32 }}>
-                  {s.value}<span style={{ fontSize: 14, fontWeight: 600, color: 'var(--muted)', marginLeft: 4 }}>{s.unit}</span>
-                </span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: s.c }}>{s.note}</span>
-              </div>
-            ))}
-          </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 520, width: '100%', justifySelf: 'center' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
@@ -203,17 +205,28 @@ export function Home({ data }: { data: NowData }) {
         </div>
       </div>
 
+      <DetailCard id="space" title={<>{t('detail.space.h2a')} <span className="hl">{t('detail.space.h2b')}</span></>} summary={summaryText(i18n, spaceLine(w))}>
+        <div className="now-stats">
+          {stats.map(s => (
+            <div key={s.label} className="now-stat">
+              <span className="label">{s.label}</span>
+              <span className="stat-value" style={{ fontSize: 32 }}>
+                {s.value}<span style={{ fontSize: 14, fontWeight: 600, color: 'var(--muted)', marginLeft: 4 }}>{s.unit}</span>
+              </span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: s.c }}>{s.note}</span>
+            </div>
+          ))}
+        </div>
+      </DetailCard>
+
       <YourSky kp={kp} />
 
       <Outlook data={data} />
 
       <SolarSection />
 
-      <div className="rule-top" style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 24 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 24, flexWrap: 'wrap' }}>
-          <h2 className="display" style={{ fontSize: 'var(--h-section)', lineHeight: 1 }}>{t('home.sun.h2a')} <span className="hl">{t('home.sun.h2b')}</span></h2>
-          <span style={{ fontSize: 13, color: 'var(--muted)' }}>{t('home.sun.source')}</span>
-        </div>
+      <DetailCard id="sun" title={<>{t('home.sun.h2a')} <span className="hl">{t('home.sun.h2b')}</span></>} summary={t('detail.sun', { n: SDO_IMAGES.length })}>
+        <span style={{ fontSize: 13, color: 'var(--muted)' }}>{t('home.sun.source')}</span>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(220px,100%),1fr))', gap: 16 }}>
           {SDO_IMAGES.map(img => (
             <figure key={img.id} style={{ margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -226,7 +239,7 @@ export function Home({ data }: { data: NowData }) {
             </figure>
           ))}
         </div>
-      </div>
+      </DetailCard>
 
       {planIndex === 0 && (
         <div className="cta-banner" style={{ border: '1px solid var(--line-2)', borderRadius: 16, background: 'radial-gradient(120% 140% at 100% 100%,rgba(89,255,58,.18),rgba(0,0,0,0) 60%)' }}>
