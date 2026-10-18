@@ -5,6 +5,7 @@ import { initials, useAuth } from '../lib/auth';
 import { useStore, type Screen } from '../store';
 import { SITE } from '../lib/site';
 import { useI18n } from '../i18n/I18n';
+import { MoonIcon, useNightMode, type NightSetting } from './NightMode';
 import type { MessageKey } from '../i18n/core';
 
 const NAV: [MessageKey, Screen][] = [['nav.now', 'home'], ['nav.map', 'map'], ['nav.dashboard', 'account']];
@@ -111,6 +112,8 @@ export function TabBar() {
     ...(signedIn ? [{ id: 'account', label: t('dash.tab.account'), on: inDash && s.tab === 'account', onClick: () => go('account', { tab: 'account' }) }] : []),
   ];
   const moreOn = more.some(m => m.on);
+  const night = useNightMode();
+  const NEXT: Record<NightSetting, NightSetting> = { off: 'on', on: 'auto', auto: 'off' };
   const tab = (id: string, label: string, on: boolean, onClick: () => void) => (
     <button key={id} type="button" className={'btn tabbar-item' + (on ? ' on' : '')} aria-current={on ? 'page' : undefined} onClick={onClick}>
       <Icon id={id} /><span>{label}</span>
@@ -133,6 +136,11 @@ export function TabBar() {
                 <Icon id={m.id} /><span>{m.label}</span>
               </button>
             ))}
+            {/* Stays open, so the mode can be cycled: off → on → auto (red while it's dark here). */}
+            <button type="button" className="btn tabbar-sheet-item tabbar-night" onClick={() => night.set(NEXT[night.setting])}
+              aria-label={t('night.label', { mode: t(`night.${night.setting}`) })}>
+              <MoonIcon on={night.active} size={24} /><span>{t('night.title')}</span><small>{t(`night.${night.setting}`)}</small>
+            </button>
           </div>
         )}
       </div>
