@@ -10,6 +10,7 @@ export const de: Messages = {
   'nav.dashboardPlan': 'Dashboard, Tarif {plan}',
   'nav.signIn': 'Anmelden',
   'nav.getAlerts': 'Alarme',
+  'nav.main': 'Hauptnavigation',
   'common.dismiss': 'SCHLIESSEN',
   'footer.sources': 'Daten: NOAA SWPC, GFZ Potsdam, NASA/SDO. Zeiten in UT.',
   'meta.tagline': 'Polarlicht-Vorhersagen',

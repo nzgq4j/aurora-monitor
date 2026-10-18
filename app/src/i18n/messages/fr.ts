@@ -10,6 +10,7 @@ export const fr: Messages = {
   'nav.dashboardPlan': 'Mon espace, offre {plan}',
   'nav.signIn': 'Connexion',
   'nav.getAlerts': 'M’alerter',
+  'nav.main': 'Navigation principale',
   'common.dismiss': 'FERMER',
   'footer.sources': 'Données : NOAA SWPC, GFZ Potsdam, NASA/SDO. Heures en UT.',
   'meta.tagline': 'Prévisions d’aurores',
