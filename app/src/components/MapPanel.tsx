@@ -37,6 +37,8 @@ interface Props {
   onClear: () => void;
   /** Layer controls and legend: inside the panel on phones (the header row and the map corner hold them on larger screens). */
   layers: ReactNode;
+  /** The aurora time slider, shown under the layers when there are saved frames. */
+  slider?: ReactNode;
   legend: ReactNode;
 }
 
@@ -45,7 +47,7 @@ interface Props {
  * On phones a pull-up sheet (collapsed, half or fully open) that also holds the layers; on larger
  * screens a card in the corner of the map.
  */
-export function MapPanel({ kp, series, pick, onClear, layers, legend }: Props) {
+export function MapPanel({ kp, series, pick, onClear, layers, slider, legend }: Props) {
   const { t, num, locale } = useI18n();
   const { plan } = useStore();
   const { shownPlace, locations, add, saveAsHome, setHome, setViewPlace, error: locError } = useLocations();
@@ -182,6 +184,7 @@ export function MapPanel({ kp, series, pick, onClear, layers, legend }: Props) {
           <span className="label">{t('map.panel.layers')}</span>
           {layers}
         </div>
+        {slider && <div className="map-panel-section"><span className="label">{t('map.time.label')}</span>{slider}</div>}
         {details}
         {legend}
       </div>

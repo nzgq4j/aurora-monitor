@@ -136,6 +136,8 @@ interface Props {
   best: HTMLCanvasElement | null;
   /** Saved locations, marked with small dots. */
   saved: Place[];
+  /** A past aurora frame from the time slider (raw OVATION bytes), or null for the live one. */
+  frame?: Uint8Array | null;
   /** Best places now: light-blue dots with name labels that hide round the back; tap one to pick it. */
   places: { name: string; country: string; lat: number; lon: number }[];
   /** Show the OVATION aurora. */
@@ -156,14 +158,14 @@ interface Props {
 }
 
 /** Interactive 3D Earth with the live OVATION aurora, the day/night line, satellite clouds and your location. */
-export function Globe({ clouds, night, lights, best, saved, places, aurora, kpLines, kp, place, home, pick = null, onPick, onStatus, onForecast }: Props) {
+export function Globe({ clouds, night, lights, best, saved, places, frame = null, aurora, kpLines, kp, place, home, pick = null, onPick, onStatus, onForecast }: Props) {
   const { t } = useI18n();
   const box = useRef<HTMLDivElement>(null);
   const label = useRef<HTMLDivElement>(null);
-  const api = useRef<{ setClouds: (on: boolean) => void; setAurora: (on: boolean) => void; setKp: (on: boolean, kp: number | null) => void; setPlace: (p: Place | null) => void; setPick: (p: { lat: number; lon: number } | null) => void; setShade: (night: boolean, lights: boolean) => void; setBest: (c: HTMLCanvasElement | null) => void; setSaved: (s: Place[]) => void; setPlaces: (p: { lat: number; lon: number }[]) => void; flyTo: (p: Place) => void } | null>(null);
+  const api = useRef<{ setClouds: (on: boolean) => void; setAurora: (on: boolean) => void; setKp: (on: boolean, kp: number | null) => void; setPlace: (p: Place | null) => void; setPick: (p: { lat: number; lon: number } | null) => void; setShade: (night: boolean, lights: boolean) => void; setBest: (c: HTMLCanvasElement | null) => void; setSaved: (s: Place[]) => void; setPlaces: (p: { lat: number; lon: number }[]) => void; setFrame: (f: Uint8Array | null) => void; flyTo: (p: Place) => void } | null>(null);
   // Latest layer choices, applied once the scene is built (props can change while it loads).
-  const latest = useRef({ aurora, kpLines, kp, pick, onPick, night, lights, best, saved, places });
-  latest.current = { aurora, kpLines, kp, pick, onPick, night, lights, best, saved, places };
+  const latest = useRef({ aurora, kpLines, kp, pick, onPick, night, lights, best, saved, places, frame });
+  latest.current = { aurora, kpLines, kp, pick, onPick, night, lights, best, saved, places, frame };
   const placeLabels = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
   const [notice, setNotice] = useState('');
@@ -265,12 +267,23 @@ export function Globe({ clouds, night, lights, best, saved, places, aurora, kpLi
 
       // Aurora: the OVATION probability grid as a glowing shell, plus a fainter, wider halo.
       const auroraMeshes: THREE.Mesh[] = [];
+      let liveTex: THREE.Texture | null = null;
+      // Show a past frame's grid (time slider), or go back to the live one.
+      const setFrame = (f: Uint8Array | null) => {
+        const tex = f ? ovalTexture(T, f) : liveTex;
+        if (!tex) return;
+        for (const m of auroraMeshes) {
+          const u = (m.material as THREE.ShaderMaterial).uniforms.oval;
+          if (u.value !== liveTex && u.value !== tex) (u.value as THREE.Texture).dispose();
+          u.value = tex;
+        }
+      };
       try {
         const res = await fetch('/api/oval');
         if (!res.ok) throw new Error();
         const grid = await res.json() as OvalGrid;
         if (disposed) return;
-        const tex = ovalTexture(T, Uint8Array.from(atob(grid.data), ch => ch.charCodeAt(0)));
+        const tex = liveTex = ovalTexture(T, Uint8Array.from(atob(grid.data), ch => ch.charCodeAt(0)));
         for (const [r, strength] of [[R.aurora, 1.1], [R.auroraGlow, 0.35]] as const) {
           const m = new T.ShaderMaterial({ uniforms: { oval: { value: tex }, sunDir: { value: sunDir }, strength: { value: strength } }, vertexShader: VERT, fragmentShader: AURORA_FRAG, transparent: true, depthWrite: false, blending: T.AdditiveBlending });
           const mesh = new T.Mesh(sphere(r), m);
@@ -516,8 +529,10 @@ export function Globe({ clouds, night, lights, best, saved, places, aurora, kpLi
         setBest,
         setSaved,
         setPlaces,
+        setFrame,
         flyTo,
       };
+      if (latest.current.frame) setFrame(latest.current.frame);
       setPlaces(latest.current.places);
       setShade(latest.current.night, latest.current.lights);
       setBest(latest.current.best);
@@ -552,6 +567,7 @@ export function Globe({ clouds, night, lights, best, saved, places, aurora, kpLi
   useEffect(() => { api.current?.setBest(best); }, [best]);
   useEffect(() => { api.current?.setSaved(saved); }, [saved]);
   useEffect(() => { api.current?.setPlaces(places); }, [places]);
+  useEffect(() => { api.current?.setFrame(frame); }, [frame]);
 
   const goHome = () => {
     if (!home) { setNotice(t('map.noHome')); setTimeout(() => setNotice(''), 4000); return; }
