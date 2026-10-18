@@ -11,15 +11,17 @@ import type { MessageKey } from '../i18n/core';
 
 const HOUSE = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5M5.5 9.5V20h5v-6h3v6h5V9.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>';
 
-/** Shell radii (Earth = 1): clouds just above the ground, the aurora above them, then the atmosphere glow. */
-const R = { clouds: 1.006, aurora: 1.014, auroraGlow: 1.03, atmosphere: 1.12, marker: 1.016 };
+/** Shell radii (Earth = 1): clouds just above the ground, the aurora above them. */
+const R = { clouds: 1.006, aurora: 1.014, auroraGlow: 1.03, marker: 1.016 };
+/** Radius the opening framing is measured against (a little beyond the ground). */
+const FRAME_R = 1.15;
 /**
  * Opening camera distance for this aspect ratio: close enough that the globe fills the view
  * (its edges just outside it), so the aurora zone is large; zoom out to see the whole Earth.
  */
 function fitDistance(fovDeg: number, aspect: number) {
   const half = Math.min(fovDeg / 2, (Math.atan(Math.tan(((fovDeg / 2) * Math.PI) / 180) * aspect) * 180) / Math.PI);
-  return ((R.atmosphere * 1.03) / Math.sin((half * Math.PI) / 180)) * 0.72;
+  return (FRAME_R / Math.sin((half * Math.PI) / 180)) * 0.72;
 }
 
 /**
@@ -102,12 +104,10 @@ function ovalTexture(T: typeof THREE, grid: Uint8Array) {
 const VERT = /* glsl */ `
   varying vec2 vUv;
   varying vec3 vNormal;
-  varying vec3 vView;
   void main() {
     vUv = uv;
     vNormal = normalize(mat3(modelMatrix) * normal);
     vec4 world = modelMatrix * vec4(position, 1.0);
-    vView = normalize(cameraPosition - world.xyz);
     gl_Position = projectionMatrix * viewMatrix * world;
   }`;
 
@@ -159,19 +159,6 @@ const CLOUD_FRAG = /* glsl */ `
     vec4 c = texture2D(clouds, vUv);
     float lit = mix(0.3, 1.0, smoothstep(-0.15, 0.2, dot(normalize(vNormal), sunDir)));
     gl_FragColor = vec4(c.rgb * lit, c.a * 0.9);
-    #include <colorspace_fragment>
-  }`;
-
-// Thin blue rim, brighter towards the limb and on the sunlit side.
-const ATMOS_FRAG = /* glsl */ `
-  uniform vec3 sunDir;
-  varying vec3 vNormal;
-  varying vec3 vView;
-  void main() {
-    vec3 n = normalize(vNormal);
-    float rim = pow(clamp(1.0 - abs(dot(n, normalize(vView))), 0.0, 1.0), 3.0);
-    float lit = mix(0.25, 1.0, smoothstep(-0.3, 0.4, dot(-n, sunDir)));
-    gl_FragColor = vec4(vec3(0.35, 0.6, 1.0) * rim * lit, rim * lit);
     #include <colorspace_fragment>
   }`;
 
@@ -287,8 +274,6 @@ export function Globe({ clouds, place, home, onStatus, onForecast }: Props) {
       } catch {
         onStatus('map.auroraUnavailable');
       }
-
-      scene.add(new T.Mesh(sphere(R.atmosphere), new T.ShaderMaterial({ uniforms: { sunDir: { value: sunDir } }, vertexShader: VERT, fragmentShader: ATMOS_FRAG, transparent: true, depthWrite: false, side: T.BackSide, blending: T.AdditiveBlending })));
 
       // Location marker: a bright dot with a soft halo; its label is an HTML overlay that hides on the far side.
       const marker = new T.Group();
