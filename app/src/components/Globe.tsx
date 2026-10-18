@@ -136,6 +136,8 @@ interface Props {
   best: HTMLCanvasElement | null;
   /** Saved locations, marked with small dots. */
   saved: Place[];
+  /** Best places now: light-blue dots with name labels that hide round the back; tap one to pick it. */
+  places: { name: string; country: string; lat: number; lon: number }[];
   /** Show the OVATION aurora. */
   aurora: boolean;
   /** Show the Kp reach lines; the line for the current Kp is drawn bold. */
@@ -147,21 +149,22 @@ interface Props {
   home: Place | null;
   /** Point picked on the map (shown with a pin), and a tap on the Earth to pick one. */
   pick?: { lat: number; lon: number } | null;
-  onPick?: (lat: number, lon: number) => void;
+  onPick?: (lat: number, lon: number, name?: string) => void;
   /** Called with a message key while something is loading or unavailable, '' when ready. */
   onStatus: (status: MessageKey | '') => void;
   onForecast: (t: number | null) => void;
 }
 
 /** Interactive 3D Earth with the live OVATION aurora, the day/night line, satellite clouds and your location. */
-export function Globe({ clouds, night, lights, best, saved, aurora, kpLines, kp, place, home, pick = null, onPick, onStatus, onForecast }: Props) {
+export function Globe({ clouds, night, lights, best, saved, places, aurora, kpLines, kp, place, home, pick = null, onPick, onStatus, onForecast }: Props) {
   const { t } = useI18n();
   const box = useRef<HTMLDivElement>(null);
   const label = useRef<HTMLDivElement>(null);
-  const api = useRef<{ setClouds: (on: boolean) => void; setAurora: (on: boolean) => void; setKp: (on: boolean, kp: number | null) => void; setPlace: (p: Place | null) => void; setPick: (p: { lat: number; lon: number } | null) => void; setShade: (night: boolean, lights: boolean) => void; setBest: (c: HTMLCanvasElement | null) => void; setSaved: (s: Place[]) => void; flyTo: (p: Place) => void } | null>(null);
+  const api = useRef<{ setClouds: (on: boolean) => void; setAurora: (on: boolean) => void; setKp: (on: boolean, kp: number | null) => void; setPlace: (p: Place | null) => void; setPick: (p: { lat: number; lon: number } | null) => void; setShade: (night: boolean, lights: boolean) => void; setBest: (c: HTMLCanvasElement | null) => void; setSaved: (s: Place[]) => void; setPlaces: (p: { lat: number; lon: number }[]) => void; flyTo: (p: Place) => void } | null>(null);
   // Latest layer choices, applied once the scene is built (props can change while it loads).
-  const latest = useRef({ aurora, kpLines, kp, pick, onPick, night, lights, best, saved });
-  latest.current = { aurora, kpLines, kp, pick, onPick, night, lights, best, saved };
+  const latest = useRef({ aurora, kpLines, kp, pick, onPick, night, lights, best, saved, places });
+  latest.current = { aurora, kpLines, kp, pick, onPick, night, lights, best, saved, places };
+  const placeLabels = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
   const [notice, setNotice] = useState('');
 
@@ -361,6 +364,15 @@ export function Globe({ clouds, night, lights, best, saved, aurora, kpLines, kp,
         for (const p of s) { const m = new T.Mesh(dotGeo, dotMat); m.position.copy(toVector(T, p.lat, p.lon, R.marker)); savedGroup.add(m); }
       };
 
+      // Best places: light-blue dots; their labels are HTML (see placeLabels), positioned each frame.
+      const placeGroup = new T.Group();
+      scene.add(placeGroup);
+      const placeMat = new T.MeshBasicMaterial({ color: 0x7fd4ff });
+      const setPlaces = (ps: { lat: number; lon: number }[]) => {
+        placeGroup.clear();
+        for (const p of ps) { const m = new T.Mesh(dotGeo, placeMat); m.position.copy(toVector(T, p.lat, p.lon, R.marker)); placeGroup.add(m); }
+      };
+
       // Camera: face the marked place (or the North Atlantic aurora zone) from mid-latitudes, so the
       // auroral oval sits on the upper part of the globe instead of being seen from over the pole.
       const start = place ?? { lat: 62, lon: -20 };
@@ -480,6 +492,16 @@ export function Globe({ clouds, night, lights, best, saved, aurora, kpLines, kp,
           }
           lab.style.opacity = facing && markerName ? '1' : '0';
         }
+        const labs = placeLabels.current?.children;
+        if (labs) for (let i = 0; i < labs.length; i++) {
+          const dot = placeGroup.children[i], el2 = labs[i] as HTMLElement;
+          const front = !!dot && dot.position.dot(tmp.copy(camera.position).sub(dot.position)) > 0;
+          if (front) {
+            tmp.copy(dot.position).project(camera);
+            el2.style.transform = `translate(${((tmp.x + 1) / 2) * el.clientWidth + 8}px, ${((1 - tmp.y) / 2) * el.clientHeight - 9}px)`;
+          }
+          el2.style.visibility = front ? 'visible' : 'hidden';
+        }
       };
       frame = requestAnimationFrame(tick);
       cleanups.push(() => cancelAnimationFrame(frame));
@@ -493,8 +515,10 @@ export function Globe({ clouds, night, lights, best, saved, aurora, kpLines, kp,
         setShade,
         setBest,
         setSaved,
+        setPlaces,
         flyTo,
       };
+      setPlaces(latest.current.places);
       setShade(latest.current.night, latest.current.lights);
       setBest(latest.current.best);
       setSaved(latest.current.saved);
@@ -527,6 +551,7 @@ export function Globe({ clouds, night, lights, best, saved, aurora, kpLines, kp,
   useEffect(() => { api.current?.setShade(night, lights); }, [night, lights]);
   useEffect(() => { api.current?.setBest(best); }, [best]);
   useEffect(() => { api.current?.setSaved(saved); }, [saved]);
+  useEffect(() => { api.current?.setPlaces(places); }, [places]);
 
   const goHome = () => {
     if (!home) { setNotice(t('map.noHome')); setTimeout(() => setNotice(''), 4000); return; }
@@ -538,6 +563,11 @@ export function Globe({ clouds, night, lights, best, saved, aurora, kpLines, kp,
     <div style={{ position: 'relative', overflow: 'hidden' }}>
       <div ref={box} className="aurora-map globe" role="img" aria-label={t('globe.aria')} />
       <div ref={label} className="globe-label" aria-hidden="true" />
+      <div ref={placeLabels}>
+        {places.map(p => (
+          <button key={`${p.lat},${p.lon}`} type="button" className="btn globe-place" onClick={() => onPick?.(p.lat, p.lon, `${p.name}, ${p.country}`)}>{p.name}</button>
+        ))}
+      </div>
       {!failed && (
         <button type="button" className="globe-home" onClick={goHome} title={t('map.zoomHome')} aria-label={t('map.zoomHome')}
           dangerouslySetInnerHTML={{ __html: HOUSE }} />

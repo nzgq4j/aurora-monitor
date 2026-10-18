@@ -459,6 +459,8 @@ export const nl: Messages = {
   'map.legend.dark': 'Donker',
   'map.legend.best': 'Poollicht waarschijnlijk, donker en helder',
   'map.legend.bestNoCloud': 'Poollicht waarschijnlijk en donker (geen wolkendata)',
+  'map.legend.places': 'Plaatsen: nu de beste kans. Tik op een plaats voor details.',
+  'map.legend.noPlaces': 'Geen enkele plaats heeft nu een goede kans.',
   'map.legend.lights': 'Stadslicht: NASA Black Marble (2016). In heldere gebieden valt zwak poollicht weg.',
   'map.panel.label': 'Details van de plek',
   'map.panel.title': 'Tik op de kaart',
