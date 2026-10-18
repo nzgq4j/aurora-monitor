@@ -67,6 +67,17 @@ export function AuroraMap({ kp }: { kp: number | null }) {
   const LRef = useRef<typeof Leaflet | null>(null);
   const cityMarkers = useRef<{ lat: number; lon: number; m: Leaflet.Marker }[]>([]);
   const [mode, setMode] = useState<Mode>('prob');
+  // Phone layers menu: closes on Escape or a tap outside it.
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const away = (e: PointerEvent) => { if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false); };
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuOpen(false); };
+    document.addEventListener('pointerdown', away);
+    document.addEventListener('keydown', esc);
+    return () => { document.removeEventListener('pointerdown', away); document.removeEventListener('keydown', esc); };
+  }, [menuOpen]);
   const { t, num } = useI18n();
   // Status and notice hold message keys; '' hides them.
   const [status, setStatus] = useState<MessageKey | ''>('map.loading');
@@ -262,7 +273,8 @@ export function AuroraMap({ kp }: { kp: number | null }) {
 
   return (
     <main data-screen-label="Aurora map" style={{ display: 'flex', flexDirection: 'column' }}>
-      <div className="wrap" style={{ width: '100%', padding: '16px var(--gutter)', display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+      {/* On phones this row is hidden (the title stays for screen readers) and the layers menu on the map takes over. */}
+      <div className="wrap map-head" style={{ width: '100%', padding: '16px var(--gutter)', display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <h1 className="display" style={{ fontSize: 'clamp(28px, 7vw, 40px)', lineHeight: 1 }}>{t('map.h1a')} <span className="hl">{t('map.h1b')}</span></h1>
           <div role="group" aria-label={t('map.view')} style={{ display: 'flex', padding: 3, border: '1px solid var(--line-2)', borderRadius: 999, background: '#111', flex: 'none' }}>
@@ -286,6 +298,32 @@ export function AuroraMap({ kp }: { kp: number | null }) {
         </div>
       </div>
       <div style={{ position: 'relative' }}>
+        <div className="map-menu" ref={menuRef}>
+          <button type="button" className="btn map-menu-btn" aria-expanded={menuOpen} aria-controls="map-menu" onClick={() => setMenuOpen(o => !o)}>
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>
+            {t('map.layersButton')}
+          </button>
+          {menuOpen && (
+            <div id="map-menu" className="map-menu-panel" role="group" aria-label={t('map.layers')}>
+              <fieldset>
+                <legend>{t('map.view')}</legend>
+                {(['2d', '3d'] as const).map(v => (
+                  <label key={v}><input type="radio" name="map-view" checked={view === v} onChange={() => chooseView(v)} /><span>{v.toUpperCase()}</span></label>
+                ))}
+              </fieldset>
+              <fieldset>
+                <legend>{t('map.aurora')}</legend>
+                {([['prob', 'map.mode.prob'], ['kp', 'map.mode.kp'], ['both', 'map.mode.both']] as const).map(([m, key]) => (
+                  <label key={m}><input type="radio" name="map-mode" checked={mode === m} onChange={() => setMode(m)} /><span>{t(key)}</span></label>
+                ))}
+              </fieldset>
+              <fieldset>
+                <legend>{t('map.overlays')}</legend>
+                <label><input type="checkbox" checked={clouds} onChange={e => setClouds(e.target.checked)} /><span>{t('map.clouds')}</span></label>
+              </fieldset>
+            </div>
+          )}
+        </div>
         <div ref={box} className="aurora-map" role="application" aria-label={t('map.aria')} style={view === '3d' ? { display: 'none' } : undefined} />
         {view === '3d' && <Globe clouds={clouds} aurora={mode !== 'kp'} kpLines={mode !== 'prob'} kp={kp} place={shownPlace} home={locations.find(l => l.isHome) ?? null} onStatus={setGlobeStatus} onForecast={setForecast} />}
         {view === '2d' && (notice || status) && <div className="map-status" role="status">{t((notice || status) as MessageKey)}</div>}
