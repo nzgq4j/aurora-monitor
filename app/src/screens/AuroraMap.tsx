@@ -16,7 +16,7 @@ import { cloudify } from '../lib/cloudify';
 import { Globe } from '../components/Globe';
 import { AURORA_RAMP, auroraColor } from '../lib/auroraColor';
 import { sampleOval, smoothOval } from '../lib/ovalSmooth';
-import { BEST_RGB, LIGHTS_URL, bestAlpha, bestScore, loadCloudGrid, nightShade, paintEquirect, paintMercator, readLayers, sunAltitudeAt, writeLayers, type CloudGrid, type LayerId, type Layers, DEFAULT_LAYERS } from '../lib/mapLayers';
+import { BEST_RGB, LIGHTS_URL, afterPaint, bestAlpha, bestScore, loadCloudGrid, nightShade, paintEquirect, paintMercator, readLayers, sunAltitudeAt, writeLayers, type CloudGrid, type LayerId, type Layers, DEFAULT_LAYERS } from '../lib/mapLayers';
 import type { OvalGrid } from '../app/api/oval/route';
 import { SITE } from '../lib/site';
 import { useI18n } from '../i18n/I18n';
@@ -63,6 +63,7 @@ const cloudStamp = () => Math.floor(Date.now() / 9e5);
 const HOUSE = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5M5.5 9.5V20h5v-6h3v6h5V9.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>';
 
 const VIEW_KEY = 'pl.map.view';
+const NO_PLACES: Place[] = [];
 
 export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[] }) {
   const box = useRef<HTMLDivElement>(null);
@@ -128,13 +129,16 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
     const prob = layers.current.prob as Leaflet.LayerGroup | undefined;
     const f = frames[fi];
     if (!prob || !liveOval.current) return;
-    let url = liveOval.current.url;
-    if (f && frameBytes) {
-      url = urlCache.current.get(f.forecast) ?? renderOval(smoothOval(frameBytes));
-      urlCache.current.set(f.forecast, url);
-    }
-    prob.eachLayer(l => (l as Leaflet.ImageOverlay).setUrl(url));
-    setForecast(f ? f.forecast : liveOval.current.forecast);
+    const live = liveOval.current;
+    return afterPaint(() => {
+      let url = live.url;
+      if (f && frameBytes) {
+        url = urlCache.current.get(f.forecast) ?? renderOval(smoothOval(frameBytes));
+        urlCache.current.set(f.forecast, url);
+      }
+      prob.eachLayer(l => (l as Leaflet.ImageOverlay).setUrl(url));
+      setForecast(f ? f.forecast : live.forecast);
+    });
   }, [frameBytes, ready]); // eslint-disable-line react-hooks/exhaustive-deps
   const [notice, setNotice] = useState<MessageKey | ''>('');
   // 2D map or 3D globe; the last choice is remembered on this device.
@@ -317,8 +321,11 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
     layers.current.night?.remove();
     layers.current.night = undefined;
     if (!map || !ready || !on.night || view !== '2d') return;
-    const alt = sunAltitudeAt(Date.now());
-    layers.current.night = overlay(paintMercator(720, LAT_MAX, (la, lo) => [2, 6, 18, 0.62 * nightShade(alt(la, lo))])).addTo(map);
+    // A smooth gradient, so half the width of the other overlays is plenty.
+    return afterPaint(() => {
+      const alt = sunAltitudeAt(Date.now());
+      layers.current.night = overlay(paintMercator(360, LAT_MAX, (la, lo) => [2, 6, 18, 0.62 * nightShade(alt(la, lo))])).addTo(map);
+    });
   }, [on.night, ready, tick, view]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Best spots: aurora × darkness × clear sky, painted for the 2D map and (as a texture) for the globe.
@@ -335,18 +342,21 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
     layers.current.best?.remove();
     layers.current.best = undefined;
     if (!on.best || !ready || !oval.current || cloudGrid === undefined) { setBestGlobe(null); setCands([]); return; }
-    const score = bestScore(oval.current, cloudGrid, Date.now());
-    setCands(places ? bestCandidates(places, score) : []);
-    const paint = (la: number, lo: number): [number, number, number, number] | null => {
-      if (Math.abs(la) < 40) return null;
-      const a = bestAlpha(score(la, lo));
-      return a ? [...BEST_RGB, a] : null;
-    };
-    if (view === '3d') { setBestGlobe(paintEquirect(720, 360, paint)); return; }
-    setBestGlobe(null);
-    if (!map || !L) return;
-    const url = paintMercator(720, LAT_MAX, paint);
-    layers.current.best = L.layerGroup(COPIES.map(dx => L.imageOverlay(url, [[-LAT_MAX, -180 + dx], [LAT_MAX, 180 + dx]], { pane: 'best', interactive: false }))).addTo(map);
+    const field = oval.current;
+    return afterPaint(() => {
+      const score = bestScore(field, cloudGrid, Date.now());
+      setCands(places ? bestCandidates(places, score) : []);
+      const paint = (la: number, lo: number): [number, number, number, number] | null => {
+        if (Math.abs(la) < 40) return null;
+        const a = bestAlpha(score(la, lo));
+        return a ? [...BEST_RGB, a] : null;
+      };
+      if (view === '3d') { setBestGlobe(paintEquirect(720, 360, paint)); return; }
+      setBestGlobe(null);
+      if (!map || !L) return;
+      const url = paintMercator(720, LAT_MAX, paint);
+      layers.current.best = L.layerGroup(COPIES.map(dx => L.imageOverlay(url, [[-LAT_MAX, -180 + dx], [LAT_MAX, 180 + dx]], { pane: 'best', interactive: false }))).addTo(map);
+    });
   }, [on.best, ready, cloudGrid, tick, view, places]);
 
   // Best places on the 2D map: name labels, at most 12 on phones and 24 on larger screens, spaced for the zoom.
@@ -398,7 +408,8 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
   }, [pick, ready]);
 
   // Saved locations (other than the one already marked): small dots with names; tap one for its verdict.
-  const others = locations.filter(l => !shownPlace || Math.abs(l.lat - shownPlace.lat) > 0.01 || Math.abs(l.lon - shownPlace.lon) > 0.01);
+  // Memoised, so re-renders (e.g. a tap) don't make the globe rebuild its saved-spot dots.
+  const others = useMemo(() => locations.filter(l => !shownPlace || Math.abs(l.lat - shownPlace.lat) > 0.01 || Math.abs(l.lon - shownPlace.lon) > 0.01), [locations, shownPlace]);
   useEffect(() => {
     const map = mapRef.current, L = LRef.current;
     layers.current.saved?.remove();
@@ -522,7 +533,7 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
         {/* Phones have no header, so the map carries the logo. */}
         <img className="map-logo" src="/icons/logo.svg" alt={SITE.name} width={56} height={43} />
         <div ref={box} className="aurora-map" role="application" aria-label={t('map.aria')} style={view === '3d' ? { display: 'none' } : undefined} />
-        {view === '3d' && <Globe clouds={on.clouds} night={on.night} lights={on.lights} best={bestGlobe} saved={on.saved ? others : []} places={globePlaces} aurora={on.aurora} kpLines={on.kp} kp={kp} place={shownPlace} home={locations.find(l => l.isHome) ?? null}
+        {view === '3d' && <Globe clouds={on.clouds} night={on.night} lights={on.lights} best={bestGlobe} saved={on.saved ? others : NO_PLACES} places={globePlaces} aurora={on.aurora} kpLines={on.kp} kp={kp} place={shownPlace} home={locations.find(l => l.isHome) ?? null}
           frame={frames[fi] ? frameBytes : null} pick={pick} onPick={(la, lo, name) => (name ? setPick({ name, lat: la, lon: lo }) : pickAt.current(la, lo))} onStatus={setGlobeStatus} onForecast={setForecast} />}
         {view === '2d' && (notice || status) && <div className="map-status" role="status">{t((notice || status) as MessageKey)}</div>}
         {view === '3d' && globeStatus && <div className="map-status" role="status">{t(globeStatus)}</div>}
