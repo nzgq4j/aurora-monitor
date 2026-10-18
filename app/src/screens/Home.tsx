@@ -205,6 +205,10 @@ export function Home({ data }: { data: NowData }) {
         </div>
       </div>
 
+      <YourSky kp={kp} />
+
+      <Outlook data={data} />
+
       <DetailCard id="space" title={<>{t('detail.space.h2a')} <span className="hl">{t('detail.space.h2b')}</span></>} summary={summaryText(i18n, spaceLine(w))}>
         <div className="now-stats">
           {stats.map(s => (
@@ -218,10 +222,6 @@ export function Home({ data }: { data: NowData }) {
           ))}
         </div>
       </DetailCard>
-
-      <YourSky kp={kp} />
-
-      <Outlook data={data} />
 
       <SolarSection />
 
