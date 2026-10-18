@@ -13,7 +13,10 @@ export function FitHeadings() {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         for (const el of document.querySelectorAll<HTMLElement>('.display')) {
-          el.style.fontSize = '';
+          // Start from the heading's own size (its inline style, remembered the first time), not the
+          // browser default; only a heading that still overflows is shrunk.
+          el.dataset.fitSize ??= el.style.fontSize;
+          el.style.fontSize = el.dataset.fitSize;
           if (!el.offsetParent || el.scrollWidth <= el.clientWidth + 1) continue;
           const size = parseFloat(getComputedStyle(el).fontSize);
           el.style.fontSize = `${Math.floor(size * (el.clientWidth / el.scrollWidth) * 0.98)}px`;
