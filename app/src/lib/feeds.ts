@@ -3,6 +3,8 @@
 // data stays current. Any feed can fail independently; callers get `null`/[]
 // for that piece and render an "unavailable" state rather than fake values.
 
+import { OVAL_SCALE, sampleOval, smoothOval } from './ovalSmooth';
+
 const SWPC = 'https://services.swpc.noaa.gov';
 const GFZ = 'https://kp.gfz.de/app/json/';
 
@@ -198,23 +200,64 @@ export function ovalAt(oval: Oval, lat: number, lon: number, reach = 6) {
   return { overhead: at(lat), nearby };
 }
 
-/** Thinned northern-hemisphere points for the polar map. */
+/** The smoothed OVATION field (see lib/ovalSmooth), computed once per grid. */
+const fields = new WeakMap<Oval, Float32Array>();
+function ovalField(oval: Oval): Float32Array {
+  let field = fields.get(oval);
+  if (!field) {
+    const flat = new Uint8Array(181 * 360);
+    oval.grid.forEach((row, i) => flat.set(row, i * 360));
+    field = smoothOval(flat);
+    fields.set(oval, field);
+  }
+  return field;
+}
+
+/** Thinned northern-hemisphere points for the polar map, from the same smoothed field as the maps. */
 export function ovalPoints(oval: Oval, minLat = 35, step = 2, min = 3): [number, number, number][] {
+  const field = ovalField(oval);
   const pts: [number, number, number][] = [];
   for (let lat = minLat; lat <= 90; lat += 1) {
-    const row = oval.grid[lat + 90];
-    for (let lon = 0; lon < 360; lon += step) if (row[lon] >= min) pts.push([lon, lat, row[lon]]);
+    for (let lon = 0; lon < 360; lon += step) {
+      const v = Math.round(sampleOval(field, lat, lon));
+      if (v >= min) pts.push([lon, lat, v]);
+    }
   }
   return pts;
 }
 
-/** Equatorward edge (lowest latitude with ≥ threshold %) per longitude, northern hemisphere. */
-export function ovalEdge(oval: Oval, threshold = 10, step = 4): [number, number][] {
-  const out: [number, number][] = [];
+/**
+ * Equatorward edge of the smoothed probability >= threshold %, northern hemisphere, as runs of [lon, lat].
+ * Each longitude takes the lowest latitude where the field reaches the threshold (interpolated within
+ * the 0.25 degree step). Where no latitude reaches it, the line breaks rather than cutting across; a single
+ * unbroken run is returned closed (its first point repeated at the end).
+ */
+export function ovalEdge(oval: Oval, threshold = 10, step = 2): [number, number][][] {
+  const field = ovalField(oval);
+  const dLat = 1 / OVAL_SCALE;
+  const at: ([number, number] | null)[] = [];
   for (let lon = 0; lon < 360; lon += step) {
-    for (let lat = 35; lat <= 85; lat++) if (oval.grid[lat + 90][lon] >= threshold) { out.push([lon, lat]); break; }
+    let hit: [number, number] | null = null;
+    let prev = sampleOval(field, 35, lon);
+    for (let lat = 35 + dLat; lat <= 88; lat += dLat) {
+      const v = sampleOval(field, lat, lon);
+      if (v >= threshold) { hit = [lon, prev >= threshold ? lat : lat - (dLat * (v - threshold)) / (v - prev)]; break; }
+      prev = v;
+    }
+    at.push(hit);
   }
-  return out;
+  const gap = at.findIndex(p => !p);
+  if (gap < 0) return at.length > 2 ? [[...(at as [number, number][]), at[0] as [number, number]]] : [];
+  // Start just after a gap so a run that crosses 0 degrees longitude stays in one piece.
+  const runs: [number, number][][] = [];
+  let run: [number, number][] = [];
+  for (let i = 1; i <= at.length; i++) {
+    const p = at[(gap + i) % at.length];
+    if (p) run.push(p);
+    else { if (run.length > 1) runs.push(run); run = []; }
+  }
+  if (run.length > 1) runs.push(run);
+  return runs;
 }
 
 // ---------------------------------------------------------------------------
