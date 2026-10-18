@@ -74,6 +74,8 @@ const EARTH_FRAG = /* glsl */ `
   uniform sampler2D dayMap;
   uniform sampler2D nightMap;
   uniform vec3 sunDir;
+  // x: night shading on (else daylight everywhere); y: city lights on the night side (else dim ground).
+  uniform vec2 shade;
   // Part of each image this surface shows (offset xy, size zw): the whole image for the Earth,
   // a sub-rectangle for zoom tiles (see lib/globeTiles).
   uniform vec4 dayRect;
@@ -82,10 +84,11 @@ const EARTH_FRAG = /* glsl */ `
   varying vec3 vNormal;
   void main() {
     float d = dot(normalize(vNormal), sunDir);
-    float day = smoothstep(-0.1, 0.1, d);
+    float day = mix(1.0, smoothstep(-0.1, 0.1, d), shade.x);
     vec3 tex = texture2D(dayMap, dayRect.xy + vUv * dayRect.zw).rgb;
-    vec3 dayCol = tex * (0.75 + 0.6 * max(d, 0.0));
-    vec3 nightCol = texture2D(nightMap, nightRect.xy + vUv * nightRect.zw).rgb * vec3(1.1, 0.95, 0.75) + tex * 0.012;
+    vec3 dayCol = tex * mix(1.05, 0.75 + 0.6 * max(d, 0.0), shade.x);
+    vec3 lights = texture2D(nightMap, nightRect.xy + vUv * nightRect.zw).rgb * vec3(1.1, 0.95, 0.75);
+    vec3 nightCol = mix(tex * 0.025, lights + tex * 0.012, shade.y);
     gl_FragColor = vec4(mix(nightCol, dayCol, day), 1.0);
     #include <colorspace_fragment>
   }`;
@@ -126,6 +129,13 @@ const CLOUD_FRAG = /* glsl */ `
 interface Props {
   /** Show the satellite cloud layer. */
   clouds: boolean;
+  /** Shade the night side (else daylight all round), and show city lights there. */
+  night: boolean;
+  lights: boolean;
+  /** Best spots now (aurora, dark and clear) as an equirectangular overlay, or null. */
+  best: HTMLCanvasElement | null;
+  /** Saved locations, marked with small dots. */
+  saved: Place[];
   /** Show the OVATION aurora. */
   aurora: boolean;
   /** Show the Kp reach lines; the line for the current Kp is drawn bold. */
@@ -144,14 +154,14 @@ interface Props {
 }
 
 /** Interactive 3D Earth with the live OVATION aurora, the day/night line, satellite clouds and your location. */
-export function Globe({ clouds, aurora, kpLines, kp, place, home, pick = null, onPick, onStatus, onForecast }: Props) {
+export function Globe({ clouds, night, lights, best, saved, aurora, kpLines, kp, place, home, pick = null, onPick, onStatus, onForecast }: Props) {
   const { t } = useI18n();
   const box = useRef<HTMLDivElement>(null);
   const label = useRef<HTMLDivElement>(null);
-  const api = useRef<{ setClouds: (on: boolean) => void; setAurora: (on: boolean) => void; setKp: (on: boolean, kp: number | null) => void; setPlace: (p: Place | null) => void; setPick: (p: { lat: number; lon: number } | null) => void; flyTo: (p: Place) => void } | null>(null);
+  const api = useRef<{ setClouds: (on: boolean) => void; setAurora: (on: boolean) => void; setKp: (on: boolean, kp: number | null) => void; setPlace: (p: Place | null) => void; setPick: (p: { lat: number; lon: number } | null) => void; setShade: (night: boolean, lights: boolean) => void; setBest: (c: HTMLCanvasElement | null) => void; setSaved: (s: Place[]) => void; flyTo: (p: Place) => void } | null>(null);
   // Latest layer choices, applied once the scene is built (props can change while it loads).
-  const latest = useRef({ aurora, kpLines, kp, pick, onPick });
-  latest.current = { aurora, kpLines, kp, pick, onPick };
+  const latest = useRef({ aurora, kpLines, kp, pick, onPick, night, lights, best, saved });
+  latest.current = { aurora, kpLines, kp, pick, onPick, night, lights, best, saved };
   const [failed, setFailed] = useState(false);
   const [notice, setNotice] = useState('');
 
@@ -205,14 +215,14 @@ export function Globe({ clouds, aurora, kpLines, kp, place, home, pick = null, o
       if (disposed) return;
       if (!day || !night) { onStatus('map.basemapFailed'); return; }
       const sphere = (r: number) => new T.SphereGeometry(r, 128, 64);
-      const earthMat = new T.ShaderMaterial({ uniforms: { dayMap: { value: day }, nightMap: { value: night }, sunDir: { value: sunDir }, dayRect: { value: new T.Vector4(0, 0, 1, 1) }, nightRect: { value: new T.Vector4(0, 0, 1, 1) } }, vertexShader: VERT, fragmentShader: EARTH_FRAG });
+      const earthMat = new T.ShaderMaterial({ uniforms: { dayMap: { value: day }, nightMap: { value: night }, sunDir: { value: sunDir }, dayRect: { value: new T.Vector4(0, 0, 1, 1) }, nightRect: { value: new T.Vector4(0, 0, 1, 1) }, shade: { value: new T.Vector2(1, 1) } }, vertexShader: VERT, fragmentShader: EARTH_FRAG });
       scene.add(new T.Mesh(sphere(1), earthMat));
       // Desktop (fine pointer, wide screen): swap in 4K imagery once it has loaded. Phones keep the 2K
       // images, which are sharp at their size and save the download.
       const desktop = window.matchMedia('(pointer: fine) and (min-width: 900px)').matches;
       // Desktop: NASA zoom tiles for sharper detail as the user zooms in (see lib/globeTiles).
       const tileLayer = desktop
-        ? createTileLayer(T, { scene, vertexShader: VERT, fragmentShader: EARTH_FRAG, nightMap: earthMat.uniforms.nightMap, sunDir: earthMat.uniforms.sunDir, anisotropy: renderer.capabilities.getMaxAnisotropy() })
+        ? createTileLayer(T, { scene, vertexShader: VERT, fragmentShader: EARTH_FRAG, nightMap: earthMat.uniforms.nightMap, sunDir: earthMat.uniforms.sunDir, shade: earthMat.uniforms.shade, anisotropy: renderer.capabilities.getMaxAnisotropy() })
         : null;
       if (tileLayer) cleanups.push(() => tileLayer.dispose());
       if (desktop && renderer.capabilities.maxTextureSize >= 4096) {
@@ -326,6 +336,29 @@ export function Globe({ clouds, aurora, kpLines, kp, place, home, pick = null, o
       const setPick = (p: { lat: number; lon: number } | null) => {
         pin.visible = !!p;
         if (p) pin.position.copy(toVector(T, p.lat, p.lon, R.marker));
+      };
+
+      // Best spots: a transparent shell just above the clouds, painted by the map screen.
+      const bestMat = new T.MeshBasicMaterial({ transparent: true, depthWrite: false, opacity: 0.9 });
+      const bestMesh = new T.Mesh(sphere(R.clouds + 0.002), bestMat);
+      bestMesh.visible = false;
+      scene.add(bestMesh);
+      const setBest = (c: HTMLCanvasElement | null) => {
+        bestMat.map?.dispose();
+        bestMat.map = c ? new T.CanvasTexture(c) : null;
+        if (bestMat.map) bestMat.map.colorSpace = T.SRGBColorSpace;
+        bestMat.needsUpdate = true;
+        bestMesh.visible = !!c;
+      };
+      const setShade = (n: boolean, l: boolean) => { (earthMat.uniforms.shade.value as THREE.Vector2).set(n ? 1 : 0, l ? 1 : 0); };
+
+      // Saved locations: small green dots.
+      const savedGroup = new T.Group();
+      scene.add(savedGroup);
+      const dotGeo = new T.SphereGeometry(0.008, 12, 6), dotMat = new T.MeshBasicMaterial({ color: 0x6cff2b, transparent: true, opacity: 0.85 });
+      const setSaved = (s: Place[]) => {
+        savedGroup.clear();
+        for (const p of s) { const m = new T.Mesh(dotGeo, dotMat); m.position.copy(toVector(T, p.lat, p.lon, R.marker)); savedGroup.add(m); }
       };
 
       // Camera: face the marked place (or the North Atlantic aurora zone) from mid-latitudes, so the
@@ -457,8 +490,14 @@ export function Globe({ clouds, aurora, kpLines, kp, place, home, pick = null, o
         setKp,
         setPlace,
         setPick,
+        setShade,
+        setBest,
+        setSaved,
         flyTo,
       };
+      setShade(latest.current.night, latest.current.lights);
+      setBest(latest.current.best);
+      setSaved(latest.current.saved);
       setPlace(place);
       setPick(latest.current.pick);
       setClouds(clouds);
@@ -485,6 +524,9 @@ export function Globe({ clouds, aurora, kpLines, kp, place, home, pick = null, o
   useEffect(() => { api.current?.setKp(kpLines, kp); }, [kpLines, kp]);
   useEffect(() => { api.current?.setPlace(place); }, [place]);
   useEffect(() => { api.current?.setPick(pick); }, [pick]);
+  useEffect(() => { api.current?.setShade(night, lights); }, [night, lights]);
+  useEffect(() => { api.current?.setBest(best); }, [best]);
+  useEffect(() => { api.current?.setSaved(saved); }, [saved]);
 
   const goHome = () => {
     if (!home) { setNotice(t('map.noHome')); setTimeout(() => setNotice(''), 4000); return; }
