@@ -67,13 +67,13 @@ export interface LabelSpot { id: number; x: number; y: number }
 export interface PlacedLabel extends LabelSpot { lx: number; ly: number; anchor: 'start' | 'end'; moved: boolean }
 
 /**
- * Place region numbers beside their spots (all in image fractions) without overlapping: each label
- * goes to the side away from the nearer limb, then steps down or up by its own height until it clears
+ * Place region numbers beside their spots (all in image fractions) without overlapping, far enough off
+ * for a leader line: each label goes to the side away from the nearer limb, then steps down or up by its own height until it clears
  * the labels already placed. `size` is the font size; labels are about 0.62·size per digit wide.
  */
 export function layoutLabels(spots: LabelSpot[], size: number, cx = 0.5): PlacedLabel[] {
   const boxes: { x0: number; x1: number; y0: number; y1: number }[] = [];
-  const gap = size * 0.7, h = size * 1.15;
+  const gap = size * 1.3, h = size * 1.15;
   const steps = [0, 1, -1, 2, -2, 3, -3, 4, -4];
   return [...spots].sort((a, b) => a.y - b.y || a.x - b.x).map(s => {
     const anchor: 'start' | 'end' = s.x <= cx + 0.2 ? 'start' : 'end';
