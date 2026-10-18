@@ -61,6 +61,7 @@ const ICONS: Record<string, string> = {
   now: 'M4 18c2-6 5-10 8-10s6 4 8 10M7 18c1.4-3.6 3-5.5 5-5.5s3.6 1.9 5 5.5M3 21h18',
   map: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm-9 9h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z',
   more: 'M5 12h.01M12 12h.01M19 12h.01',
+  dashboard: 'M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z',
   alerts: 'M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15L6 16Zm4 4.5a2.2 2.2 0 0 0 4 0',
   locations: 'M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Zm0-8.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
   account: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7.5 8.5c.9-3.6 3.8-5.5 7.5-5.5s6.6 1.9 7.5 5.5',
@@ -104,10 +105,12 @@ export function TabBar() {
     { id: 'alerts', label: t('dash.tab.alerts'), on: (inDash && s.tab === 'alerts') || (!signedIn && screen === 'plans'), onClick: dash('alerts') },
     { id: 'locations', label: t('dash.tab.locations'), on: inDash && s.tab === 'locations', onClick: dash('locations') },
     {
-      id: 'account', label: signedIn ? t('nav.dashboard') : t('nav.signIn'),
-      on: screen === 'signin' || (inDash && s.tab !== 'alerts' && s.tab !== 'locations'),
+      id: 'dashboard', label: signedIn ? t('nav.dashboard') : t('nav.signIn'),
+      on: screen === 'signin' || (inDash && (s.tab === 'overview' || s.tab === 'plans')),
       onClick: signedIn ? () => go('account', { tab: 'overview' }) : goAccount,
     },
+    // Phones don't show the name and Sign out above the Dashboard, so Account (with Sign out) is here.
+    ...(signedIn ? [{ id: 'account', label: t('dash.tab.account'), on: inDash && s.tab === 'account', onClick: () => go('account', { tab: 'account' }) }] : []),
   ];
   const moreOn = more.some(m => m.on);
   const tab = (id: string, label: string, on: boolean, onClick: () => void) => (

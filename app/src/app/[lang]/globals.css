@@ -274,6 +274,8 @@ button.pill-ghost { border: 1px solid var(--line-2); }
     border-radius: 16px; border: 1px solid var(--line-2); background: #0a0c0b; box-shadow: 0 -10px 30px rgba(0,0,0,.6);
   }
   .tabbar-sheet-item { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 12px; border-radius: 10px; color: var(--soft); font: 600 16px var(--f-body); text-align: left; }
+  /* Dashboard: the name, email and Sign out move to Account under More. */
+  .account-profile, .account-signout { display: none !important; }
   .tabbar-sheet-item.on { color: var(--green); background: rgba(108, 255, 43, .08); }
   /* Logo at the top of every page except the map, which shows it over the map. */
   .phone-brand { display: flex; justify-content: center; padding: 10px var(--gutter) 0; }
