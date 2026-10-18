@@ -3,8 +3,8 @@
 const rad = (d: number) => (d * Math.PI) / 180;
 const deg = (r: number) => (r * 180) / Math.PI;
 
-/** Solar altitude in degrees (low-precision almanac algorithm, ~0.1° accuracy). */
-export function sunAltitude(t: number, lat: number, lon: number): number {
+/** Sun's right ascension, declination (radians) and Greenwich sidereal time (hours) at time t. */
+function sunPosition(t: number) {
   const d = t / 864e5 - 10957.5; // days since J2000.0
   const g = rad(357.529 + 0.98560028 * d);
   const q = 280.459 + 0.98564736 * d;
@@ -13,8 +13,20 @@ export function sunAltitude(t: number, lat: number, lon: number): number {
   const ra = Math.atan2(Math.cos(e) * Math.sin(L), Math.cos(L));
   const dec = Math.asin(Math.sin(e) * Math.sin(L));
   const gmst = (18.697374558 + 24.06570982441908 * d) % 24;
+  return { ra, dec, gmst };
+}
+
+/** Solar altitude in degrees (low-precision almanac algorithm, ~0.1° accuracy). */
+export function sunAltitude(t: number, lat: number, lon: number): number {
+  const { ra, dec, gmst } = sunPosition(t);
   const H = rad(gmst * 15 + lon) - ra;
   return deg(Math.asin(Math.sin(rad(lat)) * Math.sin(dec) + Math.cos(rad(lat)) * Math.cos(dec) * Math.cos(H)));
+}
+
+/** The point on Earth with the Sun directly overhead, in degrees (lon −180…180). */
+export function subsolarPoint(t: number): { lat: number; lon: number } {
+  const { ra, dec, gmst } = sunPosition(t);
+  return { lat: deg(dec), lon: ((((deg(ra) - gmst * 15) % 360) + 540) % 360) - 180 };
 }
 
 /** Sky is dark enough for aurora once the Sun is 12° below the horizon (nautical twilight). */

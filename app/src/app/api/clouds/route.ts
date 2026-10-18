@@ -9,8 +9,12 @@ const WMS = 'https://view.eumetsat.int/geoserver/ows';
 const LAYER = 'mumi:worldcloudmap_ir108';
 const HALF = 20037508.342789244;
 
+/** Whole-world image (equirectangular, 2048×1024, JPEG to stay small) for the 3D globe: `/api/clouds?world=1`. */
+const WORLD = `${WMS}?service=WMS&version=1.3.0&request=GetMap&layers=${LAYER}&styles=&crs=EPSG:4326&bbox=-90,-180,90,180&width=2048&height=1024&format=image/jpeg`;
+
 export async function GET(req: Request) {
   const q = new URL(req.url).searchParams;
+  if (q.get('world') === '1') return image(WORLD);
   const z = Number(q.get('z')), x = Number(q.get('x')), y = Number(q.get('y'));
   const n = 2 ** z;
   if (![z, x, y].every(Number.isInteger) || z < 0 || z > 9 || x < 0 || y < 0 || x >= n || y >= n) {
@@ -18,12 +22,16 @@ export async function GET(req: Request) {
   }
   const size = (2 * HALF) / n;
   const bbox = [-HALF + x * size, HALF - (y + 1) * size, -HALF + (x + 1) * size, HALF - y * size].map(v => v.toFixed(2)).join(',');
-  const url = `${WMS}?service=WMS&version=1.3.0&request=GetMap&layers=${LAYER}&styles=&crs=EPSG:3857&bbox=${bbox}&width=256&height=256&format=image/png&transparent=true`;
+  return image(`${WMS}?service=WMS&version=1.3.0&request=GetMap&layers=${LAYER}&styles=&crs=EPSG:3857&bbox=${bbox}&width=256&height=256&format=image/png&transparent=true`);
+}
+
+async function image(url: string) {
   try {
     const res = await fetch(url, { next: { revalidate: 900 } });
-    if (!res.ok || !(res.headers.get('content-type') ?? '').startsWith('image/')) throw new Error(String(res.status));
+    const type = res.headers.get('content-type') ?? '';
+    if (!res.ok || !type.startsWith('image/')) throw new Error(String(res.status));
     return new NextResponse(await res.arrayBuffer(), {
-      headers: { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=600, s-maxage=900, stale-while-revalidate=1800' },
+      headers: { 'Content-Type': type, 'Cache-Control': 'public, max-age=600, s-maxage=900, stale-while-revalidate=1800' },
     });
   } catch {
     return NextResponse.json({ error: 'Cloud imagery unavailable' }, { status: 502 });

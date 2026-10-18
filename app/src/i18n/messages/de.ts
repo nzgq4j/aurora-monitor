@@ -414,6 +414,11 @@ export const de: Messages = {
   'map.legend.clear': 'Klar',
   'map.legend.thick': 'Dichte, hohe Wolken',
   'map.legend.cloudNote': 'Geostationäres EUMETSAT-Mosaik, stündlich aktualisiert. Sehr kalter Schnee und Eis können als Wolken erscheinen.',
+  'map.view': 'Kartenansicht',
+  'globe.aria': 'Interaktiver 3D-Globus mit dem aktuellen Polarlichtoval, Tag und Nacht sowie Ihrem Standort. Ziehen zum Drehen, scrollen oder zoomen mit zwei Fingern.',
+  'globe.loading': 'Globus wird geladen…',
+  'globe.noWebgl': 'Dieser Browser kann den 3D-Globus nicht anzeigen. Wechseln Sie zu 2D.',
+  'globe.legend': 'Nachtseite abgedunkelt mit Stadtlichtern; Polarlicht bei Tag abgeschwächt. Bilder: NASA.',
 
   // ---- Dashboard ----
   'dash.redirecting': 'Weiterleitung zur Anmeldung …',

@@ -414,6 +414,11 @@ export const es: Messages = {
   'map.legend.clear': 'Despejado',
   'map.legend.thick': 'Nubes altas y gruesas',
   'map.legend.cloudNote': 'Mosaico geoestacionario de EUMETSAT, actualizado cada hora. La nieve y el hielo muy fríos pueden aparecer como nubes.',
+  'map.view': 'Vista del mapa',
+  'globe.aria': 'Globo 3D interactivo con el óvalo auroral en directo, el día y la noche, y tu ubicación. Arrastra para girar; desplaza o pellizca para acercar.',
+  'globe.loading': 'Cargando el globo…',
+  'globe.noWebgl': 'Este navegador no puede mostrar el globo 3D. Cambia a 2D.',
+  'globe.legend': 'El lado nocturno se muestra con luces de ciudades; la aurora se atenúa de día. Imágenes: NASA.',
 
   // ---- Dashboard ----
   'dash.redirecting': 'Redirigiendo al inicio de sesión…',

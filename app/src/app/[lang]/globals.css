@@ -202,6 +202,13 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 .aurora-map .map-home a { display: flex; align-items: center; justify-content: center; background: #111; color: #fff; border-color: var(--line-2); }
 .aurora-map .map-home a:hover { background: #1d211e; }
 
+/* 3D globe: dark space background, a label that follows the marker, and a Home button like the 2D map's. */
+.aurora-map.globe { background: radial-gradient(120% 90% at 50% 40%, #070b14, #000 70%); cursor: grab; }
+.aurora-map.globe:active { cursor: grabbing; }
+.globe-label { position: absolute; left: 0; top: 0; pointer-events: none; padding: 3px 8px; border-radius: 6px; background: rgba(0,0,0,.65); color: var(--green); font-weight: 700; font-size: 13px; white-space: nowrap; opacity: 0; transition: opacity .2s; will-change: transform; }
+.globe-home { position: absolute; top: 12px; left: 12px; z-index: 800; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--line-2); background: #111; color: #fff; cursor: pointer; }
+.globe-home:hover { background: #1d211e; }
+
 /* Narrow phones: tighten the one-line header further. */
 @media (max-width: 380px) {
   .header-left { gap: 12px; }
@@ -227,4 +234,5 @@ button.pill-ghost { border: 1px solid var(--line-2); }
   .brand, .nav-item, .header-signin { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; padding: 0 5px; margin: 0 -5px; }
   .header-account .avatar { width: 36px !important; height: 36px !important; }
   .aurora-map.leaflet-touch .leaflet-bar a { width: 44px; height: 44px; line-height: 44px; }
+  .globe-home { width: 44px; height: 44px; }
 }

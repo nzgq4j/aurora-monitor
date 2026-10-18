@@ -414,6 +414,11 @@ export const nl: Messages = {
   'map.legend.clear': 'Helder',
   'map.legend.thick': 'Dikke, hoge bewolking',
   'map.legend.cloudNote': 'Geostationair mozaïek van EUMETSAT, elk uur bijgewerkt. Zeer koude sneeuw en ijs kunnen als bewolking verschijnen.',
+  'map.view': 'Kaartweergave',
+  'globe.aria': 'Interactieve 3D-wereldbol met het actuele poollichtovaal, dag en nacht, en je locatie. Sleep om te draaien; scroll of knijp om te zoomen.',
+  'globe.loading': 'Wereldbol laden…',
+  'globe.noWebgl': 'Deze browser kan de 3D-wereldbol niet tonen. Schakel over naar 2D.',
+  'globe.legend': 'Nachtzijde donker met stadslichten; poollicht vervaagt overdag. Beelden: NASA.',
 
   // ---- Dashboard ----
   'dash.redirecting': 'Doorsturen naar inloggen…',
