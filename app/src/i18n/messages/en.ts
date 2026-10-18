@@ -11,6 +11,7 @@ export const en = {
   'nav.signIn': 'Sign in',
   'nav.getAlerts': 'Get alerts',
   'nav.main': 'Main navigation',
+  'nav.more': 'More',
   'common.dismiss': 'DISMISS',
   'footer.sources': 'Data: NOAA SWPC, GFZ Potsdam, NASA/SDO. Times in UT.',
   'meta.tagline': 'Aurora forecasts',

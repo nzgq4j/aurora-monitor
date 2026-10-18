@@ -11,6 +11,7 @@ export const de: Messages = {
   'nav.signIn': 'Anmelden',
   'nav.getAlerts': 'Alarme',
   'nav.main': 'Hauptnavigation',
+  'nav.more': 'Mehr',
   'common.dismiss': 'SCHLIESSEN',
   'footer.sources': 'Daten: NOAA SWPC, GFZ Potsdam, NASA/SDO. Zeiten in UT.',
   'meta.tagline': 'Polarlicht-Vorhersagen',
