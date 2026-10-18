@@ -6,6 +6,7 @@ import { KpBarChart, POLAR_MIN_LAT, PolarOval, type KpBar } from '../components/
 import { Locked } from '../components/Locked';
 import { SolarActivity, useSolarData } from '../components/SolarActivity';
 import { DetailCard } from '../components/DetailCard';
+import { SunspotRegions, useSunspots } from '../components/SunspotRegions';
 import { outlookLine, solarLine, spaceLine, type Line } from '../lib/detailSummaries';
 import type { KpPoint } from '../lib/feeds';
 import { YourSky } from '../components/YourSky';
@@ -145,10 +146,11 @@ function FakeLines() {
 }
 
 export function Home({ data }: { data: NowData }) {
+  const spots = useSunspots();
   const { planIndex, go } = useStore();
   const { shownPlace } = useLocations();
   const i18n = useI18n();
-  const { t, num } = i18n;
+  const { t, tn, num } = i18n;
   const fmt = (n: number | null | undefined, d = 0) => (n === null || n === undefined ? '—' : num(n, d));
   const kp = data.kp?.kp ?? null;
   const [l1, l2] = headline(kp, i18n);
@@ -225,10 +227,13 @@ export function Home({ data }: { data: NowData }) {
 
       <SolarSection />
 
-      <DetailCard id="sun" title={<>{t('home.sun.h2a')} <span className="hl">{t('home.sun.h2b')}</span></>} summary={t('detail.sun', { n: SDO_IMAGES.length })}>
+      <DetailCard id="sun" title={<>{t('home.sun.h2a')} <span className="hl">{t('home.sun.h2b')}</span></>}
+        summary={spots?.regions.length ? `${tn('detail.sunRegions', spots.regions.length)} · ${t('detail.sun', { n: SDO_IMAGES.length })}` : t('detail.sun', { n: SDO_IMAGES.length })}>
         <span style={{ fontSize: 13, color: 'var(--muted)' }}>{t('home.sun.source')}</span>
+        <SunspotRegions />
+        {/* The visible-light (HMI) view is the labelled disc above. */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(220px,100%),1fr))', gap: 16 }}>
-          {SDO_IMAGES.map(img => (
+          {SDO_IMAGES.filter(img => img.id !== 'HMIIC').map(img => (
             <figure key={img.id} style={{ margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={img.url} alt={t('home.sun.alt', { band: img.label })} loading="lazy" width={512} height={512}
