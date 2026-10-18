@@ -343,3 +343,15 @@ button.pill-ghost { border: 1px solid var(--line-2); }
   .tonight-bars { gap: 6px; }
 }
 
+/* ---- Add-to-home-screen prompt (components/InstallPrompt) ---- */
+.install-sheet {
+  position: fixed; z-index: 1200; right: 24px; bottom: 24px; width: min(400px, calc(100vw - 24px));
+  display: flex; flex-direction: column; gap: 14px; padding: 18px; border-radius: 18px;
+  border: 1px solid var(--line-2); background: #0a0c0b; box-shadow: 0 16px 40px rgba(0,0,0,.7);
+}
+.install-steps { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--soft); }
+.install-steps li svg { vertical-align: -3px; margin-left: 6px; color: #fff; }
+@media (max-width: 640px) {
+  .install-sheet { left: 12px; right: 12px; width: auto; bottom: calc(76px + env(safe-area-inset-bottom)); }
+}
+
