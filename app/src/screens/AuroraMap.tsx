@@ -12,6 +12,7 @@ import { Globe } from '../components/Globe';
 import { AURORA_RAMP, auroraColor } from '../lib/auroraColor';
 import { sampleOval, smoothOval } from '../lib/ovalSmooth';
 import type { OvalGrid } from '../app/api/oval/route';
+import { SITE } from '../lib/site';
 import { useI18n } from '../i18n/I18n';
 import type { MessageKey } from '../i18n/core';
 
@@ -298,6 +299,8 @@ export function AuroraMap({ kp }: { kp: number | null }) {
         </div>
       </div>
       <div style={{ position: 'relative' }}>
+        {/* Phones have no header, so the map carries the logo. */}
+        <img className="map-logo" src="/icons/logo.svg" alt={SITE.name} width={56} height={43} />
         <div className="map-menu" ref={menuRef}>
           <button type="button" className="btn map-menu-btn" aria-expanded={menuOpen} aria-controls="map-menu" onClick={() => setMenuOpen(o => !o)}>
             <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>
