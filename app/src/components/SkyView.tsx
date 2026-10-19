@@ -17,9 +17,6 @@ import { addPhoto, listPhotos } from '../lib/gallery';
 
 /** Horizontal angle the rear main camera sees along the long side of its picture (typical phones: 63–70°). */
 const CAMERA_FOV = 66;
-/** Boost levels for the live picture and the photo: brightness, contrast, saturation. */
-const BOOST = [[1, 1, 1], [1.5, 1.12, 1.3], [2.1, 1.25, 1.55], [2.8, 1.35, 1.8]] as const;
-const boostCss = (b: number) => `brightness(${BOOST[b][0]}) contrast(${BOOST[b][1]}) saturate(${BOOST[b][2]})`;
 
 type Phase = 'intro' | 'starting' | 'live' | 'error';
 type Pose = { az: number | null; el: number; roll: number };
@@ -37,7 +34,7 @@ const smoothAngle = (prev: number | null, next: number, k: number) => (prev === 
 /**
  * Augmented vision (#92): the live rear camera with the horizon, compass points, the expected aurora band
  * (OVATION along each direction, at 100–250 km), the oval's edge for the current Kp and the Moon drawn
- * over it, a boost for faint aurora, and a photo button that never uses the flash. Phones only.
+ * over it, and a photo button that never uses the flash. Phones only.
  */
 export function SkyView({ kp }: { kp: number | null }) {
   const { t, num, locale } = useI18n();
@@ -50,7 +47,6 @@ export function SkyView({ kp }: { kp: number | null }) {
   const [phase, setPhase] = useState<Phase>('intro');
   const [error, setError] = useState('');
   // Off until the user turns it up: photos and the live picture are unprocessed by default.
-  const [boost, setBoost] = useState(0);
   const [caption, setCaption] = useState(false);
   const [pose, setPose] = useState<Pose | null>(null);
   const [compass, setCompass] = useState<'ok' | 'calibrate' | 'none'>('ok');
@@ -62,8 +58,8 @@ export function SkyView({ kp }: { kp: number | null }) {
   const [saveNote, setSaveNote] = useState('');
   const [gallery, setGallery] = useState(false);
   const [busy, setBusy] = useState(false);
-  // The camera is optional: the overlay comes from the motion sensors, compass and location. It's only
-  // needed for the live picture, boost and photos, and is off until turned on.
+  // The camera turns on with the view; it can be turned off, as the overlay comes from the motion
+  // sensors, compass and location alone.
   const [cam, setCam] = useState<'off' | 'starting' | 'on'>('off');
   const night = useNightMode();
 
@@ -119,6 +115,14 @@ export function SkyView({ kp }: { kp: number | null }) {
     if (shownPlace) setHere(h => h ?? { lat: shownPlace.lat, lon: shownPlace.lon, name: shownPlace.name.split(',')[0] });
     setPhase('live');
   };
+
+  // The live camera picture from the start.
+  const camStarted = useRef(false);
+  useEffect(() => {
+    if (phase !== 'live' || camStarted.current) return;
+    camStarted.current = true;
+    void openCamera();
+  }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Stop the camera on leaving.
   useEffect(() => () => stream.current?.getTracks().forEach(tr => tr.stop()), []);
@@ -203,22 +207,7 @@ export function SkyView({ kp }: { kp: number | null }) {
       const c = document.createElement('canvas');
       c.width = w; c.height = h + strip;
       const ctx = c.getContext('2d')!;
-      // Canvas filters: Chrome, Firefox and Safari 18+; older Safari gets the same boost by hand below.
-      const filterOk = typeof (ctx as { filter?: unknown }).filter === 'string';
-      if (filterOk) ctx.filter = boostCss(boost);
       ctx.drawImage(source, 0, 0, w, h);
-      ctx.filter = 'none';
-      if (!filterOk && boost > 0) {
-        // Safari without canvas filters: the same boost by hand.
-        const img = ctx.getImageData(0, 0, w, h), d = img.data, [br, ct, sat] = BOOST[boost];
-        for (let i = 0; i < d.length; i += 4) {
-          let r = d[i] * br, g = d[i + 1] * br, b = d[i + 2] * br;
-          const l = 0.299 * r + 0.587 * g + 0.114 * b;
-          r = l + (r - l) * sat; g = l + (g - l) * sat; b = l + (b - l) * sat;
-          d[i] = (r - 128) * ct + 128; d[i + 1] = (g - 128) * ct + 128; d[i + 2] = (b - 128) * ct + 128;
-        }
-        ctx.putImageData(img, 0, 0);
-      }
       if (strip) {
         ctx.fillStyle = '#000'; ctx.fillRect(0, h, w, strip);
         ctx.fillStyle = '#fff'; ctx.font = `600 ${Math.round(strip * 0.42)}px system-ui, sans-serif`; ctx.textBaseline = 'middle';
@@ -266,7 +255,6 @@ export function SkyView({ kp }: { kp: number | null }) {
         <p>{t('sky.intro')}</p>
         <ul>
           <li>{t('sky.intro.overlay')}</li>
-          <li>{t('sky.intro.boost')}</li>
           <li>{t('sky.intro.photo')}</li>
         </ul>
         {!markOptional && <p className="sky-small">{t('sky.intro.mark')}</p>}
@@ -283,7 +271,7 @@ export function SkyView({ kp }: { kp: number | null }) {
   return (
     <div className="sky sky-live">
       {/* Always in the page (hidden while the camera is off), so the stream has somewhere to play. */}
-      <video ref={video} playsInline muted autoPlay className="sky-video" style={{ filter: boostCss(boost), opacity: cam === 'on' ? 1 : 0 }} />
+      <video ref={video} playsInline muted autoPlay className="sky-video" style={{ opacity: cam === 'on' ? 1 : 0 }} />
       <svg className="sky-overlay" width={view.w} height={view.h} aria-hidden="true">
         {pose && (
           <g transform={`rotate(${pose.roll} ${cx} ${cy})`}>
@@ -338,12 +326,6 @@ export function SkyView({ kp }: { kp: number | null }) {
       {here?.name && <p className="sky-hint sky-hint-place">{t('sky.usingPlace', { place: here.name })}</p>}
 
       <div className="sky-bottom">
-        {cam === 'on' && (
-          <label className="sky-boost">
-            <span>{t('sky.boost')}</span>
-            <input type="range" min={0} max={3} step={1} value={boost} onChange={e => setBoost(+e.target.value)} aria-valuetext={t(`sky.boost.${boost as 0 | 1 | 2 | 3}`)} />
-          </label>
-        )}
         <div className="sky-actions">
           {markOptional
             ? <label className="sky-caption"><input type="checkbox" checked={caption} onChange={e => setCaption(e.target.checked)} />{t('sky.caption')}</label>
