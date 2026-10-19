@@ -5,6 +5,7 @@ export const es: Messages = {
   // ---- Header, footer, shared ----
   'nav.now': 'Ahora',
   'nav.map': 'Mapa',
+  'nav.sky': "Cielo",
   'nav.dashboard': 'Panel',
   'nav.home': 'Inicio de {name}',
   'nav.dashboardPlan': 'Panel, plan {plan}',

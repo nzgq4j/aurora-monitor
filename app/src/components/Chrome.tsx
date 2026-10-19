@@ -36,6 +36,10 @@ export function Header({ kpLabel }: { kpLabel: string }) {
                 </button>
               );
             })}
+            {/* Tablets (touch screens wider than the phone layout) get Sky view in the header. */}
+            <button type="button" className={'btn nav-item nav-sky' + (current === 'sky' ? ' on' : '')} aria-current={current === 'sky' ? 'page' : undefined} onClick={() => go('sky')}>
+              {t('nav.sky')}
+            </button>
           </nav>
         </div>
         <div className="header-right">
@@ -63,6 +67,7 @@ const ICONS: Record<string, string> = {
   map: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm-9 9h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z',
   more: 'M5 12h.01M12 12h.01M19 12h.01',
   dashboard: 'M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z',
+  sky: 'M4 8h3l1.6-2.4h6.8L17 8h3v11H4zM12 16.6a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8Z',
   alerts: 'M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15L6 16Zm4 4.5a2.2 2.2 0 0 0 4 0',
   locations: 'M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Zm0-8.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
   account: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7.5 8.5c.9-3.6 3.8-5.5 7.5-5.5s6.6 1.9 7.5 5.5',
@@ -115,7 +120,7 @@ export function TabBar() {
   const night = useNightMode();
   const NEXT: Record<NightSetting, NightSetting> = { off: 'on', on: 'auto', auto: 'off' };
   const tab = (id: string, label: string, on: boolean, onClick: () => void) => (
-    <button key={id} type="button" className={'btn tabbar-item' + (on ? ' on' : '')} aria-current={on ? 'page' : undefined} onClick={onClick}>
+    <button key={id} type="button" className={`btn tabbar-item tab-${id}` + (on ? ' on' : '')} aria-current={on ? 'page' : undefined} onClick={onClick}>
       <Icon id={id} /><span>{label}</span>
     </button>
   );
@@ -123,6 +128,8 @@ export function TabBar() {
     <nav className="tabbar" aria-label={t('nav.main')}>
       {tab('now', t('nav.now'), screen === 'home', () => { setOpen(false); go('home'); })}
       {tab('map', t('nav.map'), screen === 'map', () => { setOpen(false); go('map'); })}
+      {/* Sky view needs a camera and motion sensors: touch devices only (see globals.css). */}
+      {tab('sky', t('nav.sky'), screen === 'sky', () => { setOpen(false); go('sky'); })}
       {tab('alerts', t('nav.alerts'), screen === 'alerts', () => { setOpen(false); go('alerts'); })}
       <div className="tabbar-more" ref={moreRef}>
         <button type="button" className={'btn tabbar-item' + (moreOn || open ? ' on' : '')} aria-expanded={open} aria-controls="tabbar-more" onClick={() => setOpen(o => !o)}>

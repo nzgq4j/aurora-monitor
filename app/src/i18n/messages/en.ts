@@ -5,6 +5,7 @@ export const en = {
   // ---- Header, footer, shared ----
   'nav.now': 'Now',
   'nav.map': 'Map',
+  'nav.sky': "Sky",
   'nav.dashboard': 'Dashboard',
   'nav.home': '{name} home',
   'nav.dashboardPlan': 'Dashboard, {plan} plan',
