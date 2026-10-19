@@ -12,6 +12,7 @@ import { StoreProvider } from '../../store';
 import { SITE } from '../../lib/site';
 import { ServiceWorker } from '../../components/ServiceWorker';
 import { UpdateCheck } from '../../components/UpdateCheck';
+import { AppPush } from '../../components/AppPush';
 import { FitHeadings } from '../../components/FitHeadings';
 import { LOCALES } from '../../i18n/config';
 import { I18nProvider } from '../../i18n/I18n';
@@ -76,6 +77,7 @@ export default async function RootLayout({ children, params }: Props & { childre
                 </div>
                 <ServiceWorker />
                 <UpdateCheck />
+                <AppPush />
                 <InstallPrompt />
                 <FitHeadings />
                 </NightModeProvider>

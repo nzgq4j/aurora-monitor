@@ -11,6 +11,7 @@ import { useConditions } from '../lib/useConditions';
 import { ALERT_LEVELS, levelKp, type AlertKind, type AlertLevel, type AlertRules } from '../lib/alerts';
 import { supabase } from '../lib/supabase';
 import { disablePush, enablePush, pushState, type PushState } from '../lib/push';
+import { inApp } from '../lib/native';
 import { INSTALL_EVENT } from '../components/InstallPrompt';
 import { useStore, type Tab } from '../store';
 import { Field } from '../components/Field';
@@ -511,14 +512,14 @@ function PushRow({ need, locked }: { need: number; locked: boolean }) {
   useEffect(() => { pushState().then(setState).catch(() => setState('unsupported')); }, []);
   const sub = err || (state === null ? t('channel.push.sub')
     : state === 'unconfigured' ? `${t('channel.push.sub')} · ${t('alerts.comingSoon')}`
-    : state === 'on' ? t('push.sub.on') : state === 'off' ? t('channel.push.sub') : t(`push.sub.${state === 'needs-install' ? 'needsInstall' : state}`));
+    : state === 'on' ? t('push.sub.on') : state === 'off' ? t('channel.push.sub') : t(`push.sub.${state === 'needs-install' ? 'needsInstall' : state === 'denied' && inApp() ? 'deniedApp' : state}`));
   const toggle = async () => {
     if (locked) return go('plans');
     if (state === 'needs-install') return window.dispatchEvent(new Event(INSTALL_EVENT));
     if (state !== 'on' && state !== 'off') return;
     setBusy(true); setErr('');
     try {
-      const next = state === 'on' ? await disablePush() : await enablePush();
+      const next = state === 'on' ? await disablePush() : await enablePush(t('push.channel'));
       setState(next);
       set(st => ({ channels: { ...st.channels, push: next === 'on' } }));
     } catch {

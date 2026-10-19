@@ -1,6 +1,7 @@
 import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
+import { fcmAccount, sendFcm } from './fcm';
 import { DEFAULT_RULES, REPEAT_HOURS, decidePlace, inQuietHours, stormKp, type AlertKind, type AlertLevel, type AlertRules } from './alerts';
 import { kpNeeded, moon } from './astro';
 import { cloudCover, type CloudForecast } from './cloud';
@@ -138,25 +139,40 @@ async function deliverEmail(admin: SupabaseClient, s: Settings, texts: AlertText
 }
 
 /**
- * One push per user per run to each device they switched on (Chaser). Subscriptions the push service
- * reports as gone (404/410) are removed.
+ * One push per user per run to each device they switched on (Chaser): browsers by web push, the Android
+ * app through Firebase (rows of kind 'fcm', endpoint 'fcm:<token>'). Subscriptions the push service
+ * reports as gone are removed.
  */
 async function deliverPush(admin: SupabaseClient, s: Settings, chaser: boolean, texts: AlertTexts): Promise<string> {
   if (!chaser) return 'plan';
   if (!s.channels?.push) return 'off';
   const pub = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY, priv = process.env.VAPID_PRIVATE_KEY;
-  if (!pub || !priv) return 'not_configured';
-  const { data: subs } = await admin.from('push_subscriptions').select('id, endpoint, p256dh, auth').eq('user_id', s.user_id);
-  if (!subs?.length) return 'no_device';
+  const webReady = !!pub && !!priv, appReady = !!fcmAccount();
+  if (!webReady && !appReady) return 'not_configured';
+  const { data: all } = await admin.from('push_subscriptions').select('id, endpoint, p256dh, auth, kind').eq('user_id', s.user_id);
+  const subs = (all ?? []).filter(x => (x.kind === 'fcm' ? appReady : webReady));
+  if (!subs.length) return all?.length ? 'not_configured' : 'no_device';
   const [first] = texts.lines;
   const payload = JSON.stringify({
     title: first.subject,
     body: texts.lines.length > 1 ? texts.lines.map(l => l.subject).join(' · ') : `${first.body}${first.look ? ` ${first.look}.` : ''}`,
     url: texts.url, tag: `alert-${texts.lines.map(l => l.kind).join('-')}`,
   });
-  const opts = { vapidDetails: { subject: process.env.VAPID_SUBJECT || `mailto:alerts@${SITE.domain}`, publicKey: pub, privateKey: priv }, TTL: 3600, urgency: 'high' as const };
+  const opts = { vapidDetails: { subject: process.env.VAPID_SUBJECT || `mailto:alerts@${SITE.domain}`, publicKey: pub ?? '', privateKey: priv ?? '' }, TTL: 3600, urgency: 'high' as const };
   let sent = 0, failed = '';
   for (const sub of subs) {
+    if (sub.kind === 'fcm') {
+      const { title, body, url, tag } = JSON.parse(payload) as { title: string; body: string; url: string; tag: string };
+      try {
+        const r = await sendFcm(sub.endpoint.slice(4), { title, body, url, tag });
+        if (r === 'sent') sent++;
+        else if (r === 'gone') await admin.from('push_subscriptions').delete().eq('id', sub.id);
+        else failed = r;
+      } catch (e) {
+        failed = `failed: ${(e as Error).message.slice(0, 60)}`;
+      }
+      continue;
+    }
     try {
       await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, payload, opts);
       sent++;
