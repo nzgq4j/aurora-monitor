@@ -71,14 +71,44 @@ export const photoFile = (p: GalleryPhoto) => new File([p.photo], p.name, { type
 /** iPhone and iPad, where the share sheet's Save Image is the way into Photos. */
 export const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-export type ExportResult = 'done' | 'cancelled' | 'downloaded' | 'tap';
+export type ExportResult = 'done' | 'cancelled' | 'downloaded' | 'tap' | 'album' | 'denied' | 'failed';
+
+/** The Android app's photo plugin (mobile/android … PhotoLibraryPlugin.java); null on the website. */
+type NativePhotos = Record<'save' | 'share', (o: { photos: { name: string; data: string }[] }) => Promise<unknown>>;
+function nativePhotos(): NativePhotos | null {
+  const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean; Plugins?: { PhotoLibrary?: NativePhotos } } }).Capacitor;
+  return cap?.isNativePlatform?.() ? cap.Plugins?.PhotoLibrary ?? null : null;
+}
+
+/** Running inside the Android app, which saves photos to its own album. */
+export const inApp = () => typeof window !== 'undefined' && nativePhotos() !== null;
+
+/** A photo as base64 (no data: prefix), for the native plugin. */
+const base64 = (b: Blob) => new Promise<string>((res, rej) => {
+  const r = new FileReader();
+  r.onload = () => res(String(r.result).slice(String(r.result).indexOf(',') + 1));
+  r.onerror = () => rej(r.error);
+  r.readAsDataURL(b);
+});
 
 /**
- * Save photos to the phone as directly as a web page may. iPhone and iPad: the share sheet, whose first
- * action is Save Image / Save N Images. Elsewhere (Android): downloads, which Google Photos and Gallery
- * show under Downloads. `share` always uses the share sheet where there is one.
+ * Save photos to the phone as directly as a web page may. In the Android app: straight into a Polar Lights
+ * album, or Android's share sheet. iPhone and iPad: the share sheet, whose first action is Save Image /
+ * Save N Images. Elsewhere (Android browsers): downloads, which Google Photos and Gallery show under
+ * Downloads. `share` always uses the share sheet where there is one.
  */
 export async function exportPhotos(photos: GalleryPhoto[], how: 'save' | 'share'): Promise<ExportResult> {
+  const native = nativePhotos();
+  if (native) {
+    try {
+      const list = [];
+      for (const p of photos) list.push({ name: p.name, data: await base64(p.photo) });
+      await native[how]({ photos: list });
+      return how === 'save' ? 'album' : 'done';
+    } catch (e) {
+      return (e as { code?: string }).code === 'denied' ? 'denied' : 'failed';
+    }
+  }
   const files = photos.map(photoFile);
   if ((how === 'share' || isIOS()) && navigator.canShare?.({ files })) {
     try {

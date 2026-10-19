@@ -70,7 +70,10 @@ export function SkyView({ kp }: { kp: number | null }) {
   }, []);
 
   /** Turn the camera on; true once its picture is playing. */
-  const openCamera = async () => {
+  // While the camera is starting, everyone waits on the same start (the shutter can be pressed meanwhile).
+  const opening = useRef<Promise<boolean> | null>(null);
+  const openCamera = () => (opening.current ??= startCamera().finally(() => { opening.current = null; }));
+  const startCamera = async () => {
     if (stream.current) return true;
     setCam('starting');
     setError('');
@@ -177,6 +180,7 @@ export function SkyView({ kp }: { kp: number | null }) {
     setBusy(true);
     try {
       // Camera not running (e.g. not allowed at first): try again for the shot, and let its exposure settle.
+      if (opening.current) await opening.current;
       if (!stream.current) {
         if (!(await openCamera())) return;
         await new Promise(res => setTimeout(res, 800));
