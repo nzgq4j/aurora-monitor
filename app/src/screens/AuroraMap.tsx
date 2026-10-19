@@ -1,7 +1,7 @@
 'use client';
 
 import 'leaflet/dist/leaflet.css';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type * as Leaflet from 'leaflet';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import { C } from '../data';
@@ -150,8 +150,24 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
     setView(v);
     try { localStorage.setItem(VIEW_KEY, v); } catch { /* storage unavailable */ }
   };
+  // Zooming the globe in past its imagery's resolution switches to the 2D map at the same place and
+  // scale (not remembered: the globe stays the choice next time).
+  const handOff = useRef<{ lat: number; lon: number; zoom: number } | null>(null);
+  const zoomPast = useCallback((lat: number, lon: number, zoom: number) => {
+    handOff.current = { lat, lon, zoom: Math.max(2, Math.min(9, Math.round(zoom * 2) / 2)) };
+    setView('2d');
+  }, []);
   // Leaflet measures its container, so it needs a nudge after being hidden.
-  useEffect(() => { if (view === '2d') setTimeout(() => mapRef.current?.invalidateSize(), 0); }, [view]);
+  useEffect(() => {
+    if (view !== '2d') return;
+    setTimeout(() => {
+      const map = mapRef.current;
+      if (!map) return;
+      map.invalidateSize();
+      const h = handOff.current;
+      if (h) { handOff.current = null; map.setView([h.lat, h.lon], h.zoom, { animate: false }); }
+    }, 0);
+  }, [view]);
   const { shownPlace, locations, load } = useLocations();
   const current = kp === null ? null : Math.max(1, Math.min(9, Math.round(kp)));
 
@@ -565,7 +581,7 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
         <img className="map-logo" src="/icons/logo.svg" alt={SITE.name} width={56} height={43} />
         <div ref={box} className="aurora-map" role="application" aria-label={t('map.aria')} style={view === '3d' ? { display: 'none' } : undefined} />
         {view === '3d' && <Globe clouds={on.clouds} night={on.night} lights={on.lights} best={bestGlobe} saved={on.saved ? others : NO_PLACES} places={globePlaces} sightings={globeSightings} aurora={on.aurora} kpLines={on.kp} kp={kp} place={shownPlace} home={locations.find(l => l.isHome) ?? null}
-          frame={frames[fi] ? frameBytes : null} pick={pick} onPick={(la, lo, name) => (name ? setPick({ name, lat: la, lon: lo }) : pickAt.current(la, lo))} onStatus={setGlobeStatus} onForecast={setForecast} />}
+          frame={frames[fi] ? frameBytes : null} pick={pick} onPick={(la, lo, name) => (name ? setPick({ name, lat: la, lon: lo }) : pickAt.current(la, lo))} onStatus={setGlobeStatus} onForecast={setForecast} onZoomPast={zoomPast} />}
         {view === '2d' && (notice || status) && <div className="map-status" role="status">{t((notice || status) as MessageKey)}</div>}
         {view === '3d' && globeStatus && <div className="map-status" role="status">{t(globeStatus)}</div>}
         <details className="map-legend" ref={legend} open>

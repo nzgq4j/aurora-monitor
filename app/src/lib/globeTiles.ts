@@ -12,6 +12,8 @@ const GIBS = 'https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/BlueMarble_Next
 const MAX_Z = 7;
 const span = (z: number) => 288 / 2 ** z;
 const TILE_PX = 512;
+/** Imagery detail at the finest level, texels per degree (about 228, ~500 m). */
+export const TILE_TEXELS_PER_DEG = TILE_PX / span(MAX_Z);
 /** Most tiles drawn at once, and kept in memory (the least recently used go first). */
 const MAX_VISIBLE = 48, MAX_CACHED = 160, MAX_LOADING = 6;
 const deg = Math.PI / 180;
