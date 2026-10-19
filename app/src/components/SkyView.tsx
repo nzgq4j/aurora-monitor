@@ -11,6 +11,7 @@ import { ENTITLEMENTS } from '../data';
 import { useStore } from '../store';
 import { INTL_TAG } from '../i18n/config';
 import { useI18n } from '../i18n/I18n';
+import { MoonIcon, useNightMode } from './NightMode';
 
 /** Horizontal angle the rear main camera sees along the long side of its picture (typical phones: 63–70°). */
 const CAMERA_FOV = 66;
@@ -58,6 +59,10 @@ export function SkyView({ kp }: { kp: number | null }) {
   // iPhone: the share sheet couldn't open straight after the shot, so a tap on Save to Photos opens it.
   const [needSave, setNeedSave] = useState(false);
   const [busy, setBusy] = useState(false);
+  // The camera is optional: the overlay comes from the motion sensors, compass and location. It's only
+  // needed for the live picture, boost and photos, and is off until turned on.
+  const [cam, setCam] = useState<'off' | 'starting' | 'on'>('off');
+  const night = useNightMode();
 
   // The aurora forecast grid (the same one as the map), smoothed for sampling.
   useEffect(() => {
@@ -66,18 +71,41 @@ export function SkyView({ kp }: { kp: number | null }) {
     }).catch(() => { /* the overlay works without the band */ });
   }, []);
 
-  const start = async () => {
-    setPhase('starting');
+  /** Turn the camera on; true once its picture is playing. */
+  const openCamera = async () => {
+    if (stream.current) return true;
+    setCam('starting');
     setError('');
-    const motionOk = await askMotion();
     try {
       stream.current = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1920 } } });
     } catch {
-      setPhase('error'); setError(t('sky.err.camera')); return;
+      setCam('off'); setError(t('sky.err.camera')); return false;
     }
     // Make sure no torch is on: the view and photos never light the scene.
     const track = stream.current.getVideoTracks()[0];
     track.applyConstraints({ advanced: [{ torch: false } as MediaTrackConstraintSet] }).catch(() => { /* no torch control */ });
+    const v = video.current;
+    if (v) {
+      v.srcObject = stream.current;
+      const ready = new Promise<void>(res => { if (v.readyState >= 2) res(); else v.addEventListener('loadeddata', () => res(), { once: true }); setTimeout(res, 3000); });
+      await v.play().catch(() => { /* muted + playsInline may autoplay; the frame wait below still applies */ });
+      await ready;
+    }
+    setCam('on');
+    return true;
+  };
+  /** Turn the camera off: the browser's camera indicator goes away. */
+  const closeCamera = () => {
+    stream.current?.getTracks().forEach(tr => tr.stop());
+    stream.current = null;
+    if (video.current) video.current.srcObject = null;
+    setCam('off');
+  };
+
+  const start = async () => {
+    setPhase('starting');
+    setError('');
+    const motionOk = await askMotion();
     if (!motionOk) setCompass('none');
     // Where the user stands now; the shown place if the location isn't shared.
     navigator.geolocation?.getCurrentPosition(
@@ -88,14 +116,6 @@ export function SkyView({ kp }: { kp: number | null }) {
     if (shownPlace) setHere(h => h ?? { lat: shownPlace.lat, lon: shownPlace.lon, name: shownPlace.name.split(',')[0] });
     setPhase('live');
   };
-
-  // The live view's video element appears with the 'live' phase: give it the stream then.
-  useEffect(() => {
-    const v = video.current;
-    if (phase !== 'live' || !v || !stream.current || v.srcObject === stream.current) return;
-    v.srcObject = stream.current;
-    v.play().catch(() => { /* autoplay with muted + playsInline is allowed; retried on the next tap */ });
-  }, [phase]);
 
   // Stop the camera on leaving.
   useEffect(() => () => stream.current?.getTracks().forEach(tr => tr.stop()), []);
@@ -146,7 +166,7 @@ export function SkyView({ kp }: { kp: number | null }) {
     window.addEventListener('resize', measure);
     const v = video.current;
     return () => { v?.removeEventListener('loadedmetadata', measure); window.removeEventListener('resize', measure); };
-  }, [phase]);
+  }, [phase, cam]);
 
   const band = useMemo<BandSlice[]>(() => (field && here ? auroraBand((la, lo) => sampleOval(field, la, lo), here.lat, here.lon) : []), [field, here]);
   const edge = useMemo(() => (kp !== null && here ? kpEdge(kp, here.lat, here.lon) : []), [kp, here]);
@@ -154,11 +174,16 @@ export function SkyView({ kp }: { kp: number | null }) {
   const peak = bandPeak(band);
 
   const capture = async () => {
-    const v = video.current;
     if (busy) return;
-    if (!v || !v.videoWidth) { setError(t('sky.err.photo')); return; }
     setBusy(true);
     try {
+      // Camera off: turn it on for the shot, and give it a moment to settle its exposure.
+      if (!stream.current) {
+        if (!(await openCamera())) return;
+        await new Promise(res => setTimeout(res, 800));
+      }
+      const v = video.current;
+      if (!v || !v.videoWidth) { setError(t('sky.err.photo')); return; }
       let source: CanvasImageSource = v, w = v.videoWidth, h = v.videoHeight;
       // Full-resolution still where the browser offers it (Chrome on Android), flash explicitly off.
       const IC = (window as unknown as { ImageCapture?: new (t: MediaStreamTrack) => { takePhoto: (s?: object) => Promise<Blob> } }).ImageCapture;
@@ -271,7 +296,8 @@ export function SkyView({ kp }: { kp: number | null }) {
   const horizon = pose ? cy + pose.el * view.ppd : null;
   return (
     <div className="sky sky-live">
-      <video ref={video} playsInline muted autoPlay className="sky-video" style={{ filter: boostCss(boost) }} />
+      {/* Always in the page (hidden while the camera is off), so the stream has somewhere to play. */}
+      <video ref={video} playsInline muted autoPlay className="sky-video" style={{ filter: boostCss(boost), opacity: cam === 'on' ? 1 : 0 }} />
       <svg className="sky-overlay" width={view.w} height={view.h} aria-hidden="true">
         {pose && (
           <g transform={`rotate(${pose.roll} ${cx} ${cy})`}>
@@ -309,15 +335,29 @@ export function SkyView({ kp }: { kp: number | null }) {
           {pose?.az != null ? <b>{t('sky.facing', { dir: t(`sky.dir.${point16(pose.az)}`), deg: Math.round(pose.az), el: Math.round(pose.el) })}</b> : <b>{t('sky.noHeading')}</b>}
           <span>{peak ? t('sky.lookTo', { dir: t(`sky.dir.${point16(peak.az)}`), el: Math.round(Math.max(0, peak.low)), pct: Math.round(peak.p) }) : field ? t('sky.noAurora') : t('sky.loadingAurora')}</span>
         </div>
+        <div className="sky-top-buttons">
+          <button type="button" className="btn sky-round" aria-pressed={cam === 'on'} disabled={cam === 'starting'}
+            onClick={() => (cam === 'on' ? closeCamera() : void openCamera())} aria-label={t(cam === 'on' ? 'sky.cameraOff' : 'sky.cameraOn')} title={t(cam === 'on' ? 'sky.cameraOff' : 'sky.cameraOn')}>
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+              <path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4zM12 16.6a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8Z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+              {cam !== 'on' && <path d="M3 3l18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />}
+            </svg>
+          </button>
+          <button type="button" className="btn sky-round" aria-pressed={night.active} onClick={night.toggle} aria-label={t('night.toggle')} title={t('night.toggle')}>
+            <MoonIcon on={night.active} size={22} />
+          </button>
+        </div>
       </div>
       {compass !== 'ok' && <p className="sky-hint" role="status">{compass === 'calibrate' ? t('sky.calibrate') : t('sky.noCompass')}</p>}
       {here?.name && <p className="sky-hint sky-hint-place">{t('sky.usingPlace', { place: here.name })}</p>}
 
       <div className="sky-bottom">
-        <label className="sky-boost">
-          <span>{t('sky.boost')}</span>
-          <input type="range" min={0} max={3} step={1} value={boost} onChange={e => setBoost(+e.target.value)} aria-valuetext={t(`sky.boost.${boost as 0 | 1 | 2 | 3}`)} />
-        </label>
+        {cam === 'on' && (
+          <label className="sky-boost">
+            <span>{t('sky.boost')}</span>
+            <input type="range" min={0} max={3} step={1} value={boost} onChange={e => setBoost(+e.target.value)} aria-valuetext={t(`sky.boost.${boost as 0 | 1 | 2 | 3}`)} />
+          </label>
+        )}
         {needSave && shot && <button type="button" className="btn pill pill-primary sky-save" onClick={saveAgain}>{t('sky.savePhotos')}</button>}
         <div className="sky-actions">
           {markOptional
@@ -334,7 +374,7 @@ export function SkyView({ kp }: { kp: number | null }) {
             </button>
           ) : <span className="sky-thumb sky-thumb-empty" />}
         </div>
-        <p className="sky-small" role="status">{error || saveNote || t('sky.photoNote')}</p>
+        <p className="sky-small" role="status">{error || saveNote || (cam === 'on' ? t('sky.photoNote') : t('sky.cameraHint'))}</p>
       </div>
     </div>
   );

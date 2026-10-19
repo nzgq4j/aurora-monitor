@@ -589,7 +589,11 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 .sky-centre { fill: none; stroke: rgba(255,255,255,.8); stroke-width: 1.5; }
 .sky-top { position: absolute; top: 0; left: 0; right: 0; display: flex; gap: 10px; align-items: flex-start; padding: calc(10px + env(safe-area-inset-top)) 12px 10px; background: linear-gradient(rgba(0,0,0,.65), transparent); }
 .sky-round { flex: none; width: 44px; height: 44px; border-radius: 50%; background: rgba(0,0,0,.5); color: #fff; font-size: 26px; line-height: 1; }
-.sky-readout { display: flex; flex-direction: column; gap: 2px; font-size: 14px; text-shadow: 0 1px 3px #000; padding-top: 4px; }
+.sky-top-buttons { margin-left: auto; display: flex; gap: 8px; flex: none; }
+.sky-round[aria-pressed="true"] { background: rgba(108,255,43,.25); color: #6CFF2B; }
+.sky-round:disabled { opacity: .5; }
+.sky-round svg { display: block; margin: auto; }
+.sky-readout { min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 14px; text-shadow: 0 1px 3px #000; padding-top: 4px; }
 .sky-readout b { font-size: 16px; }
 .sky-hint { position: absolute; left: 12px; right: 12px; top: calc(84px + env(safe-area-inset-top)); margin: 0; padding: 8px 12px; border-radius: 10px; background: rgba(230,184,0,.85); color: #000; font-size: 13px; font-weight: 700; }
 .sky-hint-place { top: auto; bottom: calc(190px + env(safe-area-inset-bottom)); background: rgba(0,0,0,.6); color: #fff; font-weight: 500; }
