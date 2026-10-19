@@ -105,11 +105,11 @@ export async function nowCardBlob(d: NowCardData, oval: SVGSVGElement | null): P
   g.fillStyle = '#000'; g.fillRect(0, 0, S, S);
 
   // The oval filling the top-right quarter: the card's own polar chart (480 × 480, pole at the centre,
-  // 4.2 px per degree), cropped to about 54° latitude so the auroral zone fills the square.
+  // 4.2 px per degree), cropped to about 59° latitude so the auroral zone fills the square.
   const O = S / 2, ox = S - O, oy = 0;
   if (oval) {
     const copy = oval.cloneNode(true) as SVGSVGElement;
-    copy.setAttribute('viewBox', '90 90 300 300');
+    copy.setAttribute('viewBox', '110 110 260 260');
     copy.setAttribute('width', String(O)); copy.setAttribute('height', String(O));
     // Just the oval, grid and dots: labels would clutter the card (and lose the page's fonts in an image).
     copy.querySelectorAll('.map-pulse, text').forEach(n => n.remove());
