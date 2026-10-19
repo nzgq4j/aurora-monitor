@@ -259,6 +259,8 @@ export const es: Messages = {
   'err.invalidLogin': 'Ese correo y esa contraseña no coinciden con ninguna cuenta.',
   'err.exists': 'Ya existe una cuenta con ese correo. Inicia sesión.',
   'err.provider': 'Ese método de inicio de sesión aún no está activado. Usa correo y contraseña.',
+  'err.noGoogleAccount': "No hay ninguna cuenta de Google en este móvil. Añade una en Ajustes de Android › Contraseñas y cuentas, o inicia sesión con tu correo.",
+  'err.google': "No se pudo iniciar sesión con Google. Inténtalo de nuevo o inicia sesión con tu correo.",
   'err.unconfirmed': 'Primero confirma tu correo. Busca el enlace en tu bandeja de entrada.',
   'err.network': 'No se puede conectar con el servicio de cuentas. Comprueba tu conexión e inténtalo de nuevo.',
   'err.samePassword': 'Elige una contraseña distinta de la actual.',

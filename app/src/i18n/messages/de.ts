@@ -259,6 +259,8 @@ export const de: Messages = {
   'err.invalidLogin': 'E-Mail und Passwort passen zu keinem Konto.',
   'err.exists': 'Es gibt bereits ein Konto mit dieser E-Mail. Melden Sie sich stattdessen an.',
   'err.provider': 'Diese Anmeldemethode ist noch nicht aktiviert. Verwenden Sie E-Mail und Passwort.',
+  'err.noGoogleAccount': "Auf diesem Handy ist kein Google-Konto eingerichtet. Fügen Sie eines in den Android-Einstellungen › Passwörter & Konten hinzu oder melden Sie sich mit E-Mail an.",
+  'err.google': "Die Anmeldung mit Google hat nicht geklappt. Bitte versuchen Sie es erneut oder melden Sie sich mit E-Mail an.",
   'err.unconfirmed': 'Bestätigen Sie zuerst Ihre E-Mail-Adresse. Der Link ist in Ihrem Posteingang.',
   'err.network': 'Der Kontodienst ist gerade nicht erreichbar. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.',
   'err.samePassword': 'Wählen Sie ein Passwort, das sich von Ihrem aktuellen unterscheidet.',

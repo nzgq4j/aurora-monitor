@@ -259,6 +259,8 @@ export const fr: Messages = {
   'err.invalidLogin': 'Cet e-mail et ce mot de passe ne correspondent à aucun compte.',
   'err.exists': 'Un compte existe déjà avec cet e-mail. Connectez-vous plutôt.',
   'err.provider': 'Ce mode de connexion n’est pas encore activé. Utilisez votre e-mail et votre mot de passe.',
+  'err.noGoogleAccount': "Aucun compte Google sur ce téléphone. Ajoutez-en un dans Paramètres Android › Mots de passe et comptes, ou connectez-vous avec votre e-mail.",
+  'err.google': "La connexion avec Google n’a pas fonctionné. Réessayez ou connectez-vous avec votre e-mail.",
   'err.unconfirmed': 'Confirmez d’abord votre e-mail. Le lien se trouve dans votre boîte de réception.',
   'err.network': 'Impossible de joindre le service de compte pour le moment. Vérifiez votre connexion et réessayez.',
   'err.samePassword': 'Choisissez un mot de passe différent de l’actuel.',
