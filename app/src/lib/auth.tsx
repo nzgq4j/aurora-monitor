@@ -71,6 +71,8 @@ interface AuthCtx {
   /** Stripe Checkout (url) or Billing Portal (url); `error` is an API error code. */
   startCheckout: (tier: TierId, cycle: 'monthly' | 'annual') => Promise<{ url?: string; error?: string }>;
   openBillingPortal: () => Promise<{ url?: string; error?: string }>;
+  /** Delete the account and everything stored with it, then sign out on this device. */
+  deleteAccount: () => Promise<Result>;
 }
 
 const Ctx = createContext<AuthCtx | null>(null);
@@ -238,6 +240,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       startCheckout: (tier, cycle) => billing('/api/stripe/checkout', { tier, cycle }),
       openBillingPortal: () => billing('/api/stripe/portal'),
+      deleteAccount: async () => {
+        if (!sb || !user) return none;
+        const r = await billing('/api/account/delete') as { ok?: boolean; error?: string };
+        if (!r.ok) return { error: r.error === 'billing_failed' ? 'err.deleteBilling' : r.error === 'network' ? 'err.network' : 'err.deleteFailed' };
+        // The session no longer exists on the server, so only this device's copy is cleared.
+        await sb.auth.signOut({ scope: 'local' });
+        setProfile(null);
+        return { error: null };
+      },
     };
   }, [sb, ready, user, profile, loadProfile, locale]);
 

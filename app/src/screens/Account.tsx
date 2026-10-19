@@ -778,7 +778,52 @@ function AccountSettings() {
         <span style={{ fontSize: 14, color: 'var(--soft)' }}>{t('logout.body')}</span>
         <button type="button" className="btn pill pill-ghost" onClick={signOut} style={{ alignSelf: 'flex-start', fontSize: 15, padding: '12px 22px', color: C.red, borderColor: C.red }}>{t('logout.button')}</button>
       </section>
+      <DeleteAccount />
     </div>
+  );
+}
+
+/**
+ * Delete the account (required for apps on Google Play): asks once more, closes billing and deletes
+ * everything stored with the account on the server, then signs out. Photos in the gallery stay on the device.
+ */
+function DeleteAccount() {
+  const { live, go } = useStore();
+  const { deleteAccount } = useAuth();
+  const { t, tx } = useI18n();
+  const [asking, setAsking] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const confirm = async () => {
+    if (!live) { setAsking(false); go('account', { toast: t('delete.demo') }); return; }
+    setBusy(true); setErr('');
+    // This device's push registration (and its saved token) go first; the server removes every other one.
+    await disablePush().catch(() => {});
+    const { error } = await deleteAccount();
+    setBusy(false);
+    if (error) { setErr(tx(error)); return; }
+    go('home', { signedIn: false, toast: t('delete.done') });
+  };
+  return (
+    <section aria-labelledby="delete-h" style={{ display: 'flex', flexDirection: 'column', gap: 12, borderTop: '1px solid var(--line)', paddingTop: 24 }}>
+      <h2 id="delete-h" className="display" style={h2}>{t('delete.h2a')} <span className="hl">{t('delete.h2b')}</span></h2>
+      <span style={{ fontSize: 14, color: 'var(--soft)' }}>{t('delete.body')}</span>
+      {!asking ? (
+        <button type="button" className="btn" onClick={() => setAsking(true)} style={{ alignSelf: 'flex-start', fontWeight: 600, fontSize: 14, color: C.red }}>{t('delete.button')}</button>
+      ) : (
+        <div role="alertdialog" aria-labelledby="delete-confirm" className="card" style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 22, borderColor: C.red }}>
+          <span id="delete-confirm" style={{ fontWeight: 700, fontSize: 17 }}>{t('delete.confirm')}</span>
+          <span style={{ fontSize: 14, color: 'var(--soft)' }}>{t('delete.confirmBody')}</span>
+          {err && <span role="alert" style={{ fontSize: 14, color: C.red }}>{err}</span>}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+            <button type="button" disabled={busy} className="btn pill pill-ghost" onClick={confirm} style={{ fontSize: 15, padding: '12px 22px', color: C.red, borderColor: C.red, opacity: busy ? .6 : 1 }}>
+              {busy ? t('delete.deleting') : t('delete.yes')}
+            </button>
+            <button type="button" disabled={busy} className="btn pill pill-ghost" onClick={() => { setAsking(false); setErr(''); }} style={{ fontSize: 15, padding: '12px 22px' }}>{t('delete.no')}</button>
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
 
