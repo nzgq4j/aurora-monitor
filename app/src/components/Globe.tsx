@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type * as THREE from 'three';
 import { subsolarPoint } from '../lib/astro';
 import { cloudify } from '../lib/cloudify';
-import { createTileLayer } from '../lib/globeTiles';
+import { createTileLayer, TILE_TEXELS_PER_DEG } from '../lib/globeTiles';
 import { kpColor, kpLine } from '../lib/kpLines';
 import { OVAL_H, OVAL_W, smoothOval } from '../lib/ovalSmooth';
 import type { Place } from '../lib/locations';
@@ -37,6 +37,12 @@ function toVector(T: typeof THREE, lat: number, lon: number, r = 1) {
   const theta = ((90 - lat) * Math.PI) / 180, phi = ((lon + 180) * Math.PI) / 180;
   return new T.Vector3(-Math.cos(phi) * Math.sin(theta) * r, Math.cos(theta) * r, Math.sin(phi) * Math.sin(theta) * r);
 }
+
+/**
+ * Zooming in until one texel of the sharpest imagery the globe has covers this many CSS pixels at the
+ * centre of the view is where it starts to look soft; zooming further hands over to the 2D map.
+ */
+const SHARP_PX = 1.5;
 
 /** Latitude the camera looks from for a place: well towards the equator, but on the place's side of it. */
 const viewLat = (lat: number) => Math.max(-48, Math.min(48, lat * 0.72));
@@ -158,17 +164,22 @@ interface Props {
   /** Called with a message key while something is loading or unavailable, '' when ready. */
   onStatus: (status: MessageKey | '') => void;
   onForecast: (t: number | null) => void;
+  /**
+   * Zoomed in to where the imagery loses resolution: the point at the centre of the view and the 2D
+   * map zoom (Web Mercator, fractional) at the same scale there.
+   */
+  onZoomPast?: (lat: number, lon: number, zoom: number) => void;
 }
 
 /** Interactive 3D Earth with the live OVATION aurora, the day/night line, satellite clouds and your location. */
-export function Globe({ clouds, night, lights, best, saved, places, sightings = NO_POINTS, frame = null, aurora, kpLines, kp, place, home, pick = null, onPick, onStatus, onForecast }: Props) {
+export function Globe({ clouds, night, lights, best, saved, places, sightings = NO_POINTS, frame = null, aurora, kpLines, kp, place, home, pick = null, onPick, onStatus, onForecast, onZoomPast }: Props) {
   const { t } = useI18n();
   const box = useRef<HTMLDivElement>(null);
   const label = useRef<HTMLDivElement>(null);
   const api = useRef<{ setClouds: (on: boolean) => void; setAurora: (on: boolean) => void; setKp: (on: boolean, kp: number | null) => void; setPlace: (p: Place | null) => void; setPick: (p: { lat: number; lon: number } | null) => void; setShade: (night: boolean, lights: boolean) => void; setBest: (c: HTMLCanvasElement | null) => void; setSaved: (s: Place[]) => void; setPlaces: (p: { lat: number; lon: number }[]) => void; setFrame: (f: Uint8Array | null) => void; setSightings: (s: { lat: number; lon: number }[]) => void; flyTo: (p: Place) => void } | null>(null);
   // Latest layer choices, applied once the scene is built (props can change while it loads).
-  const latest = useRef({ aurora, kpLines, kp, pick, onPick, night, lights, best, saved, places, frame, sightings });
-  latest.current = { aurora, kpLines, kp, pick, onPick, night, lights, best, saved, places, frame, sightings };
+  const latest = useRef({ aurora, kpLines, kp, pick, onPick, onZoomPast, night, lights, best, saved, places, frame, sightings });
+  latest.current = { aurora, kpLines, kp, pick, onPick, onZoomPast, night, lights, best, saved, places, frame, sightings };
   const placeLabels = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
   const [notice, setNotice] = useState('');
@@ -225,23 +236,30 @@ export function Globe({ clouds, night, lights, best, saved, places, sightings = 
       const sphere = (r: number) => new T.SphereGeometry(r, 128, 64);
       const earthMat = new T.ShaderMaterial({ uniforms: { dayMap: { value: day }, nightMap: { value: night }, sunDir: { value: sunDir }, dayRect: { value: new T.Vector4(0, 0, 1, 1) }, nightRect: { value: new T.Vector4(0, 0, 1, 1) }, shade: { value: new T.Vector2(1, 1) } }, vertexShader: VERT, fragmentShader: EARTH_FRAG });
       scene.add(new T.Mesh(sphere(1), earthMat));
-      // Desktop (fine pointer, wide screen): swap in 4K imagery once it has loaded. Phones keep the 2K
-      // images, which are sharp at their size and save the download.
+      // Desktop (fine pointer, wide screen): swap in 4K imagery once it has loaded. Phones start with the
+      // 2K images, which are sharp at the opening zoom and save the download, and fetch 4K the first time
+      // they zoom in.
       const desktop = window.matchMedia('(pointer: fine) and (min-width: 900px)').matches;
       // Desktop: NASA zoom tiles for sharper detail as the user zooms in (see lib/globeTiles).
       const tileLayer = desktop
         ? createTileLayer(T, { scene, vertexShader: VERT, fragmentShader: EARTH_FRAG, nightMap: earthMat.uniforms.nightMap, sunDir: earthMat.uniforms.sunDir, shade: earthMat.uniforms.shade, anisotropy: renderer.capabilities.getMaxAnisotropy() })
         : null;
       if (tileLayer) cleanups.push(() => tileLayer.dispose());
-      if (desktop && renderer.capabilities.maxTextureSize >= 4096) {
+      // 4K imagery: requested once; while it loads the zoom limit already allows for it.
+      let hi: 'no' | 'loading' | 'done' = 'no';
+      const loadHi = () => {
+        if (hi !== 'no' || renderer.capabilities.maxTextureSize < 4096) return;
+        hi = 'loading';
         Promise.all([loadTex('/globe/earth-day-4k.jpg'), loadTex('/globe/earth-night-4k.jpg')]).then(([day4, night4]) => {
           if (disposed) { day4.dispose(); night4.dispose(); return; }
           for (const t of [day4, night4]) t.anisotropy = renderer.capabilities.getMaxAnisotropy();
           earthMat.uniforms.dayMap.value = day4;
           earthMat.uniforms.nightMap.value = night4;
           day.dispose(); night.dispose();
-        }, () => { /* keep the 2K imagery */ });
-      }
+          hi = 'done';
+        }, () => { hi = 'no'; /* keep the 2K imagery */ });
+      };
+      if (desktop) loadHi();
 
       // Clouds (loaded the first time they're switched on).
       const cloudMat = new T.ShaderMaterial({ uniforms: { clouds: { value: null }, sunDir: { value: sunDir } }, vertexShader: VERT, fragmentShader: CLOUD_FRAG, transparent: true, depthWrite: false });
@@ -409,8 +427,9 @@ export function Globe({ clouds, night, lights, best, saved, places, sightings = 
       controls.rotateSpeed = 0.45;
       controls.zoomSpeed = 0.7;
       // Desktop can zoom close to the ground, where the zoom tiles carry the detail (and the near plane
-      // has to come in so the surface isn't clipped).
-      controls.minDistance = desktop ? 1.06 : 1.35;
+      // has to come in so the surface isn't clipped). The imagery may run out sooner: see `sharpLimit`.
+      const floor = desktop ? 1.06 : 1.35;
+      controls.minDistance = floor;
       if (desktop) { camera.near = 0.01; camera.updateProjectionMatrix(); }
       controls.maxDistance = 7;
       // Keep the view off the poles, where turning the globe spins it in place.
@@ -428,7 +447,7 @@ export function Globe({ clouds, night, lights, best, saved, places, sightings = 
       const flyTo = (p: Place) => {
         controls.autoRotate = false;
         touched = true;
-        const dist = Math.min(camera.position.length(), 2.6);
+        const dist = Math.max(controls.minDistance, Math.min(camera.position.length(), 2.6));
         flight = { from: camera.position.clone(), to: toVector(T, viewLat(p.lat), p.lon, dist), t0: performance.now() };
       };
 
@@ -474,6 +493,39 @@ export function Globe({ clouds, night, lights, best, saved, places, sightings = 
       renderer.domElement.addEventListener('pointerup', onUp);
       cleanups.push(() => { renderer.domElement.removeEventListener('pointerdown', onDown); renderer.domElement.removeEventListener('pointerup', onUp); });
 
+      // Zooming in (wheel, or two fingers spreading) is what hands over to the 2D map at the limit;
+      // turning the globe or a Home flight never does.
+      let zoomInAt = 0, handed = false;
+      const zoomIn = () => { zoomInAt = performance.now(); if (!desktop) loadHi(); };
+      const onWheel = (e: WheelEvent) => { if (e.deltaY < 0) zoomIn(); };
+      const fingers = new Map<number, { x: number; y: number }>();
+      let spread = 0;
+      const pinchSpread = () => { const [a, b] = [...fingers.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+      const onFinger = (e: PointerEvent) => {
+        if (e.pointerType !== 'touch') return;
+        if (e.type === 'pointerdown' || e.type === 'pointermove') fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        else fingers.delete(e.pointerId);
+        if (fingers.size !== 2) { spread = 0; return; }
+        const s = pinchSpread();
+        if (spread && s > spread + 1) zoomIn();
+        spread = s;
+      };
+      const fingerEvents = ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'] as const;
+      renderer.domElement.addEventListener('wheel', onWheel, { passive: true });
+      for (const n of fingerEvents) renderer.domElement.addEventListener(n, onFinger);
+      cleanups.push(() => {
+        renderer.domElement.removeEventListener('wheel', onWheel);
+        for (const n of fingerEvents) renderer.domElement.removeEventListener(n, onFinger);
+      });
+      /** CSS pixels per degree of ground at the centre of the view, times the camera's height above it. */
+      const pxPerDegAt = () => ((Math.PI / 180) * (viewH / 2)) / Math.tan((camera.fov * Math.PI) / 360);
+      /** Camera distance where the imagery starts to look soft (see SHARP_PX). */
+      const sharpLimit = () => {
+        const texPerDeg = tileLayer ? TILE_TEXELS_PER_DEG
+          : hi === 'loading' ? 4096 / 360 : ((earthMat.uniforms.dayMap.value as THREE.Texture).image as { width: number }).width / 360;
+        return 1 + pxPerDegAt() / (texPerDeg * SHARP_PX);
+      };
+
       const sunTimer = setInterval(updateSun, 6e4);
       cleanups.push(() => clearInterval(sunTimer));
 
@@ -492,7 +544,19 @@ export function Globe({ clouds, night, lights, best, saved, places, sightings = 
         }
         // Desktop: turning slows as the camera nears the ground, so a drag moves the view a similar distance.
         if (desktop) controls.rotateSpeed = 0.45 * Math.max(0.04, Math.min(1, (camera.position.length() - 1) / 1.5));
+        if (viewH) controls.minDistance = Math.max(floor, sharpLimit());
         controls.update();
+        // Zoomed in to the limit: hand over to the 2D map at the same place and scale.
+        const handTo = latest.current.onZoomPast;
+        if (handTo && !handed && now - zoomInAt < 300 && camera.position.length() <= controls.minDistance + 1e-3) {
+          handed = true;
+          const d = tmp.copy(camera.position).normalize();
+          const lat = (Math.asin(d.y) * 180) / Math.PI;
+          const lon = ((((Math.atan2(d.z, -d.x) * 180) / Math.PI - 180) % 360) + 540) % 360 - 180;
+          const pxPerDeg = pxPerDegAt() / (camera.position.length() - 1);
+          // Web Mercator: 256·2^z pixels round the equator, stretched by 1/cos(lat).
+          handTo(lat, lon, Math.log2((pxPerDeg * 360 * Math.cos((lat * Math.PI) / 180)) / 256));
+        }
         if (tileLayer && now - tilesAt > 150) {
           tilesAt = now;
           tileLayer.update(camera, viewH, renderer.getPixelRatio(), 360 / ((earthMat.uniforms.dayMap.value as THREE.Texture).image as { width: number }).width);
