@@ -350,6 +350,7 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 }
 
 /* Logo over the phone map, centred between the Home and Layers buttons. */
+.map-logo { display: none; position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 850; height: 44px; width: auto; pointer-events: none; }
 /* Phone layers menu on the map (shown only in the phone layout below). */
 
 /* ---- Phone app bar: on phone widths the header gives way to a tab bar along the bottom. ---- */
@@ -383,6 +384,7 @@ button.pill-ghost { border: 1px solid var(--line-2); }
   /* Map page: no title row; the map fills the screen above the tab bar and layers live in a menu. */
   .map-head { position: absolute; width: 1px !important; height: 1px; padding: 0 !important; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .aurora-map { height: calc(100svh - 64px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); min-height: 360px; }
+  .map-logo { display: block; }
   /* The panel takes over the legend, and the map's bottom controls sit above its collapsed height. */
   .map-legend { display: none; }
   .map-head-time { display: none; }
