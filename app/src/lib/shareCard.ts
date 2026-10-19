@@ -87,6 +87,8 @@ export interface NowCardData {
   scale: { label: string; color: string; on: boolean }[];
   /** Caption for the oval, e.g. "Auroral oval · OVATION 08:37 UT". */
   ovalLabel: string;
+  /** Lowest latitude of the oval's equatorward edge (°N), so the crop always fits the whole oval; null if unknown. */
+  edgeLat: number | null;
   site: string;
 }
 
@@ -105,11 +107,14 @@ export async function nowCardBlob(d: NowCardData, oval: SVGSVGElement | null): P
   g.fillStyle = '#000'; g.fillRect(0, 0, S, S);
 
   // The oval filling the top-right quarter: the card's own polar chart (480 × 480, pole at the centre,
-  // 4.2 px per degree), cropped to about 59° latitude so the auroral zone fills the square.
+  // 4.2 px per degree), cropped just past the oval's equatorward edge: about 59° when quiet, wider in a
+  // storm (down to the chart's 40° ring), so the whole oval always fits.
   const O = S / 2, ox = S - O, oy = 0;
   if (oval) {
     const copy = oval.cloneNode(true) as SVGSVGElement;
-    copy.setAttribute('viewBox', '110 110 260 260');
+    const edge = d.edgeLat === null ? 59 : Math.min(59, d.edgeLat - 3);
+    const r = Math.min(226, (90 - edge) * 4.2);
+    copy.setAttribute('viewBox', `${240 - r} ${240 - r} ${2 * r} ${2 * r}`);
     copy.setAttribute('width', String(O)); copy.setAttribute('height', String(O));
     // Just the oval, grid and dots: labels would clutter the card (and lose the page's fonts in an image).
     copy.querySelectorAll('.map-pulse, text').forEach(n => n.remove());
