@@ -121,8 +121,8 @@ const AURORA_FRAG = /* glsl */ `
     float p = texture2D(oval, vUv).r * 100.0 + dither * 0.4;
     float a = smoothstep(3.0, 30.0, p);
     if (a <= 0.001) discard;
-    vec3 col = mix(vec3(0.35, 1.0, 0.23), vec3(1.0, 0.88, 0.3), smoothstep(35.0, 65.0, p));
-    col = mix(col, vec3(1.0, 0.3, 0.3), smoothstep(65.0, 95.0, p));
+    vec3 col = mix(vec3(0.35, 1.0, 0.23), vec3(1.0, 0.88, 0.3), smoothstep(20.0, 40.0, p));
+    col = mix(col, vec3(1.0, 0.3, 0.3), smoothstep(40.0, 70.0, p));
     float night = 1.0 - smoothstep(-0.1, 0.15, dot(normalize(vNormal), sunDir));
     gl_FragColor = vec4(col * a * strength * mix(0.35, 1.0, night), 1.0);
     #include <colorspace_fragment>
