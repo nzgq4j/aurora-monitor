@@ -15,6 +15,8 @@ import { Tonight } from '../components/Tonight';
 import { G_SCALE } from '../lib/astro';
 import { SDO_IMAGES } from '../lib/sdo';
 import { useLocations } from '../lib/locations';
+import { useConditions } from '../lib/useConditions';
+import { INTL_TAG } from '../i18n/config';
 import type { NowData } from '../lib/now';
 import { nowCardBlob } from '../lib/shareCard';
 import { SITE } from '../lib/site';
@@ -32,11 +34,11 @@ function headline(kp: number | null, { t }: I18n): [string, string] {
   return [t('home.h.quiet'), t('home.h.low')];
 }
 
-function summary(d: NowData, { t, num }: I18n): string {
+function summary(d: NowData, { t, num }: I18n, clock: (t: number) => string): string {
   const parts: string[] = [];
   if (d.kp) {
     const g = G_SCALE(d.kp.kp);
-    parts.push(t(g ? 'home.sum.kpStorm' : 'home.sum.kp', { kp: num(d.kp.kp, 2), g, time: hhmm(d.kp.t) }));
+    parts.push(t(g ? 'home.sum.kpStorm' : 'home.sum.kp', { kp: num(d.kp.kp, 2), g, time: clock(d.kp.t) }));
   }
   const w = d.wind;
   if (w && (w.speed !== null || w.bz !== null)) {
@@ -183,7 +185,15 @@ export function Home({ data }: { data: NowData }) {
     { label: t('home.stat.density'), value: fmt(w?.density, 1), unit: 'p/cm³', note: w?.density == null ? t('common.noData') : w.density >= 15 ? t('home.density.dense') : t('home.density.typical'), c: C.soft },
   ];
   const scale = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => ({ n: n === 5 ? 'G1' : n === 9 ? 'G5' : String(n), bg: n >= 5 ? C.red : n === 4 ? C.amber : C.darkGreen, on: n <= level }));
-  const kicker = updated ? t('home.live', { time: hhmm(updated) }) : t('home.liveUnavailable');
+  // Times on the Now card in local time at the shown place (its zone comes with the cloud forecast), else this
+  // device's. The server render can't know either, so it shows UT until the page is running in the browser.
+  const { data: placeCond } = useConditions(shownPlace?.lat, shownPlace?.lon);
+  const placeTz = placeCond?.cloud?.timeZone ?? undefined;
+  const [inBrowser, setInBrowser] = useState(false);
+  useEffect(() => setInBrowser(true), []);
+  const clock = (x: number) => (!inBrowser ? `${hhmm(x)} UT`
+    : new Date(x).toLocaleTimeString(INTL_TAG[i18n.locale], { hour: '2-digit', minute: '2-digit', ...(placeTz ? { timeZone: placeTz } : {}) }));
+  const kicker = updated ? t('home.live', { time: clock(updated) }) : t('home.liveUnavailable');
 
   // Share the Now card: text, and an image with the current oval as its background, drawn ahead of time
   // because Safari only opens the share sheet straight from a tap (as the verdict card does).
@@ -199,7 +209,7 @@ export function Home({ data }: { data: NowData }) {
     nowCardBlob({
       kicker, l1, l2, line: kp === null ? '' : t('home.shareLine', { kp: num(kp, 1) }),
       scale: scale.map(s => ({ label: s.n, color: s.bg, on: s.on })),
-      ovalLabel: data.oval?.forecast ? `${t('home.oval')} · ${t('home.ovalForecast', { time: hhmm(data.oval.forecast) })}` : t('home.oval'),
+      ovalLabel: data.oval?.forecast ? `${t('home.oval')} · ${t('home.ovalForecast', { time: clock(data.oval.forecast) })}` : t('home.oval'),
       site: SITE.domain,
     }, oval).then(blob => {
       if (!live || !blob) return;
@@ -207,7 +217,7 @@ export function Home({ data }: { data: NowData }) {
       if (navigator.canShare({ files: [file] })) nowFile.current = file;
     });
     return () => { live = false; };
-  }, [data, i18n.locale]); // eslint-disable-line react-hooks/exhaustive-deps -- the rest follows the data and language
+  }, [data, i18n.locale, placeTz, inBrowser]); // eslint-disable-line react-hooks/exhaustive-deps -- the rest follows the data, language and zone
   const shareNow = async () => {
     setNowMsg('');
     try {
@@ -241,7 +251,7 @@ export function Home({ data }: { data: NowData }) {
           <h1 className="display" style={{ fontSize: 'clamp(36px, 12cqi, 80px)', lineHeight: .88 }}>
             <span className="hero-line">{l1}</span><br /><span className="hl hero-line">{l2}</span>
           </h1>
-          <p style={{ margin: 0, maxWidth: 540, fontSize: 18, lineHeight: 1.45, color: 'var(--soft)', textWrap: 'pretty' }}>{summary(data, i18n)}</p>
+          <p style={{ margin: 0, maxWidth: 540, fontSize: 18, lineHeight: 1.45, color: 'var(--soft)', textWrap: 'pretty' }}>{summary(data, i18n, clock)}</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(9,1fr)', gap: 4, maxWidth: 520 }} aria-label={t('home.scale', { level: kp === null ? '—' : num(kp, 2) })}>
             {scale.map(s => (
               <div key={s.n} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -254,7 +264,7 @@ export function Home({ data }: { data: NowData }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 520, width: '100%', justifySelf: 'center' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
             <span style={{ fontFamily: 'var(--f-display)', fontWeight: 800, fontSize: 14, color: 'var(--green)', letterSpacing: '.04em' }}>{t('home.oval')}</span>
-            <span className="label">{data.oval?.forecast ? t('home.ovalForecast', { time: hhmm(data.oval.forecast) }) : '—'}</span>
+            <span className="label">{data.oval?.forecast ? t('home.ovalForecast', { time: clock(data.oval.forecast) }) : '—'}</span>
           </div>
           <PolarOval points={data.oval?.points ?? []} edge={data.oval?.edge ?? []} marker={shownPlace} />
           <span style={{ fontSize: 12, color: 'var(--muted)' }}>
