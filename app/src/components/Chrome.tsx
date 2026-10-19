@@ -76,20 +76,6 @@ const Icon = ({ id, bold }: { id: string; bold?: boolean }) => (
   <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d={ICONS[id]} fill="none" stroke="currentColor" strokeWidth={bold ? 3.2 : 1.8} strokeLinecap="round" strokeLinejoin="round" /></svg>
 );
 
-/** The logo at the top of phone pages, which have no header (the map shows its own over the map). */
-export function PhoneBrand() {
-  const { screen, go } = useStore();
-  const { t } = useI18n();
-  if (screen === 'map') return null;
-  return (
-    <div className="phone-brand">
-      <button type="button" className="btn" onClick={() => go('home')} aria-label={t('nav.home', { name: SITE.name })}>
-        <img src="/icons/logo.svg" alt="" width={52} height={40} />
-      </button>
-    </div>
-  );
-}
-
 /** App-style navigation along the bottom of phone screens, in place of the header (see globals.css). */
 export function TabBar() {
   const { signedIn, s, screen, go, goAccount } = useStore();

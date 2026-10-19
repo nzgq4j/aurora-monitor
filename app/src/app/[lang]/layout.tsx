@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import './globals.css';
-import { Footer, Header, PhoneBrand, TabBar, Toast } from '../../components/Chrome';
+import { Footer, Header, TabBar, Toast } from '../../components/Chrome';
 import { InstallPrompt } from '../../components/InstallPrompt';
 import { G_SCALE } from '../../lib/astro';
 import { kpNow } from '../../lib/feeds';
@@ -68,7 +68,6 @@ export default async function RootLayout({ children, params }: Props & { childre
                 <NightModeProvider>
                 <div className="app">
                   <Header kpLabel={kpLabel} />
-                  <PhoneBrand />
                   <Toast />
                   {children}
                   <Footer />

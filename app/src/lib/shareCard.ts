@@ -27,15 +27,7 @@ export async function shareCardBlob(d: ShareCardData): Promise<Blob | null> {
   const body = "'Barlow', 'Helvetica Neue', Arial, sans-serif";
 
   drawSky(g, S, d.score);
-
-  // Logo ring and brand.
-  g.save(); g.translate(112, 112); g.rotate(-0.38);
-  g.strokeStyle = '#6CFF2B'; g.lineWidth = 9; g.shadowColor = '#6CFF2B'; g.shadowBlur = 18;
-  g.beginPath(); g.ellipse(0, 0, 44, 28, 0, 0, Math.PI * 2); g.stroke(); g.restore();
-  g.fillStyle = '#fff'; g.beginPath(); g.arc(112, 112, 8, 0, Math.PI * 2); g.fill();
-  g.font = "800 44px 'Archivo', sans-serif"; g.textBaseline = 'middle';
-  g.fillStyle = '#fff'; g.fillText('POLAR', 186, 112);
-  g.fillStyle = '#6CFF2B'; g.fillText('LIGHTS', 186 + g.measureText('POLAR ').width, 112);
+  drawBrand(g);
 
   // Place and kicker.
   g.textBaseline = 'alphabetic';
@@ -67,6 +59,98 @@ export async function shareCardBlob(d: ShareCardData): Promise<Blob | null> {
     g.fillText(b.label, x + w / 2, top + h + 38); g.textAlign = 'left';
   });
 
+  g.fillStyle = '#6CFF2B'; g.font = `700 34px ${body}`; g.textAlign = 'right'; g.fillText(d.site, S - 80, S - 48); g.textAlign = 'left';
+  return new Promise(res => c.toBlob(b => res(b), 'image/png'));
+}
+
+/** Logo ring and POLAR LIGHTS wordmark, top left. */
+function drawBrand(g: CanvasRenderingContext2D) {
+  g.save(); g.translate(112, 112); g.rotate(-0.38);
+  g.strokeStyle = '#6CFF2B'; g.lineWidth = 9; g.shadowColor = '#6CFF2B'; g.shadowBlur = 18;
+  g.beginPath(); g.ellipse(0, 0, 44, 28, 0, 0, Math.PI * 2); g.stroke(); g.restore();
+  g.fillStyle = '#fff'; g.beginPath(); g.arc(112, 112, 8, 0, Math.PI * 2); g.fill();
+  g.font = "800 44px 'Archivo', sans-serif"; g.textBaseline = 'middle';
+  g.fillStyle = '#fff'; g.fillText('POLAR', 186, 112);
+  g.fillStyle = '#6CFF2B'; g.fillText('LIGHTS', 186 + g.measureText('POLAR ').width, 112);
+  g.textBaseline = 'alphabetic';
+}
+
+export interface NowCardData {
+  /** e.g. "LIVE · DATA 08:06 UT". */
+  kicker: string;
+  /** The headline in two lines, e.g. "Quiet" / "Low activity" (the second in green). */
+  l1: string;
+  l2: string;
+  /** One short line, e.g. "Planetary Kp 1.3". */
+  line: string;
+  /** The Kp scale, 1 to 9 (G1–G5), lit up to the current level. */
+  scale: { label: string; color: string; on: boolean }[];
+  /** Caption for the oval, e.g. "Auroral oval · OVATION 08:37 UT". */
+  ovalLabel: string;
+  site: string;
+}
+
+/**
+ * A square image of the Now card for sharing (1080 × 1080 PNG): the current auroral oval (the card's own
+ * polar chart, an SVG on the page) fills the background, with the headline, Kp and the Kp scale over it.
+ */
+export async function nowCardBlob(d: NowCardData, oval: SVGSVGElement | null): Promise<Blob | null> {
+  const S = 1080;
+  const c = document.createElement('canvas');
+  c.width = c.height = S;
+  const g = c.getContext('2d');
+  if (!g) return null;
+  try { await document.fonts.ready; } catch { /* system fonts */ }
+  const body = "'Barlow', 'Helvetica Neue', Arial, sans-serif";
+  g.fillStyle = '#000'; g.fillRect(0, 0, S, S);
+
+  // The oval chart as the background: serialised at full size and drawn edge to edge.
+  if (oval) {
+    const copy = oval.cloneNode(true) as SVGSVGElement;
+    copy.setAttribute('width', String(S)); copy.setAttribute('height', String(S));
+    // Just the oval, grid and dots: labels would clutter the card (and lose the page's fonts in an image).
+    copy.querySelectorAll('.map-pulse, text').forEach(n => n.remove());
+    const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(copy)], { type: 'image/svg+xml' }));
+    try {
+      const img = new Image();
+      img.src = url;
+      await img.decode();
+      g.globalAlpha = 0.9; g.drawImage(img, 0, 60, S, S); g.globalAlpha = 1;
+    } catch { /* no background; the text still makes a card */ } finally { URL.revokeObjectURL(url); }
+  }
+  // Keep the text readable over the chart: darker at the top and bottom.
+  const top = g.createLinearGradient(0, 0, 0, 560);
+  top.addColorStop(0, 'rgba(0,0,0,0.92)'); top.addColorStop(0.7, 'rgba(0,0,0,0.6)'); top.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = top; g.fillRect(0, 0, S, 560);
+  const bottom = g.createLinearGradient(0, S - 260, 0, S);
+  bottom.addColorStop(0, 'rgba(0,0,0,0)'); bottom.addColorStop(0.45, 'rgba(0,0,0,0.85)'); bottom.addColorStop(1, 'rgba(0,0,0,0.95)');
+  g.fillStyle = bottom; g.fillRect(0, S - 260, S, 260);
+
+  drawBrand(g);
+  g.fillStyle = '#6CFF2B'; g.font = `600 34px 'JetBrains Mono', monospace`; g.fillText(d.kicker.toUpperCase(), 80, 250);
+  // Headline, each line shrunk to fit.
+  const fit = (text: string, start: number) => {
+    let size = start;
+    g.font = `800 ${size}px 'Archivo', sans-serif`;
+    while (g.measureText(text).width > S - 160 && size > 56) { size -= 4; g.font = `800 ${size}px 'Archivo', sans-serif`; }
+    return size;
+  };
+  const s1 = fit(d.l1.toUpperCase(), 120);
+  g.fillStyle = '#fff'; g.fillText(d.l1.toUpperCase(), 80, 250 + 30 + s1);
+  const s2 = fit(d.l2.toUpperCase(), 120);
+  g.fillStyle = '#6CFF2B'; g.shadowColor = '#6CFF2B'; g.shadowBlur = 24;
+  g.fillText(d.l2.toUpperCase(), 80, 250 + 30 + s1 + 8 + s2);
+  g.shadowBlur = 0;
+  g.fillStyle = '#C9D0CB'; g.font = `600 40px ${body}`; g.fillText(d.line, 80, 250 + 30 + s1 + 8 + s2 + 70, S - 160);
+
+  // Kp scale along the bottom.
+  const y = S - 190, gap = 10, w = (S - 160 - gap * 8) / 9;
+  d.scale.forEach((b, i) => {
+    const x = 80 + i * (w + gap);
+    g.globalAlpha = b.on ? 1 : 0.25; g.fillStyle = b.color; roundRect(g, x, y, w, 26, 4); g.fill(); g.globalAlpha = 1;
+    g.fillStyle = '#9AA39D'; g.font = `500 26px 'JetBrains Mono', monospace`; g.fillText(b.label, x, y + 62);
+  });
+  g.fillStyle = '#9AA39D'; g.font = `600 28px ${body}`; g.fillText(d.ovalLabel, 80, S - 48, S - 500);
   g.fillStyle = '#6CFF2B'; g.font = `700 34px ${body}`; g.textAlign = 'right'; g.fillText(d.site, S - 80, S - 48); g.textAlign = 'left';
   return new Promise(res => c.toBlob(b => res(b), 'image/png'));
 }

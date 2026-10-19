@@ -20,7 +20,6 @@ import { AURORA_RAMP, auroraColor } from '../lib/auroraColor';
 import { sampleOval, smoothOval } from '../lib/ovalSmooth';
 import { BEST_RGB, LIGHTS_URL, afterPaint, bestAlpha, bestScore, loadCloudGrid, nightShade, paintEquirect, paintMercator, readLayers, sunAltitudeAt, writeLayers, type CloudGrid, type LayerId, type Layers, DEFAULT_LAYERS } from '../lib/mapLayers';
 import type { OvalGrid } from '../app/api/oval/route';
-import { SITE } from '../lib/site';
 import { useI18n } from '../i18n/I18n';
 import type { MessageKey } from '../i18n/core';
 
@@ -582,7 +581,6 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
       </div>
       <div style={{ position: 'relative' }}>
         {/* Phones have no header, so the map carries the logo. */}
-        <img className="map-logo" src="/icons/logo.svg" alt={SITE.name} width={56} height={43} />
         <div ref={box} className="aurora-map" role="application" aria-label={t('map.aria')} style={view === '3d' ? { display: 'none' } : undefined} />
         {view === '3d' && <Globe clouds={on.clouds} night={on.night} lights={on.lights} best={bestGlobe} saved={on.saved ? others : NO_PLACES} places={globePlaces} sightings={globeSightings} aurora={on.aurora} kpLines={on.kp} kp={kp} place={shownPlace} home={locations.find(l => l.isHome) ?? null}
           frame={frames[fi] ? frameBytes : null} pick={pick} onPick={(la, lo, name) => (name ? setPick({ name, lat: la, lon: lo }) : pickAt.current(la, lo))} onStatus={setGlobeStatus} onForecast={setForecast} onZoomPast={zoomPast} />}

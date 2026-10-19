@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { C, ENTITLEMENTS, kpBarColor } from '../data';
 import { KpBarChart, POLAR_MIN_LAT, PolarOval, type KpBar } from '../components/Charts';
 import { Locked } from '../components/Locked';
@@ -16,6 +16,8 @@ import { G_SCALE } from '../lib/astro';
 import { SDO_IMAGES } from '../lib/sdo';
 import { useLocations } from '../lib/locations';
 import type { NowData } from '../lib/now';
+import { nowCardBlob } from '../lib/shareCard';
+import { SITE } from '../lib/site';
 import { useStore } from '../store';
 import { useI18n, type I18n } from '../i18n/I18n';
 
@@ -181,16 +183,61 @@ export function Home({ data }: { data: NowData }) {
     { label: t('home.stat.density'), value: fmt(w?.density, 1), unit: 'p/cm³', note: w?.density == null ? t('common.noData') : w.density >= 15 ? t('home.density.dense') : t('home.density.typical'), c: C.soft },
   ];
   const scale = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => ({ n: n === 5 ? 'G1' : n === 9 ? 'G5' : String(n), bg: n >= 5 ? C.red : n === 4 ? C.amber : C.darkGreen, on: n <= level }));
+  const kicker = updated ? t('home.live', { time: hhmm(updated) }) : t('home.liveUnavailable');
+
+  // Share the Now card: text, and an image with the current oval as its background, drawn ahead of time
+  // because Safari only opens the share sheet straight from a tap (as the verdict card does).
+  const nowCard = useRef<HTMLElement>(null);
+  const nowFile = useRef<File | null>(null);
+  const [nowMsg, setNowMsg] = useState('');
+  const shareText = t('home.shareText', { l1, l2, kp: kp === null ? '—' : num(kp, 1) });
+  useEffect(() => {
+    nowFile.current = null;
+    if (typeof navigator === 'undefined' || !navigator.canShare) return;
+    let live = true;
+    const oval = nowCard.current?.querySelector<SVGSVGElement>('svg[viewBox="0 0 480 480"]') ?? null;
+    nowCardBlob({
+      kicker, l1, l2, line: kp === null ? '' : t('home.shareLine', { kp: num(kp, 1) }),
+      scale: scale.map(s => ({ label: s.n, color: s.bg, on: s.on })),
+      ovalLabel: data.oval?.forecast ? `${t('home.oval')} · ${t('home.ovalForecast', { time: hhmm(data.oval.forecast) })}` : t('home.oval'),
+      site: SITE.domain,
+    }, oval).then(blob => {
+      if (!live || !blob) return;
+      const file = new File([blob], 'polar-lights-now.png', { type: 'image/png' });
+      if (navigator.canShare({ files: [file] })) nowFile.current = file;
+    });
+    return () => { live = false; };
+  }, [data, i18n.locale]); // eslint-disable-line react-hooks/exhaustive-deps -- the rest follows the data and language
+  const shareNow = async () => {
+    setNowMsg('');
+    try {
+      if (navigator.share) {
+        const file = nowFile.current;
+        await navigator.share(file ? { files: [file], title: SITE.name, text: `${shareText} ${SITE.url}` } : { title: SITE.name, text: shareText, url: SITE.url });
+      } else {
+        await navigator.clipboard.writeText(`${shareText} ${SITE.url}`);
+        setNowMsg(t('tonight.copied'));
+      }
+    } catch (e) {
+      if ((e as Error).name !== 'AbortError') setNowMsg(t('tonight.shareFailed'));
+    }
+  };
 
   return (
     <main data-screen-label="Now" className="wrap" style={{ padding: '40px var(--gutter) 48px', display: 'flex', flexDirection: 'column', gap: 36 }}>
       {/* Now: the global picture (Kp, headline, oval), as a card above the verdict for your location. */}
-      <section className="now-card" aria-label={t('nav.now')}>
+      <section className="now-card" aria-label={t('nav.now')} ref={nowCard}>
         <div className="hero-copy">
-          <div className="kicker" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: updated ? 'var(--green)' : C.muted }} />
-            {updated ? t('home.live', { time: hhmm(updated) }) : t('home.liveUnavailable')}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+            <div className="kicker" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: updated ? 'var(--green)' : C.muted }} />
+              {kicker}
+            </div>
+            <button type="button" className="btn tonight-share" onClick={shareNow} aria-label={t('home.share')} title={t('home.share')}>
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </button>
           </div>
+          {nowMsg && <span role="status" style={{ fontSize: 13, color: 'var(--green)' }}>{nowMsg}</span>}
           <h1 className="display" style={{ fontSize: 'clamp(36px, 12cqi, 80px)', lineHeight: .88 }}>
             <span className="hero-line">{l1}</span><br /><span className="hl hero-line">{l2}</span>
           </h1>
