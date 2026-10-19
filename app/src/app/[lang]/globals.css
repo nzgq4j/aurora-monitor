@@ -658,3 +658,12 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 .gallery-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 50%; background: rgba(0,0,0,.5); color: #fff; display: grid; place-items: center; }
 .gallery-prev { left: 8px; }
 .gallery-next { right: 8px; }
+
+/* Privacy policy and terms (components/LegalPage). */
+.legal h2 { font-size: 20px; margin: 8px 0 8px; }
+.legal p, .legal li { font-size: 16px; line-height: 1.6; color: var(--soft); margin: 0 0 10px; }
+.legal ul { margin: 0 0 10px; padding-left: 22px; }
+.legal b { color: #fff; }
+.legal a { color: var(--green); }
+.legal-updated { font-size: 13px !important; color: var(--muted) !important; margin: 0 !important; }
+.legal-note { font-size: 14px; color: var(--muted); margin: 0; padding: 10px 14px; border: 1px solid var(--line-2); border-radius: 10px; }

@@ -5,3 +5,12 @@ export const SITE = {
   url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.polarlights.io',
   tagline: 'Aurora forecasts',
 } as const;
+
+/** Who runs Polar Lights, for the privacy policy and terms. */
+export const LEGAL = {
+  operator: 'Crucible Insight',
+  email: 'privacy@polarlights.io',
+  governingLaw: 'Arizona',
+  /** Date shown as "Last updated" on both pages; change it with any change to their text. */
+  updated: 'October 19, 2026',
+} as const;
