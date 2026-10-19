@@ -1,7 +1,7 @@
 import 'server-only';
 import Stripe from 'stripe';
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js';
-import type { TierId } from '../data';
+import { TRIAL_DAYS, type TierId } from '../data';
 
 // Server-only billing helpers for the Stripe routes in app/api/stripe.
 // Env: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET; prices are found by lookup key (PRICE_LOOKUP),
@@ -12,8 +12,7 @@ export const PRICE_LOOKUP: Record<Exclude<TierId, 'free'>, Record<'monthly' | 'a
   chaser: { monthly: 'chaser_monthly', annual: 'chaser_annual' },
 };
 
-/** Days of free trial for a first subscription. */
-export const TRIAL_DAYS = 14;
+export { TRIAL_DAYS };
 
 /** Subscription statuses that keep the paid plan in force (matches public.effective_plan in SQL). */
 const PAID_STATUSES = new Set<Stripe.Subscription.Status>(['trialing', 'active', 'past_due']);

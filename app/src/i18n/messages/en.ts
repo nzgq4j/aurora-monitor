@@ -106,6 +106,15 @@ export const en = {
   'plans.choose': 'Choose {plan}',
   'plans.everythingIn': 'Everything in {plan}, plus',
   'plans.includes': 'Includes',
+  'plans.included': "What's included",
+  'plans.pick': 'Choose a plan',
+  'plans.recommended': 'Recommended',
+  'plans.saveBadge': 'SAVE {pct}%',
+  'plans.perYear': '/ yr',
+  'plans.footFree': 'No card needed',
+  'plans.ctaTrial': 'Start {days}-day free trial',
+  'plans.footTrial': 'Free trial · Cancel anytime',
+  'plans.footCancel': 'Cancel anytime',
 
   // ---- Checkout ----
   'checkout.back': '← BACK TO PLANS',

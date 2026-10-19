@@ -106,6 +106,15 @@ export const es: Messages = {
   'plans.choose': 'Elegir {plan}',
   'plans.everythingIn': 'Todo lo de {plan}, y además',
   'plans.includes': 'Incluye',
+  'plans.included': 'Qué incluye',
+  'plans.pick': 'Elige un plan',
+  'plans.recommended': 'Recomendado',
+  'plans.saveBadge': 'AHORRA {pct} %',
+  'plans.perYear': '/ año',
+  'plans.footFree': 'Sin tarjeta',
+  'plans.ctaTrial': 'Empezar prueba gratis de {days} días',
+  'plans.footTrial': 'Prueba gratis · Cancela cuando quieras',
+  'plans.footCancel': 'Cancela cuando quieras',
 
   // ---- Checkout ----
   'checkout.back': '← VOLVER A LOS PLANES',

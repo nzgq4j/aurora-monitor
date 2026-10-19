@@ -208,6 +208,8 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
         // worldCopyJump recentres the view when it crosses ±180°; every layer is drawn
         // three times (COPIES) so panning left or right is seamless.
         minZoom: 2, maxZoom: 9, zoomSnap: 0.5, worldCopyJump: true,
+        // Half a zoom level per wheel notch (Leaflet's default is a whole level).
+        wheelPxPerZoomLevel: 120,
         maxBounds: [[-LAT_MAX, -1e5], [LAT_MAX, 1e5]], maxBoundsViscosity: 1, attributionControl: true,
       }).setView([58, -95], 3);
       mapRef.current = map;
