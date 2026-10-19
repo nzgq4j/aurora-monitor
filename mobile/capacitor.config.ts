@@ -24,6 +24,8 @@ const config: CapacitorConfig = {
     // Edge to edge (Android 15+): the site sets viewport-fit=cover and pads with env(safe-area-inset-*).
     // Light status and navigation bar icons on the black app.
     SystemBars: { insetsHandling: 'native', initialViewportFitValueHint: 'cover', style: 'DARK' },
+    // Show alerts as notifications even while the app is open.
+    PushNotifications: { presentationOptions: ['badge', 'sound', 'alert'] },
   },
 };
 
