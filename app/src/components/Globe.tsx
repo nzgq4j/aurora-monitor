@@ -176,14 +176,21 @@ interface Props {
    * map zoom (Web Mercator, fractional) at the same scale there.
    */
   onZoomPast?: (lat: number, lon: number, zoom: number) => void;
+  /**
+   * False while the 2D map is shown: the globe stays built but hidden and stops drawing, so switching
+   * back is instant (building it means a new WebGL context, shaders and texture uploads).
+   */
+  active?: boolean;
 }
 
 /** Interactive 3D Earth with the live OVATION aurora, the day/night line, satellite clouds and your location. */
-export function Globe({ clouds, night, lights, best, saved, places, sightings = NO_POINTS, frame = null, aurora, kpLines, kp, place, home, pick = null, onPick, onStatus, onForecast, onZoomPast }: Props) {
+export function Globe({ clouds, night, lights, best, saved, places, sightings = NO_POINTS, frame = null, aurora, kpLines, kp, place, home, pick = null, onPick, onStatus, onForecast, onZoomPast, active = true }: Props) {
   const { t } = useI18n();
   const box = useRef<HTMLDivElement>(null);
   const label = useRef<HTMLDivElement>(null);
-  const api = useRef<{ setClouds: (on: boolean) => void; setAurora: (on: boolean) => void; setKp: (on: boolean, kp: number | null) => void; setPlace: (p: Place | null) => void; setPick: (p: { lat: number; lon: number } | null) => void; setShade: (night: boolean, lights: boolean) => void; setBest: (c: HTMLCanvasElement | null) => void; setSaved: (s: Place[]) => void; setPlaces: (p: { lat: number; lon: number }[]) => void; setFrame: (f: Uint8Array | null) => void; setSightings: (s: { lat: number; lon: number }[]) => void; flyTo: (p: Place) => void } | null>(null);
+  const api = useRef<{ setClouds: (on: boolean) => void; setAurora: (on: boolean) => void; setKp: (on: boolean, kp: number | null) => void; setPlace: (p: Place | null) => void; setPick: (p: { lat: number; lon: number } | null) => void; setShade: (night: boolean, lights: boolean) => void; setBest: (c: HTMLCanvasElement | null) => void; setSaved: (s: Place[]) => void; setPlaces: (p: { lat: number; lon: number }[]) => void; setFrame: (f: Uint8Array | null) => void; setSightings: (s: { lat: number; lon: number }[]) => void; flyTo: (p: Place) => void; reactivate: () => void } | null>(null);
+  const shown = useRef(active);
+  shown.current = active;
   // Latest layer choices, applied once the scene is built (props can change while it loads).
   const latest = useRef({ aurora, kpLines, kp, pick, onPick, onZoomPast, night, lights, best, saved, places, frame, sightings });
   latest.current = { aurora, kpLines, kp, pick, onPick, onZoomPast, night, lights, best, saved, places, frame, sightings };
@@ -202,6 +209,8 @@ export function Globe({ clouds, night, lights, best, saved, places, sightings = 
         import('three/examples/jsm/lines/LineGeometry.js'),
         import('three/examples/jsm/lines/LineMaterial.js'),
       ]);
+      // Let the page paint first (e.g. the pressed 3D button), then build the scene.
+      await new Promise(res => requestAnimationFrame(() => setTimeout(res, 0)));
       const el = box.current;
       if (disposed || !el) return;
 
@@ -541,7 +550,7 @@ export function Globe({ clouds, night, lights, best, saved, places, sightings = 
       let tilesAt = 0;
       const tick = (now: number) => {
         frame = requestAnimationFrame(tick);
-        if (document.hidden) return;
+        if (document.hidden || !shown.current) return;
         if (flight) {
           const k = Math.min(1, (now - flight.t0) / 1400), e = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
           // Along the great circle, so the camera arcs over the globe rather than cutting through it.
@@ -616,6 +625,13 @@ export function Globe({ clouds, night, lights, best, saved, places, sightings = 
         setFrame,
         setSightings,
         flyTo,
+        // Shown again after the 2D map: if it was left at the zoom limit (handed over), step back out
+        // to twice that height so the next zoom in doesn't hand straight back.
+        reactivate: () => {
+          handed = false;
+          const min = controls.minDistance;
+          if (camera.position.length() <= min + 1e-3) camera.position.setLength(Math.min(fit, 1 + (min - 1) * 2));
+        },
       };
       setSightings(latest.current.sightings);
       if (latest.current.frame) setFrame(latest.current.frame);
@@ -655,6 +671,7 @@ export function Globe({ clouds, night, lights, best, saved, places, sightings = 
   useEffect(() => { api.current?.setPlaces(places); }, [places]);
   useEffect(() => { api.current?.setFrame(frame); }, [frame]);
   useEffect(() => { api.current?.setSightings(sightings); }, [sightings]);
+  useEffect(() => { if (active) api.current?.reactivate(); }, [active]);
 
   const goHome = () => {
     if (!home) { setNotice(t('map.noHome')); setTimeout(() => setNotice(''), 4000); return; }
@@ -663,7 +680,7 @@ export function Globe({ clouds, night, lights, best, saved, places, sightings = 
   };
 
   return (
-    <div style={{ position: 'relative', overflow: 'hidden' }}>
+    <div style={{ position: 'relative', overflow: 'hidden', display: active ? undefined : 'none' }}>
       <div ref={box} className="aurora-map globe" role="img" aria-label={t('globe.aria')} />
       <div ref={label} className="globe-label" aria-hidden="true" />
       <div ref={placeLabels}>

@@ -1,7 +1,7 @@
 'use client';
 
 import 'leaflet/dist/leaflet.css';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type * as Leaflet from 'leaflet';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import { C } from '../data';
@@ -147,8 +147,12 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
   const [view, setView] = useState<'2d' | '3d'>('2d');
   const [globeStatus, setGlobeStatus] = useState<MessageKey | ''>('globe.loading');
   useEffect(() => { try { if (localStorage.getItem(VIEW_KEY) === '3d') setView('3d'); } catch { /* storage unavailable */ } }, []);
+  // The globe is built the first time it's shown and then kept (hidden on 2D), so later switches are instant.
+  const [globeBuilt, setGlobeBuilt] = useState(false);
+  if (view === '3d' && !globeBuilt) setGlobeBuilt(true);
   const chooseView = (v: '2d' | '3d') => {
-    setView(v);
+    // A transition, so the button responds at once and the swap renders after.
+    startTransition(() => setView(v));
     try { localStorage.setItem(VIEW_KEY, v); } catch { /* storage unavailable */ }
   };
   // Zooming the globe in past its imagery's resolution switches to the 2D map at the same place and
@@ -584,7 +588,7 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
         {/* Phones have no header, so the map (and globe) carries the logo. */}
         <img className="map-logo" src="/icons/logo.svg" alt={SITE.name} width={56} height={43} />
         <div ref={box} className="aurora-map" role="application" aria-label={t('map.aria')} style={view === '3d' ? { display: 'none' } : undefined} />
-        {view === '3d' && <Globe clouds={on.clouds} night={on.night} lights={on.lights} best={bestGlobe} saved={on.saved ? others : NO_PLACES} places={globePlaces} sightings={globeSightings} aurora={on.aurora} kpLines={on.kp} kp={kp} place={shownPlace} home={locations.find(l => l.isHome) ?? null}
+        {globeBuilt && <Globe active={view === '3d'} clouds={on.clouds} night={on.night} lights={on.lights} best={bestGlobe} saved={on.saved ? others : NO_PLACES} places={globePlaces} sightings={globeSightings} aurora={on.aurora} kpLines={on.kp} kp={kp} place={shownPlace} home={locations.find(l => l.isHome) ?? null}
           frame={frames[fi] ? frameBytes : null} pick={pick} onPick={(la, lo, name) => (name ? setPick({ name, lat: la, lon: lo }) : pickAt.current(la, lo))} onStatus={setGlobeStatus} onForecast={setForecast} onZoomPast={zoomPast} />}
         {view === '2d' && (notice || status) && <div className="map-status" role="status">{t((notice || status) as MessageKey)}</div>}
         {view === '3d' && globeStatus && <div className="map-status" role="status">{t(globeStatus)}</div>}
