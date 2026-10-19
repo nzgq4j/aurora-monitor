@@ -122,6 +122,10 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 
 /* ---- Now ---- */
 /* Sized against its own column so "In progress" (kept on one line) always fits. */
+/* The Now card: same frame as the verdict card (components/Tonight). */
+.now-card { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 40px; align-items: center;
+  border: 1px solid var(--line-2); border-radius: 18px; padding: clamp(18px, 3vw, 32px); background: radial-gradient(120% 120% at 100% 0%, #0f1a12, #050605 60%); }
+@media (max-width: 640px) { .now-card { gap: 28px; } }
 .hero-copy { container-type: inline-size; display: flex; flex-direction: column; gap: 24px; }
 .now-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .now-stat { padding: 14px; display: flex; flex-direction: column; gap: 4px; border-right: 1px solid var(--line); }
@@ -568,8 +572,6 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 }
 
 /* Sky view (#92): phones only. The entry button on the verdict card shows on touch screens up to tablet size. */
-.sky-entry { display: none; }
-@media (pointer: coarse) and (max-width: 1024px) { .sky-entry { display: inline-flex; } }
 .sky-page { padding: 32px var(--gutter) 48px; display: flex; flex-direction: column; gap: 18px; }
 .sky { position: fixed; inset: 0; z-index: 1500; /* above the tab bar (1100) and install prompt (1200) */ background: #000; color: #fff; }
 .sky-intro { display: flex; flex-direction: column; gap: 14px; padding: calc(56px + env(safe-area-inset-top)) 24px calc(32px + env(safe-area-inset-bottom)); overflow-y: auto;
