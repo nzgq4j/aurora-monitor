@@ -17,6 +17,8 @@ import { addPhoto, listPhotos } from '../lib/gallery';
 
 /** Horizontal angle the rear main camera sees along the long side of its picture (typical phones: 63–70°). */
 const CAMERA_FOV = 66;
+/** Photos are saved at least this many pixels on the long side, so the caption is sharp on small cameras. */
+const PHOTO_MIN_EDGE = 1920;
 
 type Phase = 'intro' | 'starting' | 'live' | 'error';
 type Pose = { az: number | null; el: number; roll: number };
@@ -199,16 +201,20 @@ export function SkyView({ kp }: { kp: number | null }) {
           source = bmp; w = bmp.width; h = bmp.height;
         } catch { /* fall back to the live frame */ }
       }
-      // Caption: location, time, direction and Kp, with the Made with mark. Sized from the long edge and
-      // wrapped onto more lines when the bottom edge is too short for one (portrait photos).
+      // Small camera pictures (some phones, the emulator) are scaled up so the caption text stays sharp.
+      const k = Math.max(1, PHOTO_MIN_EDGE / Math.max(w, h));
+      w = Math.round(w * k); h = Math.round(h * k);
+      // Caption: location, time, direction and Kp, with the Made with mark. Sized from the long edge; on
+      // one line when it fits (mark on the right), otherwise wrapped and left-aligned with the mark last.
       const unit = caption || !markOptional ? Math.round(Math.max(w, h) * 0.045) : 0;
       const font = `600 ${Math.round(unit * 0.42)}px system-ui, sans-serif`, pad = unit * 0.4, lineH = unit * 0.62;
       const lines: { text: string; mark: string }[] = [];
+      let markLine = -1;
       if (unit) {
         const m = document.createElement('canvas').getContext('2d')!;
         m.font = font;
         const when = new Date().toLocaleString(INTL_TAG[locale], { dateStyle: 'medium', timeStyle: 'short' });
-        const facing = pose?.az != null ? `${t(`sky.dir.${point16(pose.az)}`)} ${Math.round(pose.az)}°` : '';
+        const facing = pose?.az != null ? `${t(`sky.dir.${point16(pose.az)}`)} ${Math.round(pose.az) % 360}°` : '';
         // Rounded to 0.1° (about 10 km), as sightings are, so a photo never gives away an exact spot.
         const where = here ? `${num(Math.abs(here.lat), 1)}°${here.lat >= 0 ? 'N' : 'S'} ${num(Math.abs(here.lon), 1)}°${here.lon >= 0 ? 'E' : 'W'}` : '';
         const mark = t('sky.madeWith', { site: SITE.domain });
@@ -218,14 +224,14 @@ export function SkyView({ kp }: { kp: number | null }) {
           const next = cur ? `${cur}  ·  ${item}` : item;
           if (cur && m.measureText(next).width > room) { lines.push({ text: cur, mark: '' }); cur = item; } else cur = next;
         }
-        // The mark goes at the end of the last line when it fits there, otherwise on a line of its own.
-        if (m.measureText(cur).width + gap + m.measureText(mark).width <= room) lines.push({ text: cur, mark });
-        else lines.push({ text: cur, mark: '' }, { text: '', mark });
+        if (!lines.length && m.measureText(cur).width + gap + m.measureText(mark).width <= room) lines.push({ text: cur, mark });
+        else lines.push({ text: cur, mark: '' }, { text: mark, mark: '' }), markLine = lines.length - 1;
       }
       const strip = unit ? Math.round(unit + (lines.length - 1) * lineH) : 0;
       const c = document.createElement('canvas');
       c.width = w; c.height = h + strip;
       const ctx = c.getContext('2d')!;
+      ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(source, 0, 0, w, h);
       if (strip) {
         ctx.fillStyle = '#000'; ctx.fillRect(0, h, w, strip);
@@ -233,7 +239,7 @@ export function SkyView({ kp }: { kp: number | null }) {
         lines.forEach((l, i) => {
           const y = h + unit / 2 + i * lineH;
           if (l.mark) { ctx.textAlign = 'right'; ctx.fillStyle = '#6CFF2B'; ctx.fillText(l.mark, w - pad, y, w - 2 * pad); }
-          if (l.text) { ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; ctx.fillText(l.text, pad, y, w - 2 * pad); }
+          if (l.text) { ctx.textAlign = 'left'; ctx.fillStyle = i === markLine ? '#6CFF2B' : '#fff'; ctx.fillText(l.text, pad, y, w - 2 * pad); }
         });
       }
       const blob = await new Promise<Blob | null>(res => c.toBlob(res, 'image/jpeg', 0.92));
@@ -320,7 +326,7 @@ export function SkyView({ kp }: { kp: number | null }) {
       <div className="sky-top">
         <button type="button" className="btn sky-round" onClick={() => go('home')} aria-label={t('sky.close')}>×</button>
         <div className="sky-readout" role="status">
-          {pose?.az != null ? <b>{t('sky.facing', { dir: t(`sky.dir.${point16(pose.az)}`), deg: Math.round(pose.az), el: Math.round(pose.el) })}</b> : <b>{t('sky.noHeading')}</b>}
+          {pose?.az != null ? <b>{t('sky.facing', { dir: t(`sky.dir.${point16(pose.az)}`), deg: Math.round(pose.az) % 360, el: Math.round(pose.el) })}</b> : <b>{t('sky.noHeading')}</b>}
           <span>{peak ? t('sky.lookTo', { dir: t(`sky.dir.${point16(peak.az)}`), el: Math.round(Math.max(0, peak.low)), pct: Math.round(peak.p) }) : field ? t('sky.noAurora') : t('sky.loadingAurora')}</span>
         </div>
         <div className="sky-top-buttons">
