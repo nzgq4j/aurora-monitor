@@ -211,6 +211,7 @@ export function Home({ data }: { data: NowData }) {
       scale: scale.map(s => ({ label: s.n, color: s.bg, on: s.on })),
       ovalLabel: data.oval?.forecast ? `${t('home.oval')} · ${t('home.ovalForecast', { time: clock(data.oval.forecast) })}` : t('home.oval'),
       site: SITE.domain,
+      edgeLat: data.oval?.edge.length ? Math.min(...data.oval.edge.flat().map(([, lat]) => lat)) : null,
     }, oval).then(blob => {
       if (!live || !blob) return;
       const file = new File([blob], 'polar-lights-now.png', { type: 'image/png' });
