@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useRouter } from 'next/navigation';
 import { C } from '../data';
 import type { KpPoint } from '../lib/feeds';
 import { useLocations } from '../lib/locations';
@@ -52,7 +53,16 @@ function SkyScene({ look, strength, cloud, light }: { look: 'low' | 'high' | 'ov
 export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }) {
   const { t, num, locale } = useI18n();
   const { shownPlace } = useLocations();
-  const { cond, loading, now, result } = usePointVerdict(shownPlace, kp, series);
+  const { cond, loading, now, result, offline, savedAt } = usePointVerdict(shownPlace, kp, series);
+  // Offline (#68): hours already past grey out against the real clock; back online, the page reloads its data.
+  const [clock, setClock] = useState<number | null>(null);
+  useEffect(() => { setClock(Date.now()); const id = setInterval(() => setClock(Date.now()), 6e4); return () => clearInterval(id); }, []);
+  const router = useRouter();
+  useEffect(() => {
+    const back = () => router.refresh();
+    window.addEventListener('online', back);
+    return () => window.removeEventListener('online', back);
+  }, [router]);
   const night = useNightMode();
   const [picked, setPicked] = useState(0);
 
@@ -61,6 +71,9 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
   useEffect(() => { if (useful) window.dispatchEvent(new Event(USEFUL_EVENT)); }, [useful]);
 
   const time = (x: number) => new Date(x).toLocaleTimeString(INTL_TAG[locale], { hour: '2-digit', minute: '2-digit' });
+  // The saved time, with the day when it isn't today.
+  const stamp = (x: number) => new Date(x).toDateString() === new Date().toDateString() ? time(x)
+    : new Date(x).toLocaleString(INTL_TAG[locale], { weekday: 'short', hour: '2-digit', minute: '2-digit' });
   const hourLabel = (x: number) => new Date(x).toLocaleTimeString(INTL_TAG[locale], { hour: '2-digit', hourCycle: 'h23' }).replace(/\D+$/, '');
 
   // The share text, and the share image drawn ahead of time: Safari only opens the share sheet straight
@@ -138,7 +151,7 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
           <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </button>
         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {now !== null && <span className="label" style={{ fontSize: 11 }}>{t('tonight.updated', { time: time(now) })}</span>}
+          {now !== null && !offline && <span className="label" style={{ fontSize: 11 }}>{t('tonight.updated', { time: time(now) })}</span>}
           <button type="button" className="btn tonight-share" onClick={night.toggle} aria-pressed={night.active} aria-label={t('night.toggle')} title={t('night.toggle')}>
             <MoonIcon on={night.active} />
           </button>
@@ -150,8 +163,14 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
         </span>
       </div>
 
+      {offline && (
+        <div className="tonight-offline" role="status">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M2 8.5a15 15 0 0 1 20 0M5.5 12a10 10 0 0 1 13 0M9 15.5a5 5 0 0 1 6 0M12 19h.01M3 3l18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+          {savedAt ? t('offline.banner', { time: stamp(savedAt) }) : t('offline.bannerNoTime')}
+        </div>
+      )}
       {!v || !h0 ? (
-        <span style={{ color: 'var(--muted)', minHeight: 120 }}>{loading || !cond ? t('sky.checking') : t('common.noData')}</span>
+        <span style={{ color: 'var(--muted)', minHeight: 120 }}>{offline && !loading ? t('offline.none') : loading || !cond ? t('sky.checking') : t('common.noData')}</span>
       ) : (
         <div className="tonight-body">
           <div className="tonight-main">
@@ -188,7 +207,7 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
             <span className="label">{t('tonight.next12')}</span>
             <div className="tonight-bars" role="group" aria-label={t('tonight.aria.bars')}>
               {result.hours.map((h, i) => (
-                <button key={h.t} type="button" className="btn" aria-pressed={picked === i} onClick={() => setPicked(i)}
+                <button key={h.t} type="button" className={'btn' + (clock !== null && h.t + 36e5 <= clock ? ' past' : '')} aria-pressed={picked === i} onClick={() => setPicked(i)}
                   aria-label={t('tonight.hour', { time: time(h.t), score: h.score, kp: h.kp === null ? '—' : num(h.kp, 1), cloud: h.cloud ?? '—', sky: skyWord(h) })}>
                   <span className="tonight-bar"><i style={{ height: `${Math.max(6, h.score)}%`, background: scoreColor(h.score) }} /></span>
                   <span className="mono">{hourLabel(h.t)}</span>

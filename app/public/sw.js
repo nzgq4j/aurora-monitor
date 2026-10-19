@@ -1,7 +1,8 @@
 // Polar Lights service worker: keeps the app usable on weak or no signal (common at dark-sky spots).
 // - Pages: network first, falling back to the last copy viewed, then to /offline.
-// - Live data (/api/*): network first, falling back to the last response.
-// - Build assets, map geometry and icons: cache first (they are versioned or rarely change).
+// - Live data (/api/*): network first, falling back to the last response, marked x-pl-offline so the
+//   page can say it's showing saved data.
+// - Build assets, map geometry, globe images and icons: cache first (versioned or rarely change).
 const VERSION = 'polarlights-v1'; // changing this clears older caches (including the pre-rebrand oval-v1-*)
 const PAGES = `${VERSION}-pages`, DATA = `${VERSION}-data`, STATIC = `${VERSION}-static`;
 const PRECACHE = ['/offline', '/icons/icon-192.png', '/icons/icon-512.png', '/geo/countries-50m.json', '/geo/lakes-50m.geo.json'];
@@ -26,6 +27,11 @@ async function networkFirst(request, cacheName) {
     return res;
   } catch {
     const hit = await cache.match(request, { ignoreSearch: request.mode === 'navigate' });
+    if (hit && request.mode !== 'navigate') {
+      const headers = new Headers(hit.headers);
+      headers.set('x-pl-offline', '1');
+      return new Response(hit.body, { status: hit.status, statusText: hit.statusText, headers });
+    }
     if (hit) return hit;
     if (request.mode === 'navigate') {
       // Redirect rather than answer in place, so the URL matches the page the app router renders.
@@ -54,7 +60,7 @@ self.addEventListener('fetch', event => {
   if (url.pathname.startsWith('/api/clouds')) return;
   if (request.mode === 'navigate') event.respondWith(networkFirst(request, PAGES));
   else if (url.pathname.startsWith('/api/')) event.respondWith(networkFirst(request, DATA));
-  else if (url.pathname.startsWith('/_next/static/') || url.pathname.startsWith('/geo/') || url.pathname.startsWith('/icons/')) event.respondWith(cacheFirst(request));
+  else if (url.pathname.startsWith('/_next/static/') || url.pathname.startsWith('/geo/') || url.pathname.startsWith('/globe/') || url.pathname.startsWith('/icons/')) event.respondWith(cacheFirst(request));
 });
 
 // Push alerts from the alert engine: { title, body, url, tag }.
