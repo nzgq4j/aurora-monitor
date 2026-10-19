@@ -5,7 +5,7 @@ import { sunAltitude } from '../lib/astro';
 import { useLocations } from '../lib/locations';
 
 /**
- * Red night mode (#66): the whole page drawn in dim red on black (html.red-mode, see globals.css), so
+ * Red night mode (#66): the whole page drawn in dim red on black (html.red-mode and NightFilter's layers), so
  * the app can be used outdoors without spoiling dark-adapted eyes. Off, on, or automatic while it's
  * dark at the user's location (Sun below −6°). Remembered on this device.
  */
@@ -56,16 +56,17 @@ export function useNightMode(): Ctx {
 }
 
 /**
- * The colour matrix behind html.red-mode: brightness becomes red (white → 88 % red, kept below full so it
- * stays gentle on dark-adapted eyes); green and blue go to zero. Rendered
- * first in <body> (see layout), so it exists before anything that uses it is drawn.
+ * Red night mode's colour layers, over everything on the page: the first takes the colour out (saturation
+ * blend with black keeps only brightness), the second tints what's left red (multiply: white → 88 % red,
+ * kept below full so it stays gentle on dark-adapted eyes; green and blue go to zero). Blend layers rather
+ * than a filter on <html>, because Safari doesn't filter fixed elements (the tab bar, the sky view) and
+ * video that way. Shown only while html has the red-mode class (see globals.css).
  */
 export const NightFilter = () => (
-  <svg width="0" height="0" aria-hidden="true" style={{ position: 'absolute' }}>
-    <filter id="pl-night" colorInterpolationFilters="sRGB">
-      <feColorMatrix type="matrix" values="0.26 0.53 0.09 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" />
-    </filter>
-  </svg>
+  <>
+    <div className="red-layer red-layer-grey" aria-hidden="true" />
+    <div className="red-layer red-layer-tint" aria-hidden="true" />
+  </>
 );
 
 /** Moon icon for the toggles (filled while red mode is on). */

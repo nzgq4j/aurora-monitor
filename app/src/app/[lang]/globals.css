@@ -27,7 +27,11 @@
 }
 
 /* Red night mode (components/NightMode): everything, including the map and globe canvases, as dim red. */
-html.red-mode { filter: url(#pl-night); }
+/* Red night mode: two blend layers over everything (components/NightMode, NightFilter). */
+.red-layer { display: none; position: fixed; inset: 0; pointer-events: none; z-index: 2147483000; }
+html.red-mode .red-layer { display: block; }
+.red-layer-grey { background: #000; mix-blend-mode: saturation; }
+.red-layer-tint { background: rgb(224, 0, 0); mix-blend-mode: multiply; z-index: 2147483001; }
 
 @media (max-width: 640px) {
   :root { --gutter: 16px; }
