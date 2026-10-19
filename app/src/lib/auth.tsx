@@ -122,6 +122,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // An account without one adopts the language in use now.
   useEffect(() => {
     if (!sb || !profile) return;
+    // Auth emails (Supabase templates, #28) read the language from user metadata. Google and Apple sign-ins
+    // don't set it at sign-up, so it's copied there once.
+    if (user && !user.user_metadata?.locale) void sb.auth.updateUser({ data: { locale: profile.locale ?? locale } });
     if (!profile.locale) { void sb.from('profiles').update({ locale }).eq('id', profile.id); return; }
     if (profile.locale === locale) return;
     try {
@@ -129,7 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.setItem('pl.lang.synced', '1');
     } catch { return; }
     applyLocale(profile.locale);
-  }, [sb, profile, locale]);
+  }, [sb, profile, locale, user]);
 
   const value = useMemo<AuthCtx>(() => {
     const none = { error: 'err.notConnected' };

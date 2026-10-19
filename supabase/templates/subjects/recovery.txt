@@ -1,0 +1,1 @@
+{{ $l := printf "%v" .Data.locale }}{{ if eq $l "es" }}Restablece tu contraseña de Polar Lights{{ else if eq $l "fr" }}Réinitialisez votre mot de passe Polar Lights{{ else if eq $l "de" }}Setzen Sie Ihr Polar-Lights-Passwort zurück{{ else if eq $l "nl" }}Stel je Polar Lights-wachtwoord opnieuw in{{ else }}Reset your Polar Lights password{{ end }}

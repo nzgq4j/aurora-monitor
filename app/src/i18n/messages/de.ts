@@ -842,6 +842,8 @@ export const de: Messages = {
   'mail.storm.body': 'Ein geomagnetischer Sturm läuft oder ist innerhalb von 3 Stunden vorhergesagt (Kp {kp}, {name}). Polarlicht kann viel weiter von den Polen entfernt sichtbar sein als sonst.',
   'mail.cta': 'Polar Lights öffnen',
   'mail.footer': 'Sie erhalten diese Alarme, weil sie in Ihrem Polar-Lights-Konto aktiviert sind. Ändern Sie sie unter Dashboard → Alarme.',
+  'mail.test.subject': "Testalarm von {name}",
+  'mail.test.body': "Dies ist ein Test Ihrer Polarlicht-Alarme. Wenn das Polarlicht an einem Ihrer Orte Ihre Stufe erreicht, kommt der Alarm so an.",
   'trigger.kp': 'Kp-Schwelle erreicht',
   'trigger.kp.sub': 'Nutzt den oben eingestellten Wert',
   'trigger.cme': 'CME-Ankunft & Sturmwarnungen',

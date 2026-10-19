@@ -842,6 +842,8 @@ export const en = {
   'mail.storm.body': 'A geomagnetic storm is under way or forecast within 3 hours (Kp {kp}, {name}). Aurora can reach much further from the poles than usual.',
   'mail.cta': 'Open Polar Lights',
   'mail.footer': 'You get these alerts because they’re switched on in your Polar Lights account. Change them in Dashboard → Alerts.',
+  'mail.test.subject': "Test alert from {name}",
+  'mail.test.body': "This is a test of your aurora alerts. When aurora reaches your level at one of your locations, the alert arrives like this.",
   'trigger.kp': 'Kp threshold reached',
   'trigger.kp.sub': 'Uses the level you set above',
   'trigger.cme': 'CME arrival & storm watches',

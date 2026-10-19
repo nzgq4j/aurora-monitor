@@ -842,6 +842,8 @@ export const fr: Messages = {
   'mail.storm.body': 'Une tempête géomagnétique est en cours ou prévue dans les 3 heures (Kp {kp}, {name}). Les aurores peuvent être vues bien plus loin des pôles que d’habitude.',
   'mail.cta': 'Ouvrir Polar Lights',
   'mail.footer': 'Vous recevez ces alertes car elles sont activées dans votre compte Polar Lights. Modifiez-les dans Mon espace → Alertes.',
+  'mail.test.subject': "Alerte de test de {name}",
+  'mail.test.body': "Ceci est un test de vos alertes d’aurores. Quand l’aurore atteindra votre niveau à l’un de vos lieux, l’alerte arrivera ainsi.",
   'trigger.kp': 'Seuil Kp atteint',
   'trigger.kp.sub': 'Utilise le niveau défini ci-dessus',
   'trigger.cme': 'Arrivée de CME et veilles d’orage',

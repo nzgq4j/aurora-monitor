@@ -1,0 +1,1 @@
+{{ $l := printf "%v" .Data.locale }}{{ if eq $l "es" }}Tu enlace para entrar en Polar Lights{{ else if eq $l "fr" }}Votre lien de connexion Polar Lights{{ else if eq $l "de" }}Ihr Anmeldelink für Polar Lights{{ else if eq $l "nl" }}Je inloglink voor Polar Lights{{ else }}Your Polar Lights sign-in link{{ end }}

@@ -842,6 +842,8 @@ export const nl: Messages = {
   'mail.storm.body': 'Er is een geomagnetische storm aan de gang of verwacht binnen 3 uur (Kp {kp}, {name}). Noorderlicht kan veel verder van de polen te zien zijn dan normaal.',
   'mail.cta': 'Polar Lights openen',
   'mail.footer': 'Je krijgt deze meldingen omdat ze aanstaan in je Polar Lights-account. Wijzig ze via Dashboard → Meldingen.',
+  'mail.test.subject': "Testmelding van {name}",
+  'mail.test.body': "Dit is een test van je noorderlichtmeldingen. Als het noorderlicht op een van je locaties jouw niveau bereikt, komt de melding zo binnen.",
   'trigger.kp': 'Kp-drempel bereikt',
   'trigger.kp.sub': 'Gebruikt het niveau dat je hierboven instelt',
   'trigger.cme': 'Aankomst CME en stormwaarschuwingen',

@@ -172,7 +172,7 @@ async function deliverPush(admin: SupabaseClient, s: Settings, chaser: boolean, 
 const esc = (x: string) => x.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 
 interface AlertLine { kind: AlertKind; subject: string; body: string; look: string }
-interface AlertTexts { lines: AlertLine[]; url: string; cta: string; footer: string }
+interface AlertTexts { lines: AlertLine[]; url: string; cta: string; footer: string; /** Language of the email (html lang). */ lang: Locale }
 
 /** The wording of a run's alerts in one language, shared by email and push. */
 async function alertTexts(locale: Locale, alerts: Alert[]): Promise<AlertTexts> {
@@ -190,11 +190,11 @@ async function alertTexts(locale: Locale, alerts: Alert[]): Promise<AlertTexts> 
       ? { kind: a.kind, subject: t('mail.aurora.subject', { place, level: t(`alerts.level.${a.level!}`) }), body: t('mail.aurora.body', { place, level: t(`mail.level.${a.level!}`), score: a.score ?? 0 }), look }
       : { kind: a.kind, subject: t('mail.forecast.subject', { place }), body: t('mail.forecast.body', { place, level: t(`mail.level.${a.level!}`), score: a.score ?? 0 }), look };
   };
-  return { lines: sorted.map(line), url: `${SITE.url}/${locale}`, cta: t('mail.cta'), footer: t('mail.footer') };
+  return { lines: sorted.map(line), url: `${SITE.url}/${locale}`, cta: t('mail.cta'), footer: t('mail.footer'), lang: locale };
 }
 
-function renderEmail({ lines, url, cta, footer }: AlertTexts) {
-  const html = `<!doctype html><html><body style="margin:0;background:#000;color:#fff;font-family:Helvetica,Arial,sans-serif">
+function renderEmail({ lines, url, cta, footer, lang }: AlertTexts) {
+  const html = `<!doctype html><html lang="${lang}"><body style="margin:0;background:#000;color:#fff;font-family:Helvetica,Arial,sans-serif">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#000"><tr><td align="center" style="padding:32px 16px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px">
 <tr><td style="font-size:20px;font-weight:800;letter-spacing:.02em;padding-bottom:24px">POLAR <span style="color:#6CFF2B">LIGHTS</span></td></tr>
@@ -214,10 +214,12 @@ ${lines.map(l => `<tr><td style="padding:0 0 20px"><div style="font-size:20px;fo
 export async function sendTestAlert(admin: SupabaseClient, userId: string): Promise<{ email: string; push: string }> {
   const { data: p } = await admin.from('profiles').select('id, plan, subscription_status, trial_ends_at, locale').eq('id', userId).maybeSingle();
   const profile = (p ?? undefined) as Profile | undefined;
-  const { cta, footer } = await alertTexts(isLocale(profile?.locale) ? profile!.locale as Locale : 'en', []);
+  const locale: Locale = isLocale(profile?.locale) ? profile!.locale as Locale : 'en';
+  const { t } = await getI18n(locale);
+  const { url, cta, footer, lang } = await alertTexts(locale, []);
   const texts: AlertTexts = {
-    lines: [{ kind: 'aurora', subject: `Test alert from ${SITE.name}`, body: 'This is a test of your aurora alerts. When aurora reaches your level at one of your locations, the alert arrives like this.', look: '' }],
-    url: SITE.url, cta, footer,
+    lines: [{ kind: 'aurora', subject: t('mail.test.subject', { name: SITE.name }), body: t('mail.test.body'), look: '' }],
+    url, cta, footer, lang,
   };
   const s: Settings = { user_id: userId, kp_threshold: 0, rules: null, time_zone: null, channels: { email: true, push: true } };
   const [email, push] = await Promise.all([deliverEmail(admin, s, texts), deliverPush(admin, s, isChaser(profile, Date.now()), texts)]);

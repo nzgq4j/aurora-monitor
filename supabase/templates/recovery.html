@@ -1,15 +1,15 @@
-<!doctype html>
-<html lang="en">
+{{ $l := printf "%v" .Data.locale }}<!doctype html>
+<html lang="{{ if eq $l "es" }}es{{ else if eq $l "fr" }}fr{{ else if eq $l "de" }}de{{ else if eq $l "nl" }}nl{{ else }}en{{ end }}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
 <meta name="supported-color-schemes" content="dark">
-<title>Reset your password</title>
+<title>{{ if eq $l "es" }}Restablece tu contraseña{{ else if eq $l "fr" }}Réinitialisez votre mot de passe{{ else if eq $l "de" }}Passwort zurücksetzen{{ else if eq $l "nl" }}Stel je wachtwoord opnieuw in{{ else }}Reset your password{{ end }}</title>
 </head>
 <body style="margin:0;padding:0;background-color:#000000;">
 <!-- Inbox preview text -->
-<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Choose a new password for your Polar Lights account.&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;</div>
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">{{ if eq $l "es" }}Elige una contraseña nueva para tu cuenta de Polar Lights.{{ else if eq $l "fr" }}Choisissez un nouveau mot de passe pour votre compte Polar Lights.{{ else if eq $l "de" }}Wählen Sie ein neues Passwort für Ihr Polar-Lights-Konto.{{ else if eq $l "nl" }}Kies een nieuw wachtwoord voor je Polar Lights-account.{{ else }}Choose a new password for your Polar Lights account.{{ end }}&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#000000" style="background-color:#000000;">
   <tr>
     <td align="center" style="padding:32px 16px;">
@@ -43,13 +43,13 @@
             </table>
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
               <tr>
-                <td style="padding:32px 32px 8px;font-family:'Courier New',Courier,monospace;font-size:12px;letter-spacing:2px;color:#6CFF2B;">PASSWORD RESET</td>
+                <td style="padding:32px 32px 8px;font-family:'Courier New',Courier,monospace;font-size:12px;letter-spacing:2px;color:#6CFF2B;">{{ if eq $l "es" }}RESTABLECER CONTRASEÑA{{ else if eq $l "fr" }}MOT DE PASSE{{ else if eq $l "de" }}PASSWORT ZURÜCKSETZEN{{ else if eq $l "nl" }}WACHTWOORD HERSTELLEN{{ else }}PASSWORD RESET{{ end }}</td>
               </tr>
               <tr>
-                <td style="padding:0 32px 16px;font-family:'Arial Black',Arial,Helvetica,sans-serif;font-size:30px;line-height:34px;font-weight:900;color:#ffffff;text-transform:uppercase;">Reset your <span style="color:#6CFF2B;">password</span></td>
+                <td style="padding:0 32px 16px;font-family:'Arial Black',Arial,Helvetica,sans-serif;font-size:30px;line-height:34px;font-weight:900;color:#ffffff;text-transform:uppercase;">{{ if eq $l "es" }}Restablece tu <span style="color:#6CFF2B;">contraseña</span>{{ else if eq $l "fr" }}Nouveau <span style="color:#6CFF2B;">mot de passe</span>{{ else if eq $l "de" }}Neues <span style="color:#6CFF2B;">Passwort</span>{{ else if eq $l "nl" }}Nieuw <span style="color:#6CFF2B;">wachtwoord</span>{{ else }}Reset your <span style="color:#6CFF2B;">password</span>{{ end }}</td>
               </tr>
               <tr>
-                <td style="padding:0 32px 28px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:#C9D0CB;">We received a request to reset the password for your Polar Lights account. Use the button below to choose a new one. For your security, the link works only once.</td>
+                <td style="padding:0 32px 28px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:#C9D0CB;">{{ if eq $l "es" }}Hemos recibido una solicitud para restablecer la contraseña de tu cuenta de Polar Lights. Usa el botón de abajo para elegir una nueva. Por seguridad, el enlace solo funciona una vez.{{ else if eq $l "fr" }}Nous avons reçu une demande de réinitialisation du mot de passe de votre compte Polar Lights. Utilisez le bouton ci-dessous pour en choisir un nouveau. Par sécurité, le lien ne fonctionne qu’une fois.{{ else if eq $l "de" }}Wir haben eine Anfrage erhalten, das Passwort Ihres Polar-Lights-Kontos zurückzusetzen. Wählen Sie mit der Schaltfläche unten ein neues. Aus Sicherheitsgründen funktioniert der Link nur einmal.{{ else if eq $l "nl" }}We hebben een verzoek ontvangen om het wachtwoord van je Polar Lights-account opnieuw in te stellen. Kies met de knop hieronder een nieuw wachtwoord. Voor je veiligheid werkt de link maar één keer.{{ else }}We received a request to reset the password for your Polar Lights account. Use the button below to choose a new one. For your security, the link works only once.{{ end }}</td>
               </tr>
               <tr>
                 <td style="padding:0 32px 28px;">
@@ -57,7 +57,7 @@
                   <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                     <tr>
                       <td align="center" bgcolor="#6CFF2B" style="background-color:#6CFF2B;border-radius:999px;">
-                        <a href="{{ .ConfirmationURL }}" target="_blank" style="display:inline-block;padding:15px 28px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;color:#000000;text-decoration:none;border-radius:999px;">Choose a new password</a>
+                        <a href="{{ .ConfirmationURL }}" target="_blank" style="display:inline-block;padding:15px 28px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;color:#000000;text-decoration:none;border-radius:999px;">{{ if eq $l "es" }}Elegir una contraseña nueva{{ else if eq $l "fr" }}Choisir un nouveau mot de passe{{ else if eq $l "de" }}Neues Passwort wählen{{ else if eq $l "nl" }}Nieuw wachtwoord kiezen{{ else }}Choose a new password{{ end }}</a>
                       </td>
                     </tr>
                   </table>
@@ -65,7 +65,7 @@
               </tr>
               <tr>
                 <td style="padding:0 32px 32px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:#9AA39D;">
-                  Button not working? Copy this link into your browser:<br>
+                  {{ if eq $l "es" }}¿El botón no funciona? Copia este enlace en tu navegador:{{ else if eq $l "fr" }}Le bouton ne fonctionne pas ? Copiez ce lien dans votre navigateur :{{ else if eq $l "de" }}Schaltfläche funktioniert nicht? Kopieren Sie diesen Link in Ihren Browser:{{ else if eq $l "nl" }}Werkt de knop niet? Kopieer deze link naar je browser:{{ else }}Button not working? Copy this link into your browser:{{ end }}<br>
                   <a href="{{ .ConfirmationURL }}" target="_blank" style="color:#6CFF2B;word-break:break-all;">{{ .ConfirmationURL }}</a>
                 </td>
               </tr>
@@ -75,9 +75,9 @@
         <!-- Footer -->
         <tr>
           <td style="padding:24px 4px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#7D857F;">
-            This was requested for {{ .Email }}. If you didn’t ask to reset your password, you can ignore this email; your password won’t change.<br><br>
+            {{ if eq $l "es" }}Se solicitó para {{ .Email }}. Si no pediste restablecer tu contraseña, ignora este correo; tu contraseña no cambiará.{{ else if eq $l "fr" }}Demande faite pour {{ .Email }}. Si vous n’avez pas demandé de réinitialisation, ignorez cet e-mail ; votre mot de passe ne changera pas.{{ else if eq $l "de" }}Angefordert für {{ .Email }}. Wenn Sie das Zurücksetzen nicht angefordert haben, ignorieren Sie diese E-Mail; Ihr Passwort bleibt unverändert.{{ else if eq $l "nl" }}Aangevraagd voor {{ .Email }}. Heb jij dit niet aangevraagd, negeer deze e-mail dan; je wachtwoord blijft hetzelfde.{{ else }}This was requested for {{ .Email }}. If you didn’t ask to reset your password, you can ignore this email; your password won’t change.{{ end }}<br><br>
             <a href="https://www.polarlights.io" target="_blank" style="color:#6CFF2B;text-decoration:none;font-weight:700;">polarlights.io</a>
-            <span style="color:#4A504C;">&nbsp;·&nbsp;</span>Live aurora forecasts and alerts for your sky
+            <span style="color:#4A504C;">&nbsp;·&nbsp;</span>{{ if eq $l "es" }}Previsiones y alertas de auroras en directo para tu cielo{{ else if eq $l "fr" }}Prévisions et alertes d’aurores en direct pour votre ciel{{ else if eq $l "de" }}Polarlicht-Vorhersagen und -Alarme live für Ihren Himmel{{ else if eq $l "nl" }}Live noorderlichtverwachtingen en -meldingen voor jouw hemel{{ else }}Live aurora forecasts and alerts for your sky{{ end }}
           </td>
         </tr>
       </table>
