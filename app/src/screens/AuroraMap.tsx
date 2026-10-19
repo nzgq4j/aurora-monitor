@@ -15,6 +15,7 @@ import { recentSightings, type Sighting } from '../lib/sightings';
 import { bestCandidates, loadPlaces, spacingKm, thinPlaces, type BestPlace, type PlaceRow } from '../lib/bestPlaces';
 import { cloudify } from '../lib/cloudify';
 import { Globe } from '../components/Globe';
+import { useOnline } from '../lib/useOnline';
 import { AURORA_RAMP, auroraColor } from '../lib/auroraColor';
 import { sampleOval, smoothOval } from '../lib/ovalSmooth';
 import { BEST_RGB, LIGHTS_URL, afterPaint, bestAlpha, bestScore, loadCloudGrid, nightShade, paintEquirect, paintMercator, readLayers, sunAltitudeAt, writeLayers, type CloudGrid, type LayerId, type Layers, DEFAULT_LAYERS } from '../lib/mapLayers';
@@ -169,6 +170,7 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
     }, 0);
   }, [view]);
   const { shownPlace, locations, load } = useLocations();
+  const online = useOnline();
   const current = kp === null ? null : Math.max(1, Math.min(9, Math.round(kp)));
 
   useEffect(() => { load(); }, [load]);
@@ -586,6 +588,7 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
           frame={frames[fi] ? frameBytes : null} pick={pick} onPick={(la, lo, name) => (name ? setPick({ name, lat: la, lon: lo }) : pickAt.current(la, lo))} onStatus={setGlobeStatus} onForecast={setForecast} onZoomPast={zoomPast} />}
         {view === '2d' && (notice || status) && <div className="map-status" role="status">{t((notice || status) as MessageKey)}</div>}
         {view === '3d' && globeStatus && <div className="map-status" role="status">{t(globeStatus)}</div>}
+        {!online && !(view === '2d' ? notice || status : globeStatus) && <div className="map-status" role="status">{t('map.offline')}</div>}
         <details className="map-legend" ref={legend} open>
           <summary>{t('map.legend')}</summary>
           {legendBody}

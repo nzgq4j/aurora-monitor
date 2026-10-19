@@ -453,6 +453,11 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 .tonight-bars .btn[aria-pressed="true"] .tonight-bar { outline: 2px solid #fff; outline-offset: 1px; }
 .tonight-bars .mono { font-size: 11px; color: var(--muted); }
 .tonight-bars .btn[aria-pressed="true"] .mono { color: #fff; }
+/* Offline (#68): the saved verdict, dated; hours already past are greyed. */
+.tonight-offline { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: 10px; background: rgba(230, 184, 0, .12); color: #E6B800; font-size: 14px; font-weight: 700; }
+.tonight-offline svg { flex: none; }
+.tonight-bars .btn.past .tonight-bar i { filter: grayscale(1) brightness(.55); }
+.tonight-bars .btn.past .mono { opacity: .45; }
 @keyframes tonight-glow { 0%, 100% { text-shadow: 0 0 6px rgba(108, 255, 43, .25); } 50% { text-shadow: 0 0 18px rgba(108, 255, 43, .7); } }
 .tonight-glow { animation: tonight-glow 3s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .tonight-glow { animation: none; } }
