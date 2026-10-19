@@ -5,6 +5,17 @@ export type AlertLevel = 'faint' | 'visible' | 'clear';
 export const LEVEL_SCORE: Record<AlertLevel, number> = { faint: 20, visible: 45, clear: 70 };
 export const ALERT_LEVELS: AlertLevel[] = ['faint', 'visible', 'clear'];
 
+/**
+ * The Kp at which a place needing Kp `need` reaches `level` on a clear, dark, moonless night: where
+ * lib/tonight's aurora factor, 1 / (1 + e^(−1.2·(Kp − need − 0.5))), equals the level's score.
+ * Faint ≈ need − 0.7, visible ≈ need + 0.3, clear ≈ need + 1.2.
+ */
+export const levelKp = (level: AlertLevel, need: number) => {
+  const p = LEVEL_SCORE[level] / 100;
+  // Places in the auroral zone need Kp 0, where any day counts.
+  return Math.max(0, need + 0.5 - Math.log(1 / p - 1) / 1.2);
+};
+
 /** A user's alert rules, stored as alert_settings.rules (jsonb). */
 export interface AlertRules {
   /** Alert when aurora reaches `level` at the user's locations. */
