@@ -14,6 +14,7 @@ import { YourSky } from '../components/YourSky';
 import { Tonight } from '../components/Tonight';
 import { G_SCALE } from '../lib/astro';
 import { SDO_IMAGES } from '../lib/sdo';
+import { SunTimelapse } from '../components/SunTimelapse';
 import { useLocations } from '../lib/locations';
 import { useConditions } from '../lib/useConditions';
 import { INTL_TAG } from '../i18n/config';
@@ -323,6 +324,7 @@ export function Home({ data }: { data: NowData }) {
             </figure>
           ))}
         </div>
+        <SunTimelapse />
       </DetailCard>
 
       {planIndex === 0 && (
