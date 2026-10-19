@@ -92,7 +92,7 @@ export interface NowCardData {
 
 /**
  * A square image of the Now card for sharing (1080 × 1080 PNG): the current auroral oval (the card's own
- * polar chart, an SVG on the page) fills the background, with the headline, Kp and the Kp scale over it.
+ * polar chart, an SVG on the page) in the top-right corner, with the headline, Kp and the Kp scale below.
  */
 export async function nowCardBlob(d: NowCardData, oval: SVGSVGElement | null): Promise<Blob | null> {
   const S = 1080;
@@ -104,10 +104,11 @@ export async function nowCardBlob(d: NowCardData, oval: SVGSVGElement | null): P
   const body = "'Barlow', 'Helvetica Neue', Arial, sans-serif";
   g.fillStyle = '#000'; g.fillRect(0, 0, S, S);
 
-  // The oval chart as the background: serialised at full size and drawn edge to edge.
+  // The oval chart in the top-right corner (the card's own polar chart, serialised), headline below it.
+  const O = 560, ox = S - O - 30, oy = 20;
   if (oval) {
     const copy = oval.cloneNode(true) as SVGSVGElement;
-    copy.setAttribute('width', String(S)); copy.setAttribute('height', String(S));
+    copy.setAttribute('width', String(O)); copy.setAttribute('height', String(O));
     // Just the oval, grid and dots: labels would clutter the card (and lose the page's fonts in an image).
     copy.querySelectorAll('.map-pulse, text').forEach(n => n.remove());
     const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(copy)], { type: 'image/svg+xml' }));
@@ -115,19 +116,17 @@ export async function nowCardBlob(d: NowCardData, oval: SVGSVGElement | null): P
       const img = new Image();
       img.src = url;
       await img.decode();
-      g.globalAlpha = 0.9; g.drawImage(img, 0, 60, S, S); g.globalAlpha = 1;
-    } catch { /* no background; the text still makes a card */ } finally { URL.revokeObjectURL(url); }
+      g.drawImage(img, ox, oy, O, O);
+    } catch { /* no oval; the text still makes a card */ } finally { URL.revokeObjectURL(url); }
   }
-  // Keep the text readable over the chart: darker at the top and bottom.
-  const top = g.createLinearGradient(0, 0, 0, 560);
-  top.addColorStop(0, 'rgba(0,0,0,0.92)'); top.addColorStop(0.7, 'rgba(0,0,0,0.6)'); top.addColorStop(1, 'rgba(0,0,0,0)');
-  g.fillStyle = top; g.fillRect(0, 0, S, 560);
-  const bottom = g.createLinearGradient(0, S - 260, 0, S);
-  bottom.addColorStop(0, 'rgba(0,0,0,0)'); bottom.addColorStop(0.45, 'rgba(0,0,0,0.85)'); bottom.addColorStop(1, 'rgba(0,0,0,0.95)');
-  g.fillStyle = bottom; g.fillRect(0, S - 260, S, 260);
+  // Fade the chart's lower edge into the headline area.
+  const fade = g.createLinearGradient(0, oy + O - 160, 0, oy + O + 10);
+  fade.addColorStop(0, 'rgba(0,0,0,0)'); fade.addColorStop(1, 'rgba(0,0,0,1)');
+  g.fillStyle = fade; g.fillRect(ox - 10, oy + O - 160, O + 40, 170);
 
   drawBrand(g);
-  g.fillStyle = '#6CFF2B'; g.font = `600 34px 'JetBrains Mono', monospace`; g.fillText(d.kicker.toUpperCase(), 80, 250);
+  const y0 = 616;
+  g.fillStyle = '#6CFF2B'; g.font = `600 34px 'JetBrains Mono', monospace`; g.fillText(d.kicker.toUpperCase(), 80, y0);
   // Headline, each line shrunk to fit.
   const fit = (text: string, start: number) => {
     let size = start;
@@ -135,23 +134,23 @@ export async function nowCardBlob(d: NowCardData, oval: SVGSVGElement | null): P
     while (g.measureText(text).width > S - 160 && size > 56) { size -= 4; g.font = `800 ${size}px 'Archivo', sans-serif`; }
     return size;
   };
-  const s1 = fit(d.l1.toUpperCase(), 120);
-  g.fillStyle = '#fff'; g.fillText(d.l1.toUpperCase(), 80, 250 + 30 + s1);
-  const s2 = fit(d.l2.toUpperCase(), 120);
+  const s1 = fit(d.l1.toUpperCase(), 92);
+  g.fillStyle = '#fff'; g.fillText(d.l1.toUpperCase(), 80, y0 + 24 + s1);
+  const s2 = fit(d.l2.toUpperCase(), 92);
   g.fillStyle = '#6CFF2B'; g.shadowColor = '#6CFF2B'; g.shadowBlur = 24;
-  g.fillText(d.l2.toUpperCase(), 80, 250 + 30 + s1 + 8 + s2);
+  g.fillText(d.l2.toUpperCase(), 80, y0 + 24 + s1 + 6 + s2);
   g.shadowBlur = 0;
-  g.fillStyle = '#C9D0CB'; g.font = `600 40px ${body}`; g.fillText(d.line, 80, 250 + 30 + s1 + 8 + s2 + 70, S - 160);
+  g.fillStyle = '#C9D0CB'; g.font = `600 38px ${body}`; g.fillText(d.line, 80, y0 + 24 + s1 + 6 + s2 + 54, S - 160);
 
   // Kp scale along the bottom.
-  const y = S - 190, gap = 10, w = (S - 160 - gap * 8) / 9;
+  const y = S - 140, gap = 10, w = (S - 160 - gap * 8) / 9;
   d.scale.forEach((b, i) => {
     const x = 80 + i * (w + gap);
-    g.globalAlpha = b.on ? 1 : 0.25; g.fillStyle = b.color; roundRect(g, x, y, w, 26, 4); g.fill(); g.globalAlpha = 1;
-    g.fillStyle = '#9AA39D'; g.font = `500 26px 'JetBrains Mono', monospace`; g.fillText(b.label, x, y + 62);
+    g.globalAlpha = b.on ? 1 : 0.25; g.fillStyle = b.color; roundRect(g, x, y, w, 22, 4); g.fill(); g.globalAlpha = 1;
+    g.fillStyle = '#9AA39D'; g.font = `500 24px 'JetBrains Mono', monospace`; g.fillText(b.label, x, y + 48);
   });
-  g.fillStyle = '#9AA39D'; g.font = `600 28px ${body}`; g.fillText(d.ovalLabel, 80, S - 48, S - 500);
-  g.fillStyle = '#6CFF2B'; g.font = `700 34px ${body}`; g.textAlign = 'right'; g.fillText(d.site, S - 80, S - 48); g.textAlign = 'left';
+  g.fillStyle = '#9AA39D'; g.font = `600 28px ${body}`; g.fillText(d.ovalLabel, 80, S - 36, S - 500);
+  g.fillStyle = '#6CFF2B'; g.font = `700 34px ${body}`; g.textAlign = 'right'; g.fillText(d.site, S - 80, S - 36); g.textAlign = 'left';
   return new Promise(res => c.toBlob(b => res(b), 'image/png'));
 }
 
