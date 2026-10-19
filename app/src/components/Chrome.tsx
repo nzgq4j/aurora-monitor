@@ -161,7 +161,11 @@ export function Footer() {
     <footer className="rule-top">
       <div className="wrap" style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', padding: '18px var(--gutter)', fontSize: 12, color: 'var(--dim)' }}>
         <span>{t('footer.sources')}</span>
-        <span style={{ color: 'var(--green)', fontWeight: 700 }}>{SITE.domain}</span>
+        <span style={{ display: 'flex', gap: 16, alignItems: 'baseline' }}>
+          <a href="/privacy" style={{ color: 'var(--dim)' }}>{t('footer.privacy')}</a>
+          <a href="/terms" style={{ color: 'var(--dim)' }}>{t('footer.terms')}</a>
+          <span style={{ color: 'var(--green)', fontWeight: 700 }}>{SITE.domain}</span>
+        </span>
       </div>
     </footer>
   );
