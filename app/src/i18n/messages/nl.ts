@@ -106,6 +106,15 @@ export const nl: Messages = {
   'plans.choose': 'Kies {plan}',
   'plans.everythingIn': 'Alles van {plan}, plus',
   'plans.includes': 'Inclusief',
+  'plans.included': 'Wat is inbegrepen',
+  'plans.pick': 'Kies een abonnement',
+  'plans.recommended': 'Aanbevolen',
+  'plans.saveBadge': 'BESPAAR {pct}%',
+  'plans.perYear': '/ jaar',
+  'plans.footFree': 'Geen kaart nodig',
+  'plans.ctaTrial': 'Start {days} dagen gratis proberen',
+  'plans.footTrial': 'Gratis proefperiode · Altijd opzegbaar',
+  'plans.footCancel': 'Altijd opzegbaar',
 
   // ---- Checkout ----
   'checkout.back': '← TERUG NAAR ABONNEMENTEN',

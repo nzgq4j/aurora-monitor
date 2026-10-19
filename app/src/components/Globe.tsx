@@ -44,6 +44,13 @@ function toVector(T: typeof THREE, lat: number, lon: number, r = 1) {
  */
 const SHARP_PX = 1.5;
 
+/**
+ * Zoom steps scale the camera's height above the ground (not its distance from the centre), so zooming
+ * feels the same near the surface as far out: a wheel notch changes the height by about 7 %; on touch
+ * the globe grows a little slower than the fingers spread.
+ */
+const ZOOM_ALT = { wheel: 1.5, touch: 0.8 };
+
 /** Latitude the camera looks from for a place: well towards the equator, but on the place's side of it. */
 const viewLat = (lat: number) => Math.max(-48, Math.min(48, lat * 0.72));
 
@@ -425,7 +432,7 @@ export function Globe({ clouds, night, lights, best, saved, places, sightings = 
       controls.dampingFactor = 0.08;
       controls.enablePan = false;
       controls.rotateSpeed = 0.45;
-      controls.zoomSpeed = 0.7;
+      // Zoom speed is set each frame (see ZOOM_ALT).
       // Desktop can zoom close to the ground, where the zoom tiles carry the detail (and the near plane
       // has to come in so the surface isn't clipped). The imagery may run out sooner: see `sharpLimit`.
       const floor = desktop ? 1.06 : 1.35;
@@ -545,6 +552,7 @@ export function Globe({ clouds, night, lights, best, saved, places, sightings = 
         // Desktop: turning slows as the camera nears the ground, so a drag moves the view a similar distance.
         if (desktop) controls.rotateSpeed = 0.45 * Math.max(0.04, Math.min(1, (camera.position.length() - 1) / 1.5));
         if (viewH) controls.minDistance = Math.max(floor, sharpLimit());
+        { const len = camera.position.length(); controls.zoomSpeed = (desktop ? ZOOM_ALT.wheel : ZOOM_ALT.touch) * (len - 1) / len; }
         controls.update();
         // Zoomed in to the limit: hand over to the 2D map at the same place and scale.
         const handTo = latest.current.onZoomPast;

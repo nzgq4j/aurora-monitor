@@ -56,13 +56,14 @@ export function useNightMode(): Ctx {
 }
 
 /**
- * The colour matrix behind html.red-mode: brightness becomes dim red; green and blue go to zero. Rendered
+ * The colour matrix behind html.red-mode: brightness becomes red (white → 88 % red, kept below full so it
+ * stays gentle on dark-adapted eyes); green and blue go to zero. Rendered
  * first in <body> (see layout), so it exists before anything that uses it is drawn.
  */
 export const NightFilter = () => (
   <svg width="0" height="0" aria-hidden="true" style={{ position: 'absolute' }}>
     <filter id="pl-night" colorInterpolationFilters="sRGB">
-      <feColorMatrix type="matrix" values="0.21 0.42 0.07 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" />
+      <feColorMatrix type="matrix" values="0.26 0.53 0.09 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" />
     </filter>
   </svg>
 );

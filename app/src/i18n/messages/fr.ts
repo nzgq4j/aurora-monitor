@@ -106,6 +106,15 @@ export const fr: Messages = {
   'plans.choose': 'Choisir {plan}',
   'plans.everythingIn': 'Tout {plan}, plus',
   'plans.includes': 'Inclus',
+  'plans.included': 'Ce qui est inclus',
+  'plans.pick': 'Choisir une formule',
+  'plans.recommended': 'Recommandé',
+  'plans.saveBadge': '−{pct} %',
+  'plans.perYear': '/ an',
+  'plans.footFree': 'Sans carte bancaire',
+  'plans.ctaTrial': 'Commencer l’essai gratuit de {days} jours',
+  'plans.footTrial': 'Essai gratuit · Résiliable à tout moment',
+  'plans.footCancel': 'Résiliable à tout moment',
 
   // ---- Checkout ----
   'checkout.back': '← RETOUR AUX OFFRES',

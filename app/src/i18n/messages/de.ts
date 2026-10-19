@@ -106,6 +106,15 @@ export const de: Messages = {
   'plans.choose': '{plan} wählen',
   'plans.everythingIn': 'Alles aus {plan}, plus',
   'plans.includes': 'Enthält',
+  'plans.included': 'Enthalten',
+  'plans.pick': 'Tarif wählen',
+  'plans.recommended': 'Empfohlen',
+  'plans.saveBadge': '{pct} % SPAREN',
+  'plans.perYear': '/ Jahr',
+  'plans.footFree': 'Keine Karte nötig',
+  'plans.ctaTrial': '{days} Tage kostenlos testen',
+  'plans.footTrial': 'Kostenloser Test · Jederzeit kündbar',
+  'plans.footCancel': 'Jederzeit kündbar',
 
   // ---- Checkout ----
   'checkout.back': '← ZURÜCK ZU DEN TARIFEN',

@@ -19,6 +19,9 @@ export const TIERS: Tier[] = [
   { id: 'chaser', m: 5, y: 50, locs: 10, accent: '#6CFF2B' },
 ];
 
+/** Days of free trial for a first subscription (Stripe checkout, see lib/billing). */
+export const TRIAL_DAYS = 14;
+
 /** Feature (message key `feat.{id}`) and the index of the tier that introduces it. */
 export const FEATS = [
   ['live', 0], ['forecast3d', 0], ['digest', 0], ['push', 1], ['kp3h', 1], ['outlook27', 1],
