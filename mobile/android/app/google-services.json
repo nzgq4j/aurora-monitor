@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "390241732466",
+    "project_id": "io-polarlights-app",
+    "storage_bucket": "io-polarlights-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:390241732466:android:cb8ca391edf97dec263feb",
+        "android_client_info": {
+          "package_name": "io.polarlights.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "390241732466-ffoaq607tdbmsir24pdokv1ff2ehcl1g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBZawTPhJ5zvjFCWRwvcZ2-E18Riyg64mY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "390241732466-ffoaq607tdbmsir24pdokv1ff2ehcl1g.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
