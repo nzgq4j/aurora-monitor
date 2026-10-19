@@ -864,6 +864,7 @@ export const de: Messages = {
   'install.done': 'Verstanden',
   'push.sub.on': 'Auf diesem Gerät aktiv',
   'push.sub.unsupported': 'In diesem Browser nicht verfügbar',
+  'push.sub.app': 'Bald in der Android-App',
   'push.sub.needsInstall': 'Fügen Sie Polar Lights zuerst zum Home-Bildschirm hinzu',
   'push.sub.denied': 'In den Browsereinstellungen blockiert',
   'push.error': 'Push konnte nicht aktiviert werden. Bitte erneut versuchen.',
