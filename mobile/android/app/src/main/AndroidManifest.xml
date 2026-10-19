@@ -37,6 +37,8 @@
     <!-- Your sky and Sky view: where you are, for the forecast and the aurora overlay. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- Gallery: saving to the Polar Lights album needs this only on Android 9 and older. -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
     <!-- The app still installs on devices without a camera or GPS; those features then say so. -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />

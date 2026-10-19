@@ -40,6 +40,6 @@ After changing `capacitor.config.ts`, `www/` or the plugins, run `npx cap sync a
 | Sign in with email and password | Works |
 | Sign in with Google | Not yet: Google blocks its sign-in inside apps' web views. Needs native Google sign-in. |
 | Sky view camera and location | Works (Android asks for permission) |
-| Gallery: Save to Photos / Share | Not yet: needs the native album save and share (next stage) |
+| Gallery: Save to Photos / Share | Works: saves into a **Polar Lights** album (Pictures/Polar Lights) and opens Android's share sheet (`PhotoLibraryPlugin.java`) |
 | Push notifications | Not yet: needs Firebase Cloud Messaging |
 | Chaser subscription | Not yet: needs Google Play Billing (Stripe can't be used for in-app purchases on Google Play) |

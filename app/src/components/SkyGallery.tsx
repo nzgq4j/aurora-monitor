@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { deletePhotos, exportPhotos, listPhotos, markExported, type ExportResult, type GalleryPhoto } from '../lib/gallery';
+import { deletePhotos, exportPhotos, inApp, listPhotos, markExported, type ExportResult, type GalleryPhoto } from '../lib/gallery';
 import { useI18n } from '../i18n/I18n';
 
 const Icon = ({ d, size = 22 }: { d: string; size?: number }) => (
@@ -43,11 +43,13 @@ export function SkyGallery({ onClose }: { onClose: () => void }) {
     const list = chosen;
     if (!list.length) return;
     const r: ExportResult = await exportPhotos(list, how);
-    if (r === 'done' || r === 'downloaded') {
+    if (r === 'done' || r === 'downloaded' || r === 'album') {
       await markExported(list);
       setPhotos(ps => ps?.map(p => (list.some(l => l.id === p.id) ? { ...p, exported: true } : p)) ?? ps);
-      setNote(r === 'downloaded' ? tn('gallery.downloaded', list.length) : '');
+      setNote(r === 'downloaded' ? tn('gallery.downloaded', list.length) : r === 'album' ? tn('gallery.album', list.length) : '');
     } else if (r === 'tap') setNote(t('gallery.tapAgain'));
+    else if (r === 'denied') setNote(t('gallery.denied'));
+    else if (r === 'failed') setNote(t('gallery.failed'));
   };
   const remove = async () => {
     if (!confirmDelete) { setConfirmDelete(true); return; }
@@ -128,7 +130,7 @@ export function SkyGallery({ onClose }: { onClose: () => void }) {
       )}
       <div className="gallery-bottom">
         {selecting && actions}
-        <p className="sky-small" role="status">{note || t('gallery.note')}</p>
+        <p className="sky-small" role="status">{note || t(inApp() ? 'gallery.noteApp' : 'gallery.note')}</p>
       </div>
     </div>
   );
