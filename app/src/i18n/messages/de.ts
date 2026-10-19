@@ -516,7 +516,7 @@ export const de: Messages = {
   'tonight.sky.dark': 'dunkel',
   'tonight.sky.twilight': 'Dämmerung',
   'tonight.sky.day': 'Tag',
-  'tonight.note': 'Kombiniert Kp-Vorhersage, Wolken, Dunkelheit und Mond. Zeiten in Ihrer Zeitzone.',
+  'tonight.note': 'Kombiniert Kp-Vorhersage, Wolken, Dunkelheit und Mond. Zeiten in Ortszeit des Ortes.',
   'tonight.noPlace': 'Legen Sie Ihren Standort fest, um zu sehen, ob es sich heute Nacht lohnt.',
   'tonight.setPlace': 'Standort festlegen',
   'tonight.changePlace': 'Standort ändern ({place})',

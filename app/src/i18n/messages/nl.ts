@@ -516,7 +516,7 @@ export const nl: Messages = {
   'tonight.sky.dark': 'donker',
   'tonight.sky.twilight': 'schemering',
   'tonight.sky.day': 'dag',
-  'tonight.note': 'Combineert de Kp-verwachting, bewolking, duisternis en de maan. Tijden in je eigen tijdzone.',
+  'tonight.note': 'Combineert de Kp-verwachting, bewolking, duisternis en de maan. Tijden zijn lokaal voor de plek.',
   'tonight.noPlace': 'Stel je locatie in om te zien of het vannacht de moeite waard is.',
   'tonight.setPlace': 'Locatie instellen',
   'tonight.changePlace': 'Locatie wijzigen ({place})',
