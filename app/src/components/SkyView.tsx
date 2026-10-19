@@ -54,6 +54,9 @@ export function SkyView({ kp }: { kp: number | null }) {
   const [field, setField] = useState<Float32Array | null>(null);
   const [view, setView] = useState({ w: 390, h: 844, ppd: 12 });
   const [shot, setShot] = useState<{ url: string; file: File } | null>(null);
+  const [saveNote, setSaveNote] = useState('');
+  // iPhone: the share sheet couldn't open straight after the shot, so a tap on Save to Photos opens it.
+  const [needSave, setNeedSave] = useState(false);
   const [busy, setBusy] = useState(false);
 
   // The aurora forecast grid (the same one as the map), smoothed for sampling.
@@ -205,7 +208,9 @@ export function SkyView({ kp }: { kp: number | null }) {
       const blob = await new Promise<Blob | null>(res => c.toBlob(res, 'image/jpeg', 0.92));
       if (!blob) throw new Error('encode');
       const file = new File([blob], `polar-lights-sky-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.jpg`, { type: 'image/jpeg' });
-      setShot(s => { if (s) URL.revokeObjectURL(s.url); return { url: URL.createObjectURL(blob), file }; });
+      const url = URL.createObjectURL(blob);
+      setShot(s => { if (s) URL.revokeObjectURL(s.url); return { url, file }; });
+      await save(file, url);
     } catch {
       setError(t('sky.err.photo'));
     } finally {
@@ -213,14 +218,31 @@ export function SkyView({ kp }: { kp: number | null }) {
     }
   };
 
-  const share = async () => {
-    if (!shot) return;
-    if (navigator.canShare?.({ files: [shot.file] })) {
-      try { await navigator.share({ files: [shot.file], title: SITE.name }); } catch { /* cancelled */ }
-    } else {
-      const a = document.createElement('a'); a.href = shot.url; a.download = shot.file.name; a.click();
+  /**
+   * Save a photo as directly as a web page may: websites can't write to the photo library themselves.
+   * iPhone and iPad: the share sheet, whose first action is Save Image (into Photos). Elsewhere (Android):
+   * a download, which Google Photos and Gallery show in their Downloads album.
+   */
+  const save = async (file: File, url: string) => {
+    setSaveNote('');
+    const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (ios && navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file] });
+        setNeedSave(false);
+      } catch (e) {
+        // NotAllowedError: the sheet may only open from a tap, and preparing the photo took too long.
+        if ((e as Error).name === 'AbortError') setNeedSave(false);
+        else { setNeedSave(true); setSaveNote(t('sky.tapToSave')); }
+      }
+      return;
     }
+    const a = document.createElement('a');
+    a.href = url; a.download = file.name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setSaveNote(t('sky.savedDownloads'));
   };
+  const saveAgain = () => { if (shot) void save(shot.file, shot.url); };
 
   // Screen position of a point in the sky (before the roll is applied to the whole overlay).
   const cx = view.w / 2, cy = view.h / 2;
@@ -296,6 +318,7 @@ export function SkyView({ kp }: { kp: number | null }) {
           <span>{t('sky.boost')}</span>
           <input type="range" min={0} max={3} step={1} value={boost} onChange={e => setBoost(+e.target.value)} aria-valuetext={t(`sky.boost.${boost as 0 | 1 | 2 | 3}`)} />
         </label>
+        {needSave && shot && <button type="button" className="btn pill pill-primary sky-save" onClick={saveAgain}>{t('sky.savePhotos')}</button>}
         <div className="sky-actions">
           {markOptional
             ? <label className="sky-caption"><input type="checkbox" checked={caption} onChange={e => setCaption(e.target.checked)} />{t('sky.caption')}</label>
@@ -305,13 +328,13 @@ export function SkyView({ kp }: { kp: number | null }) {
               </button>}
           <button type="button" className="btn sky-shutter" onClick={capture} disabled={busy} aria-label={t('sky.capture')}><span /></button>
           {shot ? (
-            <button type="button" className="btn sky-thumb" onClick={share} aria-label={t('sky.share')}>
+            <button type="button" className="btn sky-thumb" onClick={saveAgain} aria-label={t('sky.savePhotos')}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={shot.url} alt="" />
             </button>
           ) : <span className="sky-thumb sky-thumb-empty" />}
         </div>
-        <p className="sky-small">{error || t('sky.photoNote')}</p>
+        <p className="sky-small" role="status">{error || saveNote || t('sky.photoNote')}</p>
       </div>
     </div>
   );
