@@ -842,6 +842,8 @@ export const es: Messages = {
   'mail.storm.body': 'Hay una tormenta geomagnética en curso o prevista en las próximas 3 horas (Kp {kp}, {name}). La aurora puede verse mucho más lejos de los polos de lo habitual.',
   'mail.cta': 'Abrir Polar Lights',
   'mail.footer': 'Recibes estas alertas porque están activadas en tu cuenta de Polar Lights. Cámbialas en Panel → Alertas.',
+  'mail.test.subject': "Alerta de prueba de {name}",
+  'mail.test.body': "Esta es una prueba de tus alertas de auroras. Cuando la aurora alcance tu nivel en uno de tus lugares, la alerta llegará así.",
   'trigger.kp': 'Umbral de Kp alcanzado',
   'trigger.kp.sub': 'Usa el nivel que elegiste arriba',
   'trigger.cme': 'Llegada de CME y avisos de tormenta',

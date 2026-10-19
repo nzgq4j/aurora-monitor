@@ -1,15 +1,15 @@
-<!doctype html>
-<html lang="en">
+{{ $l := printf "%v" .Data.locale }}<!doctype html>
+<html lang="{{ if eq $l "es" }}es{{ else if eq $l "fr" }}fr{{ else if eq $l "de" }}de{{ else if eq $l "nl" }}nl{{ else }}en{{ end }}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
 <meta name="supported-color-schemes" content="dark">
-<title>Your phone number was changed</title>
+<title>{{ if eq $l "es" }}Se ha cambiado tu teléfono{{ else if eq $l "fr" }}Votre numéro de téléphone a été modifié{{ else if eq $l "de" }}Ihre Telefonnummer wurde geändert{{ else if eq $l "nl" }}Je telefoonnummer is gewijzigd{{ else }}Your phone number was changed{{ end }}</title>
 </head>
 <body style="margin:0;padding:0;background-color:#000000;">
 <!-- Inbox preview text -->
-<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">The phone number on your Polar Lights account was changed.&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;</div>
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">{{ if eq $l "es" }}Se ha cambiado el número de teléfono de tu cuenta de Polar Lights.{{ else if eq $l "fr" }}Le numéro de téléphone de votre compte Polar Lights a été modifié.{{ else if eq $l "de" }}Die Telefonnummer Ihres Polar-Lights-Kontos wurde geändert.{{ else if eq $l "nl" }}Het telefoonnummer van je Polar Lights-account is gewijzigd.{{ else }}The phone number on your Polar Lights account was changed.{{ end }}&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#000000" style="background-color:#000000;">
   <tr>
     <td align="center" style="padding:32px 16px;">
@@ -43,13 +43,13 @@
             </table>
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
               <tr>
-                <td style="padding:32px 32px 8px;font-family:'Courier New',Courier,monospace;font-size:12px;letter-spacing:2px;color:#E6B800;">SECURITY NOTICE</td>
+                <td style="padding:32px 32px 8px;font-family:'Courier New',Courier,monospace;font-size:12px;letter-spacing:2px;color:#E6B800;">{{ if eq $l "es" }}AVISO DE SEGURIDAD{{ else if eq $l "fr" }}AVIS DE SÉCURITÉ{{ else if eq $l "de" }}SICHERHEITSHINWEIS{{ else if eq $l "nl" }}BEVEILIGINGSMELDING{{ else }}SECURITY NOTICE{{ end }}</td>
               </tr>
               <tr>
-                <td style="padding:0 32px 16px;font-family:'Arial Black',Arial,Helvetica,sans-serif;font-size:30px;line-height:34px;font-weight:900;color:#ffffff;text-transform:uppercase;">Phone number <span style="color:#6CFF2B;">changed</span></td>
+                <td style="padding:0 32px 16px;font-family:'Arial Black',Arial,Helvetica,sans-serif;font-size:30px;line-height:34px;font-weight:900;color:#ffffff;text-transform:uppercase;">{{ if eq $l "es" }}Teléfono <span style="color:#6CFF2B;">cambiado</span>{{ else if eq $l "fr" }}Téléphone <span style="color:#6CFF2B;">modifié</span>{{ else if eq $l "de" }}Telefonnummer <span style="color:#6CFF2B;">geändert</span>{{ else if eq $l "nl" }}Telefoonnummer <span style="color:#6CFF2B;">gewijzigd</span>{{ else }}Phone number <span style="color:#6CFF2B;">changed</span>{{ end }}</td>
               </tr>
               <tr>
-                <td style="padding:0 32px 28px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:#C9D0CB;">The phone number on your Polar Lights account was changed from <strong style="color:#ffffff;">{{ .OldPhone }}</strong> to <strong style="color:#ffffff;">{{ .Phone }}</strong>.</td>
+                <td style="padding:0 32px 28px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:#C9D0CB;">{{ if eq $l "es" }}El número de teléfono de tu cuenta de Polar Lights ha cambiado de <strong style="color:#ffffff;">{{ .OldPhone }}</strong> a <strong style="color:#ffffff;">{{ .Phone }}</strong>.{{ else if eq $l "fr" }}Le numéro de téléphone de votre compte Polar Lights est passé de <strong style="color:#ffffff;">{{ .OldPhone }}</strong> à <strong style="color:#ffffff;">{{ .Phone }}</strong>.{{ else if eq $l "de" }}Die Telefonnummer Ihres Polar-Lights-Kontos wurde von <strong style="color:#ffffff;">{{ .OldPhone }}</strong> in <strong style="color:#ffffff;">{{ .Phone }}</strong> geändert.{{ else if eq $l "nl" }}Het telefoonnummer van je Polar Lights-account is gewijzigd van <strong style="color:#ffffff;">{{ .OldPhone }}</strong> naar <strong style="color:#ffffff;">{{ .Phone }}</strong>.{{ else }}The phone number on your Polar Lights account was changed from <strong style="color:#ffffff;">{{ .OldPhone }}</strong> to <strong style="color:#ffffff;">{{ .Phone }}</strong>.{{ end }}</td>
               </tr>
               <tr>
                 <td style="padding:0 32px 20px;">
@@ -57,7 +57,7 @@
                   <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                     <tr>
                       <td align="center" bgcolor="#6CFF2B" style="background-color:#6CFF2B;border-radius:999px;">
-                        <a href="https://www.polarlights.io/dashboard" target="_blank" style="display:inline-block;padding:15px 28px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;color:#000000;text-decoration:none;border-radius:999px;">Go to your dashboard</a>
+                        <a href="https://www.polarlights.io/dashboard" target="_blank" style="display:inline-block;padding:15px 28px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;color:#000000;text-decoration:none;border-radius:999px;">{{ if eq $l "es" }}Ir a tu panel{{ else if eq $l "fr" }}Aller au tableau de bord{{ else if eq $l "de" }}Zum Dashboard{{ else if eq $l "nl" }}Naar je dashboard{{ else }}Go to your dashboard{{ end }}</a>
                       </td>
                     </tr>
                   </table>
@@ -65,7 +65,7 @@
               </tr>
               <tr>
                 <td style="padding:0 32px 32px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:#9AA39D;">
-                  <strong style="color:#F06A6A;">Wasn’t you?</strong> Sign in and change your password right away, then check the sign-in and verification methods on your account.
+                  <strong style="color:#F06A6A;">{{ if eq $l "es" }}¿No fuiste tú?{{ else if eq $l "fr" }}Ce n’était pas vous ?{{ else if eq $l "de" }}Das waren nicht Sie?{{ else if eq $l "nl" }}Was jij dit niet?{{ else }}Wasn’t you?{{ end }}</strong> {{ if eq $l "es" }}Inicia sesión y cambia tu contraseña de inmediato; después revisa los métodos de inicio de sesión y verificación de tu cuenta.{{ else if eq $l "fr" }}Connectez-vous et changez votre mot de passe sans attendre, puis vérifiez les méthodes de connexion et de vérification de votre compte.{{ else if eq $l "de" }}Melden Sie sich an und ändern Sie sofort Ihr Passwort; prüfen Sie danach die Anmelde- und Bestätigungsmethoden Ihres Kontos.{{ else if eq $l "nl" }}Log in en wijzig meteen je wachtwoord; controleer daarna de aanmeld- en verificatiemethoden van je account.{{ else }}Sign in and change your password right away, then check the sign-in and verification methods on your account.{{ end }}
                 </td>
               </tr>
             </table>
@@ -74,9 +74,9 @@
         <!-- Footer -->
         <tr>
           <td style="padding:24px 4px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#7D857F;">
-            We send this security notice whenever important details on your Polar Lights account change. It was sent automatically; replies aren’t monitored.<br><br>
+            {{ if eq $l "es" }}Enviamos este aviso de seguridad cada vez que cambian datos importantes de tu cuenta de Polar Lights. Se ha enviado automáticamente; las respuestas no se leen.{{ else if eq $l "fr" }}Nous envoyons cet avis de sécurité chaque fois que des informations importantes de votre compte Polar Lights changent. Il a été envoyé automatiquement ; les réponses ne sont pas lues.{{ else if eq $l "de" }}Wir senden diesen Sicherheitshinweis, wenn sich wichtige Angaben in Ihrem Polar-Lights-Konto ändern. Er wurde automatisch versendet; Antworten werden nicht gelesen.{{ else if eq $l "nl" }}We sturen deze beveiligingsmelding wanneer belangrijke gegevens van je Polar Lights-account veranderen. Hij is automatisch verstuurd; antwoorden worden niet gelezen.{{ else }}We send this security notice whenever important details on your Polar Lights account change. It was sent automatically; replies aren’t monitored.{{ end }}<br><br>
             <a href="https://www.polarlights.io" target="_blank" style="color:#6CFF2B;text-decoration:none;font-weight:700;">polarlights.io</a>
-            <span style="color:#4A504C;">&nbsp;·&nbsp;</span>Live aurora forecasts and alerts for your sky
+            <span style="color:#4A504C;">&nbsp;·&nbsp;</span>{{ if eq $l "es" }}Previsiones y alertas de auroras en directo para tu cielo{{ else if eq $l "fr" }}Prévisions et alertes d’aurores en direct pour votre ciel{{ else if eq $l "de" }}Polarlicht-Vorhersagen und -Alarme live für Ihren Himmel{{ else if eq $l "nl" }}Live noorderlichtverwachtingen en -meldingen voor jouw hemel{{ else }}Live aurora forecasts and alerts for your sky{{ end }}
           </td>
         </tr>
       </table>

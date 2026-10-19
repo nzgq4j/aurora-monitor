@@ -1,0 +1,1 @@
+{{ $l := printf "%v" .Data.locale }}{{ if eq $l "es" }}Confirma tu cuenta de Polar Lights{{ else if eq $l "fr" }}Confirmez votre compte Polar Lights{{ else if eq $l "de" }}Bestätigen Sie Ihr Polar-Lights-Konto{{ else if eq $l "nl" }}Bevestig je Polar Lights-account{{ else }}Confirm your Polar Lights account{{ end }}

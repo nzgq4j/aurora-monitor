@@ -1,0 +1,1 @@
+{{ $l := printf "%v" .Data.locale }}{{ if eq $l "es" }}Confirma tu nuevo correo{{ else if eq $l "fr" }}Confirmez votre nouvelle adresse e-mail{{ else if eq $l "de" }}Bestätigen Sie Ihre neue E-Mail-Adresse{{ else if eq $l "nl" }}Bevestig je nieuwe e-mailadres{{ else }}Confirm your new email address{{ end }}
