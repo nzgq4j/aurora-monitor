@@ -621,3 +621,14 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 @media (max-width: 640px) and (pointer: coarse) {
   .tabbar-item.tab-sky { display: flex; }
 }
+
+/* The Sun time-lapse (components/SunTimelapse). */
+.sun-lapse { display: flex; flex-direction: column; gap: 12px; padding-top: 8px; border-top: 1px solid var(--line); }
+.sun-lapse-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.sun-lapse-head .label { flex: 1 1 100%; }
+.sun-lapse-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.sun-lapse-chips .btn { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line-2); font-size: 13px; font-weight: 700; color: var(--soft); }
+.sun-lapse-chips .btn[aria-pressed="true"] { border-color: var(--green); color: var(--green); }
+.sun-lapse-frame { position: relative; display: grid; place-items: center; width: 100%; max-width: 512px; aspect-ratio: 1; align-self: center; border-radius: 12px; background: #050605; border: 1px solid var(--line); overflow: hidden; }
+.sun-lapse-frame img { width: 100%; height: 100%; display: block; }
+.sun-lapse-stamp { position: absolute; left: 10px; bottom: 8px; font-size: 12px; color: #fff; background: rgba(0,0,0,.55); padding: 2px 6px; border-radius: 6px; }
