@@ -6,6 +6,7 @@ import { Field } from '../components/Field';
 import { useAuth } from '../lib/auth';
 import { useStore } from '../store';
 import { useI18n } from '../i18n/I18n';
+import { inApp } from '../lib/native';
 
 type Mode = 'signin' | 'signup' | 'reset';
 
@@ -27,6 +28,8 @@ export function SignIn() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [app, setApp] = useState(false);
+  useEffect(() => setApp(inApp()), []);
 
   // Links can open straight on account creation (?mode=signup), e.g. from Checkout.
   useEffect(() => { if (new URLSearchParams(window.location.search).get('mode') === 'signup') setMode('signup'); }, []);
@@ -86,9 +89,10 @@ export function SignIn() {
           {busy ? t('common.oneMoment') : mode === 'signup' ? t('signin.create') : mode === 'reset' ? t('signin.sendReset') : t('nav.signIn')}
         </button>
         {mode !== 'reset' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: app ? '1fr' : '1fr 1fr', gap: 10 }}>
             <button type="button" className="btn" onClick={() => provider('google')} style={alt}>Google</button>
-            <button type="button" className="btn" onClick={() => provider('apple')} style={alt}>Apple</button>
+            {/* Apple's sign-in page can't return to the Android app. */}
+            {!app && <button type="button" className="btn" onClick={() => provider('apple')} style={alt}>Apple</button>}
           </div>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center', fontSize: 14, color: 'var(--muted)', textAlign: 'center' }}>

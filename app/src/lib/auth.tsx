@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import type { Provider, User } from '@supabase/supabase-js';
 import type { TierId } from '../data';
 import { supabase } from './supabase';
+import { nativePlugin } from './native';
 import { applyLocale, useI18n } from '../i18n/I18n';
 import { isLocale, type Locale } from '../i18n/config';
 
@@ -86,6 +87,21 @@ const friendly = (msg: string) =>
     : /rate limit|too many requests/i.test(msg) ? 'err.rateLimit'
     : msg;
 
+/**
+ * Google's web client ID (the one Supabase's Google provider uses). Public; the Android app passes it to
+ * Google so the ID token it returns is for this app's Supabase project.
+ */
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? '';
+
+type NativeGoogle = { signIn: (o: { clientId: string; nonce: string }) => Promise<{ idToken: string }> };
+
+/** A random nonce and its SHA-256 (hex): Google signs the hash into the token, Supabase checks the original. */
+async function nonces() {
+  const raw = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
+  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
+  return { raw, hashed: Array.from(new Uint8Array(hash), b => b.toString(16).padStart(2, '0')).join('') };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const sb = supabase();
   const [user, setUser] = useState<User | null>(null);
@@ -165,6 +181,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       signInWithProvider: async provider => {
         if (!sb) return none;
+        // In the Android app Google's sign-in page is blocked, so Android's account picker is used instead.
+        const google = provider === 'google' ? nativePlugin<NativeGoogle>('GoogleSignIn') : null;
+        if (google) {
+          if (!GOOGLE_CLIENT_ID) return { error: 'err.provider' };
+          const { raw, hashed } = await nonces();
+          let idToken: string;
+          try {
+            ({ idToken } = await google.signIn({ clientId: GOOGLE_CLIENT_ID, nonce: hashed }));
+          } catch (e) {
+            const code = (e as { code?: string }).code;
+            return { error: code === 'cancelled' ? null : code === 'no_account' ? 'err.noGoogleAccount' : 'err.google' };
+          }
+          const { error } = await sb.auth.signInWithIdToken({ provider: 'google', token: idToken, nonce: raw });
+          return { error: error ? friendly(error.message) : null };
+        }
         const { error } = await sb.auth.signInWithOAuth({ provider, options: { redirectTo: `${origin}/dashboard` } });
         return { error: error ? friendly(error.message) : null };
       },

@@ -3,6 +3,8 @@
  * its own media library, and saved to Photos or shared from there. Nothing is uploaded.
  */
 
+import { nativePlugin } from './native';
+
 export interface GalleryPhoto {
   id: string;
   /** When the photo was taken, ms. */
@@ -75,13 +77,10 @@ export type ExportResult = 'done' | 'cancelled' | 'downloaded' | 'tap' | 'album'
 
 /** The Android app's photo plugin (mobile/android … PhotoLibraryPlugin.java); null on the website. */
 type NativePhotos = Record<'save' | 'share', (o: { photos: { name: string; data: string }[] }) => Promise<unknown>>;
-function nativePhotos(): NativePhotos | null {
-  const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean; Plugins?: { PhotoLibrary?: NativePhotos } } }).Capacitor;
-  return cap?.isNativePlatform?.() ? cap.Plugins?.PhotoLibrary ?? null : null;
-}
+const nativePhotos = () => nativePlugin<NativePhotos>('PhotoLibrary');
 
 /** Running inside the Android app, which saves photos to its own album. */
-export const inApp = () => typeof window !== 'undefined' && nativePhotos() !== null;
+export const inApp = () => nativePhotos() !== null;
 
 /** A photo as base64 (no data: prefix), for the native plugin. */
 const base64 = (b: Blob) => new Promise<string>((res, rej) => {

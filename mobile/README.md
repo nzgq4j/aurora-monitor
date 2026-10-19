@@ -38,7 +38,7 @@ After changing `capacitor.config.ts`, `www/` or the plugins, run `npx cap sync a
 | --- | --- |
 | All pages, maps, globe, forecasts, alerts settings | Works (the live site) |
 | Sign in with email and password | Works |
-| Sign in with Google | Not yet: Google blocks its sign-in inside apps' web views. Needs native Google sign-in. |
+| Sign in with Google | Android's account picker (`GoogleSignInPlugin.java`), then Supabase `signInWithIdToken`. Needs Google switched on in Supabase, an Android OAuth client (package + SHA-1) and `NEXT_PUBLIC_GOOGLE_CLIENT_ID` on Vercel. Apple sign-in is hidden in the app. |
 | Sky view camera and location | Works (Android asks for permission) |
 | Gallery: Save to Photos / Share | Works: saves into a **Polar Lights** album (Pictures/Polar Lights) and opens Android's share sheet (`PhotoLibraryPlugin.java`) |
 | Push notifications | Not yet: needs Firebase Cloud Messaging |

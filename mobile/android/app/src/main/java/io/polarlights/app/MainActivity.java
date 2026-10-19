@@ -9,6 +9,7 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         // The app's own plugins (installed ones are registered by Capacitor).
         registerPlugin(PhotoLibraryPlugin.class);
+        registerPlugin(GoogleSignInPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

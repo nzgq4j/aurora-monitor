@@ -259,6 +259,8 @@ export const nl: Messages = {
   'err.invalidLogin': 'Dit e-mailadres en wachtwoord horen niet bij een account.',
   'err.exists': 'Er bestaat al een account met dit e-mailadres. Log in plaats daarvan in.',
   'err.provider': 'Deze inlogmethode is nog niet ingeschakeld. Gebruik e-mail en wachtwoord.',
+  'err.noGoogleAccount': "Er staat geen Google-account op deze telefoon. Voeg er een toe in Android-instellingen › Wachtwoorden en accounts, of log in met e-mail.",
+  'err.google': "Inloggen met Google is niet gelukt. Probeer het opnieuw of log in met e-mail.",
   'err.unconfirmed': 'Bevestig eerst je e-mailadres. Kijk in je inbox voor de link.',
   'err.network': 'De accountservice is nu niet bereikbaar. Controleer je verbinding en probeer het opnieuw.',
   'err.samePassword': 'Kies een wachtwoord dat verschilt van je huidige wachtwoord.',

@@ -259,6 +259,8 @@ export const en = {
   'err.invalidLogin': 'That email and password don’t match an account.',
   'err.exists': 'An account with that email already exists. Sign in instead.',
   'err.provider': 'That sign-in method isn’t switched on yet. Use email and password.',
+  'err.noGoogleAccount': "No Google account on this phone. Add one in Android Settings › Passwords & accounts, or sign in with email.",
+  'err.google': "Google sign-in didn’t work. Please try again, or sign in with email.",
   'err.unconfirmed': 'Confirm your email first. Check your inbox for the link.',
   'err.network': 'Can’t reach the account service right now. Check your connection and try again.',
   'err.samePassword': 'Choose a password that’s different from your current one.',
