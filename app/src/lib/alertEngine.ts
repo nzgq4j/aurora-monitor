@@ -160,6 +160,8 @@ async function deliverPush(admin: SupabaseClient, s: Settings, chaser: boolean, 
   });
   const opts = { vapidDetails: { subject: process.env.VAPID_SUBJECT || `mailto:alerts@${SITE.domain}`, publicKey: pub ?? '', privateKey: priv ?? '' }, TTL: 3600, urgency: 'high' as const };
   let sent = 0, failed = '';
+  // The result shows only one outcome, so a device that fails while another succeeds is logged here.
+  const fail = (kind: string, why: string) => { failed = why; console.warn('push failed', kind, s.user_id.slice(0, 8), why); };
   for (const sub of subs) {
     if (sub.kind === 'fcm') {
       const { title, body, url, tag } = JSON.parse(payload) as { title: string; body: string; url: string; tag: string };
@@ -167,9 +169,9 @@ async function deliverPush(admin: SupabaseClient, s: Settings, chaser: boolean, 
         const r = await sendFcm(sub.endpoint.slice(4), { title, body, url, tag });
         if (r === 'sent') sent++;
         else if (r === 'gone') await admin.from('push_subscriptions').delete().eq('id', sub.id);
-        else failed = r;
+        else fail(sub.kind, r);
       } catch (e) {
-        failed = `failed: ${(e as Error).message.slice(0, 60)}`;
+        fail(sub.kind, `failed: ${(e as Error).message.slice(0, 60)}`);
       }
       continue;
     }
@@ -179,7 +181,7 @@ async function deliverPush(admin: SupabaseClient, s: Settings, chaser: boolean, 
     } catch (e) {
       const code = (e as { statusCode?: number }).statusCode;
       if (code === 404 || code === 410) await admin.from('push_subscriptions').delete().eq('id', sub.id);
-      else failed = `failed: ${code ?? (e as Error).message.slice(0, 60)}`;
+      else fail(sub.kind, `failed: ${code ?? (e as Error).message.slice(0, 60)}`);
     }
   }
   return sent ? 'sent' : failed || 'no_device';
