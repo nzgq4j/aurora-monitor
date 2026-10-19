@@ -864,6 +864,7 @@ export const nl: Messages = {
   'install.done': 'Begrepen',
   'push.sub.on': 'Aan op dit apparaat',
   'push.sub.unsupported': 'Niet ondersteund in deze browser',
+  'push.sub.app': 'Binnenkort in de Android-app',
   'push.sub.needsInstall': 'Zet Polar Lights eerst op je beginscherm',
   'push.sub.denied': 'Geblokkeerd in je browserinstellingen',
   'push.error': 'Push kon niet worden aangezet. Probeer het opnieuw.',

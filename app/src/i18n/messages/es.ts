@@ -864,6 +864,7 @@ export const es: Messages = {
   'install.done': 'Entendido',
   'push.sub.on': 'Activadas en este dispositivo',
   'push.sub.unsupported': 'No compatible con este navegador',
+  'push.sub.app': 'Pronto en la app de Android',
   'push.sub.needsInstall': 'Primero añade Polar Lights a tu pantalla de inicio',
   'push.sub.denied': 'Bloqueadas en la configuración del navegador',
   'push.error': 'No se pudieron activar las notificaciones. Inténtalo de nuevo.',

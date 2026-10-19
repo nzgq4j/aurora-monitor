@@ -1,6 +1,7 @@
 'use client';
 
 import { supabase } from './supabase';
+import { inApp } from './native';
 
 /**
  * Web push on the client: whether this browser can take push alerts, and subscribing or unsubscribing
@@ -15,7 +16,7 @@ export const isStandalone = () =>
 
 export const isIos = () => typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent) && !('MSStream' in window);
 
-export type PushState = 'unconfigured' | 'unsupported' | 'needs-install' | 'denied' | 'off' | 'on';
+export type PushState = 'unconfigured' | 'unsupported' | 'app' | 'needs-install' | 'denied' | 'off' | 'on';
 
 const urlB64 = (b64: string) => {
   const s = (b64 + '='.repeat((4 - (b64.length % 4)) % 4)).replace(/-/g, '+').replace(/_/g, '/');
@@ -25,6 +26,8 @@ const urlB64 = (b64: string) => {
 export async function pushState(): Promise<PushState> {
   if (!VAPID_PUBLIC) return 'unconfigured';
   if (typeof window === 'undefined') return 'unsupported';
+  // The Android app's web view has no web push; the app gets its own (Firebase) notifications.
+  if (inApp()) return 'app';
   // iPhone and iPad only offer push to sites added to the home screen.
   if (isIos() && !isStandalone()) return 'needs-install';
   if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return 'unsupported';
@@ -37,7 +40,7 @@ export async function pushState(): Promise<PushState> {
 export async function enablePush(): Promise<PushState> {
   const sb = supabase();
   const state = await pushState();
-  if (!sb || state === 'unconfigured' || state === 'unsupported' || state === 'needs-install' || state === 'denied') return state;
+  if (!sb || state === 'unconfigured' || state === 'unsupported' || state === 'app' || state === 'needs-install' || state === 'denied') return state;
   if ((await Notification.requestPermission()) !== 'granted') return 'denied';
   const reg = await navigator.serviceWorker.ready;
   const sub = (await reg.pushManager.getSubscription()) ?? await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64(VAPID_PUBLIC) });

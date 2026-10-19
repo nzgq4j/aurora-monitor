@@ -864,6 +864,7 @@ export const en = {
   'install.done': 'Got it',
   'push.sub.on': 'On for this device',
   'push.sub.unsupported': 'Not supported in this browser',
+  'push.sub.app': 'Coming soon to the Android app',
   'push.sub.needsInstall': 'Add Polar Lights to your home screen first',
   'push.sub.denied': 'Blocked in your browser settings',
   'push.error': 'Couldn’t turn on push. Please try again.',
