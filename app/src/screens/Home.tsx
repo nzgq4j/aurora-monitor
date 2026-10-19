@@ -6,6 +6,7 @@ import { KpBarChart, POLAR_MIN_LAT, PolarOval, type KpBar } from '../components/
 import { Locked } from '../components/Locked';
 import { SolarActivity, useSolarData } from '../components/SolarActivity';
 import { DetailCard } from '../components/DetailCard';
+import { StormOutlook, stormSummary, useDay, useStorm } from '../components/StormOutlook';
 import { SunspotRegions, useSunspots } from '../components/SunspotRegions';
 import { outlookLine, solarLine, spaceLine, type Line } from '../lib/detailSummaries';
 import type { KpPoint } from '../lib/feeds';
@@ -101,6 +102,21 @@ function Outlook({ data }: { data: NowData }) {
           title={view === 'hour' ? t('feat.kp3h') : t('feat.outlook27')}
           body={view === 'hour' ? t('outlook.locked.hour') : t('outlook.locked.month')} />
       )}
+    </DetailCard>
+  );
+}
+
+/** Storm outlook (#40), after the Kp outlook; the highest forecast Kp from now on feeds its aurora potential. */
+function StormSection({ data }: { data: NowData }) {
+  const { t } = useI18n();
+  const storm = useStorm();
+  const day = useDay();
+  const ahead = data.series.filter(p => p.kind === 'predicted' && p.t + 3 * 36e5 > data.fetchedAt);
+  const top = ahead.length ? ahead.reduce((a, b) => (b.kp > a.kp ? b : a)) : null;
+  const peak = top && { kp: top.kp, at: top.t };
+  return (
+    <DetailCard id="storm" title={<>{t('storm.h2a')} <span className="hl">{t('storm.h2b')}</span></>} summary={stormSummary(storm, t, day)}>
+      <StormOutlook peak={peak} />
     </DetailCard>
   );
 }
@@ -210,6 +226,8 @@ export function Home({ data }: { data: NowData }) {
       <YourSky kp={kp} />
 
       <Outlook data={data} />
+
+      <StormSection data={data} />
 
       <DetailCard id="space" title={<>{t('detail.space.h2a')} <span className="hl">{t('detail.space.h2b')}</span></>} summary={summaryText(i18n, spaceLine(w))}>
         <div className="now-stats">
