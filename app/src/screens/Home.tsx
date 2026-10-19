@@ -151,7 +151,8 @@ function summaryText({ t, num }: Pick<I18n, 't' | 'num'>, line: Line, day?: stri
 
 /** Decorative placeholder lines behind the locked solar panel (no real data). */
 function FakeLines() {
-  const line = (seed: number) => Array.from({ length: 60 }, (_, i) => `${i ? 'L' : 'M'}${i * 10} ${60 + Math.sin(i / 3 + seed) * 22 + Math.sin(i * 1.7 + seed) * 8}`).join(' ');
+  // Rounded: Math.sin can differ in the last digits between the server and the browser, which breaks hydration.
+  const line = (seed: number) => Array.from({ length: 60 }, (_, i) => `${i ? 'L' : 'M'}${i * 10} ${(60 + Math.sin(i / 3 + seed) * 22 + Math.sin(i * 1.7 + seed) * 8).toFixed(1)}`).join(' ');
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(440px,100%),1fr))', gap: 14, padding: 14 }}>
       {[0, 1, 2, 3].map(k => (

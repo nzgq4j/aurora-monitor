@@ -32,7 +32,7 @@ export const FEATS = [
 export const COMPARE = ['locations', 'channels', 'speed', 'range', 'detail', 'solar', 'cloud', 'substorm', 'history'] as const;
 
 /** Index into TIERS of the first plan that includes each gated feature. */
-export const ENTITLEMENTS = { kp3h: 1, outlook27: 1, solarGraphs: 1 } as const;
+export const ENTITLEMENTS = { kp3h: 1, outlook27: 1, solarGraphs: 1, skyView: 1 } as const;
 
 export const C = {
   green: '#6CFF2B',

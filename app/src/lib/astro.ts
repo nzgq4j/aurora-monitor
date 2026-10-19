@@ -93,6 +93,17 @@ export function moonAltitude(t: number, lat: number, lon: number): number {
   return deg(Math.asin(Math.sin(rad(lat)) * Math.sin(m.dec) + Math.cos(rad(lat)) * Math.cos(m.dec) * Math.cos(H)));
 }
 
+/** The Moon's azimuth (degrees clockwise from north) and altitude (degrees) for a place. */
+export function moonPosition(t: number, lat: number, lon: number): { az: number; alt: number } {
+  const d = t / 864e5 - 10957.5;
+  const m = moonCoords(d);
+  const gmst = (18.697374558 + 24.06570982441908 * d) % 24;
+  const H = rad(gmst * 15 + lon) - m.ra, phi = rad(lat);
+  const alt = Math.asin(Math.sin(phi) * Math.sin(m.dec) + Math.cos(phi) * Math.cos(m.dec) * Math.cos(H));
+  const az = Math.atan2(Math.sin(H), Math.cos(H) * Math.sin(phi) - Math.tan(m.dec) * Math.cos(phi));
+  return { az: (deg(az) + 180 + 360) % 360, alt: deg(alt) };
+}
+
 export type MoonPhase = 'new' | 'waxingCrescent' | 'firstQuarter' | 'waxingGibbous' | 'full' | 'waningGibbous' | 'lastQuarter' | 'waningCrescent';
 
 const PHASES: [number, MoonPhase][] = [

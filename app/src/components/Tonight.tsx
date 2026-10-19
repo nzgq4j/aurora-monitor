@@ -9,6 +9,7 @@ import { shareCardBlob } from '../lib/shareCard';
 import { SITE } from '../lib/site';
 import type { HourScore, Level } from '../lib/tonight';
 import { usePointVerdict } from '../lib/usePointVerdict';
+import { useStore } from '../store';
 import { INTL_TAG } from '../i18n/config';
 import { useI18n } from '../i18n/I18n';
 import { USEFUL_EVENT } from './InstallPrompt';
@@ -64,6 +65,7 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
     return () => window.removeEventListener('online', back);
   }, [router]);
   const night = useNightMode();
+  const { go } = useStore();
   const [picked, setPicked] = useState(0);
 
   // A promising verdict is a good moment to suggest adding the app to the home screen (InstallPrompt).
@@ -152,6 +154,9 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
         </button>
         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {now !== null && !offline && <span className="label" style={{ fontSize: 11 }}>{t('tonight.updated', { time: time(now) })}</span>}
+          <button type="button" className="btn tonight-share sky-entry" onClick={() => go('sky')} aria-label={t('sky.open')} title={t('sky.open')}>
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" /><circle cx="12" cy="13.2" r="3.4" fill="none" stroke="currentColor" strokeWidth="2" /></svg>
+          </button>
           <button type="button" className="btn tonight-share" onClick={night.toggle} aria-pressed={night.active} aria-label={t('night.toggle')} title={t('night.toggle')}>
             <MoonIcon on={night.active} />
           </button>
