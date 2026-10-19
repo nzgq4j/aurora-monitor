@@ -47,7 +47,8 @@ export function SkyView({ kp }: { kp: number | null }) {
   const stream = useRef<MediaStream | null>(null);
   const [phase, setPhase] = useState<Phase>('intro');
   const [error, setError] = useState('');
-  const [boost, setBoost] = useState(1);
+  // Off until the user turns it up: photos and the live picture are unprocessed by default.
+  const [boost, setBoost] = useState(0);
   const [caption, setCaption] = useState(false);
   const [pose, setPose] = useState<Pose | null>(null);
   const [compass, setCompass] = useState<'ok' | 'calibrate' | 'none'>('ok');
