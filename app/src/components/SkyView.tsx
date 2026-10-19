@@ -7,6 +7,7 @@ import { useLocations } from '../lib/locations';
 import { sampleOval, smoothOval } from '../lib/ovalSmooth';
 import { auroraBand, bandPeak, cameraPose, kpEdge, point16, wrap180, type BandSlice } from '../lib/skyView';
 import { SITE } from '../lib/site';
+import { ENTITLEMENTS } from '../data';
 import { useStore } from '../store';
 import { INTL_TAG } from '../i18n/config';
 import { useI18n } from '../i18n/I18n';
@@ -37,7 +38,9 @@ const smoothAngle = (prev: number | null, next: number, k: number) => (prev === 
  */
 export function SkyView({ kp }: { kp: number | null }) {
   const { t, num, locale } = useI18n();
-  const { go } = useStore();
+  const { go, planIndex } = useStore();
+  // Free photos always carry the caption (rounded location, time, direction, Kp, Made with); Chaser chooses (#93).
+  const markOptional = planIndex >= ENTITLEMENTS.photoMarkOff;
   const { shownPlace } = useLocations();
   const video = useRef<HTMLVideoElement>(null);
   const stream = useRef<MediaStream | null>(null);
@@ -165,7 +168,7 @@ export function SkyView({ kp }: { kp: number | null }) {
           source = bmp; w = bmp.width; h = bmp.height;
         } catch { /* fall back to the live frame */ }
       }
-      const strip = caption ? Math.round(Math.max(w, h) * 0.045) : 0;
+      const strip = caption || !markOptional ? Math.round(Math.max(w, h) * 0.045) : 0;
       const c = document.createElement('canvas');
       c.width = w; c.height = h + strip;
       const ctx = c.getContext('2d')!;
@@ -190,10 +193,14 @@ export function SkyView({ kp }: { kp: number | null }) {
         ctx.fillStyle = '#fff'; ctx.font = `600 ${Math.round(strip * 0.42)}px system-ui, sans-serif`; ctx.textBaseline = 'middle';
         const when = new Date().toLocaleString(INTL_TAG[locale], { dateStyle: 'medium', timeStyle: 'short' });
         const facing = pose?.az != null ? `${t(`sky.dir.${point16(pose.az)}`)} ${Math.round(pose.az)}°` : '';
-        const where = here ? (here.name ?? `${num(here.lat, 2)}°, ${num(here.lon, 2)}°`) : '';
-        ctx.fillText([where, when, facing, kp !== null ? `Kp ${num(kp, 1)}` : ''].filter(Boolean).join('  ·  '), strip * 0.4, h + strip / 2, w - strip * 3.4);
+        // Rounded to 0.1° (about 10 km), as sightings are, so a photo never gives away an exact spot.
+        const where = here ? `${num(Math.abs(here.lat), 1)}°${here.lat >= 0 ? 'N' : 'S'} ${num(Math.abs(here.lon), 1)}°${here.lon >= 0 ? 'E' : 'W'}` : '';
+        const mark = t('sky.madeWith', { site: SITE.domain });
         ctx.textAlign = 'right'; ctx.fillStyle = '#6CFF2B';
-        ctx.fillText(SITE.domain, w - strip * 0.4, h + strip / 2);
+        ctx.fillText(mark, w - strip * 0.4, h + strip / 2);
+        const markW = ctx.measureText(mark).width;
+        ctx.textAlign = 'left'; ctx.fillStyle = '#fff';
+        ctx.fillText([where, when, facing, kp !== null ? `Kp ${num(kp, 1)}` : ''].filter(Boolean).join('  ·  '), strip * 0.4, h + strip / 2, Math.max(strip, w - markW - strip * 1.4));
       }
       const blob = await new Promise<Blob | null>(res => c.toBlob(res, 'image/jpeg', 0.92));
       if (!blob) throw new Error('encode');
@@ -231,6 +238,7 @@ export function SkyView({ kp }: { kp: number | null }) {
           <li>{t('sky.intro.boost')}</li>
           <li>{t('sky.intro.photo')}</li>
         </ul>
+        {!markOptional && <p className="sky-small">{t('sky.intro.mark')}</p>}
         <p className="sky-small">{t('sky.permissions')}</p>
         {error && <p className="sky-error" role="alert">{error}</p>}
         <button type="button" className="btn pill pill-primary sky-start" onClick={start} disabled={phase === 'starting'}>{phase === 'starting' ? t('sky.starting') : t('sky.start')}</button>
@@ -289,7 +297,12 @@ export function SkyView({ kp }: { kp: number | null }) {
           <input type="range" min={0} max={3} step={1} value={boost} onChange={e => setBoost(+e.target.value)} aria-valuetext={t(`sky.boost.${boost as 0 | 1 | 2 | 3}`)} />
         </label>
         <div className="sky-actions">
-          <label className="sky-caption"><input type="checkbox" checked={caption} onChange={e => setCaption(e.target.checked)} />{t('sky.caption')}</label>
+          {markOptional
+            ? <label className="sky-caption"><input type="checkbox" checked={caption} onChange={e => setCaption(e.target.checked)} />{t('sky.caption')}</label>
+            : <button type="button" className="btn sky-caption" onClick={() => go('plans')} title={t('sky.markFree')}>
+                <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M7 11V8a5 5 0 0 1 10 0v3M5.5 11h13v9.5h-13z" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" /></svg>
+                {t('sky.captionOn')}
+              </button>}
           <button type="button" className="btn sky-shutter" onClick={capture} disabled={busy} aria-label={t('sky.capture')}><span /></button>
           {shot ? (
             <button type="button" className="btn sky-thumb" onClick={share} aria-label={t('sky.share')}>
