@@ -10,6 +10,9 @@ import { inApp } from '../lib/native';
 
 type Mode = 'signin' | 'signup' | 'reset';
 
+/** Show Sign in with Apple (switch on once the Apple provider is set up in Supabase). */
+const APPLE_SIGN_IN = false;
+
 /** The same-site page to continue to after signing in (?next=), if any. */
 const nextPath = () => {
   const next = new URLSearchParams(window.location.search).get('next');
@@ -89,10 +92,10 @@ export function SignIn() {
           {busy ? t('common.oneMoment') : mode === 'signup' ? t('signin.create') : mode === 'reset' ? t('signin.sendReset') : t('nav.signIn')}
         </button>
         {mode !== 'reset' && (
-          <div style={{ display: 'grid', gridTemplateColumns: app ? '1fr' : '1fr 1fr', gap: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: APPLE_SIGN_IN && !app ? '1fr 1fr' : '1fr', gap: 10 }}>
             <button type="button" className="btn" onClick={() => provider('google')} style={alt}>Google</button>
-            {/* Apple's sign-in page can't return to the Android app. */}
-            {!app && <button type="button" className="btn" onClick={() => provider('apple')} style={alt}>Apple</button>}
+            {/* Apple sign-in isn't set up yet (it needs an Apple Developer account); it would also need its own flow in the Android app. */}
+            {APPLE_SIGN_IN && !app && <button type="button" className="btn" onClick={() => provider('apple')} style={alt}>Apple</button>}
           </div>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center', fontSize: 14, color: 'var(--muted)', textAlign: 'center' }}>

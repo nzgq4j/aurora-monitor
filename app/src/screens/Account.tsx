@@ -8,7 +8,7 @@ import { G_SCALE, kpNeeded, moon } from '../lib/astro';
 import type { AccountData } from '../lib/history';
 import { searchPlaces, useLocations, type PlaceResult, type SavedLocation } from '../lib/locations';
 import { useConditions } from '../lib/useConditions';
-import { ALERT_LEVELS, type AlertKind, type AlertLevel, type AlertRules } from '../lib/alerts';
+import { ALERT_LEVELS, levelKp, type AlertKind, type AlertLevel, type AlertRules } from '../lib/alerts';
 import { supabase } from '../lib/supabase';
 import { disablePush, enablePush, pushState, type PushState } from '../lib/push';
 import { INSTALL_EVENT } from '../components/InstallPrompt';
@@ -283,15 +283,17 @@ function ToggleRow({ label, sub, on, need, locked, onClick }: ToggleProps) {
 function Alerts({ data }: { data: AccountData }) {
   const { s, set, planIndex, go, live } = useStore();
   const { user } = useAuth();
-  const { t, tn, num, date } = useI18n();
+  const { t, tn, num, date, locale } = useI18n();
   const shortDate = (d: number) => date(d, { month: 'short', day: 'numeric', timeZone: 'UTC' });
   // Email alerts go to the address the account signed up with.
   const accountEmail = live ? user?.email ?? t('dash.accountEmail') : 'sam@example.com';
   const chaser = planIndex >= 1;
   const r = s.alertRules;
   const setRules = (patch: Partial<AlertRules>) => patchRules(set, patch);
-  // The storm alert's Kp; the history chart shows how often it was reached.
-  const kp = s.kpThreshold;
+  // The history chart beside the levels: days whose highest Kp would have reached the chosen level at
+  // Home on a clear, dark night (the alerts themselves also weigh darkness, cloud and the Moon).
+  const { home, need } = useHome();
+  const kp = Math.round(levelKp(r.level, need) * 10) / 10;
   const last30 = data.days.slice(-30);
   const hits = last30.filter(d => d.kpMax >= kp).length;
   const thY = f(170 - kp * 17);
@@ -336,9 +338,9 @@ function Alerts({ data }: { data: AccountData }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
             <span style={{ fontSize: 14, color: 'var(--muted)' }}>{t('alerts.last30')}</span>
-            <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 22, whiteSpace: 'nowrap' }}><span className="hl">{hits}</span> {tn('alerts.days', hits, { kp })}</span>
+            <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 22, whiteSpace: 'nowrap' }}><span className="hl">{hits}</span> {tn('alerts.levelDays', hits, { level: t(`alerts.level.${r.level}`).toLocaleLowerCase(locale) })}</span>
           </div>
-          <svg viewBox="0 0 450 190" style={{ width: '100%', display: 'block' }} role="img" aria-label={t('alerts.aria', { hits, days: last30.length, kp })}>
+          <svg viewBox="0 0 450 190" style={{ width: '100%', display: 'block' }} role="img" aria-label={t('alerts.levelAria', { hits, days: last30.length, level: t(`alerts.level.${r.level}`).toLocaleLowerCase(locale) })}>
             <line x1="0" x2="450" y1={thY} y2={thY} style={{ stroke: C.green, strokeWidth: 1.5, strokeDasharray: '5 4' }} />
             {last30.map((d, i) => (
               <rect key={d.t} x={f(i * bw)} y={f(170 - d.kpMax * 17)} width={f(bw - 4)} height={f(d.kpMax * 17)} style={{ fill: d.kpMax >= kp ? C.green : C.line2 }}>
@@ -350,6 +352,10 @@ function Alerts({ data }: { data: AccountData }) {
             <text x="450" y="186" style={{ fill: C.muted, font: "10px 'JetBrains Mono'", textAnchor: 'end' }}>{t('alerts.today')}</text>
             {last30.length === 0 && <text x="225" y="90" style={{ fill: C.muted, font: "600 13px 'Barlow'", textAnchor: 'middle' }}>{t('dash.historyUnavailable')}</text>}
           </svg>
+          <span style={{ fontSize: 13, color: 'var(--muted)' }}>
+            {home ? t('alerts.levelNote', { place: home.name.split(',')[0], need, level: t(`alerts.level.${r.level}`), kp: num(kp, 1) })
+              : t('alerts.levelNoteNoHome', { need, level: t(`alerts.level.${r.level}`), kp: num(kp, 1) })}
+          </span>
         </div>
       </div>
 
