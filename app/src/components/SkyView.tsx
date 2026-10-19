@@ -12,6 +12,8 @@ import { useStore } from '../store';
 import { INTL_TAG } from '../i18n/config';
 import { useI18n } from '../i18n/I18n';
 import { MoonIcon, useNightMode } from './NightMode';
+import { SkyGallery } from './SkyGallery';
+import { addPhoto, listPhotos } from '../lib/gallery';
 
 /** Horizontal angle the rear main camera sees along the long side of its picture (typical phones: 63–70°). */
 const CAMERA_FOV = 66;
@@ -55,10 +57,10 @@ export function SkyView({ kp }: { kp: number | null }) {
   const [here, setHere] = useState<{ lat: number; lon: number; name: string | null } | null>(null);
   const [field, setField] = useState<Float32Array | null>(null);
   const [view, setView] = useState({ w: 390, h: 844, ppd: 12 });
-  const [shot, setShot] = useState<{ url: string; file: File } | null>(null);
+  // The latest photo in the gallery, for the thumbnail by the shutter.
+  const [shot, setShot] = useState<string | null>(null);
   const [saveNote, setSaveNote] = useState('');
-  // iPhone: the share sheet couldn't open straight after the shot, so a tap on Save to Photos opens it.
-  const [needSave, setNeedSave] = useState(false);
+  const [gallery, setGallery] = useState(false);
   const [busy, setBusy] = useState(false);
   // The camera is optional: the overlay comes from the motion sensors, compass and location. It's only
   // needed for the live picture, boost and photos, and is off until turned on.
@@ -233,10 +235,10 @@ export function SkyView({ kp }: { kp: number | null }) {
       }
       const blob = await new Promise<Blob | null>(res => c.toBlob(res, 'image/jpeg', 0.92));
       if (!blob) throw new Error('encode');
-      const file = new File([blob], `polar-lights-sky-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.jpg`, { type: 'image/jpeg' });
-      const url = URL.createObjectURL(blob);
-      setShot(s => { if (s) URL.revokeObjectURL(s.url); return { url, file }; });
-      await save(file, url);
+      // Straight into the gallery, as a camera app does; saving to Photos or sharing happens from there.
+      const p = await addPhoto(blob, `polar-lights-sky-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.jpg`);
+      showLatest(p.thumb);
+      setSaveNote(t('gallery.added'));
     } catch {
       setError(t('sky.err.photo'));
     } finally {
@@ -244,36 +246,17 @@ export function SkyView({ kp }: { kp: number | null }) {
     }
   };
 
-  /**
-   * Save a photo as directly as a web page may: websites can't write to the photo library themselves.
-   * iPhone and iPad: the share sheet, whose first action is Save Image (into Photos). Elsewhere (Android):
-   * a download, which Google Photos and Gallery show in their Downloads album.
-   */
-  const save = async (file: File, url: string) => {
-    setSaveNote('');
-    const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    if (ios && navigator.canShare?.({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file] });
-        setNeedSave(false);
-      } catch (e) {
-        // NotAllowedError: the sheet may only open from a tap, and preparing the photo took too long.
-        if ((e as Error).name === 'AbortError') setNeedSave(false);
-        else { setNeedSave(true); setSaveNote(t('sky.tapToSave')); }
-      }
-      return;
-    }
-    const a = document.createElement('a');
-    a.href = url; a.download = file.name;
-    document.body.appendChild(a); a.click(); a.remove();
-    setSaveNote(t('sky.savedDownloads'));
-  };
-  const saveAgain = () => { if (shot) void save(shot.file, shot.url); };
+  const showLatest = (thumb: Blob | null) => setShot(s => { if (s) URL.revokeObjectURL(s); return thumb ? URL.createObjectURL(thumb) : null; });
+  const refreshLatest = () => listPhotos().then(ps => showLatest(ps[0]?.thumb ?? null)).catch(() => {});
+  useEffect(() => { void refreshLatest(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const closeGallery = () => { setGallery(false); setSaveNote(''); void refreshLatest(); };
 
   // Screen position of a point in the sky (before the roll is applied to the whole overlay).
   const cx = view.w / 2, cy = view.h / 2;
   const at = (az: number, el: number) => (pose && pose.az !== null ? { x: cx + wrap180(az - pose.az) * view.ppd, y: cy - (el - pose.el) * view.ppd } : null);
   const inView = (az: number) => pose?.az != null && Math.abs(wrap180(az - pose.az)) < 100;
+
+  const galleryView = gallery && <SkyGallery onClose={closeGallery} />;
 
   if (phase !== 'live') {
     return (
@@ -290,6 +273,8 @@ export function SkyView({ kp }: { kp: number | null }) {
         <p className="sky-small">{t('sky.permissions')}</p>
         {error && <p className="sky-error" role="alert">{error}</p>}
         <button type="button" className="btn pill pill-primary sky-start" onClick={start} disabled={phase === 'starting'}>{phase === 'starting' ? t('sky.starting') : t('sky.start')}</button>
+        {shot && <button type="button" className="btn pill sky-gallery-open" onClick={() => setGallery(true)}>{t('gallery.open')}</button>}
+        {galleryView}
       </div>
     );
   }
@@ -359,7 +344,6 @@ export function SkyView({ kp }: { kp: number | null }) {
             <input type="range" min={0} max={3} step={1} value={boost} onChange={e => setBoost(+e.target.value)} aria-valuetext={t(`sky.boost.${boost as 0 | 1 | 2 | 3}`)} />
           </label>
         )}
-        {needSave && shot && <button type="button" className="btn pill pill-primary sky-save" onClick={saveAgain}>{t('sky.savePhotos')}</button>}
         <div className="sky-actions">
           {markOptional
             ? <label className="sky-caption"><input type="checkbox" checked={caption} onChange={e => setCaption(e.target.checked)} />{t('sky.caption')}</label>
@@ -369,14 +353,15 @@ export function SkyView({ kp }: { kp: number | null }) {
               </button>}
           <button type="button" className="btn sky-shutter" onClick={capture} disabled={busy} aria-label={t('sky.capture')}><span /></button>
           {shot ? (
-            <button type="button" className="btn sky-thumb" onClick={saveAgain} aria-label={t('sky.savePhotos')}>
+            <button type="button" className="btn sky-thumb" onClick={() => setGallery(true)} aria-label={t('gallery.open')}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={shot.url} alt="" />
+              <img src={shot} alt="" />
             </button>
-          ) : <span className="sky-thumb sky-thumb-empty" />}
+          ) : <button type="button" className="btn sky-thumb sky-thumb-empty" onClick={() => setGallery(true)} aria-label={t('gallery.open')} />}
         </div>
         <p className="sky-small" role="status">{error || saveNote || (cam === 'on' ? t('sky.photoNote') : t('sky.cameraHint'))}</p>
       </div>
+      {galleryView}
     </div>
   );
 }
