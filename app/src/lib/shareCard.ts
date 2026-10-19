@@ -104,10 +104,12 @@ export async function nowCardBlob(d: NowCardData, oval: SVGSVGElement | null): P
   const body = "'Barlow', 'Helvetica Neue', Arial, sans-serif";
   g.fillStyle = '#000'; g.fillRect(0, 0, S, S);
 
-  // The oval chart in the top-right corner (the card's own polar chart, serialised), headline below it.
-  const O = 560, ox = S - O - 30, oy = 20;
+  // The oval filling the top-right quarter: the card's own polar chart (480 × 480, pole at the centre,
+  // 4.2 px per degree), cropped to about 54° latitude so the auroral zone fills the square.
+  const O = S / 2, ox = S - O, oy = 0;
   if (oval) {
     const copy = oval.cloneNode(true) as SVGSVGElement;
+    copy.setAttribute('viewBox', '90 90 300 300');
     copy.setAttribute('width', String(O)); copy.setAttribute('height', String(O));
     // Just the oval, grid and dots: labels would clutter the card (and lose the page's fonts in an image).
     copy.querySelectorAll('.map-pulse, text').forEach(n => n.remove());
@@ -119,10 +121,13 @@ export async function nowCardBlob(d: NowCardData, oval: SVGSVGElement | null): P
       g.drawImage(img, ox, oy, O, O);
     } catch { /* no oval; the text still makes a card */ } finally { URL.revokeObjectURL(url); }
   }
-  // Fade the chart's lower edge into the headline area.
-  const fade = g.createLinearGradient(0, oy + O - 160, 0, oy + O + 10);
-  fade.addColorStop(0, 'rgba(0,0,0,0)'); fade.addColorStop(1, 'rgba(0,0,0,1)');
-  g.fillStyle = fade; g.fillRect(ox - 10, oy + O - 160, O + 40, 170);
+  // Fade the chart's left and lower edges into the brand and the headline.
+  const fadeDown = g.createLinearGradient(0, oy + O - 140, 0, oy + O);
+  fadeDown.addColorStop(0, 'rgba(0,0,0,0)'); fadeDown.addColorStop(1, 'rgba(0,0,0,1)');
+  g.fillStyle = fadeDown; g.fillRect(ox, oy + O - 140, O, 140);
+  const fadeLeft = g.createLinearGradient(ox, 0, ox + 120, 0);
+  fadeLeft.addColorStop(0, 'rgba(0,0,0,1)'); fadeLeft.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = fadeLeft; g.fillRect(ox, oy, 120, O);
 
   drawBrand(g);
   const y0 = 616;
