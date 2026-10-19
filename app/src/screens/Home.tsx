@@ -184,9 +184,8 @@ export function Home({ data }: { data: NowData }) {
 
   return (
     <main data-screen-label="Now" className="wrap" style={{ padding: '40px var(--gutter) 48px', display: 'flex', flexDirection: 'column', gap: 36 }}>
-      {/* The answer for your location first (see components/Tonight). */}
-      <Tonight kp={kp} series={data.series} />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(420px,100%),1fr))', gap: 40, alignItems: 'center' }}>
+      {/* Now: the global picture (Kp, headline, oval), as a card above the verdict for your location. */}
+      <section className="now-card" aria-label={t('nav.now')}>
         <div className="hero-copy">
           <div className="kicker" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: updated ? 'var(--green)' : C.muted }} />
@@ -222,7 +221,10 @@ export function Home({ data }: { data: NowData }) {
             </span>
           )}
         </div>
-      </div>
+      </section>
+
+      {/* The answer for your location (see components/Tonight). */}
+      <Tonight kp={kp} series={data.series} />
 
       <YourSky kp={kp} />
 

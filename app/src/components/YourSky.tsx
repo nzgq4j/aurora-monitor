@@ -207,10 +207,7 @@ export function YourSky({ kp }: { kp: number | null }) {
               <span className="label">{t('sky.sat.label')}</span>
               <span style={{ fontWeight: 700, fontSize: 16 }}>
                 {t(sat < 20 ? 'sky.sat.clear' : sat < 60 ? 'sky.sat.some' : 'sky.sat.cloudy', { pct: sat })}
-                <span style={{ fontWeight: 500, color: 'var(--muted)' }}>{' · '}{t('sky.sat.source')}</span>
               </span>
-              {/* Infrared can't tell low cloud from the ground at night, so say so when the two disagree. */}
-              {layers && layers.low >= 60 && sat < 40 && <span style={{ fontSize: 13, fontWeight: 600, color: C.amber }}>{t('sky.sat.lowNote')}</span>}
             </div>
           )}
           {m && effect && (
