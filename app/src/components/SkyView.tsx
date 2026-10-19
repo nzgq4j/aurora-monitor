@@ -338,9 +338,9 @@ export function SkyView({ kp }: { kp: number | null }) {
         <div className="sky-top-buttons">
           <button type="button" className="btn sky-round" aria-pressed={cam === 'on'} disabled={cam === 'starting'}
             onClick={() => (cam === 'on' ? closeCamera() : void openCamera())} aria-label={t(cam === 'on' ? 'sky.cameraOff' : 'sky.cameraOn')} title={t(cam === 'on' ? 'sky.cameraOff' : 'sky.cameraOn')}>
+            {/* + adds the live camera picture, − takes it away. */}
             <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-              <path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4zM12 16.6a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8Z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-              {cam !== 'on' && <path d="M3 3l18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />}
+              <path d={cam === 'on' ? 'M5 12h14' : 'M12 5v14M5 12h14'} fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
             </svg>
           </button>
           <button type="button" className="btn sky-round" aria-pressed={night.active} onClick={night.toggle} aria-label={t('night.toggle')} title={t('night.toggle')}>
