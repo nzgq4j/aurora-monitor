@@ -68,11 +68,14 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
   const useful = !!result && result.v.level !== 'no';
   useEffect(() => { if (useful) window.dispatchEvent(new Event(USEFUL_EVENT)); }, [useful]);
 
-  const time = (x: number) => new Date(x).toLocaleTimeString(INTL_TAG[locale], { hour: '2-digit', minute: '2-digit' });
+  // Times in local time at the place (its zone comes with the cloud forecast), else this device's.
+  const zone = cond?.cloud?.timeZone ? { timeZone: cond.cloud.timeZone } : {};
+  const time = (x: number) => new Date(x).toLocaleTimeString(INTL_TAG[locale], { hour: '2-digit', minute: '2-digit', ...zone });
   // The saved time, with the day when it isn't today.
-  const stamp = (x: number) => new Date(x).toDateString() === new Date().toDateString() ? time(x)
-    : new Date(x).toLocaleString(INTL_TAG[locale], { weekday: 'short', hour: '2-digit', minute: '2-digit' });
-  const hourLabel = (x: number) => new Date(x).toLocaleTimeString(INTL_TAG[locale], { hour: '2-digit', hourCycle: 'h23' }).replace(/\D+$/, '');
+  const day = (x: number) => new Date(x).toLocaleDateString('en-CA', zone);
+  const stamp = (x: number) => day(x) === day(Date.now()) ? time(x)
+    : new Date(x).toLocaleString(INTL_TAG[locale], { weekday: 'short', hour: '2-digit', minute: '2-digit', ...zone });
+  const hourLabel = (x: number) => new Date(x).toLocaleTimeString(INTL_TAG[locale], { hour: '2-digit', hourCycle: 'h23', ...zone }).replace(/\D+$/, '');
 
   // The share text, and the share image drawn ahead of time: Safari only opens the share sheet straight
   // from a tap, so nothing slow can happen between the tap and navigator.share.

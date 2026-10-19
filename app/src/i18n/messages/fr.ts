@@ -516,7 +516,7 @@ export const fr: Messages = {
   'tonight.sky.dark': 'nuit noire',
   'tonight.sky.twilight': 'crépuscule',
   'tonight.sky.day': 'jour',
-  'tonight.note': 'Combine la prévision Kp, les nuages, l’obscurité et la Lune. Heures dans votre fuseau horaire.',
+  'tonight.note': 'Combine la prévision Kp, les nuages, l’obscurité et la Lune. Heures locales du lieu.',
   'tonight.noPlace': 'Indiquez votre position pour savoir s’il vaut la peine de sortir ce soir.',
   'tonight.setPlace': 'Choisir un lieu',
   'tonight.changePlace': 'Changer de lieu ({place})',

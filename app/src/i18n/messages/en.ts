@@ -516,7 +516,7 @@ export const en = {
   'tonight.sky.dark': 'dark',
   'tonight.sky.twilight': 'twilight',
   'tonight.sky.day': 'daylight',
-  'tonight.note': 'Combines the Kp forecast, cloud, darkness and the Moon. Times in your time zone.',
+  'tonight.note': 'Combines the Kp forecast, cloud, darkness and the Moon. Times are local to the place.',
   'tonight.noPlace': 'Set your location to see whether it’s worth going out tonight.',
   'tonight.setPlace': 'Set location',
   'tonight.changePlace': 'Change location ({place})',

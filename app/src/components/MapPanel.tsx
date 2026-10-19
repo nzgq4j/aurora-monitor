@@ -97,8 +97,10 @@ export function MapPanel({ kp, series, pick, onClear, layers, slider, legend }: 
     setSnap((['peek', 'half', 'full'] as Snap[]).reduce((a, b) => (Math.abs(heightOf(b) - aim) < Math.abs(heightOf(a) - aim) ? b : a)));
   };
 
-  const time = (x: number) => new Date(x).toLocaleTimeString(INTL_TAG[locale], { hour: '2-digit', minute: '2-digit' });
-  const hourLabel = (x: number) => new Date(x).toLocaleTimeString(INTL_TAG[locale], { hour: '2-digit', hourCycle: 'h23' }).replace(/\D+$/, '');
+  // Times in local time at the tapped point (its zone comes with the cloud forecast), else this device's.
+  const zone = cond?.cloud?.timeZone ? { timeZone: cond.cloud.timeZone } : {};
+  const time = (x: number) => new Date(x).toLocaleTimeString(INTL_TAG[locale], { hour: '2-digit', minute: '2-digit', ...zone });
+  const hourLabel = (x: number) => new Date(x).toLocaleTimeString(INTL_TAG[locale], { hour: '2-digit', hourCycle: 'h23', ...zone }).replace(/\D+$/, '');
   const v = result?.v, h0 = result?.hours[0];
   const name = place ? place.name.split(',')[0] : '';
 
