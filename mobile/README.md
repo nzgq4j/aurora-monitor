@@ -9,7 +9,7 @@ push notifications, Google Play Billing).
 - `capacitor.config.ts`: the site URL, which hosts stay inside the app, splash and system bars
 - `www/offline.html`: shown when the site can't be reached
 - `assets/`: sources for the launcher icon and splash; regenerate with
-  `npx capacitor-assets generate --android --iconBackgroundColor '#000000' --iconBackgroundColorDark '#000000' --splashBackgroundColor '#000000' --splashBackgroundColorDark '#000000'`
+  `npx @capacitor/assets@3.0.5 generate --android --iconBackgroundColor '#000000' --iconBackgroundColorDark '#000000' --splashBackgroundColor '#000000' --splashBackgroundColorDark '#000000'`
 - `android/`: the Android Studio project
 
 ## First run (Windows)
