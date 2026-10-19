@@ -27,13 +27,18 @@ const APP_PUSH = process.env.NEXT_PUBLIC_APP_PUSH === '1';
 /** This install's Firebase token, kept on the device so the switch knows it's on. */
 const FCM_KEY = 'pl.fcmToken';
 type Listener = { remove: () => Promise<void> };
+/**
+ * The app's plugin proxies return the listener handle itself, not a promise of it (unlike
+ * @capacitor/core's), so every handle goes through Promise.resolve.
+ */
+type MaybeListener = Listener | Promise<Listener>;
 type PushNotifications = {
   checkPermissions: () => Promise<{ receive: string }>;
   requestPermissions: () => Promise<{ receive: string }>;
   register: () => Promise<void>;
   unregister: () => Promise<void>;
   createChannel: (c: { id: string; name: string; importance: number; visibility?: number; vibration?: boolean; lights?: boolean; lightColor?: string }) => Promise<void>;
-  addListener: (event: string, cb: (x: { value?: string; error?: string; notification?: { data?: Record<string, string> } }) => void) => Promise<Listener>;
+  addListener: (event: string, cb: (x: { value?: string; error?: string; notification?: { data?: Record<string, string> } }) => void) => MaybeListener;
 };
 export const appPush = () => (APP_PUSH ? nativePlugin<PushNotifications>('PushNotifications') : null);
 const readToken = () => { try { return localStorage.getItem(FCM_KEY); } catch { return null; } };
@@ -42,10 +47,10 @@ const writeToken = (t: string | null) => { try { if (t) localStorage.setItem(FCM
 /** Register with Firebase and wait for this install's token. */
 function fcmToken(pn: PushNotifications): Promise<string> {
   return new Promise((resolve, reject) => {
-    const subs: Promise<Listener>[] = [];
-    const done = () => subs.forEach(l => l.then(x => x.remove()).catch(() => {}));
+    const subs: MaybeListener[] = [];
+    const done = () => subs.forEach(l => Promise.resolve(l).then(x => x.remove()).catch(() => {}));
     const timer = setTimeout(() => { done(); reject(new Error('timeout')); }, 20_000);
-    subs.push(pn.addListener('registration', t => { clearTimeout(timer); done(); resolve(t.value ?? ''); }));
+    subs.push(pn.addListener('registration', t => { clearTimeout(timer); done(); if (t.value) resolve(t.value); else reject(new Error('no token')); }));
     subs.push(pn.addListener('registrationError', e => { clearTimeout(timer); done(); reject(new Error(e.error ?? 'registration')); }));
     pn.register().catch(e => { clearTimeout(timer); done(); reject(e); });
   });

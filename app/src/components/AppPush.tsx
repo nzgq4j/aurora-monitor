@@ -19,7 +19,7 @@ export function AppPush() {
       if (to.origin === window.location.origin) window.location.assign(to.pathname + to.search + to.hash);
     });
     refreshAppPush().catch(() => { /* kept as it is; the switch still shows it */ });
-    return () => { tap.then(l => l.remove()).catch(() => {}); };
+    return () => { Promise.resolve(tap).then(l => l.remove()).catch(() => {}); };
   }, []);
   return null;
 }
