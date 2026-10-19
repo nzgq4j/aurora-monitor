@@ -58,8 +58,7 @@ export function SkyView({ kp }: { kp: number | null }) {
   const [saveNote, setSaveNote] = useState('');
   const [gallery, setGallery] = useState(false);
   const [busy, setBusy] = useState(false);
-  // The camera turns on with the view; it can be turned off, as the overlay comes from the motion
-  // sensors, compass and location alone.
+  // The camera turns on with the view (the overlay itself comes from the motion sensors, compass and location).
   const [cam, setCam] = useState<'off' | 'starting' | 'on'>('off');
   const night = useNightMode();
 
@@ -92,13 +91,6 @@ export function SkyView({ kp }: { kp: number | null }) {
     }
     setCam('on');
     return true;
-  };
-  /** Turn the camera off: the browser's camera indicator goes away. */
-  const closeCamera = () => {
-    stream.current?.getTracks().forEach(tr => tr.stop());
-    stream.current = null;
-    if (video.current) video.current.srcObject = null;
-    setCam('off');
   };
 
   const start = async () => {
@@ -184,7 +176,7 @@ export function SkyView({ kp }: { kp: number | null }) {
     if (busy) return;
     setBusy(true);
     try {
-      // Camera off: turn it on for the shot, and give it a moment to settle its exposure.
+      // Camera not running (e.g. not allowed at first): try again for the shot, and let its exposure settle.
       if (!stream.current) {
         if (!(await openCamera())) return;
         await new Promise(res => setTimeout(res, 800));
@@ -203,24 +195,42 @@ export function SkyView({ kp }: { kp: number | null }) {
           source = bmp; w = bmp.width; h = bmp.height;
         } catch { /* fall back to the live frame */ }
       }
-      const strip = caption || !markOptional ? Math.round(Math.max(w, h) * 0.045) : 0;
+      // Caption: location, time, direction and Kp, with the Made with mark. Sized from the long edge and
+      // wrapped onto more lines when the bottom edge is too short for one (portrait photos).
+      const unit = caption || !markOptional ? Math.round(Math.max(w, h) * 0.045) : 0;
+      const font = `600 ${Math.round(unit * 0.42)}px system-ui, sans-serif`, pad = unit * 0.4, lineH = unit * 0.62;
+      const lines: { text: string; mark: string }[] = [];
+      if (unit) {
+        const m = document.createElement('canvas').getContext('2d')!;
+        m.font = font;
+        const when = new Date().toLocaleString(INTL_TAG[locale], { dateStyle: 'medium', timeStyle: 'short' });
+        const facing = pose?.az != null ? `${t(`sky.dir.${point16(pose.az)}`)} ${Math.round(pose.az)}°` : '';
+        // Rounded to 0.1° (about 10 km), as sightings are, so a photo never gives away an exact spot.
+        const where = here ? `${num(Math.abs(here.lat), 1)}°${here.lat >= 0 ? 'N' : 'S'} ${num(Math.abs(here.lon), 1)}°${here.lon >= 0 ? 'E' : 'W'}` : '';
+        const mark = t('sky.madeWith', { site: SITE.domain });
+        const room = w - 2 * pad, gap = unit;
+        let cur = '';
+        for (const item of [where, when, facing, kp !== null ? `Kp ${num(kp, 1)}` : ''].filter(Boolean)) {
+          const next = cur ? `${cur}  ·  ${item}` : item;
+          if (cur && m.measureText(next).width > room) { lines.push({ text: cur, mark: '' }); cur = item; } else cur = next;
+        }
+        // The mark goes at the end of the last line when it fits there, otherwise on a line of its own.
+        if (m.measureText(cur).width + gap + m.measureText(mark).width <= room) lines.push({ text: cur, mark });
+        else lines.push({ text: cur, mark: '' }, { text: '', mark });
+      }
+      const strip = unit ? Math.round(unit + (lines.length - 1) * lineH) : 0;
       const c = document.createElement('canvas');
       c.width = w; c.height = h + strip;
       const ctx = c.getContext('2d')!;
       ctx.drawImage(source, 0, 0, w, h);
       if (strip) {
         ctx.fillStyle = '#000'; ctx.fillRect(0, h, w, strip);
-        ctx.fillStyle = '#fff'; ctx.font = `600 ${Math.round(strip * 0.42)}px system-ui, sans-serif`; ctx.textBaseline = 'middle';
-        const when = new Date().toLocaleString(INTL_TAG[locale], { dateStyle: 'medium', timeStyle: 'short' });
-        const facing = pose?.az != null ? `${t(`sky.dir.${point16(pose.az)}`)} ${Math.round(pose.az)}°` : '';
-        // Rounded to 0.1° (about 10 km), as sightings are, so a photo never gives away an exact spot.
-        const where = here ? `${num(Math.abs(here.lat), 1)}°${here.lat >= 0 ? 'N' : 'S'} ${num(Math.abs(here.lon), 1)}°${here.lon >= 0 ? 'E' : 'W'}` : '';
-        const mark = t('sky.madeWith', { site: SITE.domain });
-        ctx.textAlign = 'right'; ctx.fillStyle = '#6CFF2B';
-        ctx.fillText(mark, w - strip * 0.4, h + strip / 2);
-        const markW = ctx.measureText(mark).width;
-        ctx.textAlign = 'left'; ctx.fillStyle = '#fff';
-        ctx.fillText([where, when, facing, kp !== null ? `Kp ${num(kp, 1)}` : ''].filter(Boolean).join('  ·  '), strip * 0.4, h + strip / 2, Math.max(strip, w - markW - strip * 1.4));
+        ctx.font = font; ctx.textBaseline = 'middle';
+        lines.forEach((l, i) => {
+          const y = h + unit / 2 + i * lineH;
+          if (l.mark) { ctx.textAlign = 'right'; ctx.fillStyle = '#6CFF2B'; ctx.fillText(l.mark, w - pad, y, w - 2 * pad); }
+          if (l.text) { ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; ctx.fillText(l.text, pad, y, w - 2 * pad); }
+        });
       }
       const blob = await new Promise<Blob | null>(res => c.toBlob(res, 'image/jpeg', 0.92));
       if (!blob) throw new Error('encode');
@@ -270,7 +280,7 @@ export function SkyView({ kp }: { kp: number | null }) {
   const horizon = pose ? cy + pose.el * view.ppd : null;
   return (
     <div className="sky sky-live">
-      {/* Always in the page (hidden while the camera is off), so the stream has somewhere to play. */}
+      {/* Always in the page (hidden until the camera is running), so the stream has somewhere to play. */}
       <video ref={video} playsInline muted autoPlay className="sky-video" style={{ opacity: cam === 'on' ? 1 : 0 }} />
       <svg className="sky-overlay" width={view.w} height={view.h} aria-hidden="true">
         {pose && (
@@ -310,13 +320,6 @@ export function SkyView({ kp }: { kp: number | null }) {
           <span>{peak ? t('sky.lookTo', { dir: t(`sky.dir.${point16(peak.az)}`), el: Math.round(Math.max(0, peak.low)), pct: Math.round(peak.p) }) : field ? t('sky.noAurora') : t('sky.loadingAurora')}</span>
         </div>
         <div className="sky-top-buttons">
-          <button type="button" className="btn sky-round" aria-pressed={cam === 'on'} disabled={cam === 'starting'}
-            onClick={() => (cam === 'on' ? closeCamera() : void openCamera())} aria-label={t(cam === 'on' ? 'sky.cameraOff' : 'sky.cameraOn')} title={t(cam === 'on' ? 'sky.cameraOff' : 'sky.cameraOn')}>
-            {/* + adds the live camera picture, − takes it away. */}
-            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-              <path d={cam === 'on' ? 'M5 12h14' : 'M12 5v14M5 12h14'} fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
-            </svg>
-          </button>
           <button type="button" className="btn sky-round" aria-pressed={night.active} onClick={night.toggle} aria-label={t('night.toggle')} title={t('night.toggle')}>
             <MoonIcon on={night.active} size={22} />
           </button>
@@ -341,7 +344,7 @@ export function SkyView({ kp }: { kp: number | null }) {
             </button>
           ) : <button type="button" className="btn sky-thumb sky-thumb-empty" onClick={() => setGallery(true)} aria-label={t('gallery.open')} />}
         </div>
-        <p className="sky-small" role="status">{error || saveNote || (cam === 'on' ? t('sky.photoNote') : t('sky.cameraHint'))}</p>
+        <p className="sky-small" role="status">{error || saveNote || t('sky.photoNote')}</p>
       </div>
       {galleryView}
     </div>
