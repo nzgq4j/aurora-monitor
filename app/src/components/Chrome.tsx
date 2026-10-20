@@ -1,11 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
 import { initials, useAuth } from '../lib/auth';
 import { useStore, type Screen } from '../store';
 import { SITE } from '../lib/site';
 import { useI18n } from '../i18n/I18n';
-import { MoonIcon, useNightMode, type NightSetting } from './NightMode';
 import type { MessageKey } from '../i18n/core';
 
 const NAV: [MessageKey, Screen][] = [['nav.now', 'home'], ['nav.map', 'map'], ['nav.dashboard', 'account']];
@@ -65,46 +63,20 @@ export function Header({ kpLabel }: { kpLabel: string }) {
 const ICONS: Record<string, string> = {
   now: 'M4 18c2-6 5-10 8-10s6 4 8 10M7 18c1.4-3.6 3-5.5 5-5.5s3.6 1.9 5 5.5M3 21h18',
   map: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm-9 9h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z',
-  more: 'M5 12h.01M12 12h.01M19 12h.01',
-  dashboard: 'M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z',
   sky: 'M4 8h3l1.6-2.4h6.8L17 8h3v11H4zM12 16.6a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8Z',
   alerts: 'M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15L6 16Zm4 4.5a2.2 2.2 0 0 0 4 0',
-  locations: 'M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Zm0-8.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
   account: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7.5 8.5c.9-3.6 3.8-5.5 7.5-5.5s6.6 1.9 7.5 5.5',
 };
-const Icon = ({ id, bold }: { id: string; bold?: boolean }) => (
-  <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d={ICONS[id]} fill="none" stroke="currentColor" strokeWidth={bold ? 3.2 : 1.8} strokeLinecap="round" strokeLinejoin="round" /></svg>
+const Icon = ({ id }: { id: string }) => (
+  <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d={ICONS[id]} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" /></svg>
 );
 
 /** App-style navigation along the bottom of phone screens, in place of the header (see globals.css). */
 export function TabBar() {
-  const { signedIn, s, screen, go, goAccount } = useStore();
+  const { screen, go } = useStore();
   const { t } = useI18n();
-  const [open, setOpen] = useState(false);
-  const moreRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const away = (e: PointerEvent) => { if (!moreRef.current?.contains(e.target as Node)) setOpen(false); };
-    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
-    document.addEventListener('pointerdown', away);
-    document.addEventListener('keydown', esc);
-    return () => { document.removeEventListener('pointerdown', away); document.removeEventListener('keydown', esc); };
-  }, [open]);
-  // Locations opens that Dashboard tab; signed out, it leads to sign-in.
-  const inDash = screen === 'account' || screen === 'checkout' || (screen === 'plans' && signedIn);
-  const more: { id: string; label: string; on: boolean; onClick: () => void }[] = [
-    { id: 'locations', label: t('dash.tab.locations'), on: inDash && s.tab === 'locations', onClick: signedIn ? () => go('account', { tab: 'locations' }) : () => go('signin') },
-    {
-      id: 'dashboard', label: signedIn ? t('nav.dashboard') : t('nav.signIn'),
-      on: screen === 'signin' || (inDash && (s.tab === 'overview' || s.tab === 'plans' || s.tab === 'alerts')) || (!signedIn && screen === 'plans'),
-      onClick: signedIn ? () => go('account', { tab: 'overview' }) : goAccount,
-    },
-    // Phones don't show the name and Sign out above the Dashboard, so Account (with Sign out) is here.
-    ...(signedIn ? [{ id: 'account', label: t('dash.tab.account'), on: inDash && s.tab === 'account', onClick: () => go('account', { tab: 'account' }) }] : []),
-  ];
-  const moreOn = more.some(m => m.on);
-  const night = useNightMode();
-  const NEXT: Record<NightSetting, NightSetting> = { off: 'on', on: 'auto', auto: 'off' };
+  // You holds the account, plans, sign-in and settings.
+  const you = screen === 'account' || screen === 'plans' || screen === 'checkout' || screen === 'signin';
   const tab = (id: string, label: string, on: boolean, onClick: () => void) => (
     <button key={id} type="button" className={`btn tabbar-item tab-${id}` + (on ? ' on' : '')} aria-current={on ? 'page' : undefined} onClick={onClick}>
       <Icon id={id} /><span>{label}</span>
@@ -112,31 +84,12 @@ export function TabBar() {
   );
   return (
     <nav className="tabbar" aria-label={t('nav.main')}>
-      {tab('now', t('nav.now'), screen === 'home', () => { setOpen(false); go('home'); })}
-      {tab('map', t('nav.map'), screen === 'map', () => { setOpen(false); go('map'); })}
+      {tab('now', t('nav.now'), screen === 'home', () => go('home'))}
+      {tab('map', t('nav.map'), screen === 'map', () => go('map'))}
       {/* Sky view needs a camera and motion sensors: touch devices only (see globals.css). */}
-      {tab('sky', t('nav.sky'), screen === 'sky', () => { setOpen(false); go('sky'); })}
-      {tab('alerts', t('nav.alerts'), screen === 'alerts', () => { setOpen(false); go('alerts'); })}
-      <div className="tabbar-more" ref={moreRef}>
-        <button type="button" className={'btn tabbar-item' + (moreOn || open ? ' on' : '')} aria-expanded={open} aria-controls="tabbar-more" onClick={() => setOpen(o => !o)}>
-          <Icon id="more" bold /><span>{t('nav.more')}</span>
-        </button>
-        {open && (
-          <div id="tabbar-more" className="tabbar-sheet">
-            {more.map(m => (
-              <button key={m.id} type="button" className={'btn tabbar-sheet-item' + (m.on ? ' on' : '')} aria-current={m.on ? 'page' : undefined}
-                onClick={() => { setOpen(false); m.onClick(); }}>
-                <Icon id={m.id} /><span>{m.label}</span>
-              </button>
-            ))}
-            {/* Stays open, so the mode can be cycled: off → on → auto (red while it's dark here). */}
-            <button type="button" className="btn tabbar-sheet-item tabbar-night" onClick={() => night.set(NEXT[night.setting])}
-              aria-label={t('night.label', { mode: t(`night.${night.setting}`) })}>
-              <MoonIcon on={night.active} size={24} /><span>{t('night.title')}</span><small>{t(`night.${night.setting}`)}</small>
-            </button>
-          </div>
-        )}
-      </div>
+      {tab('sky', t('nav.sky'), screen === 'sky', () => go('sky'))}
+      {tab('alerts', t('nav.alerts'), screen === 'alerts', () => go('alerts'))}
+      {tab('account', t('nav.you'), you, () => go('account', { tab: 'overview' }))}
     </nav>
   );
 }

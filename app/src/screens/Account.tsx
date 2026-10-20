@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { PAYMENTS, initials, useAuth } from '../lib/auth';
 import { C, CHANNEL_DEFS, TIERS, TRIGGER_DEFS, f, kpBarColor, kpColor } from '../data';
@@ -12,6 +12,7 @@ import { ALERT_LEVELS, levelKp, type AlertKind, type AlertLevel, type AlertRules
 import { supabase } from '../lib/supabase';
 import { disablePush, enablePush, pushState, type PushState } from '../lib/push';
 import { inApp } from '../lib/native';
+import { PHONE_QUERY, usePhone } from '../lib/usePhone';
 import { INSTALL_EVENT } from '../components/InstallPrompt';
 import { useStore, type Tab } from '../store';
 import { Field } from '../components/Field';
@@ -25,13 +26,20 @@ const TABS: Tab[] = ['overview', 'alerts', 'locations', 'plans', 'account'];
 /** Kp level name for 2–9 (`kp.name.{n}`). */
 const kpName = (t: I18n['t'], k: number) => t(`kp.name.${Math.max(2, Math.min(9, Math.round(k))) as 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9}`);
 
-export function Account({ data }: { data: AccountData }) {
+/**
+ * The Dashboard. On phones `phone` (the You tab) takes its place, and works signed out too; on wider
+ * screens it needs a signed-in user.
+ */
+export function Account({ data, phone }: { data: AccountData; phone?: ReactNode }) {
   const { s, set, signOut, live } = useStore();
   const auth = useAuth();
   const router = useRouter();
   const { t } = useI18n();
-  // With real accounts, the Dashboard needs a signed-in user.
-  useEffect(() => { if (live && auth.ready && !auth.user) router.replace('/signin?next=/dashboard'); }, [live, auth.ready, auth.user, router]);
+  const isPhone = usePhone() && !!phone;
+  // Read the width directly: the first render always assumes the wide layout.
+  useEffect(() => {
+    if (live && auth.ready && !auth.user && !(phone && window.matchMedia(PHONE_QUERY).matches)) router.replace('/signin?next=/dashboard');
+  }, [live, auth.ready, auth.user, router, phone]);
   // Back from Stripe Checkout: the webhook updates the plan within seconds, so re-read the profile until it has.
   const userId = auth.user?.id;
   const { refreshProfile } = auth;
@@ -46,6 +54,7 @@ export function Account({ data }: { data: AccountData }) {
     }, 2000);
     return () => clearInterval(id);
   }, [live, userId]); // eslint-disable-line react-hooks/exhaustive-deps -- run once per sign-in
+  if (isPhone) return <>{phone}</>;
   if (live && !auth.user) {
     return <main className="wrap" style={{ padding: '64px var(--gutter)', color: 'var(--muted)' }}>{auth.ready ? t('dash.redirecting') : t('dash.loading')}</main>;
   }
@@ -132,7 +141,7 @@ function nightOutlook(kp: number, need: number, south: boolean, moonLit: number,
 }
 
 /** Home location (loaded on demand) and the Kp it needs, defaulting to Kp 5 when none is saved. */
-function useHome() {
+export function useHome() {
   const { locations, load } = useLocations();
   useEffect(() => { load(); }, [load]);
   const home = locations.find(l => l.isHome) ?? null;
@@ -643,7 +652,8 @@ function AddLocation({ disabled }: { disabled: boolean }) {
   );
 }
 
-function Locations() {
+/** Saved locations. `bare`: without the page title (the phone screen's top bar names it). */
+export function Locations({ bare = false }: { bare?: boolean }) {
   const { plan, live } = useStore();
   const { locations, status, load, backend, error, detectDevice } = useLocations();
   const { t } = useI18n();
@@ -659,7 +669,7 @@ function Locations() {
   return (
     <div data-screen-label="Dashboard · Locations" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' }}>
-        <h1 className="display" style={h1}>{t('loc.h1a')} <span className="hl">{t('loc.h1b')}</span></h1>
+        {!bare && <h1 className="display" style={h1}>{t('loc.h1a')} <span className="hl">{t('loc.h1b')}</span></h1>}
         <span className="mono" style={{ fontSize: 13, color: 'var(--muted)' }}>{t('loc.active', { n: active, limit: limit > 10 ? '∞' : limit })}</span>
       </div>
       {error && <span role="status" style={{ fontSize: 14, color: C.amber }}>{error}</span>}
@@ -698,7 +708,7 @@ function Language() {
   );
 }
 
-function Billing() {
+export function Billing({ bare = false }: { bare?: boolean }) {
   const { s, plan, planIndex, go, cancelPlan, openBilling, live } = useStore();
   const { profile } = useAuth();
   const { t, money } = useI18n();
@@ -709,7 +719,7 @@ function Billing() {
   const stripeCustomer = live && PAYMENTS && !!profile?.hasBilling;
   return (
     <section aria-labelledby="billing-h" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <h2 id="billing-h" className="display" style={h2}>{t('dash.billing')}</h2>
+      <h2 id="billing-h" className={bare ? 'sr-only' : 'display'} style={bare ? undefined : h2}>{t('dash.billing')}</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(280px,100%),1fr))', gap: 16 }}>
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 22 }}>
           <span className="label">{t('billing.plan')}</span>
@@ -787,23 +797,32 @@ function AccountSettings() {
  * Delete the account (required for apps on Google Play): asks once more, closes billing and deletes
  * everything stored with the account on the server, then signs out. Photos in the gallery stay on the device.
  */
-function DeleteAccount() {
+/** Deleting the account: `run` returns false (with `err` set) when it failed. */
+export function useAccountDeletion() {
   const { live, go } = useStore();
   const { deleteAccount } = useAuth();
   const { t, tx } = useI18n();
-  const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
-  const confirm = async () => {
-    if (!live) { setAsking(false); go('account', { toast: t('delete.demo') }); return; }
+  const run = async () => {
+    if (!live) { go('account', { toast: t('delete.demo') }); return true; }
     setBusy(true); setErr('');
     // This device's push registration (and its saved token) go first; the server removes every other one.
     await disablePush().catch(() => {});
     const { error } = await deleteAccount();
     setBusy(false);
-    if (error) { setErr(tx(error)); return; }
+    if (error) { setErr(tx(error)); return false; }
     go('home', { signedIn: false, toast: t('delete.done') });
+    return true;
   };
+  return { run, busy, err, clear: () => setErr('') };
+}
+
+function DeleteAccount() {
+  const { t } = useI18n();
+  const [asking, setAsking] = useState(false);
+  const { run, busy, err, clear } = useAccountDeletion();
+  const confirm = async () => { if (await run()) setAsking(false); };
   return (
     <section aria-labelledby="delete-h" style={{ display: 'flex', flexDirection: 'column', gap: 12, borderTop: '1px solid var(--line)', paddingTop: 24 }}>
       <h2 id="delete-h" className="display" style={h2}>{t('delete.h2a')} <span className="hl">{t('delete.h2b')}</span></h2>
@@ -819,7 +838,7 @@ function DeleteAccount() {
             <button type="button" disabled={busy} className="btn pill pill-ghost" onClick={confirm} style={{ fontSize: 15, padding: '12px 22px', color: C.red, borderColor: C.red, opacity: busy ? .6 : 1 }}>
               {busy ? t('delete.deleting') : t('delete.yes')}
             </button>
-            <button type="button" disabled={busy} className="btn pill pill-ghost" onClick={() => { setAsking(false); setErr(''); }} style={{ fontSize: 15, padding: '12px 22px' }}>{t('delete.no')}</button>
+            <button type="button" disabled={busy} className="btn pill pill-ghost" onClick={() => { setAsking(false); clear(); }} style={{ fontSize: 15, padding: '12px 22px' }}>{t('delete.no')}</button>
           </div>
         </div>
       )}
@@ -828,7 +847,7 @@ function DeleteAccount() {
 }
 
 /** Change password: confirms the current password first, then sets the new one. */
-function ChangePassword({ email }: { email: string }) {
+export function ChangePassword({ email, bare = false }: { email: string; bare?: boolean }) {
   const { live } = useStore();
   const { signIn, updatePassword } = useAuth();
   const { t, tx } = useI18n();
@@ -855,7 +874,7 @@ function ChangePassword({ email }: { email: string }) {
   };
   return (
     <section aria-labelledby="password-h" style={{ display: 'flex', flexDirection: 'column', gap: 16, borderTop: '1px solid var(--line)', paddingTop: 24 }}>
-      <h2 id="password-h" className="display" style={h2}>{t('pw.h2a')} <span className="hl">{t('pw.h2b')}</span></h2>
+      <h2 id="password-h" className={bare ? 'sr-only' : 'display'} style={bare ? undefined : h2}>{t('pw.h2a')} <span className="hl">{t('pw.h2b')}</span></h2>
       <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 420 }}>
         {/* Hidden username helps password managers update the right entry. */}
         <input type="email" name="username" autoComplete="username" value={email} readOnly hidden />

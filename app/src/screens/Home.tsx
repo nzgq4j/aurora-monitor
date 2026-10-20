@@ -19,6 +19,8 @@ import { useLocations } from '../lib/locations';
 import { useConditions } from '../lib/useConditions';
 import { INTL_TAG } from '../i18n/config';
 import type { NowData } from '../lib/now';
+import type { AccountData } from '../lib/history';
+import { SeasonCards } from '../components/SeasonCards';
 import { nowCardBlob } from '../lib/shareCard';
 import { SITE } from '../lib/site';
 import { useStore } from '../store';
@@ -167,7 +169,7 @@ function FakeLines() {
   );
 }
 
-export function Home({ data }: { data: NowData }) {
+export function Home({ data, season }: { data: NowData; season?: AccountData }) {
   const spots = useSunspots();
   const { planIndex, go } = useStore();
   const { shownPlace } = useLocations();
@@ -326,6 +328,8 @@ export function Home({ data }: { data: NowData }) {
         </div>
         <SunTimelapse />
       </DetailCard>
+
+      {season && <SeasonCards data={season} />}
 
       {planIndex === 0 && (
         <div className="cta-banner" style={{ border: '1px solid var(--line-2)', borderRadius: 16, background: 'radial-gradient(120% 140% at 100% 100%,rgba(89,255,58,.18),rgba(0,0,0,0) 60%)' }}>
