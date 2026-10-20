@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import './globals.css';
 import { Footer, Header, TabBar, Toast } from '../../components/Chrome';
+import { PullToRefresh } from '../../components/PullToRefresh';
 import { InstallPrompt } from '../../components/InstallPrompt';
 import { G_SCALE } from '../../lib/astro';
 import { kpNow } from '../../lib/feeds';
@@ -74,6 +75,7 @@ export default async function RootLayout({ children, params }: Props & { childre
                   {children}
                   <Footer />
                   <TabBar />
+                  <PullToRefresh />
                 </div>
                 <ServiceWorker />
                 <UpdateCheck />
