@@ -293,6 +293,8 @@ export function Home({ data, season }: { data: NowData; season?: AccountData }) 
 
       <StormSection data={data} />
 
+      {season && <SeasonCards data={season} />}
+
       <DetailCard id="space" title={<>{t('detail.space.h2a')} <span className="hl">{t('detail.space.h2b')}</span></>} summary={summaryText(i18n, spaceLine(w))}>
         <div className="now-stats">
           {stats.map(s => (
@@ -328,8 +330,6 @@ export function Home({ data, season }: { data: NowData; season?: AccountData }) 
         </div>
         <SunTimelapse />
       </DetailCard>
-
-      {season && <SeasonCards data={season} />}
 
       {planIndex === 0 && (
         <div className="cta-banner" style={{ border: '1px solid var(--line-2)', borderRadius: 16, background: 'radial-gradient(120% 140% at 100% 100%,rgba(89,255,58,.18),rgba(0,0,0,0) 60%)' }}>
