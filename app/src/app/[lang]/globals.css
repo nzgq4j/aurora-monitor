@@ -727,3 +727,16 @@ button.you-danger-fill { background: var(--red); color: #000; }
 .best-text b { font-size: 15px; font-weight: 600; }
 .best-text small { font-size: 13px; color: var(--muted); }
 .best-kp { font: 800 16px var(--f-display); white-space: nowrap; }
+
+/* ---- Pull to refresh on phones (components/PullToRefresh). ---- */
+.ptr {
+  position: fixed; top: calc(env(safe-area-inset-top) + 8px); left: 50%; z-index: 1200; width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center; border-radius: 50%;
+  background: #0f1210; border: 1px solid var(--line-2); color: var(--muted); box-shadow: 0 6px 18px rgba(0, 0, 0, .5);
+  transition: transform .2s ease-out;
+}
+.ptr-dragging { transition: none; }
+.ptr-ready, .ptr-busy { color: var(--green); border-color: var(--green); }
+.ptr-busy svg { animation: ptr-spin .8s linear infinite; }
+@keyframes ptr-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ptr-busy svg { animation: none; } }
