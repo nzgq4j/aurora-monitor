@@ -15,7 +15,8 @@ import { USEFUL_EVENT } from './InstallPrompt';
 import { Sighting } from './Sighting';
 
 export const LEVEL_COLOR: Record<Level, string> = { goNow: C.green, goLater: C.green, maybe: C.amber, no: C.muted };
-export const scoreColor = (s: number) => (s >= 50 ? C.green : s >= 20 ? C.amber : '#3a403c');
+/** Chance-score bars: grey below 20, amber from 20, red from 50 (the same direction as the Kp charts' storm scale). */
+export const scoreColor = (s: number) => (s >= 50 ? C.red : s >= 20 ? C.amber : '#3a403c');
 
 /** Open the location picker in "Your sky" further down the page. */
 const toYourSky = () => document.getElementById('your-sky')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
