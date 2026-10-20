@@ -10,8 +10,8 @@ import { useI18n } from '../i18n/I18n';
 const DAY = 864e5;
 
 /**
- * Phones only (the desktop Dashboard's Overview has the full versions): the season so far and the best
- * nights in NOAA's 27-day outlook, as two compact cards at the end of the Now tab.
+ * Phones only (the desktop Dashboard's Overview has the full versions): the best nights in NOAA's 27-day
+ * outlook and the season so far, as two compact cards before the Now tab's space weather.
  */
 export function SeasonCards({ data }: { data: AccountData }) {
   const { t, num, date } = useI18n();
@@ -37,6 +37,29 @@ export function SeasonCards({ data }: { data: AccountData }) {
 
   return (
     <div className="season-cards">
+      <section className="season-card season-card-list" aria-labelledby="best-card-h">
+        <div className="season-card-head">
+          <h2 id="best-card-h">{t('dash.best.h2a')} {t('dash.best.h2b')}</h2>
+          <span className="mono">{t('now.best.source')}</span>
+        </div>
+        {best.length ? best.map(u => {
+          const lit = Math.round(moon(u.t + DAY, 0, 0).illumination * 100);
+          return (
+            <div key={u.t} className="best-row">
+              <span className="best-date">
+                <small className="mono">{date(u.t, { weekday: 'short', timeZone: 'UTC' })}</small>
+                <b>{date(u.t, { day: 'numeric', timeZone: 'UTC' })}</b>
+              </span>
+              <span className="best-text">
+                <b>{t(`night.label.${level(u.kp)}`)}{u.kp >= need ? ` · ${t('now.best.reach')}` : ''}</b>
+                <small>{date(u.t, { month: 'short', timeZone: 'UTC' })} · {t('dash.best.moon', { pct: lit })}</small>
+              </span>
+              <span className="best-kp" style={{ color: kpBarColor(u.kp) === C.darkGreen ? C.green : kpBarColor(u.kp) }}>Kp {u.kp}</span>
+            </div>
+          );
+        }) : <span className="season-note" style={{ padding: '0 16px 16px' }}>{t('dash.best.unavailable')}</span>}
+      </section>
+
       <section className="season-card" aria-labelledby="season-card-h">
         <div className="season-card-head">
           <h2 id="season-card-h">{t('dash.season.h2a')} {t('dash.season.h2b')}</h2>
@@ -64,29 +87,6 @@ export function SeasonCards({ data }: { data: AccountData }) {
         ) : (
           <span className="season-note">{t('dash.historyUnavailable')}</span>
         )}
-      </section>
-
-      <section className="season-card season-card-list" aria-labelledby="best-card-h">
-        <div className="season-card-head">
-          <h2 id="best-card-h">{t('dash.best.h2a')} {t('dash.best.h2b')}</h2>
-          <span className="mono">{t('now.best.source')}</span>
-        </div>
-        {best.length ? best.map(u => {
-          const lit = Math.round(moon(u.t + DAY, 0, 0).illumination * 100);
-          return (
-            <div key={u.t} className="best-row">
-              <span className="best-date">
-                <small className="mono">{date(u.t, { weekday: 'short', timeZone: 'UTC' })}</small>
-                <b>{date(u.t, { day: 'numeric', timeZone: 'UTC' })}</b>
-              </span>
-              <span className="best-text">
-                <b>{t(`night.label.${level(u.kp)}`)}{u.kp >= need ? ` · ${t('now.best.reach')}` : ''}</b>
-                <small>{date(u.t, { month: 'short', timeZone: 'UTC' })} · {t('dash.best.moon', { pct: lit })}</small>
-              </span>
-              <span className="best-kp" style={{ color: kpBarColor(u.kp) === C.darkGreen ? C.green : kpBarColor(u.kp) }}>Kp {u.kp}</span>
-            </div>
-          );
-        }) : <span className="season-note" style={{ padding: '0 16px 16px' }}>{t('dash.best.unavailable')}</span>}
       </section>
     </div>
   );
