@@ -369,17 +369,8 @@ button.pill-ghost { border: 1px solid var(--line-2); }
   }
   .tabbar-item span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .tabbar-item.on { color: var(--green); background: rgba(108, 255, 43, .08); }
-  .tabbar-more { position: relative; flex: 1 1 0; min-width: 0; display: flex; }
-  .tabbar-sheet {
-    position: absolute; right: 0; bottom: calc(100% + 12px); width: min(240px, calc(100vw - 24px)); padding: 6px;
-    border-radius: 16px; border: 1px solid var(--line-2); background: #0a0c0b; box-shadow: 0 -10px 30px rgba(0,0,0,.6);
-  }
-  .tabbar-sheet-item { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 12px; border-radius: 10px; color: var(--soft); font: 600 16px var(--f-body); text-align: left; }
-  .tabbar-night { border-top: 1px solid var(--line); border-radius: 0 0 10px 10px; margin-top: 4px; }
-  .tabbar-night small { margin-left: auto; font-size: 13px; color: var(--muted); }
-  /* Dashboard: the name, email and Sign out move to Account under More. */
-  .account-profile, .account-signout { display: none !important; }
-  .tabbar-sheet-item.on { color: var(--green); background: rgba(108, 255, 43, .08); }
+  /* The website footer's links are under You → About. */
+  footer.rule-top { display: none; }
   /* Logo at the top of every page except the map, which shows it over the map. */
   /* Map page: no title row; the map fills the screen above the tab bar and layers live in a menu. */
   .map-head { position: absolute; width: 1px !important; height: 1px; padding: 0 !important; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -667,3 +658,72 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 .legal a { color: var(--green); }
 .legal-updated { font-size: 13px !important; color: var(--muted) !important; margin: 0 !important; }
 .legal-note { font-size: 14px; color: var(--muted); margin: 0; padding: 10px 14px; border: 1px solid var(--line-2); border-radius: 10px; }
+
+/* ---- You tab: the phone's Dashboard, as an app settings screen (screens/You.tsx). ---- */
+.you { display: flex; flex-direction: column; gap: 22px; width: 100%; max-width: 640px; margin: 0 auto; padding: 20px var(--gutter) 32px; }
+.you-title { margin: 0; font: 800 30px/1.1 var(--f-display); letter-spacing: -.01em; }
+.you-profile { display: flex; flex-direction: column; gap: 14px; padding: 18px; border: 1px solid var(--line-2); border-radius: 20px; background: var(--panel); }
+.you-avatar { width: 56px; height: 56px; flex: none; font: 800 20px var(--f-display); color: var(--green); background: transparent; border: 2px solid var(--green); }
+.you-name { font-weight: 700; font-size: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.you-email { font-size: 14px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.you-badge { flex: none; padding: 5px 9px; border: 1px solid; border-radius: 999px; font: 600 11px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; }
+button.you-cta { min-height: 50px; padding: 0 18px; font-size: 16px; }
+.you-group-label { margin: 0 0 8px; padding: 0 4px; font: 400 11px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.you-group-rows { border: 1px solid var(--line); border-radius: 16px; background: #0b0d0c; overflow: hidden; }
+.you-row { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 52px; padding: 0 16px; border-bottom: 1px solid var(--line); color: #fff; font: 500 16px var(--f-body); text-align: left; text-decoration: none; }
+.you-row:last-child { border-bottom: 0; }
+a.you-row:hover { color: #fff; }
+.you-row > svg { color: var(--soft); }
+button.you-row:active, a.you-row:active { background: #121612; }
+.you-row.danger, .you-row.danger > svg { color: var(--red); }
+.you-row-label { flex: 1; min-width: 0; }
+.you-row-value { max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; color: var(--muted); }
+.you-chevron { display: flex; color: var(--dim); }
+.you-foot { margin: -6px 0 0; text-align: center; font-size: 11px; color: var(--dim); }
+.you-sub { gap: 0; padding-top: 0; }
+.you-bar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 4px; height: 56px; margin: 0 calc(var(--gutter) * -1); padding: 0 8px; background: rgba(0, 0, 0, .92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+button.you-back { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 12px; }
+.you-bar-title { margin: 0; font: 700 18px var(--f-body); }
+.you-sub-body { display: flex; flex-direction: column; gap: 20px; padding-top: 18px; }
+.you-sheet-wrap { position: fixed; inset: 0; z-index: 1500; display: flex; flex-direction: column; justify-content: flex-end; }
+button.you-sheet-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, .6); animation: you-fade .2s ease-out; }
+.you-sheet {
+  position: relative; display: flex; flex-direction: column; gap: 14px; max-height: 85vh; overflow-y: auto; outline: none;
+  padding: 10px var(--gutter) calc(24px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line-2); border-radius: 24px 24px 0 0;
+  background: #0f1210; animation: you-up .22s ease-out;
+}
+.you-sheet-handle { width: 40px; height: 4px; border-radius: 2px; background: var(--line-3); align-self: center; }
+.you-sheet-title { margin: 0; font: 700 18px var(--f-body); }
+.you-sheet-text { font-size: 15px; line-height: 1.45; color: var(--soft); }
+button.you-danger { color: var(--red); border-color: var(--red); }
+button.you-danger-fill { background: var(--red); color: #000; }
+@keyframes you-up { from { transform: translateY(100%); } }
+@keyframes you-fade { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .you-sheet, button.you-sheet-backdrop { animation: none; } }
+
+/* ---- Your season and Best nights ahead, at the end of the Now tab on phones (components/SeasonCards). ---- */
+.season-cards { display: none; }
+@media (max-width: 640px) { .season-cards { display: flex; flex-direction: column; gap: 16px; } }
+.season-card { display: flex; flex-direction: column; gap: 12px; padding: 18px; border: 1px solid var(--line-2); border-radius: 20px; background: var(--panel); }
+.season-card-list { gap: 0; padding: 0; overflow: hidden; }
+.season-card-list .season-card-head { padding: 18px 16px 10px; }
+.season-card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.season-card-head h2 { margin: 0; font: 800 20px var(--f-display); }
+.season-card-head .mono { font-size: 11px; letter-spacing: .06em; white-space: nowrap; color: var(--muted); }
+.season-count { display: flex; align-items: baseline; gap: 10px; margin: 0; }
+.season-count b { font: 900 34px/1 var(--f-display); color: var(--green); }
+.season-count span { font-size: 15px; line-height: 1.35; color: var(--soft); }
+.season-bars { position: relative; display: flex; align-items: flex-end; gap: 5px; height: 130px; border-bottom: 1px solid var(--line-2); }
+.season-bar { flex: 1; border-radius: 4px 4px 0 0; }
+.season-need { position: absolute; left: 0; right: 0; border-top: 2px dashed var(--amber); pointer-events: none; }
+.season-axis { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+.season-note { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.season-key { flex: none; width: 16px; border-top: 2px dashed var(--amber); }
+.best-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line); }
+.best-date { display: flex; flex-direction: column; align-items: center; flex: none; width: 44px; }
+.best-date small { font-size: 11px; text-transform: uppercase; color: var(--muted); }
+.best-date b { font: 800 22px var(--f-display); }
+.best-text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.best-text b { font-size: 15px; font-weight: 600; }
+.best-text small { font-size: 13px; color: var(--muted); }
+.best-kp { font: 800 16px var(--f-display); white-space: nowrap; }
