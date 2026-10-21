@@ -43,7 +43,7 @@ const sections: LegalSection[] = [
     body: <>
       <p>Don&rsquo;t misuse the Service. In particular, don&rsquo;t:</p>
       <ul>
-        <li>report sightings you didn&rsquo;t make, or otherwise submit false or misleading information;</li>
+        <li>report sightings you didn&rsquo;t make, post photos you didn&rsquo;t take, or otherwise submit false or misleading information;</li>
         <li>scrape, copy or resell the Service or its data in bulk, or use it to build a competing service;</li>
         <li>interfere with the Service, probe or bypass its security, or access other people&rsquo;s accounts or data;</li>
         <li>use the Service in breach of any law.</li>
@@ -52,7 +52,17 @@ const sections: LegalSection[] = [
   },
   {
     h: 'Your content',
-    body: <p>Photos you take in Sky view stay yours and stay on your device unless you share them. When you report a sighting, you allow us to store it and to show it, without anything that identifies you, on the map and in summaries of aurora activity.</p>,
+    body: <p>Photos you take in Sky view stay yours and stay on your device unless you share or post them. When you report a sighting, you allow us to store it and to show it, without anything that identifies you, on the map and in summaries of aurora activity.</p>,
+  },
+  {
+    id: 'community',
+    h: 'Community gallery and badges',
+    body: <>
+      <p>When you post a photo to the gallery, it is shown publicly with your gallery name, your rank, the time it was taken, the place as precisely as you chose (a town, a wider area, or none) and the Kp at the time. You keep ownership of your photos; by posting one you give us a worldwide, non-exclusive, royalty-free licence to store, display, resize and share it as part of the Service, including in the app, on the website and when someone shares a link to it, until you remove it.</p>
+      <p>Only post photos that you took yourself and have the right to share. Photos must show aurora or the night sky. Don&rsquo;t post anything illegal, sexual, violent, hateful or harassing, photos of identifiable people without their consent, advertising or spam, and don&rsquo;t use gallery names that impersonate others or are offensive.</p>
+      <p>You can report a photo or block a member from the gallery. Photos reported by several members are hidden until we review them, and we may remove any photo, change a gallery name, or suspend posting for anyone who breaks these rules. We aim to review reports within 24 hours. To raise a concern directly, write to {mail}.</p>
+      <p>Badges, ranks and points recognise confirmed sighting reports and gallery photos. They have no monetary value, can&rsquo;t be transferred, and we may adjust them, for example to correct errors or remove ones earned by breaking these terms.</p>
+    </>,
   },
   {
     h: 'Data sources',

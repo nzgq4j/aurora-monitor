@@ -4,6 +4,7 @@ import './globals.css';
 import { Footer, Header, TabBar, Toast } from '../../components/Chrome';
 import { PullToRefresh } from '../../components/PullToRefresh';
 import { PlaySync } from '../../components/PlaySync';
+import { BadgeWatcher } from '../../components/BadgeWatcher';
 import { InstallPrompt } from '../../components/InstallPrompt';
 import { G_SCALE } from '../../lib/astro';
 import { kpNow } from '../../lib/feeds';
@@ -83,6 +84,7 @@ export default async function RootLayout({ children, params }: Props & { childre
                 <AppPush />
                 <PlaySync />
                 <InstallPrompt />
+                <BadgeWatcher />
                 <FitHeadings />
                 </NightModeProvider>
               </LocationsProvider>

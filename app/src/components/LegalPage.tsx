@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-export interface LegalSection { h: string; body: ReactNode }
+export interface LegalSection { h: string; body: ReactNode; id?: string }
 
 /** Privacy policy and terms (English; other languages get a note that the English text applies). */
 export function LegalPage({ kicker, title, updated, intro, sections, note }: {
@@ -15,7 +15,7 @@ export function LegalPage({ kicker, title, updated, intro, sections, note }: {
         <p className="legal-updated">Last updated: {updated}</p>
         <div className="legal-intro">{intro}</div>
         {sections.map((s, i) => (
-          <section key={s.h} aria-labelledby={`legal-${i}`}>
+          <section key={s.h} id={s.id} aria-labelledby={`legal-${i}`}>
             <h2 id={`legal-${i}`}>{i + 1}. {s.h}</h2>
             {s.body}
           </section>

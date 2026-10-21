@@ -15,7 +15,11 @@ export interface GalleryPhoto {
   thumb: Blob;
   /** Saved to Photos or shared at least once. */
   exported: boolean;
+  /** Where and how it was taken, for posting to the community gallery (position rounded to 0.1°). */
+  meta?: PhotoMeta;
 }
+
+export interface PhotoMeta { lat: number | null; lon: number | null; kp: number | null; camera: string }
 
 const DB = 'polarlights-gallery', STORE = 'photos';
 
@@ -49,8 +53,8 @@ async function thumbnail(photo: Blob): Promise<Blob> {
 }
 
 /** Keep a photo in the gallery; asks the browser once to keep the gallery when space runs low. */
-export async function addPhoto(photo: Blob, name: string, taken = Date.now()): Promise<GalleryPhoto> {
-  const p: GalleryPhoto = { id: `${taken}-${Math.random().toString(36).slice(2, 8)}`, taken, name, photo, thumb: await thumbnail(photo), exported: false };
+export async function addPhoto(photo: Blob, name: string, taken = Date.now(), meta?: PhotoMeta): Promise<GalleryPhoto> {
+  const p: GalleryPhoto = { id: `${taken}-${Math.random().toString(36).slice(2, 8)}`, taken, name, photo, thumb: await thumbnail(photo), exported: false, meta };
   await run('readwrite', s => s.put(p));
   void navigator.storage?.persist?.().catch(() => {});
   return p;
@@ -61,6 +65,8 @@ export async function listPhotos(): Promise<GalleryPhoto[]> {
   const all = (await run<GalleryPhoto[]>('readonly', s => s.getAll())) ?? [];
   return all.sort((a, b) => b.taken - a.taken);
 }
+
+export const getPhoto = (id: string) => run<GalleryPhoto>('readonly', s => s.get(id) as IDBRequest<GalleryPhoto>);
 
 export const deletePhotos = (ids: string[]) => run('readwrite', s => { ids.forEach(id => s.delete(id)); });
 
