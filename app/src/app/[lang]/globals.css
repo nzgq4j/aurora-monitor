@@ -702,6 +702,9 @@ button.you-sheet-backdrop { position: absolute; inset: 0; background: rgba(0, 0,
 .you-sheet-text { font-size: 15px; line-height: 1.45; color: var(--soft); }
 button.you-danger { color: var(--red); border-color: var(--red); }
 button.you-danger-fill { background: var(--red); color: #000; }
+.you-sheet { transition: transform .18s ease-out; touch-action: pan-y; }
+.you-sheet.dragging { transition: none; }
+button.you-sheet-backdrop { transition: opacity .18s ease-out; }
 @keyframes you-up { from { transform: translateY(100%); } }
 @keyframes you-fade { from { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .you-sheet, button.you-sheet-backdrop { animation: none; } }
