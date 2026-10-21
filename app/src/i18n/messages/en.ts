@@ -661,6 +661,8 @@ export const en = {
   'map.arcticCircle': 'Arctic Circle',
   'map.placeHome': '{place} · Home',
   'map.layers': 'Map layers',
+  'map.flat': 'Flat map',
+  'map.layersNone': 'None',
   'map.clouds': 'Clouds',
   'map.layer.aurora': 'Aurora',
   'map.layer.kp': 'Kp lines',

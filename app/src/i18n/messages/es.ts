@@ -661,6 +661,8 @@ export const es: Messages = {
   'map.arcticCircle': 'Círculo polar ártico',
   'map.placeHome': '{place} · Principal',
   'map.layers': 'Capas del mapa',
+  'map.flat': 'Mapa plano',
+  'map.layersNone': 'Ninguna',
   'map.clouds': 'Nubes',
   'map.layer.aurora': 'Aurora',
   'map.layer.kp': 'Líneas Kp',

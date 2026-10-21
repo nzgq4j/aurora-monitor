@@ -661,6 +661,8 @@ export const fr: Messages = {
   'map.arcticCircle': 'Cercle polaire arctique',
   'map.placeHome': '{place} · Domicile',
   'map.layers': 'Calques de la carte',
+  'map.flat': 'Carte plane',
+  'map.layersNone': 'Aucune',
   'map.clouds': 'Nuages',
   'map.layer.aurora': 'Aurore',
   'map.layer.kp': 'Lignes Kp',
