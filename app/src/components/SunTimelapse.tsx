@@ -8,32 +8,30 @@ import { useI18n } from '../i18n/I18n';
 type Channel = (typeof SDO_IMAGES)[number]['id'];
 interface Frame { t: number; url: string }
 
-/** Time spans to play, with the gap between frames that keeps each to about 100 frames (about 5 MB). */
+/** Time spans to play. */
 const RANGES = [
-  { id: 'day', hours: 24, step: 1 },
-  { id: 'week', hours: 7 * 24, step: 2 },
-  { id: 'rotation', hours: 27 * 24, step: 6 },
+  { id: 'day', hours: 24 },
+  { id: 'week', hours: 7 * 24 },
+  { id: 'rotation', hours: 27 * 24 },
 ] as const;
+/** Most frames one view loads (about 6 MB); beyond it, frames are picked evenly across the span. */
+const MAX_FRAMES = 120;
 type Range = (typeof RANGES)[number]['id'];
 
 /** Frames per second while playing. */
 const FPS = 8;
 
-/** The saved frames for a channel over the last `hours`, at least `step` hours apart, oldest first. */
-async function loadFrames(channel: Channel, hours: number, step: number): Promise<Frame[] | null> {
+/** The saved frames for a channel over the last `hours`, oldest first: every one, or MAX_FRAMES spread evenly. */
+async function loadFrames(channel: Channel, hours: number): Promise<Frame[] | null> {
   const db = supabase();
   if (!db) return null;
   const since = new Date(Date.now() - hours * 36e5).toISOString();
   const { data, error } = await db.from('sun_frames').select('taken_at, path').eq('channel', channel).gte('taken_at', since).order('taken_at').limit(1000);
   if (error || !data) return null;
-  const out: Frame[] = [];
-  for (const r of data) {
-    const t = Date.parse(r.taken_at);
-    // A few minutes' slack, as SDO's update times drift within the hour.
-    if (out.length && t - out[out.length - 1].t < step * 36e5 - 15 * 6e4) continue;
-    out.push({ t, url: db.storage.from('sun-frames').getPublicUrl(r.path).data.publicUrl });
-  }
-  return out;
+  // The first and latest frames always stay in.
+  const rows = data.length <= MAX_FRAMES ? data
+    : Array.from({ length: MAX_FRAMES }, (_, i) => data[Math.round((i * (data.length - 1)) / (MAX_FRAMES - 1))]);
+  return rows.map(r => ({ t: Date.parse(r.taken_at), url: db.storage.from('sun-frames').getPublicUrl(r.path).data.publicUrl }));
 }
 
 /**
@@ -54,7 +52,7 @@ export function SunTimelapse() {
   useEffect(() => {
     let live = true;
     setFrames(undefined); setLoaded(0); setPlaying(false);
-    loadFrames(channel, r.hours, r.step).then(f => {
+    loadFrames(channel, r.hours).then(f => {
       if (!live) return;
       setFrames(f);
       setIndex(f?.length ? f.length - 1 : 0);
@@ -62,7 +60,7 @@ export function SunTimelapse() {
       f?.forEach(fr => { const im = new Image(); im.onload = im.onerror = () => live && setLoaded(n => n + 1); im.src = fr.url; });
     });
     return () => { live = false; };
-  }, [channel, r.hours, r.step]);
+  }, [channel, r.hours]);
 
   const ready = !!frames?.length && loaded >= frames.length;
   useEffect(() => {
@@ -74,7 +72,8 @@ export function SunTimelapse() {
   const when = (x: number) => date(x, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   const f = frames?.[index];
   const span = frames && frames.length > 1 ? frames[frames.length - 1].t - frames[0].t : 0;
-  const building = !!frames?.length && span < (r.hours - r.step * 2) * 36e5;
+  // Still filling the span (frames are saved hourly), allowing a couple of missed hours.
+  const building = !!frames?.length && span < (r.hours - 2) * 36e5;
   const label = useMemo(() => SDO_IMAGES.find(i => i.id === channel)!.label, [channel]);
 
   return (
