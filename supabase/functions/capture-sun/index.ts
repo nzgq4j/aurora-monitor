@@ -1,4 +1,5 @@
-// Saves the current SDO images (AIA 193, AIA 171, HMI) to the sun-frames bucket for the time-lapse.
+// Saves the current SDO images (AIA 193, AIA 171, the 211·193·171 composite, AIA 304, HMI and the HMI
+// magnetogram) to the sun-frames bucket for the time-lapse.
 // Scheduled hourly by pg_cron (see migrations/20261019000100_sun_frames.sql). Each image is kept once,
 // keyed by SDO's Last-Modified time; frames older than KEEP_DAYS are removed.
 // Uses the service role, which the Edge runtime provides as an env var.
@@ -7,7 +8,10 @@ import { createClient } from 'npm:@supabase/supabase-js@2.117.2';
 const CHANNELS = {
   '0193': 'https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0193.jpg',
   '0171': 'https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0171.jpg',
+  '211193171': 'https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_211193171.jpg',
+  '0304': 'https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0304.jpg',
   HMIIC: 'https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_HMIIC.jpg',
+  HMIBC: 'https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_HMIBC.jpg',
 } as const;
 const BUCKET = 'sun-frames';
 const KEEP_DAYS = 28;
