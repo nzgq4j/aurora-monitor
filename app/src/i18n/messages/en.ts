@@ -102,6 +102,7 @@ export const en = {
   'sky.capture': "Capture the sky",
   'sky.night.title': "Night shot",
   'sky.night.body': "For dark skies: the camera records for a few seconds, lines the frames up and stacks them into one brighter, cleaner photo, the way phone night modes work. Hold the phone still or rest it on something.",
+  'sky.night.native': "This phone can take true long exposures of up to {s} s, so night shots use them: rest the phone on something steady.",
   'sky.night.auto': "Auto",
   'sky.night.autoBody': "When the Sun is down here or the picture is dark",
   'sky.night.on': "Always",

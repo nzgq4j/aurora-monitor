@@ -102,6 +102,7 @@ export const de: Messages = {
   'sky.capture': "Himmel festhalten",
   'sky.night.title': "Nachtaufnahme",
   'sky.night.body': "Für dunklen Himmel: Die Kamera nimmt einige Sekunden auf, richtet die Bilder aus und stapelt sie zu einem helleren, rauschärmeren Foto, wie der Nachtmodus von Smartphones. Halten Sie das Telefon still oder legen Sie es auf.",
+  'sky.night.native': "Dieses Telefon kann echte Langzeitbelichtungen bis {s} s machen, die Nachtaufnahmen nutzen: Legen Sie das Telefon auf eine feste Unterlage.",
   'sky.night.auto': "Automatisch",
   'sky.night.autoBody': "Wenn hier die Sonne untergegangen oder das Bild dunkel ist",
   'sky.night.on': "Immer",

@@ -40,6 +40,7 @@ After changing `capacitor.config.ts`, `www/` or the plugins, run `npx cap sync a
 | Sign in with email and password | Works |
 | Sign in with Google | Android's account picker (`GoogleSignInPlugin.java`), then Supabase `signInWithIdToken`. Needs Google switched on in Supabase, an Android OAuth client (package + SHA-1) and `NEXT_PUBLIC_GOOGLE_CLIENT_ID` on Vercel. Apple sign-in is hidden in the app. |
 | Sky view camera and location | Works (Android asks for permission) |
+| Night photos in Sky view | Long exposures through Camera2 (`LongExposurePlugin.java`: manual exposure up to the phone's limit, ISO set for the length, focus at infinity, no flash) on phones that allow 1 s or more; elsewhere the website's stacked Night shot. |
 | Gallery: Save to Photos / Share | Works: saves into a **Polar Lights** album (Pictures/Polar Lights) and opens Android's share sheet (`PhotoLibraryPlugin.java`) |
 | Push notifications | Works: Firebase Cloud Messaging (`@capacitor/push-notifications`; alert icon `ic_stat_aurora`, channel `aurora`, shown as a banner). Uses `android/app/google-services.json` (Firebase project io-polarlights-app), and on Vercel `FCM_SERVICE_ACCOUNT` (secret) and `NEXT_PUBLIC_APP_PUSH=1`. |
 | Chaser subscription | Google Play Billing (`PlayBillingPlugin.java`, Play Billing Library 8). Needs the setup below, then `NEXT_PUBLIC_PLAY_BILLING=1` on Vercel. Until then, upgrading in the app shows that it isn't available in this version (Stripe can't be used for purchases inside a Google Play app). |

@@ -102,6 +102,7 @@ export const fr: Messages = {
   'sky.capture': "Capturer le ciel",
   'sky.night.title': "Photo de nuit",
   'sky.night.body': "Pour les ciels sombres : l’appareil filme quelques secondes, aligne les images et les cumule en une photo plus lumineuse et plus nette, comme le mode nuit des téléphones. Tenez le téléphone immobile ou posez-le.",
+  'sky.night.native': "Ce téléphone peut faire de vraies poses longues jusqu’à {s} s, que les photos de nuit utilisent : posez le téléphone sur un support stable.",
   'sky.night.auto': "Auto",
   'sky.night.autoBody': "Quand le Soleil est couché ici ou que l’image est sombre",
   'sky.night.on': "Toujours",
