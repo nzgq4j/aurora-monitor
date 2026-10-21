@@ -661,6 +661,8 @@ export const nl: Messages = {
   'map.arcticCircle': 'Noordpoolcirkel',
   'map.placeHome': '{place} · Thuis',
   'map.layers': 'Kaartlagen',
+  'map.flat': 'Platte kaart',
+  'map.layersNone': 'Geen',
   'map.clouds': 'Wolken',
   'map.layer.aurora': 'Poollicht',
   'map.layer.kp': 'Kp-lijnen',

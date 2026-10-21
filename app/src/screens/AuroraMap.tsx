@@ -9,6 +9,7 @@ import { kpColor, kpLine, rgb } from '../lib/kpLines';
 import { placeName, useLocations, type Place } from '../lib/locations';
 import type { KpPoint } from '../lib/feeds';
 import { MapPanel } from '../components/MapPanel';
+import { BottomSheet } from '../components/BottomSheet';
 import { TimeSlider } from '../components/TimeSlider';
 import type { Frame } from '../lib/ovalFrames';
 import { recentSightings, type Sighting } from '../lib/sightings';
@@ -83,6 +84,9 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
   // A point tapped on the map (2D or 3D); the panel shows its verdict. Named by coordinates until
   // reverse geocoding answers.
   const [pick, setPick] = useState<Place | null>(null);
+  // Phones: the layers or map-view sheet opened from the panel.
+  const [sheet, setSheet] = useState<null | 'layers' | 'view'>(null);
+  const closeSheet = useCallback(() => setSheet(null), []);
   const pickAt = useRef<(lat: number, lon: number) => void>(() => {});
   pickAt.current = (lat, lon) => {
     lat = Math.round(lat * 1000) / 1000;
@@ -487,15 +491,46 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
   const icon = (id: LayerId | 'globe', size: number) => (
     <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true"><path d={ICON[id]} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
   );
-  // Phones: a 4 × 2 grid in the panel. Larger screens: a row of toggles above the map (2D/3D stays its own switch).
+  // Phones: two settings rows in the panel, each opening a sheet (layers with switches, flat map or globe).
+  // Larger screens: a row of toggles above the map (2D/3D stays its own switch).
+  const onNames = ORDER.filter(id => id !== 'globe' && pressed(id)).map(id => t(LABEL[id]));
   const layerTiles = (
-    <div className="map-tiles" role="group" aria-label={t('map.layers')}>
-      {ORDER.map(id => (
-        <button key={id} type="button" className="btn map-tile" aria-pressed={pressed(id)} onClick={() => press(id)}>
-          {icon(id, 22)}<span>{t(LABEL[id])}</span>
-        </button>
-      ))}
+    <div className="you-group-rows">
+      <button type="button" className="btn you-row" aria-haspopup="dialog" onClick={() => setSheet('layers')}>
+        <span className="you-row-label">{t('map.layers')}</span><span className="you-row-value">{onNames.length ? onNames.join(', ') : t('map.layersNone')}</span><Chevron />
+      </button>
+      <button type="button" className="btn you-row" aria-haspopup="dialog" onClick={() => setSheet('view')}>
+        <span className="you-row-label">{t('map.view')}</span><span className="you-row-value">{t(view === '3d' ? 'map.layer.globe' : 'map.flat')}</span><Chevron />
+      </button>
     </div>
+  );
+  const layerSheets = (
+    <>
+      {sheet === 'layers' && (
+        <BottomSheet title={t('map.layers')} onClose={closeSheet}>
+          <div className="you-group-rows">
+            {ORDER.filter(id => id !== 'globe').map(id => (
+              <button key={id} type="button" className="btn you-row map-layer-row" role="switch" aria-checked={!!pressed(id)} onClick={() => press(id)}>
+                {icon(id, 22)}<span className="you-row-label">{t(LABEL[id])}</span>
+                <span className={'switch' + (pressed(id) ? ' on' : '')} aria-hidden="true"><span className="switch-knob" /></span>
+              </button>
+            ))}
+          </div>
+        </BottomSheet>
+      )}
+      {sheet === 'view' && (
+        <BottomSheet title={t('map.view')} onClose={closeSheet}>
+          <div className="you-group-rows">
+            {(['2d', '3d'] as const).map(v => (
+              <button key={v} type="button" className="btn you-row map-layer-row" aria-pressed={view === v} onClick={() => { chooseView(v); closeSheet(); }}>
+                {icon(v === '3d' ? 'globe' : 'aurora', 22)}<span className="you-row-label">{t(v === '3d' ? 'map.layer.globe' : 'map.flat')}</span>
+                {view === v && <span style={{ color: 'var(--green)', display: 'flex' }}><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg></span>}
+              </button>
+            ))}
+          </div>
+        </BottomSheet>
+      )}
+    </>
   );
   const layerRow = (
     <div className="map-toggles" role="group" aria-label={t('map.layers')}>
@@ -599,6 +634,7 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
         </details>
         <MapPanel kp={kp} series={series} pick={pick} onClear={() => setPick(null)} layers={layerTiles} slider={frames.length > 0 ? timeSlider : null}
           legend={<div className="map-panel-section map-panel-legend"><span className="label">{t('map.legend')}</span>{legendBody}</div>} />
+        {layerSheets}
       </div>
     </main>
   );
@@ -681,3 +717,7 @@ function repeatCollection(fc: GeoJSON.FeatureCollection): GeoJSON.FeatureCollect
 function escapeHtml(s: string) {
   return s.replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]!));
 }
+
+const Chevron = () => (
+  <span className="you-chevron"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
+);

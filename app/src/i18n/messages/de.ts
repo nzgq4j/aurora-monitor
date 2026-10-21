@@ -661,6 +661,8 @@ export const de: Messages = {
   'map.arcticCircle': 'Nördlicher Polarkreis',
   'map.placeHome': '{place} · Heimatort',
   'map.layers': 'Kartenebenen',
+  'map.flat': 'Flache Karte',
+  'map.layersNone': 'Keine',
   'map.clouds': 'Wolken',
   'map.layer.aurora': 'Polarlicht',
   'map.layer.kp': 'Kp-Linien',
