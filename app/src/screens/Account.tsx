@@ -346,9 +346,10 @@ function Alerts({ data }: { data: AccountData }) {
           ))}
         </fieldset>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
-            <span style={{ fontSize: 14, color: 'var(--muted)' }}>{t('alerts.last30')}</span>
-            <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 22, whiteSpace: 'nowrap' }}><span className="hl">{hits}</span> {tn('alerts.levelDays', hits, { level: t(`alerts.level.${r.level}`).toLocaleLowerCase(locale) })}</span>
+          {/* The count drops below the label when they don't fit side by side (long level names, phones). */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'baseline', gap: '4px 12px' }}>
+            <span style={{ fontSize: 14, color: 'var(--muted)', flex: '1 1 auto' }}>{t('alerts.last30')}</span>
+            <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 22, minWidth: 0, overflowWrap: 'anywhere' }}><span className="hl">{hits}</span> {tn('alerts.levelDays', hits, { level: t(`alerts.level.${r.level}`).toLocaleLowerCase(locale) })}</span>
           </div>
           <svg viewBox="0 0 450 190" style={{ width: '100%', display: 'block' }} role="img" aria-label={t('alerts.levelAria', { hits, days: last30.length, level: t(`alerts.level.${r.level}`).toLocaleLowerCase(locale) })}>
             <line x1="0" x2="450" y1={thY} y2={thY} style={{ stroke: C.green, strokeWidth: 1.5, strokeDasharray: '5 4' }} />
