@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import './globals.css';
 import { Footer, Header, TabBar, Toast } from '../../components/Chrome';
 import { PullToRefresh } from '../../components/PullToRefresh';
+import { PlaySync } from '../../components/PlaySync';
 import { InstallPrompt } from '../../components/InstallPrompt';
 import { G_SCALE } from '../../lib/astro';
 import { kpNow } from '../../lib/feeds';
@@ -80,6 +81,7 @@ export default async function RootLayout({ children, params }: Props & { childre
                 <ServiceWorker />
                 <UpdateCheck />
                 <AppPush />
+                <PlaySync />
                 <InstallPrompt />
                 <FitHeadings />
                 </NightModeProvider>

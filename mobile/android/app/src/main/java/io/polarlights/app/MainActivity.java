@@ -10,6 +10,7 @@ public class MainActivity extends BridgeActivity {
         // The app's own plugins (installed ones are registered by Capacitor).
         registerPlugin(PhotoLibraryPlugin.class);
         registerPlugin(GoogleSignInPlugin.class);
+        registerPlugin(PlayBillingPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

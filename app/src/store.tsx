@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState, type R
 import { usePathname, useRouter } from 'next/navigation';
 import { TIERS, type ChannelKey, type Tier, type TierId, type TriggerKey } from './data';
 import { PAYMENTS, useAuth } from './lib/auth';
+import { PLAY_MANAGE_URL, buyWithPlay, playBilling, playMissing } from './lib/playBilling';
 import { DEFAULT_RULES, DEFAULT_STORM_KP, type AlertRules } from './lib/alerts';
 import { supabase } from './lib/supabase';
 import { useI18n } from './i18n/I18n';
@@ -135,6 +136,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const pendingIndex = Math.max(1, TIERS.findIndex(t => t.id === s.pending));
     const pending = TIERS[pendingIndex];
     const openBilling = async () => {
+      // Google Play subscriptions are changed and cancelled in Google Play.
+      if (auth.profile?.billingSource === 'play') { window.open(PLAY_MANAGE_URL, '_blank', 'noopener'); return; }
       const r = await auth.openBillingPortal();
       if (r.url) window.location.assign(r.url);
       else set({ toast: t('toast.billingFailed') });
@@ -164,6 +167,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       confirm: async () => {
         if (live) {
           if (!auth.user) { go('signin'); return; }
+          // In the Android app, Google Play requires its own billing.
+          if (playBilling()) {
+            const r = await buyWithPlay(s.annual ? 'annual' : 'monthly', !!auth.profile?.trialEndsAt, auth.user.id, auth.verifyPlay);
+            if (r === 'done') { go('account', { tab: 'overview', toast: t('toast.welcome', { plan: t(`tier.${pending.id}`) }) }); return; }
+            if (r !== 'cancelled') set({ toast: t(`play.result.${r}`) });
+            return;
+          }
+          if (playMissing()) { set({ toast: t('play.result.unavailable') }); return; }
           if (PAYMENTS) {
             const r = await auth.startCheckout(pending.id, s.annual ? 'annual' : 'monthly');
             if (r.url) { window.location.assign(r.url); return; }

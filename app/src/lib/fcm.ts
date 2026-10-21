@@ -1,4 +1,4 @@
-import { createSign } from 'crypto';
+import { googleAccessToken, resetGoogleTokens, serviceAccount, type ServiceAccount } from './googleAuth';
 
 /**
  * Push alerts to the Android app through Firebase Cloud Messaging (HTTP v1). Signs in as the Firebase
@@ -6,49 +6,19 @@ import { createSign } from 'crypto';
  * keeps the access token until shortly before it expires.
  */
 
-interface ServiceAccount { project_id: string; client_email: string; private_key: string }
-
 export interface FcmMessage { title: string; body: string; url: string; tag: string }
 /** 'sent', 'gone' (the token is no longer valid: remove it) or a short failure description. */
 export type FcmResult = 'sent' | 'gone' | string;
 
 let account: ServiceAccount | null | undefined;
-let cached: { token: string; until: number } | null = null;
 
 /** The service account, or null when FCM_SERVICE_ACCOUNT isn't set (or isn't valid JSON). */
 export function fcmAccount(): ServiceAccount | null {
-  if (account !== undefined) return account;
-  try {
-    const a = JSON.parse(process.env.FCM_SERVICE_ACCOUNT ?? '') as ServiceAccount;
-    account = a.project_id && a.client_email && a.private_key ? a : null;
-  } catch {
-    account = null;
-  }
+  if (account === undefined) account = serviceAccount('FCM_SERVICE_ACCOUNT');
   return account;
 }
 
-const b64url = (x: string | Buffer) => Buffer.from(x).toString('base64url');
-
-/** A Google OAuth access token for FCM, from a JWT signed with the service account's key. */
-async function accessToken(a: ServiceAccount, now = Date.now()): Promise<string> {
-  if (cached && cached.until > now + 60_000) return cached.token;
-  const iat = Math.floor(now / 1000);
-  const head = b64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
-  const claims = b64url(JSON.stringify({
-    iss: a.client_email, scope: 'https://www.googleapis.com/auth/firebase.messaging',
-    aud: 'https://oauth2.googleapis.com/token', iat, exp: iat + 3600,
-  }));
-  const signature = createSign('RSA-SHA256').update(`${head}.${claims}`).sign(a.private_key, 'base64url');
-  const res = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion: `${head}.${claims}.${signature}` }),
-  });
-  if (!res.ok) throw new Error(`token ${res.status}`);
-  const j = await res.json() as { access_token: string; expires_in: number };
-  cached = { token: j.access_token, until: now + j.expires_in * 1000 };
-  return j.access_token;
-}
+const accessToken = (a: ServiceAccount) => googleAccessToken(a, 'https://www.googleapis.com/auth/firebase.messaging');
 
 /** Send one notification to one app install. Shown in the "aurora" channel with the app's alert icon. */
 export async function sendFcm(token: string, m: FcmMessage): Promise<FcmResult> {
@@ -75,4 +45,4 @@ export async function sendFcm(token: string, m: FcmMessage): Promise<FcmResult> 
 }
 
 /** Test hook: forget the cached account and token. */
-export function resetFcm() { account = undefined; cached = null; }
+export function resetFcm() { account = undefined; resetGoogleTokens(); }

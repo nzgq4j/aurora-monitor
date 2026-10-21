@@ -44,6 +44,9 @@ export async function userFromRequest(req: Request): Promise<User | null> {
 
 export interface BillingProfile {
   id: string;
+  billing_source: 'stripe' | 'play' | null;
+  play_purchase_token: string | null;
+  play_product_id: string | null;
   locale: string | null;
   trial_ends_at: string | null;
   stripe_customer_id: string | null;
@@ -53,7 +56,7 @@ export interface BillingProfile {
 
 export async function billingProfile(userId: string): Promise<BillingProfile | null> {
   const { data } = await supabaseAdmin().from('profiles')
-    .select('id, locale, trial_ends_at, stripe_customer_id, stripe_subscription_id, subscription_status')
+    .select('id, locale, trial_ends_at, stripe_customer_id, stripe_subscription_id, subscription_status, billing_source, play_purchase_token, play_product_id')
     .eq('id', userId).maybeSingle();
   return data as BillingProfile | null;
 }
@@ -98,7 +101,7 @@ export async function syncSubscription(sub: Stripe.Subscription): Promise<void> 
   if (sub.trial_end) patch.trial_ends_at = iso(sub.trial_end);
   const db = supabaseAdmin();
   const { data: linked, error } = await db.from('profiles')
-    .select('id, stripe_subscription_id, subscription_status').eq('stripe_customer_id', customer).maybeSingle();
+    .select('id, stripe_subscription_id, subscription_status, billing_source').eq('stripe_customer_id', customer).maybeSingle();
   if (error) throw error;
   // A customer not linked yet (the event beat the checkout's own update) is found by metadata.
   const userId = linked?.id ?? sub.metadata?.user_id;
@@ -106,7 +109,9 @@ export async function syncSubscription(sub: Stripe.Subscription): Promise<void> 
   // Never let an older, ended subscription overwrite a newer one that is still paying.
   if (linked?.stripe_subscription_id && linked.stripe_subscription_id !== sub.id
     && PAID_STATUSES.has(linked.subscription_status as Stripe.Subscription.Status) && !paid) return;
-  const { error: e2 } = await db.from('profiles').update({ ...patch, stripe_customer_id: customer }).eq('id', userId);
+  // Nor an ended Stripe subscription overwrite a Google Play one that is still paying (the Android app).
+  if (linked?.billing_source === 'play' && PAID_STATUSES.has(linked.subscription_status as Stripe.Subscription.Status) && !paid) return;
+  const { error: e2 } = await db.from('profiles').update({ ...patch, stripe_customer_id: customer, billing_source: 'stripe' }).eq('id', userId);
   if (e2) throw e2;
 }
 

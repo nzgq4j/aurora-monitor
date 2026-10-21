@@ -716,7 +716,11 @@ export function Billing({ bare = false }: { bare?: boolean }) {
   const planName = t(`tier.${plan.id}`);
   const planLine = usePlanLine();
   const annual = live ? profile?.billingCycle === 'annual' : s.annual;
-  const stripeCustomer = live && PAYMENTS && !!profile?.hasBilling;
+  // Google Play subscriptions are managed in Play; in the app, a Stripe subscription is managed on the website.
+  const playBilled = live && profile?.billingSource === 'play' && !!profile.playPurchaseToken;
+  const stripeCustomer = live && PAYMENTS && !!profile?.hasBilling && !playBilled;
+  const [appView, setAppView] = useState(false);
+  useEffect(() => setAppView(inApp()), []);
   return (
     <section aria-labelledby="billing-h" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <h2 id="billing-h" className={bare ? 'sr-only' : 'display'} style={bare ? undefined : h2}>{t('dash.billing')}</h2>
@@ -731,7 +735,22 @@ export function Billing({ bare = false }: { bare?: boolean }) {
         </div>
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 22 }}>
           <span className="label">{t('billing.payment')}</span>
-          {stripeCustomer ? (
+          {playBilled ? (
+            <>
+              <span style={{ fontWeight: 700, fontSize: 18 }}>{t('billing.play')}</span>
+              {profile?.subscriptionStatus === 'past_due' && <span role="status" style={{ fontSize: 14, fontWeight: 600, color: C.amber }}>{t('billing.playPastDue')}</span>}
+              <span style={{ fontSize: 14, color: 'var(--soft)' }}>{t('billing.playBody')}</span>
+              <button type="button" className="btn" onClick={() => openBilling()}
+                style={{ fontWeight: 700, fontSize: 14, color: 'var(--green)', marginTop: 6, alignSelf: 'flex-start' }}>
+                {`${t('billing.playManage')} →`}
+              </button>
+            </>
+          ) : stripeCustomer && appView ? (
+            <>
+              <span style={{ fontWeight: 700, fontSize: 18 }}>{t('billing.stripe')}</span>
+              <span style={{ fontSize: 14, color: 'var(--soft)' }}>{t('billing.webOnly')}</span>
+            </>
+          ) : stripeCustomer ? (
             <>
               <span style={{ fontWeight: 700, fontSize: 18 }}>{t('billing.stripe')}</span>
               {profile?.subscriptionStatus === 'past_due' && <span role="status" style={{ fontSize: 14, fontWeight: 600, color: C.amber }}>{t('billing.pastDue')}</span>}
@@ -753,7 +772,7 @@ export function Billing({ bare = false }: { bare?: boolean }) {
           )}
         </div>
       </div>
-      {planIndex > 0 && (
+      {planIndex > 0 && !(appView && stripeCustomer) && (
         <button type="button" className="btn" onClick={cancelPlan} style={{ alignSelf: 'flex-start', fontWeight: 600, fontSize: 14, color: C.red }}>{t('billing.cancel')}</button>
       )}
     </section>

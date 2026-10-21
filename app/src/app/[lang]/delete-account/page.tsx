@@ -37,7 +37,7 @@ const sections: LegalSection[] = [
   {
     h: 'Subscriptions and what is kept',
     body: <>
-      <p>A Chaser subscription bought on the website is cancelled immediately when you delete your account, and you won&rsquo;t be charged again. A subscription bought through Google Play is managed by Google: cancel it in the Google Play Store app under <b>Payments &amp; subscriptions</b>, as deleting your account doesn&rsquo;t cancel it.</p>
+      <p>A Chaser subscription bought on the website is cancelled immediately when you delete your account, and you won&rsquo;t be charged again. A subscription bought in the Android app through Google Play is set not to renew when you delete your account, so you won&rsquo;t be charged again; it shows in the Google Play Store app under <b>Payments &amp; subscriptions</b> until the time already paid for runs out.</p>
       <p>Records of past payments are kept by our payment provider (Stripe) or Google Play for as long as tax and accounting law requires. Photos you took in Sky view are stored only on your device and are not affected; delete them in the app&rsquo;s gallery or your photo library. Standard server logs are deleted by our providers on their usual schedule.</p>
     </>,
   },
