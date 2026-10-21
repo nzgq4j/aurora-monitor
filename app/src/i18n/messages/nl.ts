@@ -1076,6 +1076,7 @@ export const nl: Messages = {
   'badges.seasonsLeft.one': "Nog {n} seizoen",
   'badges.seasonsLeft.other': "Nog {n} seizoenen",
   'badges.view': "Badges bekijken",
+  'badges.cardKicker': "Badge verdiend",
   'badges.family.reporter': "Waarnemer",
   'badges.family.storm': "Stormgetuige",
   'badges.family.contributor': "Bijdrager",

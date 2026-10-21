@@ -1076,6 +1076,7 @@ export const en = {
   'badges.seasonsLeft.one': "{n} season to go",
   'badges.seasonsLeft.other': "{n} seasons to go",
   'badges.view': "View badges",
+  'badges.cardKicker': "Badge earned",
   'badges.family.reporter': "Reporter",
   'badges.family.storm': "Storm Witness",
   'badges.family.contributor': "Contributor",

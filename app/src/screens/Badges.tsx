@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../lib/auth';
 import { useStore } from '../store';
 import { useI18n } from '../i18n/I18n';
 import { BadgeIcon } from '../components/BadgeIcon';
 import { BottomSheet } from '../components/BottomSheet';
-import { FAMILIES, TIERS, badges, rank, type Badge } from '../lib/badges';
+import { FAMILIES, TIERS, TIER_COLORS, badges, rank, type Badge } from '../lib/badges';
+import { badgeCardBlob } from '../lib/shareCard';
+import { SITE } from '../lib/site';
 import { myAchievements, myMember, setHandle } from '../lib/community';
 import type { MemberInfo } from '../lib/badges';
 import type { MessageKey } from '../i18n/core';
@@ -128,14 +130,33 @@ export function BadgeSheet({ b, onClose, fresh }: { b: Badge; onClose: () => voi
   const { t, tn, date } = useI18n();
   const text = useBadgeText();
   const tiered = b.steps.length > 1;
+  const icon = useRef<HTMLDivElement>(null);
+  const card = useRef<File | null>(null);
+  // The badge as a picture, made when the sheet opens so sharing can start straight from the tap.
+  useEffect(() => {
+    if (!b.level || typeof navigator === 'undefined' || !navigator.canShare) return;
+    let live = true;
+    void badgeCardBlob({
+      kicker: t('badges.cardKicker'), name: text.name(b), tier: text.tierName(b), desc: text.desc(b),
+      color: TIER_COLORS[b.tier].rim, site: SITE.domain,
+    }, icon.current?.querySelector('svg') ?? null).then(blob => {
+      if (!live || !blob) return;
+      const file = new File([blob], `polar-lights-badge-${b.id.replace(/[^a-z0-9]+/gi, '-')}.png`, { type: 'image/png' });
+      if (navigator.canShare({ files: [file] })) card.current = file;
+    });
+    return () => { live = false; };
+  }, [b]); // eslint-disable-line react-hooks/exhaustive-deps -- once per badge
   const share = async () => {
     const msg = t('badges.shareText', { badge: text.name(b) + (text.tierName(b) ? ` · ${text.tierName(b)}` : '') });
-    try { await navigator.share?.({ text: msg, url: 'https://www.polarlights.io' }); } catch { /* cancelled */ }
+    const url = 'https://www.polarlights.io';
+    try {
+      await navigator.share?.(card.current ? { files: [card.current], title: SITE.name, text: `${msg} ${url}` } : { text: msg, url });
+    } catch { /* cancelled */ }
   };
   return (
     <BottomSheet title={fresh ? t('badges.new') : text.name(b)} onClose={onClose}>
       <div className="badge-sheet">
-        <BadgeIcon tier={b.tier} glyph={b.glyph} label={b.label} size={160} title={text.name(b)} />
+        <div ref={icon}><BadgeIcon tier={b.tier} glyph={b.glyph} label={b.label} size={160} title={text.name(b)} /></div>
         {fresh && <h3 className="badge-sheet-name">{text.name(b)}{text.tierName(b) && ` · ${text.tierName(b)}`}</h3>}
         {!fresh && text.tierName(b) && <h3 className="badge-sheet-name">{text.tierName(b)}</h3>}
         <p className="you-sheet-text" style={{ textAlign: 'center', margin: 0 }}>{text.desc(b)}</p>

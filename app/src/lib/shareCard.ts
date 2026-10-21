@@ -224,3 +224,69 @@ function roundRect(g: CanvasRenderingContext2D, x: number, y: number, w: number,
   g.moveTo(x + rr, y); g.arcTo(x + w, y, x + w, y + h, rr); g.arcTo(x + w, y + h, x, y + h, rr);
   g.arcTo(x, y + h, x, y, rr); g.arcTo(x, y, x + w, y, rr); g.closePath();
 }
+
+export interface BadgeCardData {
+  /** e.g. "Badge earned". */
+  kicker: string;
+  name: string;
+  /** Tier, e.g. "Silver"; empty for single badges. */
+  tier: string;
+  /** What it's for, one or two lines. */
+  desc: string;
+  /** The rim colour of the badge's tier, for the glow and the tier line. */
+  color: string;
+  site: string;
+}
+
+/**
+ * A square image of a badge for sharing (1080 × 1080 PNG): the badge itself (its SVG on the page) large
+ * in the middle of a night sky, with its name, tier and what it's for below.
+ */
+export async function badgeCardBlob(d: BadgeCardData, badge: SVGSVGElement | null): Promise<Blob | null> {
+  const S = 1080;
+  const c = document.createElement('canvas');
+  c.width = c.height = S;
+  const g = c.getContext('2d');
+  if (!g) return null;
+  try { await document.fonts.ready; } catch { /* system fonts */ }
+  const body = "'Barlow', 'Helvetica Neue', Arial, sans-serif";
+  drawSky(g, S, 45);
+  // Darken the sky so the badge and text stand out.
+  g.fillStyle = 'rgba(0,0,0,0.45)'; g.fillRect(0, 0, S, S);
+  drawBrand(g);
+
+  if (badge) {
+    const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(badge)], { type: 'image/svg+xml' }));
+    try {
+      const img = new Image();
+      img.src = url;
+      await img.decode();
+      const h = 470, w = (h * 120) / 132;
+      g.save(); g.shadowColor = d.color; g.shadowBlur = 60;
+      g.drawImage(img, (S - w) / 2, 190, w, h);
+      g.restore();
+    } catch { /* no badge picture; the text still makes a card */ } finally { URL.revokeObjectURL(url); }
+  }
+
+  g.textAlign = 'center';
+  g.fillStyle = '#6CFF2B'; g.font = `600 34px 'JetBrains Mono', monospace`; g.fillText(d.kicker.toUpperCase(), S / 2, 730);
+  let size = 92;
+  g.font = `800 ${size}px 'Archivo', sans-serif`;
+  while (g.measureText(d.name).width > S - 160 && size > 52) { size -= 4; g.font = `800 ${size}px 'Archivo', sans-serif`; }
+  g.fillStyle = '#fff'; g.fillText(d.name, S / 2, 730 + 20 + size);
+  let y = 730 + 20 + size;
+  if (d.tier) { y += 60; g.fillStyle = d.color; g.font = `700 46px ${body}`; g.fillText(d.tier, S / 2, y); }
+  // What it's for, wrapped to two lines at most.
+  g.fillStyle = '#C9D0CB'; g.font = `500 36px ${body}`;
+  const words = d.desc.split(' '), lines: string[] = [];
+  let cur = '';
+  for (const w of words) {
+    const next = cur ? `${cur} ${w}` : w;
+    if (cur && g.measureText(next).width > S - 200) { lines.push(cur); cur = w; } else cur = next;
+  }
+  if (cur) lines.push(cur);
+  lines.slice(0, 2).forEach((l, i) => g.fillText(l, S / 2, y + 58 + i * 46));
+  g.textAlign = 'right'; g.fillStyle = '#6CFF2B'; g.font = `700 34px ${body}`; g.fillText(d.site, S - 80, S - 40);
+  g.textAlign = 'left';
+  return new Promise(res => c.toBlob(b => res(b), 'image/png'));
+}
