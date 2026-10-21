@@ -191,7 +191,10 @@ export function BadgeSheet({ b, onClose, fresh }: { b: Badge; onClose: () => voi
   );
 }
 
-/** The name shown with a member's photos in the gallery. */
+/** A gallery name as the database stores it: trimmed, with runs of spaces made one. */
+const clean = (v: string) => v.trim().replace(/\s+/g, ' ');
+
+/** The name shown with a member's photos in the gallery: any characters, 3 to 24 of them. */
 export function HandleSheet({ current, onClose, onSaved }: { current: string; onClose: () => void; onSaved: (h: string) => void }) {
   const { t } = useI18n();
   const [v, setV] = useState(current);
@@ -201,7 +204,7 @@ export function HandleSheet({ current, onClose, onSaved }: { current: string; on
     setBusy(true); setErr('');
     const r = await setHandle(v);
     setBusy(false);
-    if (r === 'ok') onSaved(v.trim().toLowerCase());
+    if (r === 'ok') onSaved(clean(v));
     else setErr(t(r === 'taken' ? 'handle.taken' : r === 'invalid' ? 'handle.invalid' : 'handle.failed'));
   };
   return (
@@ -209,11 +212,10 @@ export function HandleSheet({ current, onClose, onSaved }: { current: string; on
       <p className="you-sheet-text">{t('handle.text')}</p>
       <label className="field">
         <span className="label">{t('handle.label')}</span>
-        <input className="input mono" value={v} maxLength={20} autoCapitalize="none" autoCorrect="off" spellCheck={false}
-          onChange={e => setV(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))} />
+        <input className="input" value={v} maxLength={24} autoCorrect="off" spellCheck={false} onChange={e => setV(e.target.value)} />
       </label>
       {err && <p className="you-sheet-text" role="alert" style={{ color: 'var(--red)' }}>{err}</p>}
-      <button type="button" className="btn pill pill-primary sheet-pill" disabled={busy || v === current} onClick={save}>{t('common.save')}</button>
+      <button type="button" className="btn pill pill-primary sheet-pill" disabled={busy || clean(v) === current || clean(v).length < 3} onClick={save}>{t('common.save')}</button>
     </BottomSheet>
   );
 }
