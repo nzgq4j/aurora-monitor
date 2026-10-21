@@ -5,7 +5,13 @@ import { useRouter } from 'next/navigation';
 import { PAYMENTS, initials, useAuth } from '../lib/auth';
 import { C, CHANNEL_DEFS, TIERS, TRIGGER_DEFS, f, kpBarColor, kpColor } from '../data';
 import { G_SCALE, kpNeeded, moon } from '../lib/astro';
-import type { AccountData } from '../lib/history';
+import type { AccountData, KpSource } from '../lib/history';
+
+/** Names the Kp history's source(s) in chart labels; `long` gives the full names. */
+function kpSourceLabel(sources: KpSource[], long = false): string {
+  const name = { gfz: long ? 'GFZ Potsdam' : 'GFZ', noaa: long ? 'NOAA SWPC' : 'NOAA' };
+  return (sources.length ? sources : ['gfz' as KpSource]).map(s => name[s]).join(' · ');
+}
 import { searchPlaces, useLocations, type PlaceResult, type SavedLocation } from '../lib/locations';
 import { useConditions } from '../lib/useConditions';
 import { ALERT_LEVELS, levelKp, type AlertKind, type AlertLevel, type AlertRules } from '../lib/alerts';
@@ -204,7 +210,7 @@ function Overview({ data }: { data: AccountData }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12 }}>
           <h2 className="display" style={h2}>{t('dash.season.h2a')} <span className="hl">{t('dash.season.h2b')}</span></h2>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 16px', fontSize: 13, color: 'var(--soft)' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 11, height: 11, background: C.darkGreen }} />{t('dash.season.weekly')}</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 11, height: 11, background: C.darkGreen }} />{t('dash.season.weekly', { src: kpSourceLabel(data.sources, true) })}</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 16, borderTop: `2px dashed ${C.amber}` }} />{home ? t('dash.season.visibleFrom', { place: home.name, need }) : t('dash.season.typical', { need })}</span>
           </div>
         </div>
@@ -348,7 +354,7 @@ function Alerts({ data }: { data: AccountData }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {/* The count drops below the label when they don't fit side by side (long level names, phones). */}
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'baseline', gap: '4px 12px' }}>
-            <span style={{ fontSize: 14, color: 'var(--muted)', flex: '1 1 auto' }}>{t('alerts.last30')}</span>
+            <span style={{ fontSize: 14, color: 'var(--muted)', flex: '1 1 auto' }}>{t('alerts.last30', { src: kpSourceLabel(data.sources) })}</span>
             <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 22, minWidth: 0, overflowWrap: 'anywhere' }}><span className="hl">{hits}</span> {tn('alerts.levelDays', hits, { level: t(`alerts.level.${r.level}`).toLocaleLowerCase(locale) })}</span>
           </div>
           <svg viewBox="0 0 450 190" style={{ width: '100%', display: 'block' }} role="img" aria-label={t('alerts.levelAria', { hits, days: last30.length, level: t(`alerts.level.${r.level}`).toLocaleLowerCase(locale) })}>

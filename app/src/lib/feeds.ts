@@ -275,6 +275,25 @@ export async function gfzKp(days: number): Promise<{ t: number; kp: number }[]> 
   return ts.map((t, i) => ({ t: Date.parse(t), kp: ks[i] })).filter(x => Number.isFinite(x.t) && typeof x.kp === 'number' && x.kp >= 0);
 }
 
+/**
+ * Backup for gfzKp: NOAA SWPC's last 30 days of planetary Kp (estimated), as 3-hour values. Each line
+ * is "2026 10 20  A  K×8  A  K×8  Ap  Kp×8"; the last eight decimals are the planetary Kp, -1 for
+ * periods still to come.
+ */
+export async function noaaKp(): Promise<{ t: number; kp: number }[]> {
+  const txt = await getText(`${SWPC}/text/daily-geomagnetic-indices.txt`, SLOW);
+  if (!txt) return [];
+  const out: { t: number; kp: number }[] = [];
+  for (const line of txt.split('\n')) {
+    const d = line.match(/^(\d{4}) (\d{2}) (\d{2})\s/);
+    const ks = line.match(/-?\d+\.\d+/g);
+    if (!d || !ks || ks.length < 8) continue;
+    const day = Date.UTC(+d[1], +d[2] - 1, +d[3]);
+    ks.slice(-8).forEach((k, i) => { const kp = +k; if (kp >= 0) out.push({ t: day + i * 3 * 36e5, kp }); });
+  }
+  return out;
+}
+
 /** Group 3-hour Kp into UTC-day maxima. */
 export function dailyMax(xs: { t: number; kp: number }[]): KpDay[] {
   const by = new Map<number, number>();
