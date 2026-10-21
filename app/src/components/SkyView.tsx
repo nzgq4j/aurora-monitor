@@ -235,9 +235,11 @@ export function SkyView({ kp }: { kp: number | null }) {
   const capture = async () => {
     if (busy) return;
     setBusy(true);
-    // How the phone is held as the shutter is pressed: the picture comes the way the screen is turned, so a
-    // phone held sideways (with the screen kept upright) needs the photo turned by the nearest quarter.
-    const turns = ((Math.round((pose?.roll ?? 0) / 90) % 4) + 4) % 4;
+    // How the phone is held as the shutter is pressed: roll relative to the screen, and the phone's own roll
+    // (the screen may have turned with it). Which one the photo needs depends on the frame (below).
+    const screenAngle = screen.orientation?.angle ?? Number((window as { orientation?: number }).orientation ?? 0);
+    const screenRoll = pose?.roll ?? 0, phoneRoll = screenRoll + screenAngle;
+    const screenPortrait = window.innerHeight >= window.innerWidth;
     try {
       // Camera not running (e.g. not allowed at first): try again for the shot, and let its exposure settle.
       if (opening.current) await opening.current;
@@ -298,6 +300,11 @@ export function SkyView({ kp }: { kp: number | null }) {
           source = bmp; w = bmp.width; h = bmp.height;
         } catch { /* fall back to the live frame */ }
       }
+      // Frames that follow the screen (Android, a screen kept upright) are turned by the roll relative to the
+      // screen. iPhone copies the camera frame the phone's own way up even when the screen has turned to
+      // landscape (the frame's shape then differs from the screen's): those are turned by the phone's roll.
+      const followsScreen = h > w === screenPortrait;
+      const turns = ((Math.round((followsScreen ? screenRoll : phoneRoll) / 90) % 4) + 4) % 4;
       if (turns) {
         const r = document.createElement('canvas');
         r.width = turns % 2 ? h : w; r.height = turns % 2 ? w : h;
