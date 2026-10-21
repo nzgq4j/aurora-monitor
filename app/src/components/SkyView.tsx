@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { OvalGrid } from '../app/api/oval/route';
-import { moonPosition } from '../lib/astro';
+import { moonPosition, sunAltitude } from '../lib/astro';
+import { longestExposure, nightShot, sceneBrightness } from '../lib/nightShot';
+import { BottomSheet } from './BottomSheet';
 import { useLocations } from '../lib/locations';
 import { sampleOval, smoothOval } from '../lib/ovalSmooth';
 import { auroraBand, bandPeak, cameraPose, kpEdge, point16, wrap180, type BandSlice } from '../lib/skyView';
@@ -21,6 +23,14 @@ const CAMERA_FOV = 66;
 const PHOTO_MIN_EDGE = 1920;
 
 type Phase = 'intro' | 'starting' | 'live' | 'error';
+/** Night shot: always, never, or when it's dark (the Sun is down at the place, or the picture is dark). */
+type NightPref = 'auto' | 'on' | 'off';
+const NIGHT_PREF = 'pl.nightShot', NIGHT_LEN = 'pl.nightShotLen';
+const LENGTHS = [3, 6, 10] as const;
+/** Below this average brightness (0–1) the picture counts as dark. */
+const DARK_SCENE = 0.12;
+const readPref = <T,>(k: string, ok: readonly T[], d: T): T => { try { const v = localStorage.getItem(k); const x = ok.find(o => String(o) === v); return x ?? d; } catch { return d; } };
+const writePref = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* storage unavailable */ } };
 type Pose = { az: number | null; el: number; roll: number };
 
 /** iOS 13+ asks for motion access from a tap; elsewhere this does nothing. */
@@ -63,6 +73,17 @@ export function SkyView({ kp }: { kp: number | null }) {
   // The camera turns on with the view (the overlay itself comes from the motion sensors, compass and location).
   const [cam, setCam] = useState<'off' | 'starting' | 'on'>('off');
   const night = useNightMode();
+  // Night shot settings (remembered on this device) and whether it's dark enough for Auto to use it.
+  const [nightPref, setNightPref] = useState<NightPref>('auto');
+  const [nightLen, setNightLen] = useState<(typeof LENGTHS)[number]>(6);
+  const [dark, setDark] = useState(false);
+  const [progress, setProgress] = useState<number | null>(null);
+  const [nightSheet, setNightSheet] = useState(false);
+  const closeNightSheet = useCallback(() => setNightSheet(false), []);
+  useEffect(() => {
+    setNightPref(readPref<NightPref>(NIGHT_PREF, ['auto', 'on', 'off'], 'auto'));
+    setNightLen(readPref(NIGHT_LEN, LENGTHS, 6));
+  }, []);
 
   // The aurora forecast grid (the same one as the map), smoothed for sampling.
   useEffect(() => {
@@ -177,6 +198,20 @@ export function SkyView({ kp }: { kp: number | null }) {
   const moon = useMemo(() => (here ? moonPosition(Date.now(), here.lat, here.lon) : null), [here]);
   const peak = bandPeak(band);
 
+  // Auto: dark when the Sun is more than 6° below the horizon here, or the camera picture is dark.
+  useEffect(() => {
+    if (cam !== 'on') return;
+    const check = () => {
+      const sunDown = here ? sunAltitude(Date.now(), here.lat, here.lon) < -6 : false;
+      const b = video.current ? sceneBrightness(video.current) : null;
+      setDark(sunDown || (b !== null && b < DARK_SCENE));
+    };
+    check();
+    const id = setInterval(check, 3000);
+    return () => clearInterval(id);
+  }, [cam, here]);
+  const nightOn = nightPref === 'on' || (nightPref === 'auto' && dark);
+
   const capture = async () => {
     if (busy) return;
     setBusy(true);
@@ -193,7 +228,18 @@ export function SkyView({ kp }: { kp: number | null }) {
       // Full-resolution still where the browser offers it (Chrome on Android), flash explicitly off.
       const IC = (window as unknown as { ImageCapture?: new (t: MediaStreamTrack) => { takePhoto: (s?: object) => Promise<Blob> } }).ImageCapture;
       const track = stream.current?.getVideoTracks()[0];
-      if (IC && track) {
+      if (nightOn) {
+        // Night shot: a few seconds of frames, lined up, averaged and brightened.
+        const restore = track ? await longestExposure(track) : () => {};
+        setProgress(0);
+        try {
+          const r = await nightShot(v, nightLen * 1000, setProgress);
+          source = r.canvas; w = r.canvas.width; h = r.canvas.height;
+        } finally {
+          restore();
+          setProgress(null);
+        }
+      } else if (IC && track) {
         try {
           // Some cameras never answer takePhoto; after 4 s the live frame is used instead.
           const blob = await Promise.race([new IC(track).takePhoto({ fillLightMode: 'off' }), new Promise<never>((_, no) => setTimeout(() => no(new Error('timeout')), 4000))]);
@@ -335,6 +381,7 @@ export function SkyView({ kp }: { kp: number | null }) {
           </button>
         </div>
       </div>
+      {progress !== null && <p className="sky-hold" role="status">{t('sky.night.hold', { n: Math.max(1, Math.ceil(nightLen * (1 - progress))) })}</p>}
       {compass !== 'ok' && <p className="sky-hint" role="status">{compass === 'calibrate' ? t('sky.calibrate') : t('sky.noCompass')}</p>}
       {here?.name && <p className="sky-hint sky-hint-place">{t('sky.usingPlace', { place: here.name })}</p>}
 
@@ -346,7 +393,14 @@ export function SkyView({ kp }: { kp: number | null }) {
                 <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M7 11V8a5 5 0 0 1 10 0v3M5.5 11h13v9.5h-13z" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" /></svg>
                 {t('sky.captionOn')}
               </button>}
-          <button type="button" className="btn sky-shutter" onClick={capture} disabled={busy} aria-label={t('sky.capture')}><span /></button>
+          <div className="sky-shutter-wrap">
+            <button type="button" className={'btn sky-night-chip' + (nightOn ? ' on' : '')} onClick={() => setNightSheet(true)} aria-haspopup="dialog"
+              aria-label={t('sky.night.label', { state: nightOn ? t('sky.night.chipOn', { n: nightLen }) : t(`sky.night.${nightPref}`) })}>
+              <MoonIcon on={nightOn} size={14} />{nightOn ? t('sky.night.chipOn', { n: nightLen }) : nightPref === 'off' ? t('sky.night.chipOff') : t('sky.night.chipAuto')}
+            </button>
+            <button type="button" className="btn sky-shutter" onClick={capture} disabled={busy} aria-label={nightOn ? t('sky.night.capture', { n: nightLen }) : t('sky.capture')}
+              style={progress !== null ? { background: `conic-gradient(var(--green) ${Math.round(progress * 360)}deg, transparent 0)` } : undefined}><span /></button>
+          </div>
           {shot ? (
             <button type="button" className="btn sky-thumb" onClick={() => setGallery(true)} aria-label={t('gallery.open')}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -356,7 +410,33 @@ export function SkyView({ kp }: { kp: number | null }) {
         </div>
         <p className="sky-small" role="status">{error || saveNote || t('sky.photoNote')}</p>
       </div>
+      {nightSheet && (
+        <BottomSheet title={t('sky.night.title')} onClose={closeNightSheet}>
+          <span className="you-sheet-text">{t('sky.night.body')}</span>
+          <div className="you-group-rows">
+            {(['auto', 'on', 'off'] as NightPref[]).map(m => (
+              <button key={m} type="button" className="btn you-row" aria-pressed={nightPref === m} onClick={() => { setNightPref(m); writePref(NIGHT_PREF, m); }}>
+                <span className="you-row-label sun-lapse-option"><b>{t(`sky.night.${m}`)}</b>{m === 'auto' && <small>{t('sky.night.autoBody')}</small>}</span>
+                {nightPref === m && <Check />}
+              </button>
+            ))}
+          </div>
+          <span className="you-group-label">{t('sky.night.length')}</span>
+          <div className="you-group-rows">
+            {LENGTHS.map(n => (
+              <button key={n} type="button" className="btn you-row" aria-pressed={nightLen === n} onClick={() => { setNightLen(n); writePref(NIGHT_LEN, String(n)); }}>
+                <span className="you-row-label">{t('sky.night.seconds', { n })}</span>
+                {nightLen === n && <Check />}
+              </button>
+            ))}
+          </div>
+        </BottomSheet>
+      )}
       {galleryView}
     </div>
   );
 }
+
+const Check = () => (
+  <span style={{ color: 'var(--green)', display: 'flex' }}><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
+);
