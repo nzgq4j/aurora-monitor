@@ -9,7 +9,8 @@ export const dynamic = 'force-dynamic';
  * first: deleting the Stripe customer cancels any Stripe subscription at once, and a Google Play
  * subscription is set not to renew, so nothing is charged again.
  * Then the user is deleted, and the database removes their profile, locations, alert settings and
- * history, push devices and sightings with it (all reference auth.users on delete cascade).
+ * history, push devices, sightings, badges and gallery photos with it (all reference auth.users on delete
+ * cascade); gallery photo files are removed from storage first.
  */
 export async function POST(req: Request) {
   const user = await userFromRequest(req);
@@ -44,6 +45,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'billing_failed' }, { status: 502 });
     }
   }
+
+  // Gallery photo files (the rows go with the user).
+  const { data: files } = await admin.storage.from('gallery').list(user.id, { limit: 1000 });
+  if (files?.length) await admin.storage.from('gallery').remove(files.map(f => `${user.id}/${f.name}`));
 
   const { error } = await admin.auth.admin.deleteUser(user.id);
   if (error) {

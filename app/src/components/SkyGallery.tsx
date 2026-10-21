@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { deletePhotos, exportPhotos, inApp, listPhotos, markExported, type ExportResult, type GalleryPhoto } from '../lib/gallery';
 import { useI18n } from '../i18n/I18n';
 
@@ -9,6 +10,7 @@ const Icon = ({ d, size = 22 }: { d: string; size?: number }) => (
 );
 const SAVE = 'M12 4v11m-4.5-4.5L12 15l4.5-4.5M5 19h14';
 const SHARE = 'M12 15V4m-4 4 4-4 4 4M6 11v8h12v-8';
+const POST = 'M12 16V5m-4 4 4-4 4 4M4 15v4h16v-4';
 const TRASH = 'M5 7h14M10 7V5h4v2m-7 0 1 12h8l1-12';
 
 /**
@@ -17,6 +19,7 @@ const TRASH = 'M5 7h14M10 7V5h4v2m-7 0 1 12h8l1-12';
  */
 export function SkyGallery({ onClose }: { onClose: () => void }) {
   const { t, tn, date } = useI18n();
+  const router = useRouter();
   const [photos, setPhotos] = useState<GalleryPhoto[] | null>(null);
   const [open, setOpen] = useState<number | null>(null);
   const [selecting, setSelecting] = useState(false);
@@ -67,6 +70,8 @@ export function SkyGallery({ onClose }: { onClose: () => void }) {
     <div className="gallery-actions">
       <button type="button" className="btn" onClick={() => exportChosen('save')} disabled={!chosen.length}><Icon d={SAVE} />{t('gallery.save')}</button>
       <button type="button" className="btn" onClick={() => exportChosen('share')} disabled={!chosen.length}><Icon d={SHARE} />{t('gallery.share')}</button>
+      {/* One photo at a time to the community gallery, with where and how it was taken. */}
+      {current && <button type="button" className="btn" onClick={() => router.push(`/gallery/post?local=${encodeURIComponent(current.id)}`)}><Icon d={POST} />{t('gallery.post')}</button>}
       <button type="button" className={`btn${confirmDelete ? ' gallery-danger' : ''}`} onClick={remove} disabled={!chosen.length}>
         <Icon d={TRASH} />{confirmDelete ? tn('gallery.deleteConfirm', chosen.length) : t('gallery.delete')}
       </button>

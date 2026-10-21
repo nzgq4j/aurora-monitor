@@ -25,6 +25,8 @@ const sections: LegalSection[] = [
       <p><b>Alert settings and history.</b> Your alert rules, thresholds, quiet hours, time zone and delivery choices, and a record of the alerts we sent you (kept for 90 days) so we don&rsquo;t send the same alert twice.</p>
       <p><b>Notifications.</b> If you turn on push alerts, the address your browser or the Android app gives us for delivering notifications (a web push subscription or a Firebase token) and the type of device. We use it only to deliver your alerts.</p>
       <p><b>Sightings.</b> When you report that you saw aurora (&ldquo;I saw it&rdquo;), we store the time, a position rounded to about 10 km, the brightness you choose and the forecast score shown at the time. Recent sightings are shown on the map for 24 hours without anything that identifies you, and every sighting is deleted after 30 days.</p>
+      <p><b>Badges and points.</b> About an hour after a sighting, we check it against other reports and the forecast. If it is confirmed, we keep a record of what it earned (for example a report, the Kp at the time, a rounded place, or that it was more than 100 km from your Home) so your badges and points last after the sighting itself is deleted. Your badges are visible only to you; your gallery name, points and rank are shown with your gallery photos.</p>
+      <p><b>Gallery photos.</b> If you post a photo to the community gallery, we store and publicly show the photo, your caption, your gallery name and rank, the time it was taken, the Kp at that time, the camera settings recorded by Sky view and the place as precisely as you chose (a town to about 10 km, a wider area, or none). Location data embedded in the photo file is removed before upload. Helpful votes, reports and blocks you make are stored with your account and are not shown to others. You can remove your photos at any time; they are also deleted with your account.</p>
       <p><b>Subscriptions.</b> If you subscribe to a paid plan, our payment provider (Stripe) processes your payment. We receive and keep a customer reference, your plan, the subscription status and its renewal date. We never see or store your full card number. In the Android app, purchases may instead be handled by Google Play, which then shares the purchase status with us.</p>
       <p><b>Technical data.</b> Our hosting and database providers keep standard server logs (such as IP address, browser type and the time of a request) for security and to keep the service running.</p>
     </>,
@@ -32,7 +34,7 @@ const sections: LegalSection[] = [
   {
     h: 'What stays on your device',
     body: <>
-      <p><b>Camera, motion sensors and Sky view.</b> The camera picture and your phone&rsquo;s compass and motion sensors are used on your device to draw the sky overlay. Photos you take are kept in the app&rsquo;s gallery on your device. They are only copied elsewhere if you save them to your photo library or share them yourself. We never upload them.</p>
+      <p><b>Camera, motion sensors and Sky view.</b> The camera picture and your phone&rsquo;s compass and motion sensors are used on your device to draw the sky overlay. Photos you take are kept in the app&rsquo;s gallery on your device. They are only copied elsewhere if you save them to your photo library, share them yourself or post them to the community gallery. We never upload them otherwise.</p>
       <p><b>Your current position.</b> When you allow location access, your position is used on your device to show your sky. It is sent to us only if you save it as a location, or as a rounded position if you report a sighting.</p>
       <p><b>Preferences.</b> Settings such as red night mode, which cards are open and the map view are stored in your browser or the app (local storage). If you use Polar Lights without an account, your saved locations are stored there too.</p>
     </>,
@@ -56,7 +58,7 @@ const sections: LegalSection[] = [
   },
   {
     h: 'How long we keep data',
-    body: <p>Account data, saved locations and alert settings are kept until you delete them or your account. Alert history is kept for 90 days and sightings for 30 days. Notification addresses are removed when you turn push alerts off or when the delivery service reports them as no longer valid. Records of payments are kept as long as tax and accounting law requires.</p>,
+    body: <p>Account data, saved locations and alert settings are kept until you delete them or your account. Alert history is kept for 90 days and sightings for 30 days; badge records and gallery photos are kept until you remove them or delete your account. Notification addresses are removed when you turn push alerts off or when the delivery service reports them as no longer valid. Records of payments are kept as long as tax and accounting law requires.</p>,
   },
   {
     h: 'Your choices and rights',

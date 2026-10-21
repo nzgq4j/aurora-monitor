@@ -7,6 +7,8 @@ import { TIERS } from '../data';
 import { useStore } from '../store';
 import { useLocations } from '../lib/locations';
 import { listPhotos } from '../lib/gallery';
+import { myMember } from '../lib/community';
+import { rank } from '../lib/badges';
 import { SITE } from '../lib/site';
 import { useI18n } from '../i18n/I18n';
 import { applyLocale } from '../i18n/I18n';
@@ -46,6 +48,7 @@ const P = {
   lock: 'M5 11h14v9H5zM8 11V8a4 4 0 0 1 8 0v3',
   logout: 'M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10',
   check: 'M5 12.5l4.5 4.5L19 7.5',
+  badge: 'M12 3l7 2.5v6c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9v-6L12 3Z',
 };
 const Icon = ({ d, size = 22 }: { d: string; size?: number }) => (
   <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" style={{ flex: 'none' }}>
@@ -93,11 +96,13 @@ export function You() {
   const [gallery, setGallery] = useState(false);
   const [photos, setPhotos] = useState<number | null>(null);
   const [langBusy, setLangBusy] = useState(false);
+  const [points, setPoints] = useState<number | null>(null);
   const deletion = useAccountDeletion();
   // Screens this tab pushed onto the history, so its back arrow can step back instead of leaving.
   const depth = useRef(0);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { if (auth.user) void myMember().then(m => setPoints(m?.points ?? null)); }, [auth.user]);
   useEffect(() => { listPhotos().then(p => setPhotos(p.length)).catch(() => setPhotos(0)); }, [gallery]);
   useEffect(() => {
     const sync = () => { const v = readView(); if (!v) depth.current = 0; setView(v); setSheet(null); };
@@ -194,6 +199,7 @@ export function You() {
 
       <Group label={t('you.group.aurora')}>
         <Row icon={P.pin} label={t('you.locations')} value={String(locations.length)} onClick={() => open('locations')} />
+        {signedIn && <Row icon={P.badge} label={t('badges.title')} value={points === null ? '' : t(`rank.${rank(points).id}` as MessageKey)} onClick={() => go('badges')} />}
         <Row icon={P.photo} label={t('gallery.title')} value={photos === null ? '' : String(photos)} onClick={() => setGallery(true)} />
       </Group>
 

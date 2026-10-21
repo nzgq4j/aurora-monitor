@@ -254,6 +254,8 @@ export function SkyView({ kp }: { kp: number | null }) {
       const IC = (window as unknown as { ImageCapture?: new (t: MediaStreamTrack) => { takePhoto: (s?: object) => Promise<Blob> } }).ImageCapture;
       const track = stream.current?.getVideoTracks()[0];
       let longShot: HTMLImageElement | null = null;
+      // How it was taken, kept with the photo for the community gallery ("night|4|24", "long|10|1600", "photo").
+      let camera = 'photo';
       if (nightOn && native) {
         // A true long exposure from the app's camera: the web view hands the camera over for the shot.
         const exposureMs = Math.min(nightLen * 1000, native.maxExposureMs);
@@ -269,6 +271,7 @@ export function SkyView({ kp }: { kp: number | null }) {
           img.src = r.dataUrl;
           await img.decode();
           longShot = img;
+          camera = `long|${Math.round(r.exposureMs / 100) / 10}|${r.iso}`;
         } catch { /* stacked instead, below */ }
         finally {
           clearInterval(tick);
@@ -288,6 +291,7 @@ export function SkyView({ kp }: { kp: number | null }) {
         try {
           const r = await nightShot(cur, nightLen * 1000, setProgress);
           source = r.canvas; w = r.canvas.width; h = r.canvas.height;
+          camera = `night|${nightLen}|${r.frames}`;
         } finally {
           restore();
           setProgress(null);
@@ -358,7 +362,9 @@ export function SkyView({ kp }: { kp: number | null }) {
       const blob = await new Promise<Blob | null>(res => c.toBlob(res, 'image/jpeg', 0.92));
       if (!blob) throw new Error('encode');
       // Straight into the gallery, as a camera app does; saving to Photos or sharing happens from there.
-      const p = await addPhoto(blob, `polar-lights-sky-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.jpg`);
+      const p = await addPhoto(blob, `polar-lights-sky-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.jpg`, Date.now(), {
+        lat: here ? Math.round(here.lat * 10) / 10 : null, lon: here ? Math.round(here.lon * 10) / 10 : null, kp, camera,
+      });
       showLatest(p.thumb);
       setSaveNote(t('gallery.added'));
     } catch {

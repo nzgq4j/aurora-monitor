@@ -6,6 +6,7 @@ import { PAYMENTS, initials, useAuth } from '../lib/auth';
 import { C, CHANNEL_DEFS, TIERS, TRIGGER_DEFS, f, kpBarColor, kpColor } from '../data';
 import { G_SCALE, kpNeeded, moon } from '../lib/astro';
 import type { AccountData, KpSource } from '../lib/history';
+import { RankStrip } from './Badges';
 
 /** Names the Kp history's source(s) in chart labels; `long` gives the full names. */
 function kpSourceLabel(sources: KpSource[], long = false): string {
@@ -184,6 +185,7 @@ function Overview({ data }: { data: AccountData }) {
 
   return (
     <div data-screen-label="Dashboard · Overview" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      <RankStrip />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(340px,100%),1fr))', gap: 20 }}>
         <div style={{ position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 14, padding: 'clamp(20px, 5vw, 28px)', border: `1px solid ${plan.accent}`, borderRadius: 18, background: 'var(--panel)' }}>
           <div aria-hidden="true" style={{ position: 'absolute', right: -90, bottom: -150, width: 340, height: 340, borderRadius: '50%', border: `38px solid ${plan.accent}`, opacity: .45, filter: 'blur(30px)' }} />

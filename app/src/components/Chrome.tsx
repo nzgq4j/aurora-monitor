@@ -6,7 +6,7 @@ import { SITE } from '../lib/site';
 import { useI18n } from '../i18n/I18n';
 import type { MessageKey } from '../i18n/core';
 
-const NAV: [MessageKey, Screen][] = [['nav.now', 'home'], ['nav.map', 'map'], ['nav.dashboard', 'account']];
+const NAV: [MessageKey, Screen][] = [['nav.now', 'home'], ['nav.map', 'map'], ['nav.gallery', 'gallery'], ['nav.dashboard', 'account']];
 
 export function Header({ kpLabel }: { kpLabel: string }) {
   const { signedIn, live, screen: current, plan, go, goAccount } = useStore();
@@ -26,7 +26,7 @@ export function Header({ kpLabel }: { kpLabel: string }) {
           <nav className="nav">
             {NAV.map(([label, screen]) => {
               // Plans and checkout live under the Dashboard.
-              const on = current === screen || (screen === 'account' && (current === 'plans' || current === 'checkout'));
+              const on = current === screen || (screen === 'account' && (current === 'plans' || current === 'checkout' || current === 'badges'));
               return (
                 <button key={screen} type="button" className={'btn nav-item' + (on ? ' on' : '')} aria-current={on ? 'page' : undefined}
                   onClick={screen === 'account' ? goAccount : () => go(screen)}>
@@ -76,7 +76,7 @@ export function TabBar() {
   const { screen, go } = useStore();
   const { t } = useI18n();
   // You holds the account, plans, sign-in and settings.
-  const you = screen === 'account' || screen === 'plans' || screen === 'checkout' || screen === 'signin';
+  const you = screen === 'account' || screen === 'plans' || screen === 'checkout' || screen === 'signin' || screen === 'badges';
   const tab = (id: string, label: string, on: boolean, onClick: () => void) => (
     <button key={id} type="button" className={`btn tabbar-item tab-${id}` + (on ? ' on' : '')} aria-current={on ? 'page' : undefined} onClick={onClick}>
       <Icon id={id} /><span>{label}</span>
@@ -86,8 +86,8 @@ export function TabBar() {
     <nav className="tabbar" aria-label={t('nav.main')}>
       {tab('now', t('nav.now'), screen === 'home', () => go('home'))}
       {tab('map', t('nav.map'), screen === 'map', () => go('map'))}
-      {/* Sky view needs a camera and motion sensors: touch devices only (see globals.css). */}
-      {tab('sky', t('nav.sky'), screen === 'sky', () => go('sky'))}
+      {/* The Sky tab: the community gallery, with Sky view's camera a tap away. */}
+      {tab('sky', t('nav.sky'), screen === 'sky' || screen === 'gallery', () => go('gallery'))}
       {tab('alerts', t('nav.alerts'), screen === 'alerts', () => go('alerts'))}
       {tab('account', t('nav.you'), you, () => go('account', { tab: 'overview' }))}
     </nav>
