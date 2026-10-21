@@ -698,9 +698,12 @@ button.you-back { width: 44px; height: 44px; display: flex; align-items: center;
 button.you-sheet-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, .6); animation: you-fade .2s ease-out; }
 .you-sheet {
   position: relative; display: flex; flex-direction: column; gap: 14px; max-height: 85vh; overflow-y: auto; outline: none;
-  padding: 10px var(--gutter) calc(24px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line-2); border-radius: 24px 24px 0 0;
+  padding: 10px max(var(--gutter), env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) max(var(--gutter), env(safe-area-inset-left));
+  border-top: 1px solid var(--line-2); border-radius: 24px 24px 0 0;
   background: #0f1210; animation: you-up .22s ease-out;
 }
+/* The sheet scrolls when its content is taller than it (landscape phones); its parts never shrink to fit. */
+.you-sheet > * { flex-shrink: 0; }
 .you-sheet-handle { width: 40px; height: 4px; border-radius: 2px; background: var(--line-3); align-self: center; }
 .you-sheet-title { margin: 0; font: 700 18px var(--f-body); }
 .you-sheet-text { font-size: 15px; line-height: 1.45; color: var(--soft); }
