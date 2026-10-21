@@ -235,6 +235,9 @@ export function SkyView({ kp }: { kp: number | null }) {
   const capture = async () => {
     if (busy) return;
     setBusy(true);
+    // How the phone is held as the shutter is pressed: the picture comes the way the screen is turned, so a
+    // phone held sideways (with the screen kept upright) needs the photo turned by the nearest quarter.
+    const turns = ((Math.round((pose?.roll ?? 0) / 90) % 4) + 4) % 4;
     try {
       // Camera not running (e.g. not allowed at first): try again for the shot, and let its exposure settle.
       if (opening.current) await opening.current;
@@ -294,6 +297,15 @@ export function SkyView({ kp }: { kp: number | null }) {
           const bmp = await createImageBitmap(blob);
           source = bmp; w = bmp.width; h = bmp.height;
         } catch { /* fall back to the live frame */ }
+      }
+      if (turns) {
+        const r = document.createElement('canvas');
+        r.width = turns % 2 ? h : w; r.height = turns % 2 ? w : h;
+        const rc = r.getContext('2d')!;
+        rc.translate(r.width / 2, r.height / 2);
+        rc.rotate((-turns * Math.PI) / 2);
+        rc.drawImage(source, -w / 2, -h / 2, w, h);
+        source = r; w = r.width; h = r.height;
       }
       // Small camera pictures (some phones, the emulator) are scaled up so the caption text stays sharp.
       const k = Math.max(1, PHOTO_MIN_EDGE / Math.max(w, h));
