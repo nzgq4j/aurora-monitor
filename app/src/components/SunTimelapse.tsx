@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { BottomSheet } from './BottomSheet';
 import { supabase } from '../lib/supabase';
 import { SDO_IMAGES } from '../lib/sdo';
 import { useI18n } from '../i18n/I18n';
@@ -47,6 +48,9 @@ export function SunTimelapse() {
   const [loaded, setLoaded] = useState(0);
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
+  // Phones pick the view and span from a sheet (see the rows below); wider screens use the chips.
+  const [sheet, setSheet] = useState<null | 'view' | 'span'>(null);
+  const closeSheet = useCallback(() => setSheet(null), []);
   const r = RANGES.find(x => x.id === range)!;
 
   useEffect(() => {
@@ -90,7 +94,40 @@ export function SunTimelapse() {
             <button key={x.id} type="button" className="btn" aria-pressed={range === x.id} onClick={() => setRange(x.id)}>{t(`sunLapse.range.${x.id}`)}</button>
           ))}
         </div>
+        <div className="you-group-rows sun-lapse-rows">
+          <button type="button" className="btn you-row" aria-haspopup="dialog" onClick={() => setSheet('view')}>
+            <span className="you-row-label">{t('sunLapse.view')}</span><span className="you-row-value">{label}</span><Chevron />
+          </button>
+          <button type="button" className="btn you-row" aria-haspopup="dialog" onClick={() => setSheet('span')}>
+            <span className="you-row-label">{t('sunLapse.span')}</span><span className="you-row-value">{t(`sunLapse.range.${range}`)}</span><Chevron />
+          </button>
+        </div>
       </div>
+
+      {sheet === 'view' && (
+        <BottomSheet title={t('sunLapse.view')} onClose={closeSheet}>
+          <div className="you-group-rows">
+            {SDO_IMAGES.map(i => (
+              <button key={i.id} type="button" className="btn you-row" aria-pressed={channel === i.id} onClick={() => { setChannel(i.id); closeSheet(); }}>
+                <span className="you-row-label sun-lapse-option"><b>{i.label}</b><small>{t(`sdo.${i.id}`)}</small></span>
+                {channel === i.id && <Check />}
+              </button>
+            ))}
+          </div>
+        </BottomSheet>
+      )}
+      {sheet === 'span' && (
+        <BottomSheet title={t('sunLapse.span')} onClose={closeSheet}>
+          <div className="you-group-rows">
+            {RANGES.map(x => (
+              <button key={x.id} type="button" className="btn you-row" aria-pressed={range === x.id} onClick={() => { setRange(x.id); closeSheet(); }}>
+                <span className="you-row-label">{t(`sunLapse.range.${x.id}`)}</span>
+                {range === x.id && <Check />}
+              </button>
+            ))}
+          </div>
+        </BottomSheet>
+      )}
 
       <div className="sun-lapse-frame">
         {f ? (
@@ -123,3 +160,10 @@ export function SunTimelapse() {
     </section>
   );
 }
+
+const Chevron = () => (
+  <span className="you-chevron"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
+);
+const Check = () => (
+  <span style={{ color: 'var(--green)', display: 'flex' }}><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
+);
