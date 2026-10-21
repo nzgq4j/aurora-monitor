@@ -24,6 +24,10 @@ export interface Profile {
   cancelAtPeriodEnd: boolean;
   /** True once the user has a Stripe customer, so the billing portal can open. */
   hasBilling: boolean;
+  /** Who bills the subscription: Stripe (website) or Google Play (Android app). */
+  billingSource: 'stripe' | 'play' | null;
+  /** The Google Play purchase the profile mirrors, if any. */
+  playPurchaseToken: string | null;
 }
 
 /** Card payments are on once the Stripe keys are configured (the publishable key doubles as the switch). */
@@ -35,11 +39,13 @@ const PAID = ['trialing', 'active', 'past_due'];
 interface ProfileRow {
   id: string; display_name: string | null; plan: TierId; billing_cycle: 'monthly' | 'annual'; trial_ends_at: string | null; created_at: string; locale: string | null;
   stripe_customer_id: string | null; subscription_status: string | null; current_period_end: string | null; cancel_at_period_end: boolean;
+  billing_source: 'stripe' | 'play' | null; play_purchase_token: string | null;
 }
 const fromRow = (r: ProfileRow): Profile => ({
   id: r.id, displayName: r.display_name, plan: r.plan, billingCycle: r.billing_cycle, trialEndsAt: r.trial_ends_at, createdAt: r.created_at,
   locale: isLocale(r.locale) ? r.locale : null,
   subscriptionStatus: r.subscription_status, currentPeriodEnd: r.current_period_end, cancelAtPeriodEnd: !!r.cancel_at_period_end, hasBilling: !!r.stripe_customer_id,
+  billingSource: r.billing_source ?? null, playPurchaseToken: r.play_purchase_token ?? null,
 });
 
 type Result = { error: string | null };
@@ -71,6 +77,8 @@ interface AuthCtx {
   /** Stripe Checkout (url) or Billing Portal (url); `error` is an API error code. */
   startCheckout: (tier: TierId, cycle: 'monthly' | 'annual') => Promise<{ url?: string; error?: string }>;
   openBillingPortal: () => Promise<{ url?: string; error?: string }>;
+  /** Send a Google Play purchase token to the server to check and apply; true when it's been applied. */
+  verifyPlay: (purchaseToken: string) => Promise<boolean>;
   /** Delete the account and everything stored with it, then sign out on this device. */
   deleteAccount: () => Promise<Result>;
 }
@@ -240,6 +248,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       startCheckout: (tier, cycle) => billing('/api/stripe/checkout', { tier, cycle }),
       openBillingPortal: () => billing('/api/stripe/portal'),
+      verifyPlay: async purchaseToken => {
+        const r = await billing('/api/play/verify', { purchaseToken }) as { status?: string; error?: string };
+        if (user) await loadProfile(user);
+        return !!r.status;
+      },
       deleteAccount: async () => {
         if (!sb || !user) return none;
         const r = await billing('/api/account/delete') as { ok?: boolean; error?: string };
