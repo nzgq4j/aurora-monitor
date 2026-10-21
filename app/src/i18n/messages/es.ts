@@ -1076,6 +1076,7 @@ export const es: Messages = {
   'badges.seasonsLeft.one': "Falta {n} estación",
   'badges.seasonsLeft.other': "Faltan {n} estaciones",
   'badges.view': "Ver insignias",
+  'badges.cardKicker': "Insignia conseguida",
   'badges.family.reporter': "Observador",
   'badges.family.storm': "Testigo de tormentas",
   'badges.family.contributor': "Colaborador",

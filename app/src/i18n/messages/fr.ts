@@ -1076,6 +1076,7 @@ export const fr: Messages = {
   'badges.seasonsLeft.one': "Encore {n} saison",
   'badges.seasonsLeft.other': "Encore {n} saisons",
   'badges.view': "Voir les badges",
+  'badges.cardKicker': "Badge obtenu",
   'badges.family.reporter': "Observateur",
   'badges.family.storm': "Témoin des tempêtes",
   'badges.family.contributor': "Contributeur",
