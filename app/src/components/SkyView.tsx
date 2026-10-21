@@ -5,6 +5,7 @@ import type { OvalGrid } from '../app/api/oval/route';
 import { moonPosition, sunAltitude } from '../lib/astro';
 import { longestExposure, nightShot, sceneBrightness } from '../lib/nightShot';
 import { BottomSheet } from './BottomSheet';
+import { nativePlugin } from '../lib/native';
 import { useLocations } from '../lib/locations';
 import { sampleOval, smoothOval } from '../lib/ovalSmooth';
 import { auroraBand, bandPeak, cameraPose, kpEdge, point16, wrap180, type BandSlice } from '../lib/skyView';
@@ -29,6 +30,18 @@ const NIGHT_PREF = 'pl.nightShot', NIGHT_LEN = 'pl.nightShotLen';
 const LENGTHS = [3, 6, 10] as const;
 /** Below this average brightness (0–1) the picture counts as dark. */
 const DARK_SCENE = 0.12;
+/**
+ * The Android app's long-exposure camera (LongExposurePlugin.java): one still with a manual exposure of up
+ * to the phone's limit. Used for night shots when the phone allows at least MIN_NATIVE_MS.
+ */
+type LongExposure = {
+  capabilities: () => Promise<{ available: boolean; maxExposureMs?: number; minIso?: number; maxIso?: number }>;
+  capture: (o: { exposureMs: number; iso: number }) => Promise<{ dataUrl: string; exposureMs: number; iso: number }>;
+};
+type NativeCaps = { maxExposureMs: number; minIso: number; maxIso: number };
+const MIN_NATIVE_MS = 1000;
+/** ISO for an exposure: about ISO 1600 at 10 s, more for shorter ones, at most ISO 6400 (noise). */
+const isoFor = (ms: number, c: NativeCaps) => Math.max(c.minIso, Math.min(c.maxIso, 6400, Math.round(16000 / (ms / 1000))));
 const readPref = <T,>(k: string, ok: readonly T[], d: T): T => { try { const v = localStorage.getItem(k); const x = ok.find(o => String(o) === v); return x ?? d; } catch { return d; } };
 const writePref = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* storage unavailable */ } };
 type Pose = { az: number | null; el: number; roll: number };
@@ -80,6 +93,13 @@ export function SkyView({ kp }: { kp: number | null }) {
   const [progress, setProgress] = useState<number | null>(null);
   const [nightSheet, setNightSheet] = useState(false);
   const closeNightSheet = useCallback(() => setNightSheet(false), []);
+  // In the Android app on a phone that allows exposures of a second or more: true long exposures.
+  const [native, setNative] = useState<NativeCaps | null>(null);
+  useEffect(() => {
+    nativePlugin<LongExposure>('LongExposure')?.capabilities().then(c => {
+      if (c.available && (c.maxExposureMs ?? 0) >= MIN_NATIVE_MS) setNative({ maxExposureMs: c.maxExposureMs!, minIso: c.minIso ?? 100, maxIso: c.maxIso ?? 3200 });
+    }).catch(() => { /* stacked night shots */ });
+  }, []);
   useEffect(() => {
     setNightPref(readPref<NightPref>(NIGHT_PREF, ['auto', 'on', 'off'], 'auto'));
     setNightLen(readPref(NIGHT_LEN, LENGTHS, 6));
@@ -228,12 +248,40 @@ export function SkyView({ kp }: { kp: number | null }) {
       // Full-resolution still where the browser offers it (Chrome on Android), flash explicitly off.
       const IC = (window as unknown as { ImageCapture?: new (t: MediaStreamTrack) => { takePhoto: (s?: object) => Promise<Blob> } }).ImageCapture;
       const track = stream.current?.getVideoTracks()[0];
-      if (nightOn) {
+      let longShot: HTMLImageElement | null = null;
+      if (nightOn && native) {
+        // A true long exposure from the app's camera: the web view hands the camera over for the shot.
+        const exposureMs = Math.min(nightLen * 1000, native.maxExposureMs);
+        stream.current?.getTracks().forEach(tr => tr.stop());
+        stream.current = null;
+        setCam('off');
+        const began = Date.now();
+        setProgress(0);
+        const tick = setInterval(() => setProgress(Math.min(1, (Date.now() - began) / exposureMs)), 100);
+        try {
+          const r = await nativePlugin<LongExposure>('LongExposure')!.capture({ exposureMs, iso: isoFor(exposureMs, native) });
+          const img = new Image();
+          img.src = r.dataUrl;
+          await img.decode();
+          longShot = img;
+        } catch { /* stacked instead, below */ }
+        finally {
+          clearInterval(tick);
+          setProgress(null);
+        }
+        if (!(await openCamera())) return;
+        if (!longShot) await new Promise(res => setTimeout(res, 800));
+      }
+      const cur = video.current ?? v;
+      if (longShot) {
+        source = longShot; w = longShot.naturalWidth; h = longShot.naturalHeight;
+      } else if (nightOn) {
         // Night shot: a few seconds of frames, lined up, averaged and brightened.
-        const restore = track ? await longestExposure(track) : () => {};
+        const tr = stream.current?.getVideoTracks()[0];
+        const restore = tr ? await longestExposure(tr) : () => {};
         setProgress(0);
         try {
-          const r = await nightShot(v, nightLen * 1000, setProgress);
+          const r = await nightShot(cur, nightLen * 1000, setProgress);
           source = r.canvas; w = r.canvas.width; h = r.canvas.height;
         } finally {
           restore();
@@ -413,6 +461,7 @@ export function SkyView({ kp }: { kp: number | null }) {
       {nightSheet && (
         <BottomSheet title={t('sky.night.title')} onClose={closeNightSheet}>
           <span className="you-sheet-text">{t('sky.night.body')}</span>
+          {native && <span className="you-sheet-text">{t('sky.night.native', { s: Math.round(native.maxExposureMs / 100) / 10 })}</span>}
           <div className="you-group-rows">
             {(['auto', 'on', 'off'] as NightPref[]).map(m => (
               <button key={m} type="button" className="btn you-row" aria-pressed={nightPref === m} onClick={() => { setNightPref(m); writePref(NIGHT_PREF, m); }}>
