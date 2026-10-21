@@ -11,6 +11,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(PhotoLibraryPlugin.class);
         registerPlugin(GoogleSignInPlugin.class);
         registerPlugin(PlayBillingPlugin.class);
+        registerPlugin(LongExposurePlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

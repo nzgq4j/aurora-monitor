@@ -102,6 +102,7 @@ export const nl: Messages = {
   'sky.capture': "Leg de hemel vast",
   'sky.night.title': "Nachtfoto",
   'sky.night.body': "Voor een donkere hemel: de camera neemt een paar seconden op, lijnt de beelden uit en stapelt ze tot één helderdere, schonere foto, zoals de nachtmodus van telefoons. Houd de telefoon stil of leg hem ergens op.",
+  'sky.night.native': "Deze telefoon kan echte lange belichtingen tot {s} s maken en nachtfoto’s gebruiken die: leg de telefoon op iets stevigs.",
   'sky.night.auto': "Automatisch",
   'sky.night.autoBody': "Als de zon hier onder is of het beeld donker is",
   'sky.night.on': "Altijd",
