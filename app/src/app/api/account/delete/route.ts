@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { billingProfile, stripe, supabaseAdmin, userFromRequest } from '../../../../lib/billing';
 import { PLAY_PRODUCT, cancelPlay, playAccount } from '../../../../lib/play';
+import { removeFolder } from '../../../../lib/galleryFiles';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,9 +47,8 @@ export async function POST(req: Request) {
     }
   }
 
-  // Gallery photo files (the rows go with the user).
-  const { data: files } = await admin.storage.from('gallery').list(user.id, { limit: 1000 });
-  if (files?.length) await admin.storage.from('gallery').remove(files.map(f => `${user.id}/${f.name}`));
+  // Gallery photo files, all of them (the rows go with the user). Any left behind are cleared by the daily cleanup.
+  await removeFolder(admin, user.id);
 
   const { error } = await admin.auth.admin.deleteUser(user.id);
   if (error) {
