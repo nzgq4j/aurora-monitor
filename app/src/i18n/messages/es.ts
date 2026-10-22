@@ -563,6 +563,8 @@ export const es: Messages = {
   'tonight.level.goLater': 'Sal más tarde',
   'tonight.level.maybe': 'Posible',
   'tonight.level.no': 'Poco probable',
+  'tonight.level.unavailable': "Previsión no disponible",
+  'tonight.unavailable': "Ahora mismo no se puede acceder a la previsión de auroras, así que no se sabe la probabilidad de esta noche. Se actualizará sola cuando vuelvan los datos.",
   'tonight.score': 'índice de probabilidad',
   'tonight.best': 'Mejor {from}–{to}',
   'tonight.noWindow': 'Sin buen momento en las próximas 12 horas',

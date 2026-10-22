@@ -563,6 +563,8 @@ export const nl: Messages = {
   'tonight.level.goLater': 'Ga later naar buiten',
   'tonight.level.maybe': 'Mogelijk',
   'tonight.level.no': 'Onwaarschijnlijk',
+  'tonight.level.unavailable': "Verwachting niet beschikbaar",
+  'tonight.unavailable': "De noorderlichtverwachting is nu niet bereikbaar, dus de kans voor vannacht is onbekend. Hij werkt zichzelf bij zodra de gegevens terug zijn.",
   'tonight.score': 'kansscore',
   'tonight.best': 'Beste {from}–{to}',
   'tonight.noWindow': 'Geen goed moment in de komende 12 uur',

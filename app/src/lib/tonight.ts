@@ -25,6 +25,8 @@ export interface HourScore {
   moonUp: boolean;
   /** Each factor, 0-1; the smallest is what holds the hour back. */
   f: Record<Factor, number>;
+  /** Set when there was no Kp and no OVATION model for the hour, so its aurora chance isn't known. */
+  unknown?: true;
 }
 
 export interface Inputs {
@@ -80,12 +82,14 @@ export function hourlyScores(x: Inputs): HourScore[] {
       cloud: cloud === null ? 0.7 : 1 - cloud / 100,
       moon: moonUp ? 1 - 0.35 * x.moonIllumination : 1,
     };
-    out.push({ t, score: Math.round(100 * f.aurora * f.dark * f.cloud * f.moon), kp, cloud, sunAlt, moonUp, f });
+    const known = kp !== null || (i <= 1 && x.ovationNearby !== null);
+    out.push({ t, score: Math.round(100 * f.aurora * f.dark * f.cloud * f.moon), kp, cloud, sunAlt, moonUp, f, ...(known ? {} : { unknown: true as const }) });
   }
   return out;
 }
 
-export type Level = 'goNow' | 'goLater' | 'maybe' | 'no';
+/** `unavailable`: the aurora forecast couldn't be read, so tonight's chance isn't known (not "no"). */
+export type Level = 'goNow' | 'goLater' | 'maybe' | 'no' | 'unavailable';
 
 export interface Verdict {
   level: Level;
@@ -104,6 +108,7 @@ export interface Verdict {
 
 export function verdict(hours: HourScore[], need: number): Verdict {
   const now = hours[0];
+  if (hours.every(h => h.unknown)) return { level: 'unavailable', score: 0, best: now, subject: now, window: null, limit: null, look: 'low' };
   let bi = 0;
   hours.forEach((h, i) => { if (h.score > hours[bi].score) bi = i; });
   const best = hours[bi];

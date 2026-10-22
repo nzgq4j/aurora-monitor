@@ -22,7 +22,13 @@ interface Profile { id: string; plan: string | null; subscription_status: string
 interface Loc { id: string; user_id: string; name: string; lat: number; lon: number; is_home: boolean }
 interface Alert { kind: AlertKind; location: Loc | null; level: AlertLevel | null; score: number | null; kp: number | null; look?: 'low' | 'high' | 'overhead' }
 
-export interface RunSummary { users: number; places: number; alerts: number; emailed: number; pushed: number; failed: number; noProvider: number; skippedQuiet: number }
+export interface RunSummary {
+  users: number; places: number; alerts: number; emailed: number; pushed: number; failed: number; noProvider: number; skippedQuiet: number;
+  /** Users not reached this run (out of time, or their batch couldn't be read); they come first next run. */
+  deferred: number;
+  /** False when Kp and the OVATION model were both unavailable, so nothing could be judged. */
+  feedsOk: boolean;
+}
 
 /** Mirrors public.effective_plan(): a paid plan counts while its subscription or trial is live. */
 function isChaser(p: Profile | undefined, now: number): boolean {
@@ -31,28 +37,36 @@ function isChaser(p: Profile | undefined, now: number): boolean {
   return !!p.trial_ends_at && Date.parse(p.trial_ends_at) > now;
 }
 
+/** Users read together (plan, places, recent alerts): keeps every query's URL short. */
+const BATCH = 100;
+/** Users alerted at the same time within a batch. */
+const PARALLEL = 5;
+/** No new user is started after this long, so a run finishes inside the route's 60-second limit. */
+const BUDGET_MS = 40_000;
+
+/** Every alert_settings row, a page at a time (the API returns at most 1,000 rows per request). */
+async function allSettings(admin: SupabaseClient): Promise<Settings[]> {
+  const out: Settings[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await admin.from('alert_settings').select('user_id, kp_threshold, rules, time_zone, channels')
+      .order('user_id').range(from, from + 999);
+    if (error) throw new Error(`alert_settings: ${error.message}`);
+    out.push(...(data as Settings[]));
+    if (data.length < 1000) return out;
+  }
+}
+
 export async function runAlerts(admin: SupabaseClient, now = Date.now()): Promise<RunSummary> {
-  const summary: RunSummary = { users: 0, places: 0, alerts: 0, emailed: 0, pushed: 0, failed: 0, noProvider: 0, skippedQuiet: 0 };
-  const { data: settings, error } = await admin.from('alert_settings').select('user_id, kp_threshold, rules, time_zone, channels');
-  if (error) throw new Error(`alert_settings: ${error.message}`);
-  const active = (settings as Settings[]).filter(s => { const r = normalizeRules(s.rules); return r.aurora || r.storm; });
+  const started = Date.now();
+  const summary: RunSummary = { users: 0, places: 0, alerts: 0, emailed: 0, pushed: 0, failed: 0, noProvider: 0, skippedQuiet: 0, deferred: 0, feedsOk: true };
+  const active = (await allSettings(admin)).filter(s => { const r = normalizeRules(s.rules); return r.aurora || r.storm; });
   if (!active.length) return summary;
-  const ids = active.map(s => s.user_id);
 
-  const [kpLatest, series, oval, profilesRes, locsRes, logRes] = await Promise.all([
-    kpNow(), kpSeries(), ovation(),
-    admin.from('profiles').select('id, plan, subscription_status, trial_ends_at, locale').in('id', ids),
-    admin.from('locations').select('id, user_id, name, lat, lon, is_home').in('user_id', ids),
-    admin.from('alert_log').select('user_id, location_id, kind, created_at').in('user_id', ids).gte('created_at', new Date(now - 12 * 36e5).toISOString()),
-  ]);
-  const profiles = new Map((profilesRes.data as Profile[] | null ?? []).map(p => [p.id, p]));
-  const locsBy = new Map<string, Loc[]>();
-  for (const l of (locsRes.data as Loc[] | null ?? [])) locsBy.set(l.user_id, [...(locsBy.get(l.user_id) ?? []), l]);
-  const recent = (logRes.data ?? []) as { user_id: string; location_id: string | null; kind: AlertKind; created_at: string }[];
-  const sentWithin = (user: string, loc: string | null, kinds: AlertKind[], hours: number) =>
-    recent.some(r => r.user_id === user && r.location_id === loc && kinds.includes(r.kind) && Date.parse(r.created_at) > now - hours * 36e5);
-
+  const [kpLatest, series, oval] = await Promise.all([kpNow(), kpSeries(), ovation()]);
   const kp = kpLatest?.kp ?? null;
+  // With no Kp and no OVATION model nothing can be judged, so nothing is sent and the run says why.
+  summary.feedsOk = kp !== null || series.length > 0 || oval !== null;
+  if (!summary.feedsOk) return summary;
   const storm = stormKp(kp, series, now);
   // Cloud forecasts are shared between users with places close together.
   const clouds = new Map<string, Promise<CloudForecast | null>>();
@@ -62,63 +76,103 @@ export async function runAlerts(admin: SupabaseClient, now = Date.now()): Promis
     return clouds.get(k)!;
   };
 
-  for (const s of active) {
-    summary.users++;
-    // One user's failure (bad saved data, a delivery error) never stops the run for everyone else.
-    try {
-      const rules: AlertRules = normalizeRules(s.rules);
-      const profile = profiles.get(s.user_id);
-      const chaser = isChaser(profile, now);
-      const alerts: Alert[] = [];
+  // Each run starts at a different point in the list, so if a run runs out of time it isn't always the
+  // same users who wait for the next one.
+  const shift = (Math.floor(now / 6e5) * 7919) % active.length;
+  const order = [...active.slice(shift), ...active.slice(0, shift)];
 
-      if (rules.storm && storm !== null && storm >= s.kp_threshold && !sentWithin(s.user_id, null, ['storm'], REPEAT_HOURS.storm)) {
-        alerts.push({ kind: 'storm', location: null, level: null, score: null, kp: storm });
-      }
-
-      const quiet = inQuietHours(rules, now, s.time_zone);
-      const all = locsBy.get(s.user_id) ?? [];
-      // Free covers the home location; Chaser covers every saved location.
-      const places = chaser ? all.slice(0, 10) : all.filter(l => l.is_home).slice(0, 1);
-      if (rules.aurora && quiet && places.length) summary.skippedQuiet++;
-      if (rules.aurora && !quiet) {
-        for (const loc of places) {
-          summary.places++;
-          const need = kpNeeded(loc.lat, loc.lon);
-          const cloud = await cloudAt(loc.lat, loc.lon);
-          const hours = hourlyScores({
-            lat: loc.lat, lon: loc.lon, need, kpNow: kp, series,
-            ovationNearby: oval ? ovalAt(oval, loc.lat, loc.lon).nearby : null,
-            cloudNow: cloud?.aurora ?? null, cloudHourly: cloud?.next12h ?? [],
-            moonIllumination: moon(now, loc.lat, loc.lon).illumination, now,
-          });
-          const d = decidePlace(rules, hours, chaser);
-          if (!d) continue;
-          // A heads-up isn't repeated after the aurora alert itself has gone out.
-          const blockers: AlertKind[] = d.kind === 'aurora' ? ['aurora'] : ['aurora', 'forecast'];
-          if (sentWithin(s.user_id, loc.id, blockers, REPEAT_HOURS[d.kind])) continue;
-          const margin = (hours[d.kind === 'aurora' ? 0 : 1].kp ?? 0) - need;
-          alerts.push({ kind: d.kind, location: loc, level: d.level, score: d.score, kp: hours[0].kp, look: margin >= 3 ? 'overhead' : margin >= 1.5 ? 'high' : 'low' });
-        }
-      }
-      if (!alerts.length) continue;
-      summary.alerts += alerts.length;
-
-      const locale: Locale = profile?.locale && isLocale(profile.locale) ? profile.locale : 'en';
-      const texts = await alertTexts(locale, alerts);
-      const [email, push] = await Promise.all([deliverEmail(admin, s, texts), deliverPush(admin, s, chaser, texts)]);
-      if (email === 'sent') summary.emailed++;
-      if (push === 'sent') summary.pushed++;
-      if (email === 'no_provider') summary.noProvider++;
-      if (email.startsWith('failed') || push.startsWith('failed')) summary.failed++;
-
-      await admin.from('alert_log').insert(alerts.map(a => ({
-        user_id: s.user_id, location_id: a.location?.id ?? null, kind: a.kind, level: a.level, score: a.score, kp: a.kp,
-        place: a.location?.name ?? null, delivery: { email, push },
-      })));
-    } catch (e) {
-      summary.failed++;
-      console.error('alert run: user failed', s.user_id.slice(0, 8), (e as Error).message);
+  for (let b = 0; b < order.length; b += BATCH) {
+    const batch = order.slice(b, b + BATCH);
+    if (Date.now() - started > BUDGET_MS) { summary.deferred += order.length - b; break; }
+    const ids = batch.map(s => s.user_id);
+    const [profilesRes, locsRes, logRes] = await Promise.all([
+      admin.from('profiles').select('id, plan, subscription_status, trial_ends_at, locale').in('id', ids),
+      admin.from('locations').select('id, user_id, name, lat, lon, is_home').in('user_id', ids),
+      admin.from('alert_log').select('user_id, location_id, kind, created_at').in('user_id', ids).gte('created_at', new Date(now - 12 * 36e5).toISOString()),
+    ]);
+    // Without plans, places or the recent log, alerts could go out wrongly or twice: skip the batch.
+    const readError = profilesRes.error ?? locsRes.error ?? logRes.error;
+    if (readError) {
+      summary.deferred += batch.length;
+      console.error('alert run: batch skipped', readError.message);
+      continue;
     }
+    const profiles = new Map((profilesRes.data as Profile[]).map(p => [p.id, p]));
+    const locsBy = new Map<string, Loc[]>();
+    for (const l of locsRes.data as Loc[]) locsBy.set(l.user_id, [...(locsBy.get(l.user_id) ?? []), l]);
+    const recent = logRes.data as { user_id: string; location_id: string | null; kind: AlertKind; created_at: string }[];
+    const sentWithin = (user: string, loc: string | null, kinds: AlertKind[], hours: number) =>
+      recent.some(r => r.user_id === user && r.location_id === loc && kinds.includes(r.kind) && Date.parse(r.created_at) > now - hours * 36e5);
+
+    const processUser = async (s: Settings) => {
+      summary.users++;
+      // One user's failure (bad saved data, a delivery error) never stops the run for everyone else.
+      try {
+        const rules: AlertRules = normalizeRules(s.rules);
+        const profile = profiles.get(s.user_id);
+        const chaser = isChaser(profile, now);
+        const alerts: Alert[] = [];
+
+        if (rules.storm && storm !== null && storm >= s.kp_threshold && !sentWithin(s.user_id, null, ['storm'], REPEAT_HOURS.storm)) {
+          alerts.push({ kind: 'storm', location: null, level: null, score: null, kp: storm });
+        }
+
+        const quiet = inQuietHours(rules, now, s.time_zone);
+        const all = locsBy.get(s.user_id) ?? [];
+        // Free covers the home location; Chaser covers every saved location.
+        const places = chaser ? all.slice(0, 10) : all.filter(l => l.is_home).slice(0, 1);
+        if (rules.aurora && quiet && places.length) summary.skippedQuiet++;
+        if (rules.aurora && !quiet) {
+          for (const loc of places) {
+            summary.places++;
+            const need = kpNeeded(loc.lat, loc.lon);
+            const cloud = await cloudAt(loc.lat, loc.lon);
+            const hours = hourlyScores({
+              lat: loc.lat, lon: loc.lon, need, kpNow: kp, series,
+              ovationNearby: oval ? ovalAt(oval, loc.lat, loc.lon).nearby : null,
+              cloudNow: cloud?.aurora ?? null, cloudHourly: cloud?.next12h ?? [],
+              moonIllumination: moon(now, loc.lat, loc.lon).illumination, now,
+            });
+            const d = decidePlace(rules, hours, chaser);
+            if (!d) continue;
+            // A heads-up isn't repeated after the aurora alert itself has gone out.
+            const blockers: AlertKind[] = d.kind === 'aurora' ? ['aurora'] : ['aurora', 'forecast'];
+            if (sentWithin(s.user_id, loc.id, blockers, REPEAT_HOURS[d.kind])) continue;
+            const margin = (hours[d.kind === 'aurora' ? 0 : 1].kp ?? 0) - need;
+            alerts.push({ kind: d.kind, location: loc, level: d.level, score: d.score, kp: hours[0].kp, look: margin >= 3 ? 'overhead' : margin >= 1.5 ? 'high' : 'low' });
+          }
+        }
+        if (!alerts.length) return;
+        summary.alerts += alerts.length;
+
+        const locale: Locale = profile?.locale && isLocale(profile.locale) ? profile.locale : 'en';
+        const texts = await alertTexts(locale, alerts);
+        const [email, push] = await Promise.all([deliverEmail(admin, s, texts), deliverPush(admin, s, chaser, texts)]);
+        if (email === 'sent') summary.emailed++;
+        if (push === 'sent') summary.pushed++;
+        if (email === 'no_provider') summary.noProvider++;
+        if (email.startsWith('failed') || push.startsWith('failed')) summary.failed++;
+
+        const { error: logError } = await admin.from('alert_log').insert(alerts.map(a => ({
+          user_id: s.user_id, location_id: a.location?.id ?? null, kind: a.kind, level: a.level, score: a.score, kp: a.kp,
+          place: a.location?.name ?? null, delivery: { email, push },
+        })));
+        // Without the log entry the same alert would go out again next run; make that visible.
+        if (logError) throw new Error(`alert_log insert: ${logError.message}`);
+      } catch (e) {
+        summary.failed++;
+        console.error('alert run: user failed', s.user_id.slice(0, 8), (e as Error).message);
+      }
+    };
+
+    let next = 0;
+    await Promise.all(Array.from({ length: Math.min(PARALLEL, batch.length) }, async () => {
+      while (next < batch.length) {
+        const s = batch[next++];
+        if (Date.now() - started > BUDGET_MS) { summary.deferred++; continue; }
+        await processUser(s);
+      }
+    }));
   }
   return summary;
 }

@@ -14,7 +14,7 @@ import { useI18n } from '../i18n/I18n';
 import { USEFUL_EVENT } from './InstallPrompt';
 import { Sighting } from './Sighting';
 
-export const LEVEL_COLOR: Record<Level, string> = { goNow: C.green, goLater: C.green, maybe: C.amber, no: C.muted };
+export const LEVEL_COLOR: Record<Level, string> = { goNow: C.green, goLater: C.green, maybe: C.amber, no: C.muted, unavailable: C.muted };
 /** Chance-score bars: grey below 20, amber from 20, red from 50 (the same direction as the Kp charts' storm scale). */
 export const scoreColor = (s: number) => (s >= 50 ? C.red : s >= 20 ? C.amber : '#3a403c');
 
@@ -66,7 +66,7 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
   const [picked, setPicked] = useState(0);
 
   // A promising verdict is a good moment to suggest adding the app to the home screen (InstallPrompt).
-  const useful = !!result && result.v.level !== 'no';
+  const useful = !!result && result.v.level !== 'no' && result.v.level !== 'unavailable';
   useEffect(() => { if (useful) window.dispatchEvent(new Event(USEFUL_EVENT)); }, [useful]);
 
   // Times in local time at the place (its zone comes with the cloud forecast), else this device's.
@@ -137,7 +137,8 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
   const h0 = result?.hours[0];
   const sel: HourScore | undefined = result?.hours[picked];
   const lightUntil = cond?.sun.dark === false ? cond.sun.changesAt : null;
-  const limitText = !v || !v.limit || !cond ? null
+  const limitText = v?.level === 'unavailable' ? t('tonight.unavailable')
+    : !v || !v.limit || !cond ? null
     : v.limit === 'aurora' ? t('tonight.limit.aurora', { need: cond.kpNeeded, kp: num(v.subject.kp ?? 0, 1) })
     : v.limit === 'dark' ? (lightUntil ? t('tonight.limit.dark', { time: time(lightUntil) }) : t('tonight.limit.darkNone'))
     : v.limit === 'cloud' ? t('tonight.limit.cloud', { pct: v.subject.cloud ?? '—' })
@@ -180,7 +181,7 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
                 {t(`tonight.level.${v.level}`)}
               </h2>
               <span style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                <span className="stat-value tonight-score">{v.score}</span>
+                <span className="stat-value tonight-score">{v.level === 'unavailable' ? '—' : v.score}</span>
                 <span style={{ fontSize: 13, color: 'var(--muted)' }}>/100 {t('tonight.score')}</span>
               </span>
             </div>
