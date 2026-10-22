@@ -2,7 +2,7 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
 import { fcmAccount, sendFcm } from './fcm';
-import { DEFAULT_RULES, REPEAT_HOURS, decidePlace, inQuietHours, stormKp, type AlertKind, type AlertLevel, type AlertRules } from './alerts';
+import { REPEAT_HOURS, decidePlace, inQuietHours, normalizeRules, stormKp, type AlertKind, type AlertLevel, type AlertRules } from './alerts';
 import { kpNeeded, moon } from './astro';
 import { cloudCover, type CloudForecast } from './cloud';
 import { kpNow, kpSeries, ovalAt, ovation } from './feeds';
@@ -17,7 +17,7 @@ import { getI18n } from '../i18n/server';
  * skips repeats and quiet hours, emails what's left and logs every alert in alert_log.
  */
 
-interface Settings { user_id: string; kp_threshold: number; rules: Partial<AlertRules> | null; time_zone: string | null; channels: Record<string, boolean> | null }
+interface Settings { user_id: string; kp_threshold: number; rules: unknown; time_zone: string | null; channels: Record<string, boolean> | null }
 interface Profile { id: string; plan: string | null; subscription_status: string | null; trial_ends_at: string | null; locale: string | null }
 interface Loc { id: string; user_id: string; name: string; lat: number; lon: number; is_home: boolean }
 interface Alert { kind: AlertKind; location: Loc | null; level: AlertLevel | null; score: number | null; kp: number | null; look?: 'low' | 'high' | 'overhead' }
@@ -35,7 +35,7 @@ export async function runAlerts(admin: SupabaseClient, now = Date.now()): Promis
   const summary: RunSummary = { users: 0, places: 0, alerts: 0, emailed: 0, pushed: 0, failed: 0, noProvider: 0, skippedQuiet: 0 };
   const { data: settings, error } = await admin.from('alert_settings').select('user_id, kp_threshold, rules, time_zone, channels');
   if (error) throw new Error(`alert_settings: ${error.message}`);
-  const active = (settings as Settings[]).filter(s => { const r = { ...DEFAULT_RULES, ...s.rules }; return r.aurora || r.storm; });
+  const active = (settings as Settings[]).filter(s => { const r = normalizeRules(s.rules); return r.aurora || r.storm; });
   if (!active.length) return summary;
   const ids = active.map(s => s.user_id);
 
@@ -64,55 +64,61 @@ export async function runAlerts(admin: SupabaseClient, now = Date.now()): Promis
 
   for (const s of active) {
     summary.users++;
-    const rules: AlertRules = { ...DEFAULT_RULES, ...s.rules };
-    const profile = profiles.get(s.user_id);
-    const chaser = isChaser(profile, now);
-    const alerts: Alert[] = [];
+    // One user's failure (bad saved data, a delivery error) never stops the run for everyone else.
+    try {
+      const rules: AlertRules = normalizeRules(s.rules);
+      const profile = profiles.get(s.user_id);
+      const chaser = isChaser(profile, now);
+      const alerts: Alert[] = [];
 
-    if (rules.storm && storm !== null && storm >= s.kp_threshold && !sentWithin(s.user_id, null, ['storm'], REPEAT_HOURS.storm)) {
-      alerts.push({ kind: 'storm', location: null, level: null, score: null, kp: storm });
-    }
-
-    const quiet = inQuietHours(rules, now, s.time_zone);
-    const all = locsBy.get(s.user_id) ?? [];
-    // Free covers the home location; Chaser covers every saved location.
-    const places = chaser ? all.slice(0, 10) : all.filter(l => l.is_home).slice(0, 1);
-    if (rules.aurora && quiet && places.length) summary.skippedQuiet++;
-    if (rules.aurora && !quiet) {
-      for (const loc of places) {
-        summary.places++;
-        const need = kpNeeded(loc.lat, loc.lon);
-        const cloud = await cloudAt(loc.lat, loc.lon);
-        const hours = hourlyScores({
-          lat: loc.lat, lon: loc.lon, need, kpNow: kp, series,
-          ovationNearby: oval ? ovalAt(oval, loc.lat, loc.lon).nearby : null,
-          cloudNow: cloud?.aurora ?? null, cloudHourly: cloud?.next12h ?? [],
-          moonIllumination: moon(now, loc.lat, loc.lon).illumination, now,
-        });
-        const d = decidePlace(rules, hours, chaser);
-        if (!d) continue;
-        // A heads-up isn't repeated after the aurora alert itself has gone out.
-        const blockers: AlertKind[] = d.kind === 'aurora' ? ['aurora'] : ['aurora', 'forecast'];
-        if (sentWithin(s.user_id, loc.id, blockers, REPEAT_HOURS[d.kind])) continue;
-        const margin = (hours[d.kind === 'aurora' ? 0 : 1].kp ?? 0) - need;
-        alerts.push({ kind: d.kind, location: loc, level: d.level, score: d.score, kp: hours[0].kp, look: margin >= 3 ? 'overhead' : margin >= 1.5 ? 'high' : 'low' });
+      if (rules.storm && storm !== null && storm >= s.kp_threshold && !sentWithin(s.user_id, null, ['storm'], REPEAT_HOURS.storm)) {
+        alerts.push({ kind: 'storm', location: null, level: null, score: null, kp: storm });
       }
+
+      const quiet = inQuietHours(rules, now, s.time_zone);
+      const all = locsBy.get(s.user_id) ?? [];
+      // Free covers the home location; Chaser covers every saved location.
+      const places = chaser ? all.slice(0, 10) : all.filter(l => l.is_home).slice(0, 1);
+      if (rules.aurora && quiet && places.length) summary.skippedQuiet++;
+      if (rules.aurora && !quiet) {
+        for (const loc of places) {
+          summary.places++;
+          const need = kpNeeded(loc.lat, loc.lon);
+          const cloud = await cloudAt(loc.lat, loc.lon);
+          const hours = hourlyScores({
+            lat: loc.lat, lon: loc.lon, need, kpNow: kp, series,
+            ovationNearby: oval ? ovalAt(oval, loc.lat, loc.lon).nearby : null,
+            cloudNow: cloud?.aurora ?? null, cloudHourly: cloud?.next12h ?? [],
+            moonIllumination: moon(now, loc.lat, loc.lon).illumination, now,
+          });
+          const d = decidePlace(rules, hours, chaser);
+          if (!d) continue;
+          // A heads-up isn't repeated after the aurora alert itself has gone out.
+          const blockers: AlertKind[] = d.kind === 'aurora' ? ['aurora'] : ['aurora', 'forecast'];
+          if (sentWithin(s.user_id, loc.id, blockers, REPEAT_HOURS[d.kind])) continue;
+          const margin = (hours[d.kind === 'aurora' ? 0 : 1].kp ?? 0) - need;
+          alerts.push({ kind: d.kind, location: loc, level: d.level, score: d.score, kp: hours[0].kp, look: margin >= 3 ? 'overhead' : margin >= 1.5 ? 'high' : 'low' });
+        }
+      }
+      if (!alerts.length) continue;
+      summary.alerts += alerts.length;
+
+      const locale: Locale = profile?.locale && isLocale(profile.locale) ? profile.locale : 'en';
+      const texts = await alertTexts(locale, alerts);
+      const [email, push] = await Promise.all([deliverEmail(admin, s, texts), deliverPush(admin, s, chaser, texts)]);
+      if (email === 'sent') summary.emailed++;
+      if (push === 'sent') summary.pushed++;
+      if (email === 'no_provider') summary.noProvider++;
+      if (email.startsWith('failed') || push.startsWith('failed')) summary.failed++;
+
+      await admin.from('alert_log').insert(alerts.map(a => ({
+        user_id: s.user_id, location_id: a.location?.id ?? null, kind: a.kind, level: a.level, score: a.score, kp: a.kp,
+        place: a.location?.name ?? null, delivery: { email, push },
+      })));
+    } catch (e) {
+      summary.failed++;
+      console.error('alert run: user failed', s.user_id.slice(0, 8), (e as Error).message);
     }
-    if (!alerts.length) continue;
-    summary.alerts += alerts.length;
-
-    const locale: Locale = profile?.locale && isLocale(profile.locale) ? profile.locale : 'en';
-    const texts = await alertTexts(locale, alerts);
-    const [email, push] = await Promise.all([deliverEmail(admin, s, texts), deliverPush(admin, s, chaser, texts)]);
-    if (email === 'sent') summary.emailed++;
-    if (push === 'sent') summary.pushed++;
-    if (email === 'no_provider') summary.noProvider++;
-    if (email.startsWith('failed') || push.startsWith('failed')) summary.failed++;
-
-    await admin.from('alert_log').insert(alerts.map(a => ({
-      user_id: s.user_id, location_id: a.location?.id ?? null, kind: a.kind, level: a.level, score: a.score, kp: a.kp,
-      place: a.location?.name ?? null, delivery: { email, push },
-    })));
   }
   return summary;
 }
@@ -129,6 +135,8 @@ async function deliverEmail(admin: SupabaseClient, s: Settings, texts: AlertText
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
+      // A slow service never holds up the alert run.
+      signal: AbortSignal.timeout(10000),
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ from: process.env.ALERTS_FROM || `${SITE.name} <alerts@${SITE.domain}>`, to, subject, html, text }),
     });
@@ -137,6 +145,23 @@ async function deliverEmail(admin: SupabaseClient, s: Settings, texts: AlertText
     return `failed: ${(e as Error).message.slice(0, 80)}`;
   }
 }
+
+/** Push services browsers use; a stored endpoint anywhere else is never contacted (users write their own rows). */
+const PUSH_HOSTS = /^([a-z0-9-]+\.)*(fcm\.googleapis\.com|push\.services\.mozilla\.com|notify\.windows\.com|push\.apple\.com)$/;
+const FCM_TOKEN = /^fcm:[A-Za-z0-9_:-]{20,4096}$/;
+
+export function pushEndpointOk(kind: string | null, endpoint: string): boolean {
+  if (kind === 'fcm') return FCM_TOKEN.test(endpoint);
+  try {
+    const u = new URL(endpoint);
+    return u.protocol === 'https:' && !u.port && PUSH_HOSTS.test(u.hostname);
+  } catch {
+    return false;
+  }
+}
+
+/** Most devices one user's alert is pushed to, newest first. */
+const MAX_DEVICES = 10;
 
 /**
  * One push per user per run to each device they switched on (Chaser): browsers by web push, the Android
@@ -149,8 +174,9 @@ async function deliverPush(admin: SupabaseClient, s: Settings, chaser: boolean, 
   const pub = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY, priv = process.env.VAPID_PRIVATE_KEY;
   const webReady = !!pub && !!priv, appReady = !!fcmAccount();
   if (!webReady && !appReady) return 'not_configured';
-  const { data: all } = await admin.from('push_subscriptions').select('id, endpoint, p256dh, auth, kind').eq('user_id', s.user_id);
-  const subs = (all ?? []).filter(x => (x.kind === 'fcm' ? appReady : webReady));
+  const { data: all } = await admin.from('push_subscriptions').select('id, endpoint, p256dh, auth, kind')
+    .eq('user_id', s.user_id).order('created_at', { ascending: false }).limit(MAX_DEVICES);
+  const subs = (all ?? []).filter(x => (x.kind === 'fcm' ? appReady : webReady) && pushEndpointOk(x.kind, x.endpoint));
   if (!subs.length) return all?.length ? 'not_configured' : 'no_device';
   const [first] = texts.lines;
   const payload = JSON.stringify({
@@ -158,7 +184,7 @@ async function deliverPush(admin: SupabaseClient, s: Settings, chaser: boolean, 
     body: texts.lines.length > 1 ? texts.lines.map(l => l.subject).join(' · ') : `${first.body}${first.look ? ` ${first.look}.` : ''}`,
     url: texts.url, tag: `alert-${texts.lines.map(l => l.kind).join('-')}`,
   });
-  const opts = { vapidDetails: { subject: process.env.VAPID_SUBJECT || `mailto:alerts@${SITE.domain}`, publicKey: pub ?? '', privateKey: priv ?? '' }, TTL: 3600, urgency: 'high' as const };
+  const opts = { vapidDetails: { subject: process.env.VAPID_SUBJECT || `mailto:alerts@${SITE.domain}`, publicKey: pub ?? '', privateKey: priv ?? '' }, TTL: 3600, urgency: 'high' as const, timeout: 5000 };
   let sent = 0, failed = '';
   // The result shows only one outcome, so a device that fails while another succeeds is logged here.
   const fail = (kind: string, why: string) => { failed = why; console.warn('push failed', kind, s.user_id.slice(0, 8), why); };

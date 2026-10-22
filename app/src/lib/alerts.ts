@@ -32,6 +32,24 @@ export interface AlertRules {
 }
 
 export const DEFAULT_RULES: AlertRules = { aurora: true, level: 'visible', forecast: true, storm: true, quiet: false, quietFrom: '23:00', quietTo: '07:00' };
+
+const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/**
+ * Saved rules as the engine can use them. alert_settings.rules is written by the user's own browser, so
+ * anything of the wrong type (a number for a time, an unknown level) falls back to the default instead of
+ * reaching the engine.
+ */
+export function normalizeRules(raw: unknown): AlertRules {
+  const r = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
+  const flag = (k: 'aurora' | 'forecast' | 'storm' | 'quiet') => (typeof r[k] === 'boolean' ? r[k] as boolean : DEFAULT_RULES[k]);
+  const time = (k: 'quietFrom' | 'quietTo') => (typeof r[k] === 'string' && HHMM.test(r[k] as string) ? r[k] as string : DEFAULT_RULES[k]);
+  return {
+    aurora: flag('aurora'), forecast: flag('forecast'), storm: flag('storm'), quiet: flag('quiet'),
+    level: ALERT_LEVELS.includes(r.level as AlertLevel) ? r.level as AlertLevel : DEFAULT_RULES.level,
+    quietFrom: time('quietFrom'), quietTo: time('quietTo'),
+  };
+}
 export const DEFAULT_STORM_KP = 6;
 
 /** Don't repeat an alert of the same kind for the same place within these windows. */
@@ -39,7 +57,7 @@ export const REPEAT_HOURS = { aurora: 6, forecast: 6, storm: 12 } as const;
 
 export type AlertKind = keyof typeof REPEAT_HOURS;
 
-const minutes = (hhmm: string) => { const [h, m] = hhmm.split(':').map(Number); return (h || 0) * 60 + (m || 0); };
+const minutes = (hhmm: string) => { const [h, m] = String(hhmm).split(':').map(Number); return (h || 0) * 60 + (m || 0); };
 
 /** Whether `t` falls in the quiet hours, read in `timeZone` (overnight ranges such as 23:00-07:00 wrap). */
 export function inQuietHours(rules: AlertRules, t: number, timeZone: string | null): boolean {
