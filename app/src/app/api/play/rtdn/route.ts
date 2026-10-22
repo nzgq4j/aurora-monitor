@@ -1,7 +1,7 @@
 import { timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../lib/billing';
-import { getPlaySubscription, playAccount, syncPlay } from '../../../../lib/play';
+import { PLAY_PRODUCT, acknowledgePlay, getPlaySubscription, needsAcknowledging, playAccount, syncPlay } from '../../../../lib/play';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +11,8 @@ const same = (a: string, b: string) => a.length === b.length && timingSafeEqual(
  * Google Play real-time developer notifications, pushed by a Pub/Sub subscription to
  * /api/play/rtdn?token=<PLAY_RTDN_TOKEN>. Each subscription change (renewal, cancellation, grace
  * period, expiry …) re-reads the subscription from Google and updates the profile it belongs to.
+ * A purchase still waiting to be confirmed (the app closed before /api/play/verify ran) is acknowledged
+ * here, so Google doesn't refund it after three days.
  * Answers 200 for anything it can't use, so Pub/Sub doesn't retry it forever, and 500 when Google
  * couldn't be reached, so it does.
  */
@@ -37,7 +39,12 @@ export async function POST(req: Request) {
     }
     if (!userId) return NextResponse.json({ ok: true, ignored: 'no_account' });
     const s = await syncPlay(userId, purchaseToken, sub);
-    console.log('play rtdn', note?.subscriptionNotification?.notificationType, userId.slice(0, 8), s.status);
+    let acked = false;
+    if (needsAcknowledging(sub)) {
+      await acknowledgePlay(sub.lineItems?.[0]?.productId ?? PLAY_PRODUCT, purchaseToken);
+      acked = true;
+    }
+    console.log('play rtdn', note?.subscriptionNotification?.notificationType, userId.slice(0, 8), s.status, acked ? 'acknowledged' : '');
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error('play rtdn', (e as Error).message);
