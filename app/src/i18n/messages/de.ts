@@ -563,6 +563,8 @@ export const de: Messages = {
   'tonight.level.goLater': 'Später rausgehen',
   'tonight.level.maybe': 'Möglich',
   'tonight.level.no': 'Unwahrscheinlich',
+  'tonight.level.unavailable': "Vorhersage nicht verfügbar",
+  'tonight.unavailable': "Die Polarlicht-Vorhersage ist gerade nicht erreichbar, daher ist die Chance für heute Nacht unbekannt. Sie aktualisiert sich automatisch, sobald die Daten wieder da sind.",
   'tonight.score': 'Chancen-Index',
   'tonight.best': 'Am besten {from}–{to}',
   'tonight.noWindow': 'Kein gutes Zeitfenster in den nächsten 12 Stunden',

@@ -124,7 +124,7 @@ export function MapPanel({ kp, series, pick, onClear, layers, slider, legend }: 
         <b>{name || t('map.panel.title')}</b>
         {saved && <small>{t(saved.isHome ? 'map.panel.home' : 'map.panel.saved')}</small>}
       </span>
-      {v && <span className="map-panel-verdict" style={{ color: LEVEL_COLOR[v.level] }}>{t(`tonight.level.${v.level}`)} <span className="mono">{v.score}</span></span>}
+      {v && <span className="map-panel-verdict" style={{ color: LEVEL_COLOR[v.level] }}>{t(`tonight.level.${v.level}`)} <span className="mono">{v.level === 'unavailable' ? '—' : v.score}</span></span>}
     </div>
   );
   const line = !place ? t('map.panel.hint')

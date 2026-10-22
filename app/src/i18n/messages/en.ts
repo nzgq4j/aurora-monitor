@@ -563,6 +563,8 @@ export const en = {
   'tonight.level.goLater': 'Go out later',
   'tonight.level.maybe': 'Possible',
   'tonight.level.no': 'Unlikely',
+  'tonight.level.unavailable': "Forecast unavailable",
+  'tonight.unavailable': "The aurora forecast can't be reached right now, so tonight's chance isn't known. It updates automatically when the data is back.",
   'tonight.score': 'chance score',
   'tonight.best': 'Best {from}–{to}',
   'tonight.noWindow': 'No good window in the next 12 hours',

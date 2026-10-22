@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { auroraFactor, verdict, type HourScore } from './tonight';
+import { auroraFactor, hourlyScores, verdict, type HourScore } from './tonight';
 
 const h = (i: number, score: number, f: Partial<HourScore['f']> = {}, kp = 5): HourScore =>
   ({ t: Date.UTC(2026, 9, 22, 18 + i), score, kp, cloud: 0, sunAlt: -20, moonUp: false, f: { aurora: 1, dark: 1, cloud: 1, moon: 1, ...f } });
@@ -36,5 +36,17 @@ describe('verdict', () => {
     expect(verdict([h(0, 80, {}, 9)], 5).look).toBe('overhead');
     expect(verdict([h(0, 80, {}, 6.5)], 5).look).toBe('high');
     expect(verdict([h(0, 80, {}, 5.5)], 5).look).toBe('low');
+  });
+});
+
+describe('unavailable', () => {
+  it('says so when no hour has Kp or the OVATION model', () => {
+    const hours = hourlyScores({ lat: 69.6, lon: 18.9, need: 1, kpNow: null, series: [], ovationNearby: null, cloudNow: 0, cloudHourly: [], moonIllumination: 0, now: Date.UTC(2026, 9, 22, 22) });
+    expect(hours.every(x => x.unknown)).toBe(true);
+    expect(verdict(hours, 1)).toMatchObject({ level: 'unavailable', window: null, limit: null });
+  });
+  it('still judges when only the OVATION model is there', () => {
+    const hours = hourlyScores({ lat: 69.6, lon: 18.9, need: 1, kpNow: null, series: [], ovationNearby: 40, cloudNow: 0, cloudHourly: [], moonIllumination: 0, now: Date.UTC(2026, 9, 22, 22) });
+    expect(verdict(hours, 1).level).not.toBe('unavailable');
   });
 });

@@ -563,6 +563,8 @@ export const fr: Messages = {
   'tonight.level.goLater': 'Sortez plus tard',
   'tonight.level.maybe': 'Possible',
   'tonight.level.no': 'Peu probable',
+  'tonight.level.unavailable': "Prévision indisponible",
+  'tonight.unavailable': "La prévision d’aurores est injoignable pour le moment, la chance de ce soir est donc inconnue. Elle se mettra à jour d’elle-même au retour des données.",
   'tonight.score': 'indice de chance',
   'tonight.best': 'Idéal {from}–{to}',
   'tonight.noWindow': 'Pas de bon créneau dans les 12 prochaines heures',
