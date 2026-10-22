@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { playStatus, type PlaySubscription } from './play';
+import { needsAcknowledging, playStatus, type PlaySubscription } from './play';
 
 const now = Date.parse('2026-10-22T12:00:00Z');
 const sub = (state: string, o: { expiry?: string; trial?: boolean; plan?: string; autoRenew?: boolean } = {}): PlaySubscription => ({
@@ -30,5 +30,15 @@ describe('playStatus', () => {
   });
   it('reads the cycle and auto-renew setting', () => {
     expect(playStatus(sub('SUBSCRIPTION_STATE_ACTIVE', { plan: 'annual', autoRenew: false }), now)).toMatchObject({ cycle: 'annual', cancelAtPeriodEnd: true });
+  });
+});
+
+describe('needsAcknowledging', () => {
+  it('is true for a pending acknowledgement once payment has gone through', () => {
+    expect(needsAcknowledging({ subscriptionState: 'SUBSCRIPTION_STATE_ACTIVE', acknowledgementState: 'ACKNOWLEDGEMENT_STATE_PENDING' })).toBe(true);
+  });
+  it('is false when already acknowledged or while the payment is pending', () => {
+    expect(needsAcknowledging({ subscriptionState: 'SUBSCRIPTION_STATE_ACTIVE', acknowledgementState: 'ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED' })).toBe(false);
+    expect(needsAcknowledging({ subscriptionState: 'SUBSCRIPTION_STATE_PENDING', acknowledgementState: 'ACKNOWLEDGEMENT_STATE_PENDING' })).toBe(false);
   });
 });

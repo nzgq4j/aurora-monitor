@@ -1,14 +1,25 @@
 // Ingests public space-weather data into the archive tables.
 // Scheduled by pg_cron (see migrations/20261017000200_ingest_schedule.sql).
-// Uses the service role, which the Edge runtime provides as an env var.
-import { createClient } from 'npm:@supabase/supabase-js@2.117.2';
+// Uses the service role, which the Edge runtime provides as an env var. Callers must send pg_cron's key.
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.117.2';
 
 const SWPC = 'https://services.swpc.noaa.gov';
 type Row = Record<string, unknown>;
+/** Each upstream request gives up after this long, so one slow feed can't hold up the run. */
+const TIMEOUT_MS = 15_000;
+
+/** Only pg_cron may run this: it sends the scheduled-jobs key from Vault, checked there by check_alerts_key(). */
+async function fromCron(req: Request, db: SupabaseClient): Promise<boolean> {
+  const k = req.headers.get('x-cron-key');
+  if (!k) return false;
+  const { data, error } = await db.rpc('check_alerts_key', { k });
+  return !error && data === true;
+}
+const refuse = () => new Response(JSON.stringify({ error: 'unauthorised' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
 
 async function json(url: string): Promise<unknown | null> {
   try {
-    const r = await fetch(url, { headers: { 'User-Agent': 'polarlights.io ingest' } });
+    const r = await fetch(url, { headers: { 'User-Agent': 'polarlights.io ingest' }, signal: AbortSignal.timeout(TIMEOUT_MS) });
     return r.ok ? await r.json() : null;
   } catch {
     return null;
@@ -17,7 +28,7 @@ async function json(url: string): Promise<unknown | null> {
 
 async function text(url: string): Promise<string | null> {
   try {
-    const r = await fetch(url);
+    const r = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
     return r.ok ? await r.text() : null;
   } catch {
     return null;
@@ -55,8 +66,9 @@ const num = (v: unknown) => {
   return Number.isFinite(n) ? n : null;
 };
 
-Deno.serve(async () => {
+Deno.serve(async req => {
   const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
+  if (!(await fromCron(req, sb))) { console.warn('ingest: refused a call without the cron key'); return refuse(); }
   const detail: Record<string, unknown> = {};
 
   // 1. SWPC Kp: observed, estimated and predicted.
@@ -142,6 +154,8 @@ Deno.serve(async () => {
   } else detail.ovation = 'no data';
 
   const ok = Object.values(detail).every(v => typeof v !== 'string' || v === 'no data') && Object.values(detail).some(v => v !== 'no data');
-  await sb.from('ingest_runs').insert({ ok, detail });
+  const { error: logged } = await sb.from('ingest_runs').insert({ ok, detail });
+  if (logged) console.error('ingest: run log failed', logged.message);
+  if (!ok) console.warn('ingest: incomplete', JSON.stringify(detail));
   return new Response(JSON.stringify({ ok, detail }), { headers: { 'Content-Type': 'application/json' } });
 });

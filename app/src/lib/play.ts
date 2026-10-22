@@ -46,6 +46,7 @@ async function call(path: string, init?: RequestInit): Promise<Response> {
   return fetch(`${API}/${path}`, {
     ...init,
     headers: { authorization: `Bearer ${await googleAccessToken(a, SCOPE)}`, 'content-type': 'application/json', ...init?.headers },
+    signal: AbortSignal.timeout(10_000),
   });
 }
 
@@ -56,6 +57,10 @@ export async function getPlaySubscription(token: string): Promise<PlaySubscripti
   if (!res.ok) throw new Error(`play get ${res.status}`);
   return res.json() as Promise<PlaySubscription>;
 }
+
+/** Whether Google is still waiting for this purchase to be confirmed (not while the payment itself is pending). */
+export const needsAcknowledging = (sub: PlaySubscription) =>
+  sub.acknowledgementState === 'ACKNOWLEDGEMENT_STATE_PENDING' && sub.subscriptionState !== 'SUBSCRIPTION_STATE_PENDING';
 
 /** Confirm a purchase to Google; unacknowledged purchases are refunded after three days. */
 export async function acknowledgePlay(productId: string, token: string): Promise<void> {

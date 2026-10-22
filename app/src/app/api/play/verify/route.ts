@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { userFromRequest } from '../../../../lib/billing';
-import { PLAY_PRODUCT, acknowledgePlay, getPlaySubscription, playAccount, syncPlay } from '../../../../lib/play';
+import { PLAY_PRODUCT, acknowledgePlay, getPlaySubscription, needsAcknowledging, playAccount, syncPlay } from '../../../../lib/play';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'other_account' }, { status: 403 });
     }
     const product = sub.lineItems?.[0]?.productId ?? PLAY_PRODUCT;
-    if (sub.acknowledgementState === 'ACKNOWLEDGEMENT_STATE_PENDING' && sub.subscriptionState !== 'SUBSCRIPTION_STATE_PENDING') {
+    if (needsAcknowledging(sub)) {
       await acknowledgePlay(product, purchaseToken);
     }
     const s = await syncPlay(user.id, purchaseToken, sub);

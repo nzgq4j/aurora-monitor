@@ -2,8 +2,8 @@
 // magnetogram) to the sun-frames bucket for the time-lapse.
 // Scheduled hourly by pg_cron (see migrations/20261019000100_sun_frames.sql). Each image is kept once,
 // keyed by SDO's Last-Modified time; frames older than KEEP_DAYS are removed.
-// Uses the service role, which the Edge runtime provides as an env var.
-import { createClient } from 'npm:@supabase/supabase-js@2.117.2';
+// Uses the service role, which the Edge runtime provides as an env var. Callers must send pg_cron's key.
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.117.2';
 
 const CHANNELS = {
   '0193': 'https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0193.jpg',
@@ -15,14 +15,26 @@ const CHANNELS = {
 } as const;
 const BUCKET = 'sun-frames';
 const KEEP_DAYS = 28;
+/** Each image download gives up after this long. */
+const TIMEOUT_MS = 15_000;
 
-Deno.serve(async () => {
+/** Only pg_cron may run this: it sends the scheduled-jobs key from Vault, checked there by check_alerts_key(). */
+async function fromCron(req: Request, db: SupabaseClient): Promise<boolean> {
+  const k = req.headers.get('x-cron-key');
+  if (!k) return false;
+  const { data, error } = await db.rpc('check_alerts_key', { k });
+  return !error && data === true;
+}
+const refuse = () => new Response(JSON.stringify({ error: 'unauthorised' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+
+Deno.serve(async req => {
   const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
+  if (!(await fromCron(req, db))) { console.warn('capture-sun: refused a call without the cron key'); return refuse(); }
   const result: Record<string, string> = {};
 
   for (const [channel, url] of Object.entries(CHANNELS)) {
     try {
-      const res = await fetch(url, { headers: { 'User-Agent': 'polarlights.io sun time-lapse' } });
+      const res = await fetch(url, { headers: { 'User-Agent': 'polarlights.io sun time-lapse' }, signal: AbortSignal.timeout(TIMEOUT_MS) });
       if (!res.ok) { result[channel] = `fetch ${res.status}`; continue; }
       const taken = new Date(res.headers.get('last-modified') ?? Date.now());
       taken.setUTCSeconds(0, 0);
@@ -46,5 +58,7 @@ Deno.serve(async () => {
     await db.from('sun_frames').delete().lt('taken_at', cutoff);
     result.pruned = String(old.length);
   }
+  const failed = Object.entries(result).filter(([, v]) => /^(fetch|upload|insert|error) /.test(v));
+  if (failed.length) console.warn('capture-sun: some frames failed', JSON.stringify(Object.fromEntries(failed)));
   return new Response(JSON.stringify(result), { headers: { 'Content-Type': 'application/json' } });
 });
