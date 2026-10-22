@@ -152,7 +152,7 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
     const { data, error: e } = await sb!.from('locations').select('*').order('created_at');
     if (e) { setError(t('loc.err.load')); setStatus('error'); return; }
     list.current = (data as Row[]).map(fromRow); setLocations(list.current); setStatus('ready');
-  }, [remote, sb, user]);
+  }, [remote, sb, user, t, tn]);
 
   // Reload when the signed-in user changes (sign in, sign out, switch account).
   useEffect(() => { if (wanted.current && ready) fetchAll(); }, [ready, fetchAll]);

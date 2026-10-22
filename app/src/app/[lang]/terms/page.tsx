@@ -3,6 +3,7 @@ import { getI18n, routeLocale } from '../../../i18n/server';
 import { LegalPage, type LegalSection } from '../../../components/LegalPage';
 import { LEGAL } from '../../../lib/site';
 import { TRIAL_DAYS } from '../../../data';
+import Link from 'next/link';
 
 type Props = { params: Promise<{ lang: string }> };
 
@@ -16,7 +17,7 @@ const mail = <a href={`mailto:${LEGAL.email}`}>{LEGAL.email}</a>;
 const sections: LegalSection[] = [
   {
     h: 'Agreement',
-    body: <p>These terms apply to your use of Polar Lights, the website at www.polarlights.io and the Polar Lights app for Android (the &ldquo;Service&rdquo;), operated by {LEGAL.operator} (&ldquo;we&rdquo;, &ldquo;us&rdquo;). By using the Service you agree to them. Our <a href="/privacy">privacy policy</a> explains how we handle personal data.</p>,
+    body: <p>These terms apply to your use of Polar Lights, the website at www.polarlights.io and the Polar Lights app for Android (the &ldquo;Service&rdquo;), operated by {LEGAL.operator} (&ldquo;we&rdquo;, &ldquo;us&rdquo;). By using the Service you agree to them. Our <Link href="/privacy">privacy policy</Link> explains how we handle personal data.</p>,
   },
   {
     h: 'What the Service is, and what it isn’t',

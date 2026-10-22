@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getI18n, routeLocale } from '../../../i18n/server';
 import { LegalPage, type LegalSection } from '../../../components/LegalPage';
 import { LEGAL } from '../../../lib/site';
+import Link from 'next/link';
 
 type Props = { params: Promise<{ lang: string }> };
 
@@ -63,7 +64,7 @@ const sections: LegalSection[] = [
   {
     h: 'Your choices and rights',
     body: <>
-      <p>You can view and change your name, locations and alert settings in your dashboard, and turn alert emails and push notifications off at any time in Dashboard → Alerts. You can delete your account and its data at any time in Dashboard → Account (see <a href="/delete-account">how to delete your account</a>), or by writing to {mail} from the email address on your account, in which case we complete deletion within 30 days.</p>
+      <p>You can view and change your name, locations and alert settings in your dashboard, and turn alert emails and push notifications off at any time in Dashboard → Alerts. You can delete your account and its data at any time in Dashboard → Account (see <Link href="/delete-account">how to delete your account</Link>), or by writing to {mail} from the email address on your account, in which case we complete deletion within 30 days.</p>
       <p>Depending on where you live, you may have the right to access, correct, delete or export your personal data, to object to or restrict its use, and to complain to your data protection authority. To use any of these rights, contact {mail}. We do not sell or share personal data as those terms are defined in California law.</p>
     </>,
   },

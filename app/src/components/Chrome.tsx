@@ -5,6 +5,7 @@ import { useStore, type Screen } from '../store';
 import { SITE } from '../lib/site';
 import { useI18n } from '../i18n/I18n';
 import type { MessageKey } from '../i18n/core';
+import Link from 'next/link';
 
 const NAV: [MessageKey, Screen][] = [['nav.now', 'home'], ['nav.map', 'map'], ['nav.gallery', 'gallery'], ['nav.dashboard', 'account']];
 
@@ -115,9 +116,9 @@ export function Footer() {
       <div className="wrap" style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', padding: '18px var(--gutter)', fontSize: 12, color: 'var(--dim)' }}>
         <span>{t('footer.sources')}</span>
         <span style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 16px', alignItems: 'baseline' }}>
-          <a href="/privacy" style={{ color: 'var(--dim)' }}>{t('footer.privacy')}</a>
-          <a href="/terms" style={{ color: 'var(--dim)' }}>{t('footer.terms')}</a>
-          <a href="/delete-account" style={{ color: 'var(--dim)' }}>{t('footer.deleteAccount')}</a>
+          <Link href="/privacy" style={{ color: 'var(--dim)' }}>{t('footer.privacy')}</Link>
+          <Link href="/terms" style={{ color: 'var(--dim)' }}>{t('footer.terms')}</Link>
+          <Link href="/delete-account" style={{ color: 'var(--dim)' }}>{t('footer.deleteAccount')}</Link>
           <span style={{ color: 'var(--green)', fontWeight: 700 }}>{SITE.domain}</span>
         </span>
       </div>

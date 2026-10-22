@@ -55,7 +55,7 @@ export function Badges() {
     setMember(m);
     setList(m ? badges(a, m) : []);
   });
-  useEffect(() => { if (user) void load(); }, [user]); // eslint-disable-line react-hooks/exhaustive-deps -- reload per user
+  useEffect(() => { if (user) void load(); }, [user]);  
 
   if (ready && !user) {
     return (

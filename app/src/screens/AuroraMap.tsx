@@ -129,7 +129,7 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
     getBytes(f.forecast).then(b => { if (live) setFrameBytes(b); });
     if (playing && frames[fi + 1]) void getBytes(frames[fi + 1].forecast);
     return () => { live = false; };
-  }, [fi, frames, playing]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fi, frames, playing]);
   // 2D: swap the aurora image for the frame's (rendered once per frame and kept).
   useEffect(() => {
     const prob = layers.current.prob as Leaflet.LayerGroup | undefined;
@@ -355,7 +355,7 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
       const alt = sunAltitudeAt(Date.now());
       layers.current.night = overlay(paintMercator(360, LAT_MAX, (la, lo) => [2, 6, 18, 0.62 * nightShade(alt(la, lo))])).addTo(map);
     });
-  }, [on.night, ready, tick, view]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [on.night, ready, tick, view]);
 
   // Best spots: aurora × darkness × clear sky, painted for the 2D map and (as a texture) for the globe.
   const [cloudGrid, setCloudGrid] = useState<CloudGrid | null | undefined>(undefined);

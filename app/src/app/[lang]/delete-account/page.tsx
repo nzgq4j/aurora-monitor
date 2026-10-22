@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getI18n, routeLocale } from '../../../i18n/server';
 import { LegalPage, type LegalSection } from '../../../components/LegalPage';
 import { LEGAL } from '../../../lib/site';
+import Link from 'next/link';
 
 type Props = { params: Promise<{ lang: string }> };
 
@@ -17,7 +18,7 @@ const sections: LegalSection[] = [
     h: 'Delete it yourself',
     body: <>
       <p>In the Polar Lights app for Android or on the website, sign in and open <b>Dashboard → Account</b> (on a phone: <b>More → Account</b>). At the bottom, choose <b>Delete my account</b> and confirm. Your account is deleted straight away and you are signed out.</p>
-      <p><a href="/signin?next=/dashboard">Sign in to delete your account</a></p>
+      <p><Link href="/signin?next=/dashboard">Sign in to delete your account</Link></p>
     </>,
   },
   {

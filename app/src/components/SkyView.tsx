@@ -342,7 +342,10 @@ export function SkyView({ kp }: { kp: number | null }) {
           if (cur && m.measureText(next).width > room) { lines.push({ text: cur, mark: '' }); cur = item; } else cur = next;
         }
         if (!lines.length && m.measureText(cur).width + gap + m.measureText(mark).width <= room) lines.push({ text: cur, mark });
-        else lines.push({ text: cur, mark: '' }, { text: mark, mark: '' }), markLine = lines.length - 1;
+        else {
+          lines.push({ text: cur, mark: '' }, { text: mark, mark: '' });
+          markLine = lines.length - 1;
+        }
       }
       const strip = unit ? Math.round(unit + (lines.length - 1) * lineH) : 0;
       const c = document.createElement('canvas');

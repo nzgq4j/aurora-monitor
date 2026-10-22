@@ -150,7 +150,7 @@ export function GalleryPost() {
       )}
       <label className="gal-confirm">
         <input type="checkbox" checked={mine} onChange={e => setMine(e.target.checked)} />
-        <span>{t('post.mine')} <a href="/terms#community">{t('gal.rulesLink')}</a></span>
+        <span>{t('post.mine')} <Link href="/terms#community">{t('gal.rulesLink')}</Link></span>
       </label>
       <p className="gal-note">{t('post.privacy')}</p>
       {err && <p className="gal-note" role="alert" style={{ color: 'var(--red)' }}>{err}</p>}

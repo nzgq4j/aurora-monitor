@@ -126,7 +126,7 @@ export function Gallery({ kp }: { kp: number | null }) {
 
       <p className="gal-foot">
         {t('gal.rules')}{' '}
-        <a href="/terms#community">{t('gal.rulesLink')}</a>
+        <Link href="/terms#community">{t('gal.rulesLink')}</Link>
         {user && <> · <button type="button" className="btn gal-link" onClick={async () => setBlocks(await myBlocks())}>{t('gal.blocked')}</button></>}
       </p>
       {blocks && (
