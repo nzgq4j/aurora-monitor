@@ -9,7 +9,7 @@ import type { Achievement, MemberInfo } from './badges';
  * remove rows or files, which run with the server's key).
  */
 
-export type Filter = 'tonight' | 'storm' | 'near' | 'top';
+export type Filter = 'tonight' | 'storm' | 'near' | 'top' | 'recent';
 export type Precision = 'town' | 'area' | 'none';
 export type ReportReason = 'not_aurora' | 'inappropriate' | 'spam' | 'not_theirs' | 'other';
 
@@ -29,7 +29,8 @@ export interface Photo {
   camera: string | null;
   featured: boolean;
   helpful: number;
-  status: 'visible' | 'hidden' | 'removed';
+  /** pending: waiting for a moderator (only its poster sees it). */
+  status: 'pending' | 'visible' | 'hidden' | 'removed';
   handle: string;
   points: number;
   voted: boolean;

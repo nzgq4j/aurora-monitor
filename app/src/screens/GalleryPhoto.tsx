@@ -113,6 +113,7 @@ export function GalleryPhoto() {
         </div>
         {p.kp != null && <span className="mono gal-author-kp" style={{ color: kpColor(p.kp) }}>KP {kpThirds(p.kp)}</span>}
       </div>
+      {p.status === 'pending' && <p className="gal-note" role="status">{t('gal.pendingNote')}</p>}
       {p.caption && <p className="gal-caption">{p.caption}</p>}
 
       <dl className="gal-facts">

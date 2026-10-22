@@ -3,7 +3,7 @@ import { supabaseAdmin, userFromRequest } from '../../../../lib/billing';
 
 export const dynamic = 'force-dynamic';
 
-type Action = 'restore' | 'remove' | 'feature' | 'unfeature';
+type Action = 'approve' | 'restore' | 'remove' | 'feature' | 'unfeature';
 
 async function admin(req: Request) {
   const user = await userFromRequest(req);
@@ -13,9 +13,9 @@ async function admin(req: Request) {
 }
 
 /**
- * Gallery moderation (admins table only). POST {} lists photos waiting for review (hidden by three
- * reports, or reported at all) with their report reasons; POST {photoId, action} restores, removes
- * (files deleted), features or unfeatures one. Featuring awards the poster the Featured achievement.
+ * Gallery moderation (admins table only). POST {} lists photos waiting for review (new posts waiting for
+ * approval, photos hidden by three reports, or reported at all) with their report reasons; POST
+ * {photoId, action} approves (publishes), restores, removes (files deleted), features or unfeatures one. Featuring awards the poster the Featured achievement.
  */
 export async function POST(req: Request) {
   const user = await admin(req);
@@ -25,8 +25,8 @@ export async function POST(req: Request) {
 
   if (!photoId) {
     const { data: photos } = await db.from('gallery_photos')
-      .select('id, user_id, taken_at, created_at, thumb_path, caption, place, kp, source, status, featured, helpful, reports')
-      .or('status.eq.hidden,reports.gt.0').neq('status', 'removed').order('created_at', { ascending: false }).limit(100);
+      .select('id, user_id, taken_at, created_at, path, thumb_path, caption, place, kp, source, status, featured, helpful, reports')
+      .or('status.eq.pending,status.eq.hidden,reports.gt.0').neq('status', 'removed').order('created_at', { ascending: false }).limit(200);
     const ids = (photos ?? []).map(p => p.id);
     const users = [...new Set((photos ?? []).map(p => p.user_id))];
     const [{ data: reports }, { data: members }] = await Promise.all([
@@ -44,7 +44,11 @@ export async function POST(req: Request) {
 
   const { data: photo } = await db.from('gallery_photos').select('user_id, path, thumb_path').eq('id', photoId).maybeSingle();
   if (!photo) return NextResponse.json({ error: 'not_found' }, { status: 404 });
-  if (action === 'restore') {
+  if (action === 'approve') {
+    // Publishes it and gives the poster the photo points (approve_photo in the database).
+    const { data: done, error } = await db.rpc('approve_photo', { p_photo: photoId });
+    if (error || done !== true) return NextResponse.json({ error: 'not_pending' }, { status: 409 });
+  } else if (action === 'restore') {
     await db.from('photo_reports').delete().eq('photo_id', photoId);
     await db.from('gallery_photos').update({ status: 'visible', reports: 0 }).eq('id', photoId);
   } else if (action === 'remove') {
