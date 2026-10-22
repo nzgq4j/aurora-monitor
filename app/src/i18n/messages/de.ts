@@ -691,7 +691,7 @@ export const de: Messages = {
   'sight.thanks.one': 'Danke. {n} weitere Person hat in der letzten Stunde in der Nähe Polarlicht gemeldet.',
   'sight.thanks.other': 'Danke. {n} weitere Personen haben in der letzten Stunde in der Nähe Polarlicht gemeldet.',
   'sight.thanksFirst': 'Danke. Sie sind in der letzten Stunde der Erste, der in der Nähe Polarlicht meldet.',
-  'sight.limit': 'Sie haben in den letzten 30 Minuten bereits eine Sichtung gemeldet.',
+  'sight.limit': 'Sie können alle 12 Stunden eine Sichtung melden und haben bereits eine gemeldet.',
   'sight.error': 'Ihre Sichtung konnte nicht gespeichert werden. Bitte erneut versuchen.',
   'sight.howBright': 'Wie hell?',
   'sight.b.faint': 'Schwach',
