@@ -691,7 +691,7 @@ export const es: Messages = {
   'sight.thanks.one': 'Gracias. {n} persona más ha visto auroras cerca en la última hora.',
   'sight.thanks.other': 'Gracias. {n} personas más han visto auroras cerca en la última hora.',
   'sight.thanksFirst': 'Gracias. Eres el primero en ver auroras cerca en la última hora.',
-  'sight.limit': 'Ya informaste de un avistamiento en los últimos 30 minutos.',
+  'sight.limit': 'Puedes informar de un avistamiento cada 12 horas y ya has informado de uno.',
   'sight.error': 'No se pudo guardar tu avistamiento. Inténtalo de nuevo.',
   'sight.howBright': '¿Qué brillo tenía?',
   'sight.b.faint': 'Tenue',

@@ -4,7 +4,7 @@ import { supabase } from './supabase';
 
 /**
  * "I saw it" sightings (#67), stored in the sightings table: the database rounds the position to
- * about 10 km and allows one report per user per 30 minutes; nobody can read who reported what.
+ * about 10 km and allows one report per user every 12 hours; nobody can read who reported what.
  */
 export type Brightness = 'faint' | 'visible' | 'bright';
 export interface Sighting { id: number; created_at: string; lat: number; lon: number; brightness: Brightness | null }
@@ -17,7 +17,7 @@ export async function reportSighting(lat: number, lon: number, score: number | n
   const { data: { session } } = await sb.auth.getSession();
   if (!session) return { ok: false, reason: 'signin' };
   const { data, error } = await sb.from('sightings').insert({ lat, lon, score: score === null ? null : Math.round(score) }).select('id').single();
-  if (error) return { ok: false, reason: /30 minutes/.test(error.message) ? 'limit' : 'error' };
+  if (error) return { ok: false, reason: /One sighting per/.test(error.message) ? 'limit' : 'error' };
   return { ok: true, id: (data as { id: number }).id };
 }
 

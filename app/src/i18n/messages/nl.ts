@@ -691,7 +691,7 @@ export const nl: Messages = {
   'sight.thanks.one': 'Bedankt. {n} ander meldde het afgelopen uur poollicht in de buurt.',
   'sight.thanks.other': 'Bedankt. {n} anderen meldden het afgelopen uur poollicht in de buurt.',
   'sight.thanksFirst': 'Bedankt. Jij bent het afgelopen uur de eerste die poollicht in de buurt meldt.',
-  'sight.limit': 'Je hebt de afgelopen 30 minuten al een waarneming gemeld.',
+  'sight.limit': 'Je kunt elke 12 uur één waarneming melden en je hebt er al een gemeld.',
   'sight.error': 'Je waarneming kon niet worden opgeslagen. Probeer het opnieuw.',
   'sight.howBright': 'Hoe helder?',
   'sight.b.faint': 'Zwak',

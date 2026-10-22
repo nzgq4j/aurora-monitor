@@ -691,7 +691,7 @@ export const fr: Messages = {
   'sight.thanks.one': 'Merci. {n} autre personne a vu une aurore près d’ici dans l’heure.',
   'sight.thanks.other': 'Merci. {n} autres personnes ont vu une aurore près d’ici dans l’heure.',
   'sight.thanksFirst': 'Merci. Vous êtes le premier à signaler une aurore près d’ici dans l’heure.',
-  'sight.limit': 'Vous avez déjà signalé une observation il y a moins de 30 minutes.',
+  'sight.limit': 'Vous pouvez signaler une observation toutes les 12 heures, et vous en avez déjà signalé une.',
   'sight.error': 'Votre observation n’a pas pu être enregistrée. Réessayez.',
   'sight.howBright': 'Quelle intensité ?',
   'sight.b.faint': 'Faible',

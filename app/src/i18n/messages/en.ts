@@ -691,7 +691,7 @@ export const en = {
   'sight.thanks.one': 'Thanks. {n} other person reported aurora nearby in the last hour.',
   'sight.thanks.other': 'Thanks. {n} others reported aurora nearby in the last hour.',
   'sight.thanksFirst': 'Thanks. You’re the first to report aurora nearby in the last hour.',
-  'sight.limit': 'You reported a sighting in the last 30 minutes.',
+  'sight.limit': 'You can report one sighting every 12 hours, and you’ve already reported one.',
   'sight.error': 'Your sighting couldn’t be saved. Try again.',
   'sight.howBright': 'How bright?',
   'sight.b.faint': 'Faint',
