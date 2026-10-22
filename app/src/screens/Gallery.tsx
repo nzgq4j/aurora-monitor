@@ -7,11 +7,14 @@ import { useLocations } from '../lib/locations';
 import { useStore } from '../store';
 import { useI18n } from '../i18n/I18n';
 import { rank } from '../lib/badges';
-import { feed, fileUrl, myBlocks, unblock, type Filter, type Photo } from '../lib/community';
+import { feed, fileUrl, myBlocks, myMember, unblock, type Filter, type Photo } from '../lib/community';
+import { pendingCount } from '../lib/moderation';
 import { BottomSheet } from '../components/BottomSheet';
 import type { MessageKey } from '../i18n/core';
 
-const FILTERS: Filter[] = ['tonight', 'storm', 'near', 'top'];
+const FILTERS: Filter[] = ['tonight', 'storm', 'near', 'top', 'recent'];
+/** Recent shows this many photos in all (the database stops there too). */
+const RECENT = 20;
 const CAMERA = 'M4 8h3l1.6-2.4h6.8L17 8h3v11H4zM12 16.6a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8Z';
 const PLUS = 'M12 5v14M5 12h14';
 const HEART = 'M12 20s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 9c0 6-8 11-8 11z';
@@ -40,6 +43,7 @@ export function PhotoCard({ p }: { p: Photo }) {
         {p.kp != null && <span className="gal-chip gal-chip-kp mono" style={{ color: kpColor(p.kp) }}>KP {kpThirds(p.kp)}</span>}
         <span className={'gal-chip gal-chip-src' + (p.source === 'app' ? ' is-app' : '')}>{t(p.source === 'app' ? 'gal.captured' : 'gal.uploaded')}</span>
         {p.featured && <span className="gal-chip gal-chip-feat">{t('gal.featured')}</span>}
+        {p.status === 'pending' && <span className="gal-chip gal-chip-feat">{t('gal.pending')}</span>}
       </div>
       <div className="gal-card-body">
         <div className="gal-card-row">
@@ -66,6 +70,8 @@ export function Gallery({ kp }: { kp: number | null }) {
   const [more, setMore] = useState(false);
   const [failed, setFailed] = useState(false);
   const [blocks, setBlocks] = useState<string[] | null>(null);
+  // Moderators get a link to the review queue, with how many photos are waiting.
+  const [waiting, setWaiting] = useState<number | null>(null);
   const home = locations.find(l => l.isHome) ?? locations[0] ?? null;
 
   // Only the latest request may update the list (switching filters quickly mustn't show an older answer).
@@ -74,13 +80,18 @@ export function Gallery({ kp }: { kp: number | null }) {
     const id = ++request.current;
     if (filter === 'near' && !home) { setPhotos([]); return; }
     setFailed(false);
-    const r = await feed(filter, { lat: home?.lat, lon: home?.lon, offset, limit: 24 });
+    const limit = filter === 'recent' ? RECENT : 24;
+    const r = await feed(filter, { lat: home?.lat, lon: home?.lon, offset, limit });
     if (id !== request.current) return;
     if (!r) { setFailed(true); if (!offset) setPhotos([]); return; }
-    setMore(r.length === 24);
+    setMore(filter !== 'recent' && r.length === limit);
     setPhotos(prev => (offset ? [...(prev ?? []), ...r] : r));
   }, [filter, home?.id]); // eslint-disable-line react-hooks/exhaustive-deps -- the home place, not each new locations array
   useEffect(() => { setPhotos(null); void load(); }, [load]);
+  useEffect(() => {
+    if (!user) return;
+    void myMember().then(async m => setWaiting(m?.isAdmin ? await pendingCount() : null));
+  }, [user]);
 
   const storm = kp != null && kp >= 4.66;
   return (
@@ -128,6 +139,7 @@ export function Gallery({ kp }: { kp: number | null }) {
         {t('gal.rules')}{' '}
         <Link href="/terms#community">{t('gal.rulesLink')}</Link>
         {user && <> · <button type="button" className="btn gal-link" onClick={async () => setBlocks(await myBlocks())}>{t('gal.blocked')}</button></>}
+        {user && waiting !== null && <> · <Link href="/gallery/moderate">{t('gal.modLink', { n: waiting })}</Link></>}
       </p>
       {blocks && (
         <BottomSheet title={t('gal.blocked')} onClose={() => setBlocks(null)}>

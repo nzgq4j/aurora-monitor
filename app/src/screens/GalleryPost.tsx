@@ -153,6 +153,7 @@ export function GalleryPost() {
         <span>{t('post.mine')} <Link href="/terms#community">{t('gal.rulesLink')}</Link></span>
       </label>
       <p className="gal-note">{t('post.privacy')}</p>
+      <p className="gal-note">{t('post.review')}</p>
       {err && <p className="gal-note" role="alert" style={{ color: 'var(--red)' }}>{err}</p>}
       <button type="button" className="btn pill pill-primary sheet-pill gal-submit" disabled={!blob || !mine || busy} onClick={submit}>
         {busy ? t('post.posting') : t('post.submit')}
