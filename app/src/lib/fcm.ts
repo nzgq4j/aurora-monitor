@@ -26,6 +26,8 @@ export async function sendFcm(token: string, m: FcmMessage): Promise<FcmResult> 
   if (!a) return 'not_configured';
   const res = await fetch(`https://fcm.googleapis.com/v1/projects/${a.project_id}/messages:send`, {
     method: 'POST',
+    // A slow service never holds up the alert run.
+    signal: AbortSignal.timeout(10000),
     headers: { authorization: `Bearer ${await accessToken(a)}`, 'content-type': 'application/json' },
     body: JSON.stringify({
       message: {

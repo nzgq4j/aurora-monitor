@@ -30,6 +30,8 @@ export async function googleAccessToken(a: ServiceAccount, scope: string, now = 
   const signature = createSign('RSA-SHA256').update(`${head}.${claims}`).sign(a.private_key, 'base64url');
   const res = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
+    // A slow service never holds up the alert run.
+    signal: AbortSignal.timeout(10000),
     headers: { 'content-type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion: `${head}.${claims}.${signature}` }),
   });

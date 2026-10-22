@@ -78,7 +78,27 @@ public class PhotoLibraryPlugin extends Plugin {
         }
     }
 
+    /**
+     * A plain file name from the page: letters, digits, dot, dash and underscore only, so a name such as
+     * "../../shared_prefs/x" can never point outside the album or share folder.
+     */
+    private static String safeName(String raw) {
+        String base = raw == null ? "" : raw.substring(raw.lastIndexOf('/') + 1).replaceAll("[^A-Za-z0-9._-]", "_");
+        while (base.startsWith(".")) base = base.substring(1);
+        if (base.isEmpty()) base = "polar-lights-" + System.currentTimeMillis();
+        if (base.length() > 80) base = base.substring(base.length() - 80);
+        return base.toLowerCase(java.util.Locale.ROOT).endsWith(".jpg") ? base : base + ".jpg";
+    }
+
+    /** `file` if it lies directly inside `dir`, else an IOException. */
+    private static File inside(File dir, String name) throws IOException {
+        File file = new File(dir, safeName(name));
+        if (!file.getCanonicalFile().getParentFile().equals(dir.getCanonicalFile())) throw new IOException("Bad file name");
+        return file;
+    }
+
     private void saveOne(String name, byte[] jpeg) throws IOException {
+        name = safeName(name);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             ContentResolver resolver = getContext().getContentResolver();
             ContentValues values = new ContentValues();
@@ -101,7 +121,7 @@ public class PhotoLibraryPlugin extends Plugin {
         } else {
             File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), ALBUM);
             if (!dir.exists() && !dir.mkdirs()) throw new IOException("Couldn't create the album folder");
-            File file = new File(dir, name);
+            File file = inside(dir, name);
             try (FileOutputStream out = new FileOutputStream(file)) {
                 out.write(jpeg);
             }
@@ -120,10 +140,14 @@ public class PhotoLibraryPlugin extends Plugin {
             // Written to the app's cache (shared through the FileProvider in AndroidManifest.xml).
             File dir = new File(getContext().getCacheDir(), "shared");
             if (!dir.exists() && !dir.mkdirs()) throw new IOException("Couldn't create the share folder");
+            // Photos shared earlier have been handed over already; don't let them pile up in the cache.
+            File[] old = dir.listFiles();
+            if (old != null) for (File f : old) //noinspection ResultOfMethodCallIgnored
+                f.delete();
             ArrayList<Uri> uris = new ArrayList<>();
             for (int i = 0; i < photos.length(); i++) {
                 JSONObject p = photos.getJSONObject(i);
-                File file = new File(dir, p.getString("name"));
+                File file = inside(dir, p.getString("name"));
                 try (FileOutputStream out = new FileOutputStream(file)) {
                     out.write(Base64.decode(p.getString("data"), Base64.DEFAULT));
                 }

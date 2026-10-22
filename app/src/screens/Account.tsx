@@ -328,7 +328,7 @@ function Alerts({ data }: { data: AccountData }) {
           <ToggleRow label={t('alerts.storm')} sub={t('alerts.storm.sub')} need={0} locked={false} on={r.storm} onClick={() => setRules({ storm: !r.storm })} />
           <label className="alert-kp" aria-disabled={!r.storm}>
             <span>{t('alerts.stormKp')}</span>
-            <select value={kp} disabled={!r.storm} onChange={e => set({ kpThreshold: +e.target.value })}>
+            <select value={Math.min(9, Math.max(5, Math.round(s.kpThreshold)))} disabled={!r.storm} onChange={e => set({ kpThreshold: +e.target.value })}>
               {[5, 6, 7, 8, 9].map(k => <option key={k} value={k}>{`Kp ${k}+ · ${kpName(t, k)}`}</option>)}
             </select>
           </label>

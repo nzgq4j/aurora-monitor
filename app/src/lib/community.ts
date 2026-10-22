@@ -71,11 +71,12 @@ export async function setHandle(handle: string): Promise<'ok' | 'invalid' | 'tak
   return error ? 'error' : (data as 'ok' | 'invalid' | 'taken');
 }
 
-export async function feed(filter: Filter | 'around' | 'one' | 'mine', o: { lat?: number; lon?: number; at?: string; id?: string; before?: string; limit?: number } = {}): Promise<Photo[] | null> {
+export async function feed(filter: Filter | 'around' | 'one' | 'mine', o: { lat?: number; lon?: number; at?: string; id?: string; offset?: number; limit?: number } = {}): Promise<Photo[] | null> {
   const sb = supabase();
   if (!sb) return null;
-  const { data, error } = await sb.rpc('gallery_feed', {
-    p_filter: filter, p_lat: o.lat ?? null, p_lon: o.lon ?? null, p_at: o.at ?? null, p_id: o.id ?? null, p_before: o.before ?? null, p_limit: o.limit ?? 30,
+  // Paged by position in the full sort order, so "Show more" neither skips nor repeats photos.
+  const { data, error } = await sb.rpc('gallery_page', {
+    p_filter: filter, p_lat: o.lat ?? null, p_lon: o.lon ?? null, p_at: o.at ?? null, p_id: o.id ?? null, p_offset: o.offset ?? 0, p_limit: o.limit ?? 30,
   });
   return error ? null : (data as Photo[]);
 }

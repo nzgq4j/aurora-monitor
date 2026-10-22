@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { TIERS, type ChannelKey, type Tier, type TierId, type TriggerKey } from './data';
 import { PAYMENTS, useAuth } from './lib/auth';
 import { PLAY_MANAGE_URL, buyWithPlay, playBilling, playMissing } from './lib/playBilling';
-import { DEFAULT_RULES, DEFAULT_STORM_KP, type AlertRules } from './lib/alerts';
+import { DEFAULT_RULES, DEFAULT_STORM_KP, normalizeRules, type AlertRules } from './lib/alerts';
 import { supabase } from './lib/supabase';
 import { useI18n } from './i18n/I18n';
 import { LOCALES } from './i18n/config';
@@ -214,7 +214,7 @@ function useAlertSettingsSync(s: AppState, setState: (f: (p: AppState) => AppSta
     if (!sb || !userId || requested.current === userId) return;
     requested.current = userId;
     sb.from('alert_settings').select('*').eq('user_id', userId).maybeSingle().then(({ data, error }) => {
-      if (data) setState(p => ({ ...p, kpThreshold: data.kp_threshold, alertRules: { ...DEFAULT_RULES, ...data.rules }, triggers: { ...p.triggers, ...data.triggers }, channels: { ...p.channels, ...data.channels } }));
+      if (data) setState(p => ({ ...p, kpThreshold: data.kp_threshold, alertRules: normalizeRules(data.rules), triggers: { ...p.triggers, ...data.triggers }, channels: { ...p.channels, ...data.channels } }));
       if (!error) setLoadedFor(userId);
     });
   }, [userId, setState]);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../lib/auth';
 import { useLocations } from '../lib/locations';
@@ -68,14 +68,18 @@ export function Gallery({ kp }: { kp: number | null }) {
   const [blocks, setBlocks] = useState<string[] | null>(null);
   const home = locations.find(l => l.isHome) ?? locations[0] ?? null;
 
-  const load = useCallback(async (append?: string) => {
+  // Only the latest request may update the list (switching filters quickly mustn't show an older answer).
+  const request = useRef(0);
+  const load = useCallback(async (offset = 0) => {
+    const id = ++request.current;
     if (filter === 'near' && !home) { setPhotos([]); return; }
     setFailed(false);
-    const r = await feed(filter, { lat: home?.lat, lon: home?.lon, before: append, limit: 24 });
-    if (!r) { setFailed(true); if (!append) setPhotos([]); return; }
+    const r = await feed(filter, { lat: home?.lat, lon: home?.lon, offset, limit: 24 });
+    if (id !== request.current) return;
+    if (!r) { setFailed(true); if (!offset) setPhotos([]); return; }
     setMore(r.length === 24);
-    setPhotos(prev => (append ? [...(prev ?? []), ...r] : r));
-  }, [filter, home]);
+    setPhotos(prev => (offset ? [...(prev ?? []), ...r] : r));
+  }, [filter, home?.id]); // eslint-disable-line react-hooks/exhaustive-deps -- the home place, not each new locations array
   useEffect(() => { setPhotos(null); void load(); }, [load]);
 
   const storm = kp != null && kp >= 4.66;
@@ -118,7 +122,7 @@ export function Gallery({ kp }: { kp: number | null }) {
           {photos.map(p => <PhotoCard key={p.id} p={p} />)}
         </div>
       )}
-      {more && photos && <button type="button" className="btn pill pill-ghost sheet-pill gal-more" onClick={() => load(photos[photos.length - 1].taken_at)}>{t('gal.more')}</button>}
+      {more && photos && <button type="button" className="btn pill pill-ghost sheet-pill gal-more" onClick={() => load(photos.length)}>{t('gal.more')}</button>}
 
       <p className="gal-foot">
         {t('gal.rules')}{' '}

@@ -44,10 +44,13 @@ export function stormHeadline(days: StormDay[]): { level: StormLevel; day: strin
   return { level: 'quiet', day: null, prob: 0 };
 }
 
-/** GOES 0.1–0.8 nm X-ray flux (W/m²) as a flare class, e.g. 8.3e-7 → "B8.3", 2.1e-5 → "M2.1". */
+/**
+ * GOES 0.1–0.8 nm X-ray flux (W/m²) as a flare class, e.g. 8.3e-7 → "B8.3", 2.1e-5 → "M2.1". Rounded down to
+ * a tenth; the tiny epsilon stops floating-point error turning 3e-4 into "X2.9".
+ */
 export function xrayClass(flux: number): string {
   const classes = [['X', 1e-4], ['M', 1e-5], ['C', 1e-6], ['B', 1e-7], ['A', 1e-8]] as const;
-  for (const [c, base] of classes) if (flux >= base) return `${c}${(Math.floor((flux / base) * 10) / 10).toFixed(1)}`;
+  for (const [c, base] of classes) if (flux >= base) return `${c}${(Math.floor((flux / base) * 10 + 1e-9) / 10).toFixed(1)}`;
   return 'A0.0';
 }
 

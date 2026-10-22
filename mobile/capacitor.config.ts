@@ -10,8 +10,9 @@ const config: CapacitorConfig = {
   webDir: 'www',
   server: {
     url: 'https://www.polarlights.io',
-    // Pages on these hosts stay in the app; other links open in the browser.
-    allowNavigation: ['www.polarlights.io', 'polarlights.io', 'uicfvlmmjdttpcglxhdh.supabase.co'],
+    // Pages on these hosts stay in the app (and can use its native plugins); other links open in the
+    // browser. Only our own site: Google sign-in is native in the app, so no auth pages load here.
+    allowNavigation: ['www.polarlights.io', 'polarlights.io'],
     errorPath: 'offline.html',
   },
   android: {

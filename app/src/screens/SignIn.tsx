@@ -7,6 +7,7 @@ import { useAuth } from '../lib/auth';
 import { useStore } from '../store';
 import { useI18n } from '../i18n/I18n';
 import { inApp } from '../lib/native';
+import { sameOriginPath } from '../lib/safeUrl';
 
 type Mode = 'signin' | 'signup' | 'reset';
 
@@ -15,8 +16,7 @@ const APPLE_SIGN_IN = false;
 
 /** The same-site page to continue to after signing in (?next=), if any. */
 const nextPath = () => {
-  const next = new URLSearchParams(window.location.search).get('next');
-  return next && next.startsWith('/') && !next.startsWith('//') ? next : null;
+  return sameOriginPath(new URLSearchParams(window.location.search).get('next'));
 };
 
 export function SignIn() {
