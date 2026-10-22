@@ -70,7 +70,7 @@ export function SunspotRegions() {
   };
 
   // A cached image can finish loading before React attaches onLoad, so also measure once mounted.
-  useEffect(() => { if (img.current?.complete) measure(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (img.current?.complete) measure(); }, []);
 
   const placed = useMemo(() => {
     if (!data || now === null) return [];

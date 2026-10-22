@@ -32,7 +32,10 @@ export function Checkout() {
   const playOffer = offers?.[s.annual ? 'annual' : 'monthly'];
   // On Play, only when the plan has a free-trial offer (set up in Play Console).
   const trial = play ? !profile?.trialEndsAt && !!playOffer?.trial : (!stripe && !play) || !profile?.trialEndsAt;
-  const trialEnd = date(Date.now() + 14 * 864e5, { month: 'short', day: 'numeric', year: 'numeric' });
+  // Today's date is known only in the browser (the page itself is built ahead of time).
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => setNow(Date.now()), []); // eslint-disable-line react-hooks/set-state-in-effect -- read the clock once after mount
+  const trialEnd = now === null ? '' : date(now + TRIAL_DAYS * 864e5, { month: 'short', day: 'numeric', year: 'numeric' });
   const cycle = s.annual ? t('plans.annual') : t('plans.monthly');
   const price = (play && (trial ? playOffer?.trial ?? playOffer?.base : playOffer?.base)?.price) || money(s.annual ? pending.y : pending.m);
   const name = t(`tier.${pending.id}`);

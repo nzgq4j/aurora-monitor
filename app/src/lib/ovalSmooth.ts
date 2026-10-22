@@ -12,7 +12,7 @@ export function smoothOval(grid: Uint8Array): Float32Array {
   const W = OVAL_W, H = OVAL_H, S = OVAL_SCALE;
   const at = (row: number, c: number) => grid[row * 360 + ((c + 180) % 360)];
   // Bilinear upsample (u = 0 at 180° W, wrapping in longitude).
-  let cur = new Float32Array(W * H);
+  const cur = new Float32Array(W * H);
   for (let y = 0; y < H; y++) {
     const r0 = Math.min(180, Math.floor(y / S)), r1 = Math.min(180, r0 + 1), ty = y / S - r0;
     for (let x = 0; x < W; x++) {
