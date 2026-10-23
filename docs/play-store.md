@@ -71,7 +71,7 @@ Polar Lights: Aurora Forecast
 Aurora forecasts, alerts and a sky camera for chasing the northern lights.
 ```
 
-**Full description** (about 2,400 characters)
+**Full description** (about 2,600 characters)
 
 ```
 Know when to look up. Polar Lights turns live space weather into a simple answer for where you are: is the aurora worth going out for tonight, and when?
@@ -113,7 +113,7 @@ MADE FOR THE DARK
 • Available in English, German, Spanish, French and Dutch
 
 PLANS
-Polar Lights is free to use, with the live map, forecasts and alerts for one place. Chaser adds up to 10 places, instant push alerts, the technical alerts, the 3-hour Kp forecast and 27-day outlook, hour-by-hour cloud and darkness, solar wind graphs and the dark-sky spot map, with a 14-day free trial for new subscribers.
+Polar Lights is free to use, with the live map, forecasts and alerts for one place. Chaser adds up to 10 places, instant push alerts, the technical alerts, the 3-hour Kp forecast and 27-day outlook, hour-by-hour cloud and darkness, solar wind graphs and the dark-sky spot map. Chaser is US$3.99 a month or US$36 a year (save 25%), with a 14-day free trial for new subscribers. Prices in other countries are shown in Google Play before you subscribe.
 
 Data from NOAA's Space Weather Prediction Center, NASA, ESA, GFZ Potsdam, EUMETSAT and Open-Meteo. Polar Lights is independent and not affiliated with these organisations.
 
@@ -139,3 +139,5 @@ Privacy: https://www.polarlights.io/privacy
   until they are available.
 - The 14-day trial applies in the app only once the `free-trial` offer exists on the `chaser`
   subscription (billing setup step 2). Remove the trial wording if the listing goes live first.
+- The prices in the PLANS paragraph must match the `chaser` base plans in Play Console
+  (`monthly` US$3.99, `annual` US$36) and `TIERS` in `app/src/data.ts`. Update all three together.
