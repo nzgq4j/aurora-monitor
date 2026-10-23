@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_RULES, decidePlace, inQuietHours, levelKp, normalizeRules, stormKp, type AlertRules } from './alerts';
+import { DEFAULT_RULES, bzSouth, decidePlace, inQuietHours, levelKp, normalizeRules, powerJump, stormKp, type AlertRules } from './alerts';
 import type { HourScore } from './tonight';
 
 const hour = (score: number): HourScore => ({ t: 0, score, kp: 5, cloud: 0, sunAlt: -20, moonUp: false, f: { aurora: 1, dark: 1, cloud: 1, moon: 1 } });
@@ -74,4 +74,24 @@ describe('levelKp', () => {
     expect(levelKp('clear', need)).toBeCloseTo(need + 1.21, 1);
   });
   it('never goes below zero', () => expect(levelKp('faint', 0)).toBe(0));
+});
+
+describe('technical alerts', () => {
+  const now = Date.UTC(2026, 10, 20, 22);
+  const bins = (vals: (number | null)[]) => vals.map((bz, i) => ({ t: now - (vals.length - i) * 3e5, bz }));
+  it('Bz: 15 minutes at or below −10 nT, ending now', () => {
+    expect(bzSouth(bins([-3, -11, -12, -14]), now)).toEqual({ bz: -12.3, since: now - 3 * 3e5 });
+    expect(bzSouth(bins([-3, -2, -12, -14]), now)).toBeNull();
+    expect(bzSouth(bins([-12, -14, -15, -6]), now)).toBeNull();
+  });
+  it('Bz: a stale feed raises nothing', () => {
+    expect(bzSouth(bins([-12, -14, -15]), now + 3 * 36e5)).toBeNull();
+  });
+  const hp = (vals: number[]) => vals.map((v, i) => ({ observed: now - (vals.length - 1 - i) * 3e5, north: v, south: 5 }));
+  it('substorm: a sharp rise in hemispheric power', () => {
+    expect(powerJump(hp([12, 14, 15, 22, 35, 48]), 'north', now)).toEqual({ from: 12, to: 48 });
+    expect(powerJump(hp([40, 45, 48, 50, 55, 60]), 'north', now)).toBeNull();
+    expect(powerJump(hp([5, 6, 8, 12, 18, 24]), 'north', now)).toBeNull();
+    expect(powerJump(hp([12, 14, 15, 22, 35, 48]), 'south', now)).toBeNull();
+  });
 });

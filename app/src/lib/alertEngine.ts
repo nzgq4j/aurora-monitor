@@ -2,10 +2,10 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
 import { fcmAccount, sendFcm } from './fcm';
-import { REPEAT_HOURS, decidePlace, inQuietHours, normalizeRules, stormKp, type AlertKind, type AlertLevel, type AlertRules } from './alerts';
-import { kpNeeded, moon } from './astro';
+import { REPEAT_HOURS, bzSouth, decidePlace, inQuietHours, normalizeRules, powerJump, stormKp, type AlertKind, type AlertLevel, type AlertRules } from './alerts';
+import { kpNeeded, moon, sunAltitude } from './astro';
 import { cloudCover, type CloudForecast } from './cloud';
-import { kpNow, kpSeries, ovalAt, ovation } from './feeds';
+import { hemiPowerSeries, kpNow, kpSeries, ovalAt, ovation, solarWindSeries } from './feeds';
 import { SITE } from './site';
 import { hourlyScores } from './tonight';
 import { isLocale, type Locale } from '../i18n/config';
@@ -17,10 +17,14 @@ import { getI18n } from '../i18n/server';
  * skips repeats and quiet hours, emails what's left and logs every alert in alert_log.
  */
 
-interface Settings { user_id: string; kp_threshold: number; rules: unknown; time_zone: string | null; channels: Record<string, boolean> | null }
+interface Settings { user_id: string; kp_threshold: number; rules: unknown; time_zone: string | null; channels: Record<string, boolean> | null; triggers?: Record<string, boolean> | null }
 interface Profile { id: string; plan: string | null; subscription_status: string | null; trial_ends_at: string | null; locale: string | null }
 interface Loc { id: string; user_id: string; name: string; lat: number; lon: number; is_home: boolean }
-interface Alert { kind: AlertKind; location: Loc | null; level: AlertLevel | null; score: number | null; kp: number | null; look?: 'low' | 'high' | 'overhead' }
+interface Alert {
+  kind: AlertKind; location: Loc | null; level: AlertLevel | null; score: number | null; kp: number | null; look?: 'low' | 'high' | 'overhead';
+  /** Technical alerts: Bz (nT), or the hemispheric power reached (GW) with `from` the power before. */
+  value?: number; from?: number;
+}
 
 export interface RunSummary {
   users: number; places: number; alerts: number; emailed: number; pushed: number; failed: number; noProvider: number; skippedQuiet: number;
@@ -48,7 +52,7 @@ const BUDGET_MS = 40_000;
 async function allSettings(admin: SupabaseClient): Promise<Settings[]> {
   const out: Settings[] = [];
   for (let from = 0; ; from += 1000) {
-    const { data, error } = await admin.from('alert_settings').select('user_id, kp_threshold, rules, time_zone, channels')
+    const { data, error } = await admin.from('alert_settings').select('user_id, kp_threshold, rules, time_zone, channels, triggers')
       .order('user_id').range(from, from + 999);
     if (error) throw new Error(`alert_settings: ${error.message}`);
     out.push(...(data as Settings[]));
@@ -59,7 +63,8 @@ async function allSettings(admin: SupabaseClient): Promise<Settings[]> {
 export async function runAlerts(admin: SupabaseClient, now = Date.now()): Promise<RunSummary> {
   const started = Date.now();
   const summary: RunSummary = { users: 0, places: 0, alerts: 0, emailed: 0, pushed: 0, failed: 0, noProvider: 0, skippedQuiet: 0, deferred: 0, feedsOk: true };
-  const active = (await allSettings(admin)).filter(s => { const r = normalizeRules(s.rules); return r.aurora || r.storm; });
+  const technical = (s: Settings) => !!(s.triggers?.bz || s.triggers?.sub);
+  const active = (await allSettings(admin)).filter(s => { const r = normalizeRules(s.rules); return r.aurora || r.storm || technical(s); });
   if (!active.length) return summary;
 
   const [kpLatest, series, oval] = await Promise.all([kpNow(), kpSeries(), ovation()]);
@@ -68,6 +73,10 @@ export async function runAlerts(admin: SupabaseClient, now = Date.now()): Promis
   summary.feedsOk = kp !== null || series.length > 0 || oval !== null;
   if (!summary.feedsOk) return summary;
   const storm = stormKp(kp, series, now);
+  // Technical alerts (Chaser): read only when someone has one switched on.
+  const [wind, power] = active.some(technical) ? await Promise.all([solarWindSeries(), hemiPowerSeries()]) : [[], []];
+  const bz = bzSouth(wind, now);
+  const jump = { north: powerJump(power, 'north', now), south: powerJump(power, 'south', now) };
   // Cloud forecasts are shared between users with places close together.
   const clouds = new Map<string, Promise<CloudForecast | null>>();
   const cloudAt = (lat: number, lon: number) => {
@@ -119,6 +128,18 @@ export async function runAlerts(admin: SupabaseClient, now = Date.now()): Promis
 
         const quiet = inQuietHours(rules, now, s.time_zone);
         const all = locsBy.get(s.user_id) ?? [];
+
+        // Bz turns south and substorm onset: Chaser, while it's dark at Home and outside quiet hours.
+        const home = all.find(l => l.is_home) ?? null;
+        if (chaser && home && !quiet && sunAltitude(now, home.lat, home.lon) <= -6) {
+          if (s.triggers?.bz && bz && !sentWithin(s.user_id, null, ['bz'], REPEAT_HOURS.bz)) {
+            alerts.push({ kind: 'bz', location: null, level: null, score: null, kp, value: bz.bz });
+          }
+          const j = jump[home.lat < 0 ? 'south' : 'north'];
+          if (s.triggers?.sub && j && !sentWithin(s.user_id, null, ['substorm'], REPEAT_HOURS.substorm)) {
+            alerts.push({ kind: 'substorm', location: null, level: null, score: null, kp, value: j.to, from: j.from });
+          }
+        }
         // Free covers the home location; Chaser covers every saved location.
         const places = chaser ? all.slice(0, 10) : all.filter(l => l.is_home).slice(0, 1);
         if (rules.aurora && quiet && places.length) summary.skippedQuiet++;
@@ -155,7 +176,7 @@ export async function runAlerts(admin: SupabaseClient, now = Date.now()): Promis
 
         const { error: logError } = await admin.from('alert_log').insert(alerts.map(a => ({
           user_id: s.user_id, location_id: a.location?.id ?? null, kind: a.kind, level: a.level, score: a.score, kp: a.kp,
-          place: a.location?.name ?? null, delivery: { email, push },
+          place: a.location?.name ?? null, value: a.value ?? null, delivery: { email, push },
         })));
         // Without the log entry the same alert would go out again next run; make that visible.
         if (logError) throw new Error(`alert_log insert: ${logError.message}`);
@@ -275,13 +296,15 @@ interface AlertTexts { lines: AlertLine[]; url: string; cta: string; footer: str
 /** The wording of a run's alerts in one language, shared by email and push. */
 async function alertTexts(locale: Locale, alerts: Alert[]): Promise<AlertTexts> {
   const { t } = await getI18n(locale);
-  const order: AlertKind[] = ['storm', 'aurora', 'forecast'];
+  const order: AlertKind[] = ['storm', 'substorm', 'aurora', 'bz', 'forecast'];
   const sorted = [...alerts].sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind));
   const line = (a: Alert) => {
     if (a.kind === 'storm') {
       const k = Math.max(2, Math.min(9, Math.round(a.kp ?? 5))) as 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
       return { kind: a.kind, subject: t('mail.storm.subject', { kp: Math.round((a.kp ?? 0) * 10) / 10 }), body: t('mail.storm.body', { kp: Math.round((a.kp ?? 0) * 10) / 10, name: t(`kp.name.${k}`) }), look: '' };
     }
+    if (a.kind === 'bz') return { kind: a.kind, subject: t('mail.bz.subject', { bz: a.value ?? 0 }), body: t('mail.bz.body', { bz: a.value ?? 0 }), look: '' };
+    if (a.kind === 'substorm') return { kind: a.kind, subject: t('mail.substorm.subject'), body: t('mail.substorm.body', { from: a.from ?? 0, to: a.value ?? 0 }), look: '' };
     const place = (a.location?.name ?? '').split(',')[0];
     const look = a.look === 'overhead' ? t('tonight.look.overhead') : t(`tonight.look.${a.look ?? 'low'}.${(a.location?.lat ?? 1) < 0 ? 'south' : 'north'}`);
     return a.kind === 'aurora'
