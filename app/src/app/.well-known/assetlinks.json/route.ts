@@ -4,7 +4,8 @@ import { NextResponse } from 'next/server';
  * Digital Asset Links for the Android app: Android checks this file to let the app open polarlights.io
  * links itself (App Links; the paths are in mobile/android/app/src/main/AndroidManifest.xml). Set on Vercel:
  *   ANDROID_PACKAGE_NAME   io.polarlights.app
- *   ANDROID_CERT_SHA256    app signing key fingerprint(s) from Play Console → App integrity, comma-separated
+ *   ANDROID_CERT_SHA256    SHA-256 fingerprints, comma-separated: the debug key (Android Studio Run builds)
+ *                          and the app signing key from Play Console → App integrity (Play builds)
  */
 export const dynamic = 'force-dynamic';
 
