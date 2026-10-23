@@ -325,6 +325,10 @@ export function Home({ data, season }: { data: NowData; season?: AccountData }) 
               <figcaption style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 13 }}>
                 <span style={{ fontWeight: 700 }}>{img.label}</span><span style={{ color: 'var(--muted)' }}>{t(`sdo.${img.id}`)}</span>
               </figcaption>
+              <details className="toggle-info">
+                <summary>{t('chart.explain')}</summary>
+                <p>{t(`sdo.${img.id}.info`)}</p>
+              </details>
             </figure>
           ))}
         </div>
