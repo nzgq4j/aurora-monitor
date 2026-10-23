@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../lib/auth';
-import { useLocations, devicePlace } from '../lib/locations';
+import { useLocations, devicePlace, searchPlaces, type PlaceResult } from '../lib/locations';
 import { useStore } from '../store';
 import { useI18n } from '../i18n/I18n';
 import { getPhoto, type GalleryPhoto as LocalPhoto } from '../lib/gallery';
@@ -41,6 +41,12 @@ export function GalleryPost() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [locating, setLocating] = useState(false);
+  // "Other": search for a place, or pick one of the member's other saved places.
+  const [other, setOther] = useState(false);
+  const [q, setQ] = useState('');
+  const [results, setResults] = useState<PlaceResult[] | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [searchMsg, setSearchMsg] = useState('');
 
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get('local');
@@ -73,10 +79,19 @@ export function GalleryPost() {
   const home = locations.find(l => l.isHome) ?? null;
   const takenAt = local?.taken ?? (file ? Math.min(Date.now(), file.lastModified || Date.now()) : Date.now());
   const place = precision === 'town' ? names?.town ?? names?.area : precision === 'area' ? names?.area : null;
+  const others = locations.filter(l => !l.isHome);
+  const pick = (p: { lat: number; lon: number }) => { setPos({ lat: p.lat, lon: p.lon }); setOther(false); setResults(null); setQ(''); setSearchMsg(''); };
   const useDevice = async () => {
-    setLocating(true);
-    try { const d = await devicePlace(); setPos({ lat: d.lat, lon: d.lon }); } catch { setErr(t('post.noLocation')); }
+    setLocating(true); setErr(''); setOther(false);
+    try { pick(await devicePlace()); } catch { setErr(t('post.noLocation')); }
     setLocating(false);
+  };
+  const search = async (e: FormEvent) => {
+    e.preventDefault();
+    setSearching(true); setSearchMsg('');
+    try { const r = await searchPlaces(q); setResults(r); if (!r.length) setSearchMsg(t('search.none')); }
+    catch { setSearchMsg(t('search.unavailable')); }
+    finally { setSearching(false); }
   };
   const submit = async () => {
     if (!blob || !mine || busy) return;
@@ -127,9 +142,36 @@ export function GalleryPost() {
         {!pos && (
           <div className="gal-where-pick">
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button type="button" className="btn pill pill-ghost sheet-pill" disabled={locating} onClick={useDevice}>{t('post.here')}</button>
-              {home && <button type="button" className="btn pill pill-ghost sheet-pill" onClick={() => setPos({ lat: home.lat, lon: home.lon })}>{t('post.home', { place: home.name })}</button>}
+              <button type="button" className="btn pill pill-ghost sheet-pill" disabled={locating} onClick={useDevice}>{locating ? '…' : t('post.here')}</button>
+              {home && <button type="button" className="btn pill pill-ghost sheet-pill" title={home.name} onClick={() => pick(home)}>{t('post.home')}</button>}
+              <button type="button" className={'btn pill sheet-pill ' + (other ? 'pill-primary' : 'pill-ghost')} aria-expanded={other} onClick={() => setOther(o => !o)}>{t('post.other')}</button>
             </div>
+            {other && (
+              <>
+                {others.length > 0 && (
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {others.map(l => <button key={l.id} type="button" className="btn pill pill-ghost sheet-pill" onClick={() => pick(l)}>{l.name}</button>)}
+                  </div>
+                )}
+                <form onSubmit={search} style={{ display: 'flex', gap: 8, minWidth: 0 }}>
+                  <input className="input" value={q} onChange={e => setQ(e.target.value)} placeholder={t('search.placeholder')} aria-label={t('search.placeholder')} style={{ padding: 11 }} />
+                  <button type="submit" className="btn pill pill-ghost" disabled={searching || q.trim().length < 2} style={{ fontSize: 14, padding: '0 16px', flex: 'none' }}>{searching ? '…' : t('search.button')}</button>
+                </form>
+                {searchMsg && <p className="gal-note" role="status" style={{ margin: 0 }}>{searchMsg}</p>}
+                {results && results.length > 0 && (
+                  <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                    {results.map(r => (
+                      <li key={`${r.lat},${r.lon}`}>
+                        <button type="button" className="btn" onClick={() => pick(r)}
+                          style={{ width: '100%', display: 'flex', justifyContent: 'space-between', gap: 8, padding: '10px 0', borderTop: '1px solid var(--line)' }}>
+                          <span style={{ fontWeight: 700 }}>{r.name}</span><span style={{ fontSize: 13, color: 'var(--muted)', textAlign: 'right' }}>{r.detail}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
           </div>
         )}
         {pos && PRECISIONS.map(p => (
@@ -141,6 +183,7 @@ export function GalleryPost() {
             </span>
           </label>
         ))}
+        {pos && <button type="button" className="btn gal-link" style={{ alignSelf: 'flex-start' }} onClick={() => { setPos(null); setPrecision('town'); }}>{t('post.changePlace')}</button>}
       </fieldset>
 
       {handle && (
