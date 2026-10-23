@@ -20,7 +20,7 @@ export const TIERS: Tier[] = [
 ];
 
 /** Days of free trial for a first subscription (Stripe checkout, see lib/billing). */
-export const TRIAL_DAYS = 14;
+export const TRIAL_DAYS = 7;
 
 /** Feature (message key `feat.{id}`) and the index of the tier that introduces it. */
 export const FEATS = [
