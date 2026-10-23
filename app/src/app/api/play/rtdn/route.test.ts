@@ -36,6 +36,21 @@ describe('Play notifications', () => {
     expect((await POST(notify('tok-2'))).status).toBe(200);
     expect(play.acked).toEqual([]);
   });
+  it('reads an unwrapped notification (push payload unwrapping on)', async () => {
+    play.sub = sub('ACKNOWLEDGEMENT_STATE_PENDING');
+    const res = await POST(new Request('https://x.test/api/play/rtdn?token=secret', {
+      method: 'POST', body: JSON.stringify({ packageName: 'io.polarlights.app', subscriptionNotification: { purchaseToken: 'tok-3', notificationType: 4 } }),
+    }));
+    expect(res.status).toBe(200);
+    expect(play.acked).toEqual(['tok-3']);
+  });
+  it('accepts a test notification, wrapped or not', async () => {
+    const wrapped = { message: { data: Buffer.from(JSON.stringify({ testNotification: { version: '1.0' } })).toString('base64') } };
+    for (const body of [wrapped, { packageName: 'io.polarlights.app', testNotification: { version: '1.0' } }]) {
+      const res = await POST(new Request('https://x.test/api/play/rtdn?token=secret', { method: 'POST', body: JSON.stringify(body) }));
+      expect(await res.json()).toEqual({ ok: true });
+    }
+  });
   it('refuses a call without the shared token', async () => {
     const res = await POST(new Request('https://x.test/api/play/rtdn?token=wrong', { method: 'POST', body: '{}' }));
     expect(res.status).toBe(401);
