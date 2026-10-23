@@ -7,6 +7,7 @@ import { devicePlace, searchPlaces, useLocations, type Place, type PlaceResult }
 import { useConditions } from '../lib/useConditions';
 import { useStore } from '../store';
 import { useI18n, type I18n } from '../i18n/I18n';
+import { Explain } from './Explain';
 
 const hhmmUT = (t: number) => `${new Date(t).toISOString().slice(11, 16)} UT`;
 
@@ -122,10 +123,10 @@ export function YourSky({ kp }: { kp: number | null }) {
   }
 
   const stats = [
-    { label: t('sky.stat.aurora'), value: aur === null ? '—' : `${aur}`, unit: aur === null ? '' : '%', note: t(`sky.auroraNote.${look}`), c: aur !== null && aur >= 10 ? C.green : C.soft },
-    { label: t('sky.stat.cloud'), value: cloud === null ? '—' : `${cloud}`, unit: cloud === null ? '' : '%', note: !layers ? t('common.noData') : t('sky.cloud.layers', { ...layers }), c: cloud !== null && cloud < 30 ? C.green : C.soft },
-    { label: t('sky.stat.dark'), value: dark === null ? '—' : dark ? t('sky.dark.now') : cond?.sun.changesAt ? hhmmUT(cond.sun.changesAt).slice(0, 5) : t('sky.dark.no'), unit: dark === false && cond?.sun.changesAt ? 'UT' : '', note: dark === null ? (loading ? t('sky.checking') : t('common.noData')) : dark ? (cond?.sun.changesAt ? t('sky.dark.until', { time: hhmmUT(cond.sun.changesAt) }) : t('sky.dark.allNight')) : t('sky.dark.rule'), c: dark ? C.green : C.soft },
-    { label: t('sky.stat.needs'), value: need === null ? '—' : `Kp ${need}`, unit: '', note: cond ? t('sky.magLat', { lat: num(cond.magLat, 1) }) : t('sky.approx'), c: C.soft },
+    { label: t('sky.stat.aurora'), info: t('sky.info.aurora'), value: aur === null ? '—' : `${aur}`, unit: aur === null ? '' : '%', note: t(`sky.auroraNote.${look}`), c: aur !== null && aur >= 10 ? C.green : C.soft },
+    { label: t('sky.stat.cloud'), info: t('sky.info.cloud'), value: cloud === null ? '—' : `${cloud}`, unit: cloud === null ? '' : '%', note: !layers ? t('common.noData') : t('sky.cloud.layers', { ...layers }), c: cloud !== null && cloud < 30 ? C.green : C.soft },
+    { label: t('sky.stat.dark'), info: t('sky.info.dark'), value: dark === null ? '—' : dark ? t('sky.dark.now') : cond?.sun.changesAt ? hhmmUT(cond.sun.changesAt).slice(0, 5) : t('sky.dark.no'), unit: dark === false && cond?.sun.changesAt ? 'UT' : '', note: dark === null ? (loading ? t('sky.checking') : t('common.noData')) : dark ? (cond?.sun.changesAt ? t('sky.dark.until', { time: hhmmUT(cond.sun.changesAt) }) : t('sky.dark.allNight')) : t('sky.dark.rule'), c: dark ? C.green : C.soft },
+    { label: t('sky.stat.needs'), info: t('sky.info.needs'), value: need === null ? '—' : `Kp ${need}`, unit: '', note: cond ? t('sky.magLat', { lat: num(cond.magLat, 1) }) : t('sky.approx'), c: C.soft },
   ];
 
   const pill = { fontSize: 14, padding: '11px 18px', whiteSpace: 'nowrap' as const };
@@ -202,6 +203,7 @@ export function YourSky({ kp }: { kp: number | null }) {
                   {s.value}{s.unit && <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--muted)', marginLeft: 4 }}>{s.unit}</span>}
                 </span>
                 <span style={{ fontSize: 13, fontWeight: 600, color: s.c }}>{s.note}</span>
+                <Explain>{s.info}</Explain>
               </div>
             ))}
           </div>
@@ -211,6 +213,7 @@ export function YourSky({ kp }: { kp: number | null }) {
               <span style={{ fontWeight: 700, fontSize: 16 }}>
                 {t(sat < 20 ? 'sky.sat.clear' : sat < 60 ? 'sky.sat.some' : 'sky.sat.cloudy', { pct: sat })}
               </span>
+              <Explain>{t('sky.info.sat')}</Explain>
             </div>
           )}
           {m && effect && (

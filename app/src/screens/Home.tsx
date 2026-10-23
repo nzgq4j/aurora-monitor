@@ -277,6 +277,7 @@ export function Home({ data, season }: { data: NowData; season?: AccountData }) 
             <span style={{ display: 'inline-block', width: 16, borderTop: `1.5px dashed ${C.red}`, verticalAlign: 'middle', marginRight: 6 }} />
             {t('home.ovalEdge')}
           </span>
+          <Explain>{t('home.oval.info')}</Explain>
           <button type="button" className="btn" onClick={() => go('map')} style={{ alignSelf: 'flex-start', fontSize: 14, fontWeight: 700, color: 'var(--green)' }}>{t('home.openMap')}</button>
           {shownPlace && shownPlace.lat < POLAR_MIN_LAT && (
             <span style={{ fontSize: 12, color: 'var(--muted)' }}>
