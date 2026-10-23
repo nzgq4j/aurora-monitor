@@ -54,9 +54,10 @@ current by Play's real-time developer notifications at `/api/play/rtdn`. Steps, 
 1. **Play Console:** create the app (`io.polarlights.app`) and upload a signed release (AAB) to the
    *Internal testing* track. Play only allows subscriptions once a build with billing has been uploaded.
 2. **Subscription:** *Monetize → Products → Subscriptions → Create subscription*, product ID `chaser`.
-   Add two auto-renewing base plans, IDs `monthly` (1 month) and `annual` (1 year), with prices, and
-   activate them. For the trial, add an offer with ID `free-trial` to each base plan: *New customer
-   acquisition*, eligibility *New customer never had this subscription*, one free-trial phase of 14 days.
+   Add two auto-renewing base plans, IDs `monthly` (1 month, US$3.99) and `annual` (1 year, US$36), and
+   activate them (Play suggests local prices for other countries from the US price). For the trial,
+   add an offer with ID `free-trial` to each base plan: *New customer acquisition*, eligibility *New
+   customer never had this subscription*, one free-trial phase of 14 days.
 3. **API access:** in Google Cloud (project `io-polarlights-app`) enable the *Google Play Android
    Developer API* and create a service account (no Cloud roles needed) with a JSON key. In Play Console
    → *Users and permissions → Invite new users*, invite the service account's email with *View
