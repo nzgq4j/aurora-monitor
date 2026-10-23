@@ -12,7 +12,7 @@ import { pendingCount } from '../lib/moderation';
 import { BottomSheet } from '../components/BottomSheet';
 import type { MessageKey } from '../i18n/core';
 
-const FILTERS: Filter[] = ['tonight', 'storm', 'near', 'top', 'recent'];
+const FILTERS: Filter[] = ['recent', 'tonight', 'storm', 'near', 'top'];
 /** Recent shows this many photos in all (the database stops there too). */
 const RECENT = 20;
 const CAMERA = 'M4 8h3l1.6-2.4h6.8L17 8h3v11H4zM12 16.6a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8Z';
@@ -65,7 +65,7 @@ export function Gallery({ kp }: { kp: number | null }) {
   const { user } = useAuth();
   const { locations } = useLocations();
   const { t, tn, num } = useI18n();
-  const [filter, setFilter] = useState<Filter | 'mine'>('tonight');
+  const [filter, setFilter] = useState<Filter | 'mine'>('recent');
   const [photos, setPhotos] = useState<Photo[] | null>(null);
   const [more, setMore] = useState(false);
   const [failed, setFailed] = useState(false);
