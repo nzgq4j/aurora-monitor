@@ -5,6 +5,7 @@ import { C, ENTITLEMENTS, kpBarColor } from '../data';
 import { KpBarChart, POLAR_MIN_LAT, PolarOval, type KpBar } from '../components/Charts';
 import { Locked } from '../components/Locked';
 import { SolarActivity, useSolarData } from '../components/SolarActivity';
+import { Explain } from '../components/Explain';
 import { DetailCard } from '../components/DetailCard';
 import { StormOutlook, stormSummary, useDay, useStorm } from '../components/StormOutlook';
 import { SunspotRegions, useSunspots } from '../components/SunspotRegions';
@@ -182,10 +183,10 @@ export function Home({ data, season }: { data: NowData; season?: AccountData }) 
   const updated = Math.max(data.kp?.t ?? 0, data.wind?.t ?? 0, data.hemi?.t ?? 0);
   const w = data.wind;
   const stats = [
-    { label: t('home.stat.bz'), value: fmt(w?.bz, 1), unit: 'nT', note: w?.bz == null ? t('common.noData') : w.bz <= -10 ? t('home.bz.strongSouth') : w.bz <= -3 ? t('home.bz.south') : w.bz < 3 ? t('home.bz.zero') : t('home.bz.north'), c: w?.bz != null && w.bz <= -3 ? C.green : C.soft },
-    { label: t('home.stat.speed'), value: fmt(w?.speed), unit: 'km/s', note: w?.speed == null ? t('common.noData') : w.speed >= 600 ? t('home.speed.fast') : w.speed >= 450 ? t('home.speed.elevated') : t('home.speed.slow'), c: w?.speed != null && w.speed >= 450 ? C.amber : C.soft },
-    { label: t('home.stat.hemi'), value: fmt(data.hemi?.north), unit: 'GW', note: data.hemi == null ? t('common.noData') : data.hemi.north >= 50 ? t('home.hemi.high') : data.hemi.north >= 20 ? t('home.hemi.moderate') : t('home.hemi.low'), c: data.hemi && data.hemi.north >= 50 ? C.red : C.soft },
-    { label: t('home.stat.density'), value: fmt(w?.density, 1), unit: 'p/cm³', note: w?.density == null ? t('common.noData') : w.density >= 15 ? t('home.density.dense') : t('home.density.typical'), c: C.soft },
+    { label: t('home.stat.bz'), info: t('solar.bzInfo'), value: fmt(w?.bz, 1), unit: 'nT', note: w?.bz == null ? t('common.noData') : w.bz <= -10 ? t('home.bz.strongSouth') : w.bz <= -3 ? t('home.bz.south') : w.bz < 3 ? t('home.bz.zero') : t('home.bz.north'), c: w?.bz != null && w.bz <= -3 ? C.green : C.soft },
+    { label: t('home.stat.speed'), info: t('solar.speedInfo'), value: fmt(w?.speed), unit: 'km/s', note: w?.speed == null ? t('common.noData') : w.speed >= 600 ? t('home.speed.fast') : w.speed >= 450 ? t('home.speed.elevated') : t('home.speed.slow'), c: w?.speed != null && w.speed >= 450 ? C.amber : C.soft },
+    { label: t('home.stat.hemi'), info: t('solar.hemiInfo'), value: fmt(data.hemi?.north), unit: 'GW', note: data.hemi == null ? t('common.noData') : data.hemi.north >= 50 ? t('home.hemi.high') : data.hemi.north >= 20 ? t('home.hemi.moderate') : t('home.hemi.low'), c: data.hemi && data.hemi.north >= 50 ? C.red : C.soft },
+    { label: t('home.stat.density'), info: t('solar.densityInfo'), value: fmt(w?.density, 1), unit: 'p/cm³', note: w?.density == null ? t('common.noData') : w.density >= 15 ? t('home.density.dense') : t('home.density.typical'), c: C.soft },
   ];
   const scale = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => ({ n: n === 5 ? 'G1' : n === 9 ? 'G5' : String(n), bg: n >= 5 ? C.red : n === 4 ? C.amber : C.darkGreen, on: n <= level }));
   // Times on the Now card in local time at the shown place (its zone comes with the cloud forecast), else this
@@ -304,6 +305,7 @@ export function Home({ data, season }: { data: NowData; season?: AccountData }) 
                 {s.value}<span style={{ fontSize: 14, fontWeight: 600, color: 'var(--muted)', marginLeft: 4 }}>{s.unit}</span>
               </span>
               <span style={{ fontSize: 13, fontWeight: 600, color: s.c }}>{s.note}</span>
+              <Explain>{s.info}</Explain>
             </div>
           ))}
         </div>
