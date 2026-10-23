@@ -22,12 +22,19 @@ export async function POST(req: Request) {
   if (!secret || !same(token, secret)) return NextResponse.json({ error: 'unauthorised' }, { status: 401 });
   if (!playAccount()) return NextResponse.json({ error: 'not_configured' }, { status: 503 });
 
-  const body = await req.json().catch(() => null) as { message?: { data?: string } } | null;
-  let note: { subscriptionNotification?: { purchaseToken?: string; notificationType?: number }; testNotification?: object } | null = null;
-  try { note = JSON.parse(Buffer.from(body?.message?.data ?? '', 'base64').toString('utf8')); } catch { /* not JSON */ }
+  type Note = { packageName?: string; subscriptionNotification?: { purchaseToken?: string; notificationType?: number }; testNotification?: object };
+  const body = await req.json().catch(() => null) as ({ message?: { data?: string } } & Note) | null;
+  // Pub/Sub wraps the notification (base64 in message.data) unless the subscription has payload unwrapping on,
+  // in which case the notification itself is the body.
+  let note: Note | null = body && (body.packageName || body.testNotification || body.subscriptionNotification) ? body : null;
+  if (!note) try { note = JSON.parse(Buffer.from(body?.message?.data ?? '', 'base64').toString('utf8')); } catch { /* not JSON */ }
   if (note?.testNotification) { console.log('play rtdn test'); return NextResponse.json({ ok: true }); }
   const purchaseToken = note?.subscriptionNotification?.purchaseToken;
-  if (!purchaseToken) return NextResponse.json({ ok: true, ignored: true });
+  if (!purchaseToken) {
+    // Nothing this handles (e.g. a one-time product or voided purchase); keys only, no tokens.
+    console.log('play rtdn ignored', Object.keys(note ?? body ?? {}).join(','));
+    return NextResponse.json({ ok: true, ignored: true });
+  }
 
   try {
     const sub = await getPlaySubscription(purchaseToken);
