@@ -1,4 +1,4 @@
-import { DARK_ALT, moonAltitude, sunAltitude } from './astro';
+import { DARK_ALT, magLocalTime, moonAltitude, ovalShift, sunAltitude } from './astro';
 import type { KpPoint } from './feeds';
 
 /**
@@ -55,21 +55,40 @@ function kpAt(series: KpPoint[], t: number): number | null {
   return kp;
 }
 
+/**
+ * Aurora factor from OVATION's best probability within ~6° poleward (%): rises steadily to 0.5 at 10 %,
+ * then 0.5 + p/100 (capped at 0.95). Below 10 % the model sees little aurora within reach of this sky.
+ */
+export const ovationFactor = (p: number) => (p < 10 ? 0.05 + 0.045 * Math.max(0, p) : Math.min(0.95, 0.5 + p / 100));
+/** Weight of OVATION's correction to the Kp forecast 2, 3 and 4 hours ahead. */
+const PERSIST = [0.6, 0.4, 0.2];
+
 const darkFactor = (alt: number) => (alt <= DARK_ALT ? 1 : alt >= -4 ? 0 : (-4 - alt) / (-4 - DARK_ALT));
 
 export function hourlyScores(x: Inputs): HourScore[] {
   const hour = 36e5;
   const start = Math.floor(x.now / hour) * hour;
   const out: HourScore[] = [];
+  const ov = x.ovationNearby === null ? null : ovationFactor(x.ovationNearby);
+  // How OVATION's reading compares with what Kp alone says for now (null when Kp says nothing).
+  const kp0 = x.kpNow ?? kpAt(x.series, x.now);
+  const kpNowFactor = kp0 === null ? 0 : auroraFactor(kp0, x.need + ovalShift(magLocalTime(x.lat, x.lon, x.now)) / 2);
+  const ratio = ov === null || kpNowFactor < 0.02 ? null : Math.max(0.2, Math.min(3, ov / kpNowFactor));
   for (let i = 0; i < 12; i++) {
     const t = i === 0 ? x.now : start + i * hour;
     // Sample the middle of each hour (and now, for the first).
     const at = i === 0 ? x.now : t + hour / 2;
     const kp = i === 0 && x.kpNow !== null ? x.kpNow : kpAt(x.series, at) ?? x.kpNow;
-    let aurora = kp === null ? 0 : auroraFactor(kp, x.need);
-    if (i <= 1 && x.ovationNearby !== null) {
-      if (x.ovationNearby >= 10) aurora = Math.max(aurora, Math.min(0.95, 0.5 + x.ovationNearby / 100));
-      else if (x.ovationNearby < 3) aurora = Math.min(aurora, 0.25);
+    // Kp alone: the Kp this place needs is for magnetic midnight; away from it the oval sits further poleward.
+    const kpAurora = kp === null ? 0 : auroraFactor(kp, x.need + ovalShift(magLocalTime(x.lat, x.lon, at)) / 2);
+    let aurora = kpAurora;
+    if (ov !== null) {
+      // OVATION is a nowcast of where the aurora is (it covers the next hour or so), so it decides the first
+      // hour and most of the second. After that the Kp forecast takes over, scaled by how OVATION compares
+      // with it now, fading out over three hours, so the forecast doesn't jump back to Kp's guess.
+      if (i === 0) aurora = ov;
+      else if (i === 1) aurora = 0.7 * ov + 0.3 * kpAurora;
+      else if (i <= 4 && ratio !== null) aurora = Math.min(0.95, kpAurora * (1 + PERSIST[i - 2] * (ratio - 1)));
     }
     const sunAlt = sunAltitude(at, x.lat, x.lon);
     const near = x.cloudHourly.reduce<{ t: number; pct: number } | null>((b, c) => (Math.abs(c.t - at) <= hour && (!b || Math.abs(c.t - at) < Math.abs(b.t - at)) ? c : b), null);

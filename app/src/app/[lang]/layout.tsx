@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 import './globals.css';
 import { Footer, Header, TabBar, Toast } from '../../components/Chrome';
 import { PullToRefresh } from '../../components/PullToRefresh';
+import { FreshData } from '../../components/FreshData';
+import { renderedAt } from '../../lib/now';
 import { PlaySync } from '../../components/PlaySync';
 import { BadgeWatcher } from '../../components/BadgeWatcher';
 import { InstallPrompt } from '../../components/InstallPrompt';
@@ -50,6 +52,8 @@ export const viewport: Viewport = { width: 'device-width', initialScale: 1, them
 export default async function RootLayout({ children, params }: Props & { children: ReactNode }) {
   const locale = await routeLocale(params);
   const [kp, messages, { num }] = await Promise.all([kpNow(), getMessages(locale), getI18n(locale)]);
+  // When this was built: cached pages older than ten minutes fetch fresh data in the browser (FreshData).
+  const builtAt = renderedAt();
   const kpLabel = kp ? `KP ${num(kp.kp, 2)}${G_SCALE(kp.kp) ? ` · G${G_SCALE(kp.kp)}` : ''}` : 'KP —';
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -78,6 +82,7 @@ export default async function RootLayout({ children, params }: Props & { childre
                   <Footer />
                   <TabBar />
                   <PullToRefresh />
+                  <FreshData at={builtAt} />
                 </div>
                 <ServiceWorker />
                 <UpdateCheck />

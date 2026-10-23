@@ -51,6 +51,36 @@ export function magLat(lat: number, lon: number): number {
 }
 
 /**
+ * Magnetic local time (hours, 0–24): where a place sits relative to the Sun in the geomagnetic frame.
+ * The auroral oval is widest and brightest around magnetic midnight and shrinks poleward towards dawn
+ * and dusk. Dipole approximation: the place's and the subsolar point's magnetic longitudes, 15° an hour.
+ */
+export function magLocalTime(lat: number, lon: number, t: number): number {
+  const mlon = (la: number, lo: number) => {
+    const x1 = Math.cos(rad(la)) * Math.cos(rad(lo - POLE.lon)), y1 = Math.cos(rad(la)) * Math.sin(rad(lo - POLE.lon)), z1 = Math.sin(rad(la));
+    const th = rad(90 - POLE.lat);
+    return deg(Math.atan2(y1, x1 * Math.cos(th) - z1 * Math.sin(th)));
+  };
+  const d = new Date(t);
+  const ut = d.getUTCHours() + d.getUTCMinutes() / 60 + d.getUTCSeconds() / 3600;
+  // Subsolar point: longitude from the time of day, latitude from the season (declination).
+  const doy = (t - Date.UTC(d.getUTCFullYear(), 0, 0)) / 864e5;
+  const dec = -23.44 * Math.cos(rad((360 / 365) * (doy + 10)));
+  const mlt = 12 + (mlon(lat, lon) - mlon(dec, (12 - ut) * 15)) / 15;
+  return ((mlt % 24) + 24) % 24;
+}
+
+/**
+ * Degrees the oval's equatorward edge sits poleward of its midnight position at a given magnetic local
+ * time: none within two hours of 23 MLT (where the oval reaches furthest from the pole), then a degree
+ * an hour, up to 6° (on the day side, where it's daylight anyway).
+ */
+export function ovalShift(mlt: number): number {
+  const d = Math.min(Math.abs(mlt - 23), 24 - Math.abs(mlt - 23));
+  return Math.min(6, Math.max(0, d - 2));
+}
+
+/**
  * Rough Kp at which aurora becomes visible low on the poleward horizon.
  * Rule of thumb: the oval's equatorward edge sits near 66° − 2·Kp magnetic
  * latitude, and it can be seen low on the horizon from ~3° beyond that.
