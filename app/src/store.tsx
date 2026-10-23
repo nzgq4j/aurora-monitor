@@ -224,7 +224,9 @@ function useAlertSettingsSync(s: AppState, setState: (f: (p: AppState) => AppSta
     const t = setTimeout(() => {
       // Quiet hours are read in the browser's time zone, saved alongside the rules.
       const time_zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      sb.from('alert_settings').upsert({ user_id: userId, kp_threshold: s.kpThreshold, rules: s.alertRules, time_zone, triggers: s.triggers, channels: s.channels, updated_at: new Date().toISOString() });
+      // A Supabase query is only sent once its result is awaited; without .then() this save never left the browser.
+      void sb.from('alert_settings').upsert({ user_id: userId, kp_threshold: s.kpThreshold, rules: s.alertRules, time_zone, triggers: s.triggers, channels: s.channels, updated_at: new Date().toISOString() })
+        .then(({ error }) => { if (error) console.error('alert settings: save failed', error.message); });
     }, 800);
     return () => clearTimeout(t);
   }, [userId, loadedFor, s.kpThreshold, s.alertRules, s.triggers, s.channels]);

@@ -56,10 +56,20 @@ function kpAt(series: KpPoint[], t: number): number | null {
 }
 
 /**
- * Aurora factor from OVATION's best probability within ~6° poleward (%): rises steadily to 0.5 at 10 %,
- * then 0.5 + p/100 (capped at 0.95). Below 10 % the model sees little aurora within reach of this sky.
+ * Aurora factor from OVATION's best probability within ~6° poleward (%), matched to the map's colours
+ * (lib/auroraColor) so that on a clear, dark, moonless night the alert levels (lib/alerts: 20, 45, 70)
+ * fall where the colours change: faint from about 5 % (green), visible from about 15 % (yellow) and
+ * clearly visible from about 40 % (red).
  */
-export const ovationFactor = (p: number) => (p < 10 ? 0.05 + 0.045 * Math.max(0, p) : Math.min(0.95, 0.5 + p / 100));
+const OVATION_POINTS: [number, number][] = [[0, 0.05], [5, 0.2], [15, 0.45], [40, 0.7], [80, 0.95]];
+export function ovationFactor(p: number): number {
+  const x = Math.max(0, p);
+  for (let i = 1; i < OVATION_POINTS.length; i++) {
+    const [p1, f1] = OVATION_POINTS[i], [p0, f0] = OVATION_POINTS[i - 1];
+    if (x <= p1) return f0 + ((x - p0) / (p1 - p0)) * (f1 - f0);
+  }
+  return OVATION_POINTS[OVATION_POINTS.length - 1][1];
+}
 /** Weight of OVATION's correction to the Kp forecast 2, 3 and 4 hours ahead. */
 const PERSIST = [0.6, 0.4, 0.2];
 
