@@ -6,6 +6,7 @@ import { kpNeeded, moon } from '../lib/astro';
 import type { AccountData } from '../lib/history';
 import { useLocations } from '../lib/locations';
 import { useI18n } from '../i18n/I18n';
+import { Explain } from './Explain';
 
 const DAY = 864e5;
 
@@ -58,6 +59,7 @@ export function SeasonCards({ data }: { data: AccountData }) {
             </div>
           );
         }) : <span className="season-note" style={{ padding: '0 16px 16px' }}>{t('dash.best.unavailable')}</span>}
+        <div style={{ padding: '4px 16px 16px' }}><Explain>{t('season.info.best')}</Explain></div>
       </section>
 
       <section className="season-card" aria-labelledby="season-card-h">
@@ -87,6 +89,7 @@ export function SeasonCards({ data }: { data: AccountData }) {
         ) : (
           <span className="season-note">{t('dash.historyUnavailable')}</span>
         )}
+        <Explain>{t('season.info.weeks')}</Explain>
       </section>
     </div>
   );

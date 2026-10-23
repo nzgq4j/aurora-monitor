@@ -11,6 +11,7 @@ import type { HourScore, Level } from '../lib/tonight';
 import { usePointVerdict } from '../lib/usePointVerdict';
 import { INTL_TAG } from '../i18n/config';
 import { useI18n } from '../i18n/I18n';
+import { Explain } from './Explain';
 import { USEFUL_EVENT } from './InstallPrompt';
 import { Sighting } from './Sighting';
 
@@ -220,6 +221,7 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
               </span>
             )}
             <span style={{ fontSize: 11, color: 'var(--dim)' }}>{t('tonight.note')}</span>
+            <Explain>{t('tonight.info')}</Explain>
             {shareMsg && <span role="status" style={{ fontSize: 13, color: 'var(--green)' }}>{shareMsg}</span>}
           </div>
         </div>
