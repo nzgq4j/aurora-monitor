@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../lib/auth';
 import { useLocations } from '../lib/locations';
@@ -59,13 +59,18 @@ export function PhotoCard({ p }: { p: Photo }) {
   );
 }
 
+const noSubscribe = () => () => {};
+
 /** The community gallery (the Sky tab): members' aurora photos, with Sky view's camera a tap away. */
 export function Gallery({ kp }: { kp: number | null }) {
   const { go } = useStore();
   const { user } = useAuth();
   const { locations } = useLocations();
   const { t, tn, num } = useI18n();
-  const [filter, setFilter] = useState<Filter | 'mine'>('recent');
+  // Opened from You → My gallery (/gallery?f=mine) it starts on the member's own photos.
+  const asked = useSyncExternalStore(noSubscribe, () => new URLSearchParams(window.location.search).get('f'), () => null);
+  const [chosen, setFilter] = useState<Filter | 'mine' | null>(null);
+  const filter: Filter | 'mine' = chosen ?? (asked === 'mine' && user ? 'mine' : 'recent');
   const [photos, setPhotos] = useState<Photo[] | null>(null);
   const [more, setMore] = useState(false);
   const [failed, setFailed] = useState(false);
