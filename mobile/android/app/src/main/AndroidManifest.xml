@@ -18,7 +18,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- App Links: these polarlights.io pages open in the app (verified by /.well-known/assetlinks.json).
+            <!-- App Links: these www.polarlights.io pages open in the app (verified by /.well-known/assetlinks.json).
                  The home page (alert emails), map, Sky, Alerts and gallery (shared photos) only: sign-in,
                  checkout, dashboard and password reset stay in the browser where those flows began. -->
             <intent-filter android:autoVerify="true">
@@ -26,8 +26,9 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" />
+                <!-- www only: polarlights.io redirects there, and Android won't follow a redirect to
+                     assetlinks.json, so listing it would fail verification (on Android 11 and older, for both). -->
                 <data android:host="www.polarlights.io" />
-                <data android:host="polarlights.io" />
                 <data android:path="/" />
                 <data android:path="/en" />
                 <data android:path="/es" />
