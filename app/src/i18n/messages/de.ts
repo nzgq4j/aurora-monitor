@@ -953,6 +953,7 @@ export const de: Messages = {
   'mail.footer': 'Sie erhalten diese Alarme, weil sie in Ihrem Polar-Lights-Konto aktiviert sind. Ändern Sie sie unter Dashboard → Alarme.',
   'mail.test.subject': "Testalarm von {name}",
   'mail.test.body': "Dies ist ein Test Ihrer Polarlicht-Alarme. Wenn das Polarlicht an einem Ihrer Orte Ihre Stufe erreicht, kommt der Alarm so an.",
+  'mail.test.bodySamples': 'Dies ist ein Test Ihrer Benachrichtigungen. Unten jede technische Meldung so, wie sie lauten würde; die Werte sind Beispiele, nicht die aktuelle Lage.',
   'trigger.kp': 'Kp-Schwelle erreicht',
   'trigger.kp.sub': 'Nutzt den oben eingestellten Wert',
   'trigger.cme': 'CMEs: Vorhersage und Ankunft',

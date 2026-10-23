@@ -953,6 +953,7 @@ export const en = {
   'mail.footer': 'You get these alerts because they’re switched on in your Polar Lights account. Change them in Dashboard → Alerts.',
   'mail.test.subject': "Test alert from {name}",
   'mail.test.body': "This is a test of your aurora alerts. When aurora reaches your level at one of your locations, the alert arrives like this.",
+  'mail.test.bodySamples': 'This is a test of your alerts. Below, each technical alert as it would read; the readings are examples, not current conditions.',
   'trigger.kp': 'Kp threshold reached',
   'trigger.kp.sub': 'Uses the level you set above',
   'trigger.cme': 'CMEs: forecast and arrival',

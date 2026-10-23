@@ -953,6 +953,7 @@ export const nl: Messages = {
   'mail.footer': 'Je krijgt deze meldingen omdat ze aanstaan in je Polar Lights-account. Wijzig ze via Dashboard → Meldingen.',
   'mail.test.subject': "Testmelding van {name}",
   'mail.test.body': "Dit is een test van je noorderlichtmeldingen. Als het noorderlicht op een van je locaties jouw niveau bereikt, komt de melding zo binnen.",
+  'mail.test.bodySamples': 'Dit is een test van je waarschuwingen. Hieronder elke technische waarschuwing zoals die zou luiden; de waarden zijn voorbeelden, niet de huidige omstandigheden.',
   'trigger.kp': 'Kp-drempel bereikt',
   'trigger.kp.sub': 'Gebruikt het niveau dat je hierboven instelt',
   'trigger.cme': 'CME’s: verwachting en aankomst',

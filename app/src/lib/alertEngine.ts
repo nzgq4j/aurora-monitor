@@ -378,14 +378,25 @@ ${lines.map(l => `<tr><td style="padding:0 0 20px"><div style="font-size:20px;fo
  * switches say, so the delivery path can be checked end to end. Clearly labelled as a test; nothing
  * is written to alert_log. Push still needs Chaser, as for real alerts.
  */
-export async function sendTestAlert(admin: SupabaseClient, userId: string): Promise<{ email: string; push: string }> {
+export async function sendTestAlert(admin: SupabaseClient, userId: string, samples = false): Promise<{ email: string; push: string }> {
   const { data: p } = await admin.from('profiles').select('id, plan, subscription_status, trial_ends_at, locale').eq('id', userId).maybeSingle();
   const profile = (p ?? undefined) as Profile | undefined;
   const locale: Locale = isLocale(profile?.locale) ? profile!.locale as Locale : 'en';
   const { t } = await getI18n(locale);
-  const { url, cta, footer, lang } = await alertTexts(locale, []);
+  // With `samples`, the test also shows each technical alert as it would read, with made-up readings.
+  const { data: settings } = await admin.from('alert_settings').select('time_zone').eq('user_id', userId).maybeSingle();
+  const now = Date.now();
+  const sample: Alert[] = samples ? [
+    { kind: 'bz', location: null, level: null, score: null, kp: null, value: -12.4 },
+    { kind: 'substorm', location: null, level: null, score: null, kp: null, value: 52, from: 14 },
+    { kind: 'coupling', location: null, level: null, score: null, kp: null, value: 18_400 },
+    { kind: 'shock', location: null, level: null, score: null, kp: null, value: 560, from: 410 },
+    { kind: 'cme', location: null, level: null, score: null, kp: 7, value: Math.round((now + 36 * 36e5) / 36e5), when: now + 36 * 36e5, glancing: false },
+    { kind: 'flare', location: null, level: null, score: null, kp: null, value: 1.3e-4 },
+  ] : [];
+  const { lines, url, cta, footer, lang } = await alertTexts(locale, sample, settings?.time_zone ?? null);
   const texts: AlertTexts = {
-    lines: [{ kind: 'aurora', subject: t('mail.test.subject', { name: SITE.name }), body: t('mail.test.body'), look: '' }],
+    lines: [{ kind: 'aurora', subject: t('mail.test.subject', { name: SITE.name }), body: t(samples ? 'mail.test.bodySamples' : 'mail.test.body'), look: '' }, ...lines],
     url, cta, footer, lang,
   };
   const s: Settings = { user_id: userId, kp_threshold: 0, rules: null, time_zone: null, channels: { email: true, push: true } };
