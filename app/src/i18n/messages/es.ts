@@ -235,7 +235,7 @@ export const es: Messages = {
   'checkout.summary': 'RESUMEN DEL PEDIDO',
   'checkout.cyclePrice': 'Precio ({cycle})',
   'checkout.freeTrial': 'Prueba gratis',
-  'checkout.days14': '14 días',
+  'checkout.trialDays': '{days} días',
   'checkout.dueToday': 'A pagar hoy',
   'checkout.perYear': 'al año',
   'checkout.perMonth': 'al mes',

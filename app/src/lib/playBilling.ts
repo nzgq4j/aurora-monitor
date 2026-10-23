@@ -23,7 +23,15 @@ interface PlayBilling {
 }
 
 export type Cycle = 'monthly' | 'annual';
-export interface PlayPrice { offerToken: string; trial: boolean; price: string }
+export interface PlayPrice { offerToken: string; trial: boolean; price: string; /** Length of the free phase, for trial offers. */ trialDays?: number }
+
+/** Days in an ISO 8601 billing period as Play reports it (P7D, P1W, P1M …); months count as 30 days. */
+export const periodDays = (iso: string): number | undefined => {
+  const m = /^P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)W)?(?:(\d+)D)?$/.exec(iso);
+  if (!m) return undefined;
+  const [y, mo, w, d] = m.slice(1).map(v => Number(v ?? 0));
+  return y * 365 + mo * 30 + w * 7 + d || undefined;
+};
 export type PlayOffers = Record<Cycle, { base: PlayPrice | null; trial: PlayPrice | null }>;
 
 /** The plugin, in an app build that has it and once Play billing is switched on. */
@@ -45,7 +53,7 @@ export function playOffers(): Promise<PlayOffers | null> {
       const trial = plan.find(o => o.offerId && o.phases.some(ph => ph.priceMicros === 0));
       return {
         base: base ? { offerToken: base.offerToken, trial: false, price: price(base) } : null,
-        trial: trial ? { offerToken: trial.offerToken, trial: true, price: price(trial) } : null,
+        trial: trial ? { offerToken: trial.offerToken, trial: true, price: price(trial), trialDays: periodDays(trial.phases.find(ph => ph.priceMicros === 0)?.billingPeriod ?? '') } : null,
       };
     };
     return { monthly: pick('monthly'), annual: pick('annual') };

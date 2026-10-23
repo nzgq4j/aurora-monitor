@@ -35,7 +35,9 @@ export function Checkout() {
   // Today's date is known only in the browser (the page itself is built ahead of time).
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => setNow(Date.now()), []); // eslint-disable-line react-hooks/set-state-in-effect -- read the clock once after mount
-  const trialEnd = now === null ? '' : date(now + TRIAL_DAYS * 864e5, { month: 'short', day: 'numeric', year: 'numeric' });
+  // Play's trial is whatever the offer in Play Console says; the website's (Stripe) is TRIAL_DAYS.
+  const trialDays = (play && playOffer?.trial?.trialDays) || TRIAL_DAYS;
+  const trialEnd = now === null ? '' : date(now + trialDays * 864e5, { month: 'short', day: 'numeric', year: 'numeric' });
   const cycle = s.annual ? t('plans.annual') : t('plans.monthly');
   const price = (play && (trial ? playOffer?.trial ?? playOffer?.base : playOffer?.base)?.price) || money(s.annual ? pending.y : pending.m);
   const name = t(`tier.${pending.id}`);
@@ -50,7 +52,7 @@ export function Checkout() {
         {live ? (
           <>
             <p style={{ margin: 0, fontSize: 16, lineHeight: 1.5, color: 'var(--soft)' }}>
-              {play ? (trial ? t('play.body.trial', { days: TRIAL_DAYS, date: trialEnd }) : t('play.body.noTrial'))
+              {play ? (trial ? t('play.body.trial', { days: trialDays, date: trialEnd }) : t('play.body.noTrial'))
                 : missing ? t('play.result.unavailable')
                 : !stripe ? t('checkout.liveBody') : trial ? t('checkout.stripeTrial', { date: trialEnd }) : t('checkout.stripeNoTrial')}
             </p>
@@ -96,7 +98,7 @@ export function Checkout() {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, borderTop: '1px solid var(--line-2)', paddingTop: 16, fontSize: 15 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--muted)' }}>{t('checkout.cyclePrice', { cycle })}</span><span className="mono">{price}</span></div>
-          {trial && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--muted)' }}>{t('checkout.freeTrial')}</span><span className="mono">{t('checkout.days14')}</span></div>}
+          {trial && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--muted)' }}>{t('checkout.freeTrial')}</span><span className="mono">{t('checkout.trialDays', { days: trialDays })}</span></div>}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderTop: '1px solid var(--line-2)', paddingTop: 12 }}>
             <span style={{ fontWeight: 700 }}>{t('checkout.dueToday')}</span>
             <span style={{ fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 32 }}>{trial ? money(0) : price}</span>

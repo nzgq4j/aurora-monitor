@@ -235,7 +235,7 @@ export const nl: Messages = {
   'checkout.summary': 'OVERZICHT BESTELLING',
   'checkout.cyclePrice': '{cycle} tarief',
   'checkout.freeTrial': 'Gratis proefperiode',
-  'checkout.days14': '14 dagen',
+  'checkout.trialDays': '{days} dagen',
   'checkout.dueToday': 'Vandaag te betalen',
   'checkout.perYear': 'per jaar',
   'checkout.perMonth': 'per maand',

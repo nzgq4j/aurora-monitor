@@ -235,7 +235,7 @@ export const en = {
   'checkout.summary': 'ORDER SUMMARY',
   'checkout.cyclePrice': '{cycle} price',
   'checkout.freeTrial': 'Free trial',
-  'checkout.days14': '14 days',
+  'checkout.trialDays': '{days} days',
   'checkout.dueToday': 'Due today',
   'checkout.perYear': 'per year',
   'checkout.perMonth': 'per month',
