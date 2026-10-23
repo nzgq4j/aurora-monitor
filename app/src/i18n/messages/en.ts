@@ -1185,7 +1185,7 @@ export const en = {
   'gal.f.near': "Near me",
   'gal.f.top': "Top",
   'gal.f.recent': "Recent",
-  'gal.f.mine': "My photos",
+  'gal.f.mine': "My gallery",
   'gal.stormNow': "Kp {kp} now",
   'gal.tonightCount.one': "{n} photo tonight",
   'gal.tonightCount.other': "{n} photos tonight",

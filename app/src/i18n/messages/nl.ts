@@ -1185,7 +1185,7 @@ export const nl: Messages = {
   'gal.f.near': "Bij mij",
   'gal.f.top': "Populair",
   'gal.f.recent': "Recent",
-  'gal.f.mine': "Mijn foto's",
+  'gal.f.mine': "Mijn galerij",
   'gal.stormNow': "Kp {kp} nu",
   'gal.tonightCount.one': "{n} foto vannacht",
   'gal.tonightCount.other': "{n} foto's vannacht",
