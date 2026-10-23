@@ -113,6 +113,14 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 .switch.on .switch-knob { left: 23px; background: #000; }
 
 .toggle-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--line); width: 100%; }
+.toggle-group { border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+.toggle-group .toggle-row { border-bottom: 0; padding-bottom: 6px; }
+.toggle-info summary { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; list-style: none; font-size: 13px; color: var(--muted); padding: 2px 0; }
+.toggle-info summary::-webkit-details-marker { display: none; }
+.toggle-info summary::before { content: ''; width: 0; height: 0; border-left: 5px solid currentColor; border-top: 4px solid transparent; border-bottom: 4px solid transparent; transition: transform .15s; }
+.toggle-info[open] summary::before { transform: rotate(90deg); }
+.toggle-info summary:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; border-radius: 4px; }
+.toggle-info p { margin: 8px 0 0; font-size: 14px; line-height: 1.5; color: var(--soft); max-width: 60ch; }
 
 .rule-top { border-top: 1px solid var(--line); }
 .card { border: 1px solid var(--line-2); border-radius: 16px; }

@@ -2,12 +2,14 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 
 // The real alert engine and forecast, with stand-ins for the feeds, cloud and database. Tromsø at
 // 22:00 UTC on 20 Nov 2026 (dark, near magnetic midnight), clear sky, Moon not counted.
-const env = vi.hoisted(() => ({ kp: 3 as number | null, ovation: 20 as number | null, cloud: 0 as number | null, hourly: [] as { t: number; pct: number }[], series: [] as { t: number; kp: number; kind: string }[] }));
+const env = vi.hoisted(() => ({ kp: 3 as number | null, ovation: 20 as number | null, cloud: 0 as number | null, hourly: [] as { t: number; pct: number }[], wind: [] as { t: number; bz: number | null }[], power: [] as { observed: number; north: number; south: number }[], windReads: 0, series: [] as { t: number; kp: number; kind: string }[] }));
 vi.mock('./feeds', () => ({
   kpNow: async () => (env.kp === null ? null : { t: Date.now(), kp: env.kp }),
   kpSeries: async () => env.series,
   ovation: async () => (env.ovation === null ? null : {}),
   ovalAt: () => ({ overhead: env.ovation ?? 0, nearby: env.ovation ?? 0 }),
+  solarWindSeries: async () => { env.windReads++; return env.wind; },
+  hemiPowerSeries: async () => env.power,
 }));
 vi.mock('./cloud', () => ({ cloudCover: async () => (env.cloud === null ? null : { now: env.cloud, aurora: env.cloud, layers: null, next12h: env.hourly }) }));
 vi.mock('./astro', async orig => ({ ...(await orig<typeof import('./astro')>()), moon: () => ({ illumination: 0 }), moonAltitude: () => -10 }));
@@ -17,10 +19,10 @@ import type { AlertLevel } from './alerts';
 
 const NOW = Date.UTC(2026, 10, 20, 22);
 const HOME = { lat: 69.65, lon: 18.96 };
-type Kind = 'aurora' | 'forecast' | 'storm';
+type Kind = 'aurora' | 'forecast' | 'storm' | 'bz' | 'substorm';
 
 /** Users set to each level, each with Tromsø as Home; returns what each was sent. */
-async function run(users: { id: string; level: AlertLevel; storm?: boolean; chaser?: boolean; quiet?: boolean; kp?: number; away?: boolean }[], log: { user_id: string; location_id: string | null; kind: Kind; created_at: string }[] = []) {
+async function run(users: { id: string; level: AlertLevel; storm?: boolean; chaser?: boolean; quiet?: boolean; kp?: number; away?: boolean; aurora?: boolean; triggers?: { bz?: boolean; sub?: boolean } }[], log: { user_id: string; location_id: string | null; kind: Kind; created_at: string }[] = []) {
   const sent: { user_id: string; kind: Kind; level: AlertLevel | null }[] = [];
   const q = (rows: unknown[]) => {
     const b: Record<string, unknown> = {};
@@ -30,8 +32,8 @@ async function run(users: { id: string; level: AlertLevel; storm?: boolean; chas
     return b;
   };
   const tables: Record<string, unknown[]> = {
-    alert_settings: users.map(u => ({ user_id: u.id, kp_threshold: u.kp ?? 6, time_zone: 'UTC', channels: { email: true },
-      rules: { aurora: true, level: u.level, forecast: true, storm: u.storm ?? false, quiet: u.quiet ?? false, quietFrom: '21:00', quietTo: '23:00' } })),
+    alert_settings: users.map(u => ({ user_id: u.id, kp_threshold: u.kp ?? 6, time_zone: 'UTC', channels: { email: true }, triggers: u.triggers ?? null,
+      rules: { aurora: u.aurora ?? true, level: u.level, forecast: true, storm: u.storm ?? false, quiet: u.quiet ?? false, quietFrom: '21:00', quietTo: '23:00' } })),
     profiles: users.map(u => ({ id: u.id, plan: u.chaser ? 'chaser' : 'free', subscription_status: null, trial_ends_at: u.chaser ? '2099-01-01T00:00:00Z' : null, locale: 'en' })),
     locations: users.flatMap(u => [{ id: `loc-${u.id}`, user_id: u.id, name: 'Tromsø', ...HOME, is_home: true },
       ...(u.away ? [{ id: `away-${u.id}`, user_id: u.id, name: 'Abisko', lat: 68.35, lon: 18.83, is_home: false }] : [])]),
@@ -51,7 +53,7 @@ const byLevel = (sent: { user_id: string; kind: Kind; level: AlertLevel | null }
 
 beforeAll(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(NOW); });
 afterAll(() => { vi.useRealTimers(); });
-beforeEach(() => { vi.setSystemTime(NOW); env.kp = 3; env.ovation = 20; env.cloud = 0; env.hourly = []; env.series = []; });
+beforeEach(() => { vi.setSystemTime(NOW); env.kp = 3; env.ovation = 20; env.cloud = 0; env.hourly = []; env.series = []; env.wind = []; env.power = []; env.windReads = 0; });
 
 const only = (sent: { user_id: string; kind: Kind }[], id: string) => sent.filter(x => x.user_id === id).map(x => x.kind);
 
@@ -140,5 +142,45 @@ describe('Free and Chaser', () => {
     const { sent } = await run([{ id: 'free', level: 'visible' }, { id: 'chaser', level: 'visible', chaser: true }]);
     expect(only(sent, 'free')).toEqual([]);
     expect(only(sent, 'chaser')).toEqual(['forecast']);
+  });
+});
+
+describe('technical alerts (Chaser)', () => {
+  // Bz at −12 to −15 nT for the last 20 minutes; hemispheric power from 12 to 48 GW in half an hour.
+  const south = () => { env.wind = [-3, -12, -13, -15, -14].map((bz, i, a) => ({ t: NOW - (a.length - i) * 3e5, bz })); };
+  const jump = () => { env.power = [12, 14, 15, 22, 35, 48].map((v, i, a) => ({ observed: NOW - (a.length - 1 - i) * 3e5, north: v, south: 5 })); };
+  const tech = (id: string, extra = {}) => ({ id, level: 'clear' as AlertLevel, aurora: false, chaser: true, triggers: { bz: true, sub: true }, ...extra });
+  beforeEach(() => { env.ovation = 0; south(); jump(); });
+
+  it('Bz south and a substorm both alert a Chaser member at night', async () => {
+    const { sent } = await run([tech('c')]);
+    expect(only(sent, 'c').sort()).toEqual(['bz', 'substorm']);
+  });
+  it('need Chaser', async () => {
+    expect((await run([tech('free', { chaser: false })])).sent).toEqual([]);
+  });
+  it('only the ones switched on', async () => {
+    expect(only((await run([tech('c', { triggers: { bz: true } })])).sent, 'c')).toEqual(['bz']);
+    expect(only((await run([tech('c', { triggers: { sub: true } })])).sent, 'c')).toEqual(['substorm']);
+  });
+  it('wait for the dark and for quiet hours to end', async () => {
+    vi.setSystemTime(Date.UTC(2026, 5, 21, 12)); south(); env.power = [];
+    expect((await run([tech('c')])).sent).toEqual([]);
+    vi.setSystemTime(Date.UTC(2026, 10, 20, 22, 30)); south(); jump();
+    expect((await run([tech('c', { quiet: true })])).sent).toEqual([]);
+  });
+  it('need the condition to be happening now', async () => {
+    env.wind = [-12, -13, -15, -4].map((bz, i, a) => ({ t: NOW - (a.length - i) * 3e5, bz }));
+    env.power = [40, 45, 48, 50].map((v, i, a) => ({ observed: NOW - (a.length - 1 - i) * 3e5, north: v, south: 5 }));
+    expect((await run([tech('c')])).sent).toEqual([]);
+  });
+  it('aren’t repeated within 3 hours (Bz) and 2 hours (substorm)', async () => {
+    const log = (kind: Kind, h: number) => ({ user_id: 'c', location_id: null, kind, created_at: new Date(NOW - h * 36e5).toISOString() });
+    expect((await run([tech('c')], [log('bz', 2), log('substorm', 1)])).sent).toEqual([]);
+    expect(only((await run([tech('c')], [log('bz', 4), log('substorm', 3)])).sent, 'c').sort()).toEqual(['bz', 'substorm']);
+  });
+  it('leave the solar wind unread when nobody has them on', async () => {
+    await run([{ id: 'a', level: 'visible' }]);
+    expect(env.windReads).toBe(0);
   });
 });

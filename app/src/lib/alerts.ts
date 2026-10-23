@@ -53,7 +53,7 @@ export function normalizeRules(raw: unknown): AlertRules {
 export const DEFAULT_STORM_KP = 6;
 
 /** Don't repeat an alert of the same kind for the same place within these windows. */
-export const REPEAT_HOURS = { aurora: 6, forecast: 6, storm: 12 } as const;
+export const REPEAT_HOURS = { aurora: 6, forecast: 6, storm: 12, bz: 3, substorm: 2 } as const;
 
 export type AlertKind = keyof typeof REPEAT_HOURS;
 
@@ -96,4 +96,41 @@ export function stormKp(kpNow: number | null, series: { t: number; kp: number }[
   let max = kpNow;
   for (const p of series) if (p.t >= now - 3 * 36e5 && p.t <= now + 3 * 36e5) max = Math.max(max ?? 0, p.kp);
   return max;
+}
+
+/** Bz alert (Chaser): the solar wind's north–south magnetic field at or below this, nT ... */
+export const BZ_LIMIT = -10;
+/** ... for at least this long, in minutes. */
+export const BZ_MINUTES = 15;
+
+/**
+ * A sustained southward Bz at L1 (DSCOVR, 5-minute means, each stamped at its start): the latest bins,
+ * back to back, all at or below BZ_LIMIT and covering BZ_MINUTES. The newest bin has to be recent, so a
+ * feed that has stopped never raises an alert. Returns the mean Bz over the run, or null.
+ */
+export function bzSouth(points: { t: number; bz: number | null }[], now: number): { bz: number; since: number } | null {
+  const BIN = 5 * 6e4;
+  const pts = points.filter(p => p.bz !== null).sort((a, b) => a.t - b.t);
+  const last = pts[pts.length - 1];
+  if (!last || last.bz! > BZ_LIMIT || now - (last.t + BIN) > 15 * 6e4) return null;
+  let i = pts.length - 1;
+  while (i > 0 && pts[i - 1].bz! <= BZ_LIMIT && pts[i].t - pts[i - 1].t <= BIN) i--;
+  const run = pts.slice(i);
+  if (last.t + BIN - run[0].t < BZ_MINUTES * 6e4) return null;
+  return { bz: Math.round((run.reduce((a, p) => a + p.bz!, 0) / run.length) * 10) / 10, since: run[0].t };
+}
+
+/**
+ * A substorm onset, as NOAA's hemispheric power (GW, a model estimate every 5 minutes) sees it: within
+ * 30 minutes, at least doubled, up by 20 GW or more, and 30 GW or more now. The newest value has to be
+ * recent. Returns the power before and now, or null.
+ */
+export function powerJump(points: { observed: number; north: number; south: number }[], hemi: 'north' | 'south', now: number): { from: number; to: number } | null {
+  const pts = [...points].sort((a, b) => a.observed - b.observed);
+  const last = pts[pts.length - 1];
+  if (!last || now - last.observed > 20 * 6e4) return null;
+  const before = pts.filter(p => p.observed >= last.observed - 30 * 6e4 && p.observed < last.observed);
+  if (!before.length) return null;
+  const from = Math.min(...before.map(p => p[hemi])), to = last[hemi];
+  return to >= 30 && to >= 2 * from && to - from >= 20 ? { from, to } : null;
 }

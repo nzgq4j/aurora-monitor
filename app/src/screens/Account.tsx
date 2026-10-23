@@ -392,8 +392,17 @@ function Alerts({ data }: { data: AccountData }) {
           <span className="eyebrow" style={{ marginBottom: 8 }}>{t('alerts.moreTypes')}</span>
           {TRIGGER_DEFS.filter(([k]) => k === 'bz' || k === 'sub').map(([k, need]) => {
             const locked = planIndex < need;
-            return <ToggleRow key={k} label={t(`trigger.${k}`)} sub={soon(t(`trigger.${k}.sub`))} need={need} locked={locked} on={s.triggers[k]}
-              onClick={locked ? () => go('plans') : () => set(st => ({ triggers: { ...st.triggers, [k]: !st.triggers[k] } }))} />;
+            return (
+              <div key={k} className="toggle-group">
+                <ToggleRow label={t(`trigger.${k}`)} sub={t(`trigger.${k}.sub`)} need={need} locked={locked} on={s.triggers[k]}
+                  onClick={locked ? () => go('plans') : () => set(st => ({ triggers: { ...st.triggers, [k]: !st.triggers[k] } }))} />
+                {/* What the alert watches and when it's sent, folded away until asked for. */}
+                <details className="toggle-info">
+                  <summary>{t('alerts.explain')}</summary>
+                  <p>{t(`trigger.${k as 'bz' | 'sub'}.info`)}</p>
+                </details>
+              </div>
+            );
           })}
         </div>
       </div>
@@ -434,7 +443,7 @@ function AlertStatus() {
 const patchRules = (set: ReturnType<typeof useStore>['set'], patch: Partial<AlertRules>) =>
   set(st => ({ alertRules: { ...st.alertRules, ...patch } }));
 
-interface LogRow { id: number; kind: AlertKind; level: AlertLevel | null; score: number | null; kp: number | null; place: string | null; created_at: string }
+interface LogRow { id: number; kind: AlertKind; level: AlertLevel | null; score: number | null; kp: number | null; value: number | null; place: string | null; created_at: string }
 
 /** The last alerts the engine sent this account (alert_log; read-own under RLS). */
 function RecentAlerts() {
@@ -447,7 +456,7 @@ function RecentAlerts() {
     const sb = live && userId ? supabase() : null;
     if (!sb) { setRows([]); return; }
     let stale = false;
-    sb.from('alert_log').select('id,kind,level,score,kp,place,created_at').order('created_at', { ascending: false }).limit(8)
+    sb.from('alert_log').select('id,kind,level,score,kp,value,place,created_at').order('created_at', { ascending: false }).limit(8)
       .then(({ data }) => { if (!stale) setRows((data as LogRow[] | null) ?? []); });
     return () => { stale = true; };
   }, [live, userId]);
@@ -455,6 +464,8 @@ function RecentAlerts() {
   const title = (a: LogRow) => {
     const place = (a.place ?? '').split(',')[0];
     if (a.kind === 'storm') return t('alerts.recent.storm', { kp: num(a.kp ?? 0, 1) });
+    if (a.kind === 'bz') return t('alerts.recent.bz', { bz: num(a.value ?? 0, 1) });
+    if (a.kind === 'substorm') return t('alerts.recent.substorm', { gw: num(a.value ?? 0) });
     const level = t(`alerts.level.${a.level ?? 'visible'}`);
     return t(a.kind === 'forecast' ? 'alerts.recent.forecast' : 'alerts.recent.aurora', { level, place });
   };
@@ -472,7 +483,7 @@ function RecentAlerts() {
                 <b>{title(a)}</b>
                 <small>{when(a.created_at)}</small>
               </span>
-              {a.kind !== 'storm' && a.score != null && <span className="mono alert-recent-score">{a.score}</span>}
+              {a.kind !== 'storm' && a.kind !== 'bz' && a.kind !== 'substorm' && a.score != null && <span className="mono alert-recent-score">{a.score}</span>}
             </li>
           ))}
         </ol>
