@@ -7,6 +7,7 @@ vi.mock('./feeds', () => ({
   kpSeries: async () => feeds.series,
   ovation: async () => feeds.oval,
   ovalAt: () => ({ nearby: 0 }),
+  hp30Recent: async () => [],
 }));
 vi.mock('./cloud', () => ({ cloudCover: async () => null }));
 

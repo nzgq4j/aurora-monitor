@@ -2,7 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 
 // The real alert engine and forecast, with stand-ins for the feeds, cloud and database. Tromsø at
 // 22:00 UTC on 20 Nov 2026 (dark, near magnetic midnight), clear sky, Moon not counted.
-const env = vi.hoisted(() => ({ kp: 3 as number | null, ovation: 20 as number | null, cloud: 0 as number | null, hourly: [] as { t: number; pct: number }[], wind: [] as { t: number; bz: number | null }[], power: [] as { observed: number; north: number; south: number }[], windReads: 0, series: [] as { t: number; kp: number; kind: string }[] }));
+const env = vi.hoisted(() => ({ kp: 3 as number | null, ovation: 20 as number | null, cloud: 0 as number | null, hourly: [] as { t: number; pct: number }[], wind: [] as { t: number; bz: number | null }[], power: [] as { observed: number; north: number; south: number }[], windReads: 0, hp: [] as { t: number; hp: number }[], xrays: [] as { t: number; flux: number }[], sims: null as unknown[] | null, series: [] as { t: number; kp: number; kind: string }[] }));
 vi.mock('./feeds', () => ({
   kpNow: async () => (env.kp === null ? null : { t: Date.now(), kp: env.kp }),
   kpSeries: async () => env.series,
@@ -10,6 +10,9 @@ vi.mock('./feeds', () => ({
   ovalAt: () => ({ overhead: env.ovation ?? 0, nearby: env.ovation ?? 0 }),
   solarWindSeries: async () => { env.windReads++; return env.wind; },
   hemiPowerSeries: async () => env.power,
+  hp30Recent: async () => env.hp,
+  xrayRecent: async () => env.xrays,
+  enlilSims: async () => env.sims,
 }));
 vi.mock('./cloud', () => ({ cloudCover: async () => (env.cloud === null ? null : { now: env.cloud, aurora: env.cloud, layers: null, next12h: env.hourly }) }));
 vi.mock('./astro', async orig => ({ ...(await orig<typeof import('./astro')>()), moon: () => ({ illumination: 0 }), moonAltitude: () => -10 }));
@@ -19,10 +22,10 @@ import type { AlertLevel } from './alerts';
 
 const NOW = Date.UTC(2026, 10, 20, 22);
 const HOME = { lat: 69.65, lon: 18.96 };
-type Kind = 'aurora' | 'forecast' | 'storm' | 'bz' | 'substorm';
+type Kind = 'aurora' | 'forecast' | 'storm' | 'bz' | 'substorm' | 'coupling' | 'flare' | 'shock' | 'cme';
 
 /** Users set to each level, each with Tromsø as Home; returns what each was sent. */
-async function run(users: { id: string; level: AlertLevel; storm?: boolean; chaser?: boolean; quiet?: boolean; kp?: number; away?: boolean; aurora?: boolean; triggers?: { bz?: boolean; sub?: boolean } }[], log: { user_id: string; location_id: string | null; kind: Kind; created_at: string }[] = []) {
+async function run(users: { id: string; level: AlertLevel; storm?: boolean; chaser?: boolean; quiet?: boolean; kp?: number; away?: boolean; aurora?: boolean; triggers?: { bz?: boolean; sub?: boolean; coupling?: boolean; flare?: boolean; cme?: boolean } }[], log: { user_id: string; location_id: string | null; kind: Kind; created_at: string; value?: number | null }[] = []) {
   const sent: { user_id: string; kind: Kind; level: AlertLevel | null }[] = [];
   const q = (rows: unknown[]) => {
     const b: Record<string, unknown> = {};
@@ -53,7 +56,7 @@ const byLevel = (sent: { user_id: string; kind: Kind; level: AlertLevel | null }
 
 beforeAll(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(NOW); });
 afterAll(() => { vi.useRealTimers(); });
-beforeEach(() => { vi.setSystemTime(NOW); env.kp = 3; env.ovation = 20; env.cloud = 0; env.hourly = []; env.series = []; env.wind = []; env.power = []; env.windReads = 0; });
+beforeEach(() => { vi.setSystemTime(NOW); env.kp = 3; env.ovation = 20; env.cloud = 0; env.hourly = []; env.series = []; env.wind = []; env.power = []; env.windReads = 0; env.hp = []; env.xrays = []; env.sims = null; });
 
 const only = (sent: { user_id: string; kind: Kind }[], id: string) => sent.filter(x => x.user_id === id).map(x => x.kind);
 
@@ -182,5 +185,57 @@ describe('technical alerts (Chaser)', () => {
   it('leave the solar wind unread when nobody has them on', async () => {
     await run([{ id: 'a', level: 'visible' }]);
     expect(env.windReads).toBe(0);
+  });
+});
+
+describe('scientific alerts (Chaser)', () => {
+  const sci = (id: string, extra = {}) => ({ id, level: 'clear' as AlertLevel, aurora: false, chaser: true, triggers: { flare: true, cme: true, coupling: true }, ...extra });
+  const xr = (flux: number[]) => flux.map((f, i, a) => ({ t: NOW - (a.length - 1 - i) * 6e4, flux: f }));
+  // Quiet solar wind for an hour, then a shock: faster, denser, stronger field.
+  const shock = () => { env.wind = [...Array.from({ length: 10 }, (_, i) => ({ t: NOW - (12 - i) * 3e5, speed: 400, density: 5, bt: 6, by: 2, bz: 2 })),
+    { t: NOW - 2 * 3e5, speed: 520, density: 14, bt: 18, by: 2, bz: 2 }, { t: NOW - 3e5, speed: 530, density: 15, bt: 19, by: 2, bz: 2 }] as never; };
+  const driven = () => { env.wind = Array.from({ length: 7 }, (_, i) => ({ t: NOW - (7 - i) * 3e5, speed: 650, density: 8, bt: 16, by: 2, bz: -15 })) as never; };
+  const sim = (arrivalH: number, kp = 7) => ({ modelCompletionTime: '2026-11-20T12:00Z', estimatedShockArrivalTime: new Date(NOW + arrivalH * 36e5).toISOString().slice(0, 16) + 'Z', isEarthGB: false, kp_90: kp, cmeIDs: ['CME-1'] });
+
+  it('a flare at M1 or more, and again when it reaches X', async () => {
+    env.ovation = 0; env.xrays = xr([3e-6, 8e-6, 2.1e-5]);
+    expect(only((await run([sci('s')])).sent, 's')).toEqual(['flare']);
+    const log = [{ user_id: 's', location_id: null, kind: 'flare' as const, created_at: new Date(NOW - 30 * 6e4).toISOString(), value: 2.1e-5 }];
+    expect((await run([sci('s')], log)).sent).toEqual([]);
+    env.xrays = xr([2e-5, 6e-5, 1.3e-4]);
+    expect(only((await run([sci('s')], log)).sent, 's')).toEqual(['flare']);
+  });
+  it('a CME shock at L1, any time of day', async () => {
+    vi.setSystemTime(Date.UTC(2026, 5, 21, 12)); env.ovation = 0;
+    env.wind = [...Array.from({ length: 10 }, (_, i) => ({ t: Date.now() - (12 - i) * 3e5, speed: 400, density: 5, bt: 6, by: 2, bz: 2 })),
+      { t: Date.now() - 2 * 3e5, speed: 520, density: 14, bt: 18, by: 2, bz: 2 }, { t: Date.now() - 3e5, speed: 530, density: 15, bt: 19, by: 2, bz: 2 }] as never;
+    expect(only((await run([sci('s')])).sent, 's')).toEqual(['shock']);
+  });
+  it('a CME forecast, once per expected arrival however often the model reruns', async () => {
+    env.ovation = 0; env.sims = [sim(30)];
+    expect(only((await run([sci('s')])).sent, 's')).toEqual(['cme']);
+    const log = [{ user_id: 's', location_id: null, kind: 'cme' as const, created_at: new Date(NOW - 5 * 36e5).toISOString(), value: Math.round((NOW + 28 * 36e5) / 36e5) }];
+    expect((await run([sci('s')], log)).sent).toEqual([]);
+    env.sims = [sim(60)];
+    expect(only((await run([sci('s')], log)).sent, 's')).toEqual(['cme']);
+  });
+  it('strong coupling only in the dark', async () => {
+    env.ovation = 0; driven();
+    expect(only((await run([sci('s')])).sent, 's')).toEqual(['coupling']);
+    vi.setSystemTime(Date.UTC(2026, 5, 21, 12)); env.wind = Array.from({ length: 7 }, (_, i) => ({ t: Date.now() - (7 - i) * 3e5, speed: 650, density: 8, bt: 16, by: 2, bz: -15 })) as never;
+    expect((await run([sci('s')])).sent).toEqual([]);
+  });
+  it('none for Free, none in quiet hours, none when switched off', async () => {
+    env.ovation = 0; env.xrays = xr([2e-5]); shock(); env.sims = [sim(30)];
+    expect((await run([sci('f', { chaser: false })])).sent).toEqual([]);
+    vi.setSystemTime(Date.UTC(2026, 10, 20, 22, 30)); env.xrays = [{ t: Date.now(), flux: 2e-5 }];
+    expect((await run([sci('q', { quiet: true })])).sent).toEqual([]);
+    expect((await run([sci('o', { triggers: {} })])).sent).toEqual([]);
+  });
+  it('storm alerts use Hp30 when it runs ahead of Kp', async () => {
+    env.ovation = 0; env.kp = 3; env.hp = [{ t: NOW - 30 * 6e4, hp: 6.33 }];
+    expect(only((await run([{ id: 's', level: 'clear', aurora: false, storm: true, kp: 6 }])).sent, 's')).toEqual(['storm']);
+    env.hp = [{ t: NOW - 4 * 36e5, hp: 6.33 }];
+    expect((await run([{ id: 's', level: 'clear', aurora: false, storm: true, kp: 6 }])).sent).toEqual([]);
   });
 });

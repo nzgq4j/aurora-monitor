@@ -2,10 +2,11 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
 import { fcmAccount, sendFcm } from './fcm';
-import { REPEAT_HOURS, bzSouth, decidePlace, inQuietHours, normalizeRules, powerJump, stormKp, type AlertKind, type AlertLevel, type AlertRules } from './alerts';
+import { FLARE_X, REPEAT_HOURS, bzSouth, cmeComing, couplingHigh, decidePlace, flareNow, inQuietHours, normalizeRules, powerJump, shockArrival, stormKp, type AlertKind, type AlertLevel, type AlertRules } from './alerts';
 import { kpNeeded, moon, sunAltitude } from './astro';
 import { cloudCover, type CloudForecast } from './cloud';
-import { hemiPowerSeries, kpNow, kpSeries, ovalAt, ovation, solarWindSeries } from './feeds';
+import { enlilSims, hemiPowerSeries, hp30Recent, kpNow, kpSeries, ovalAt, ovation, solarWindSeries, xrayRecent } from './feeds';
+import { earthCmes, xrayClass } from './storm';
 import { SITE } from './site';
 import { hourlyScores } from './tonight';
 import { isLocale, type Locale } from '../i18n/config';
@@ -24,6 +25,8 @@ interface Alert {
   kind: AlertKind; location: Loc | null; level: AlertLevel | null; score: number | null; kp: number | null; look?: 'low' | 'high' | 'overhead';
   /** Technical alerts: Bz (nT), or the hemispheric power reached (GW) with `from` the power before. */
   value?: number; from?: number;
+  /** CME forecasts: the expected arrival time, and whether it's a glancing blow. */
+  when?: number; glancing?: boolean;
 }
 
 export interface RunSummary {
@@ -63,7 +66,8 @@ async function allSettings(admin: SupabaseClient): Promise<Settings[]> {
 export async function runAlerts(admin: SupabaseClient, now = Date.now()): Promise<RunSummary> {
   const started = Date.now();
   const summary: RunSummary = { users: 0, places: 0, alerts: 0, emailed: 0, pushed: 0, failed: 0, noProvider: 0, skippedQuiet: 0, deferred: 0, feedsOk: true };
-  const technical = (s: Settings) => !!(s.triggers?.bz || s.triggers?.sub);
+  const on = (s: Settings, ...keys: string[]) => keys.some(k => !!s.triggers?.[k]);
+  const technical = (s: Settings) => on(s, 'bz', 'sub', 'coupling', 'flare', 'cme');
   const active = (await allSettings(admin)).filter(s => { const r = normalizeRules(s.rules); return r.aurora || r.storm || technical(s); });
   if (!active.length) return summary;
 
@@ -72,11 +76,24 @@ export async function runAlerts(admin: SupabaseClient, now = Date.now()): Promis
   // With no Kp and no OVATION model nothing can be judged, so nothing is sent and the run says why.
   summary.feedsOk = kp !== null || series.length > 0 || oval !== null;
   if (!summary.feedsOk) return summary;
-  const storm = stormKp(kp, series, now);
+  // Storm alerts also read GFZ's half-hourly Hp30 (Kp's scale), so they can go out hours before the 3-hourly Kp.
+  const hp = (await hp30Recent()).filter(p => p.t > now - 90 * 6e4).sort((a, b) => b.t - a.t)[0];
+  const kpStorm = stormKp(kp, series, now);
+  const storm = hp ? Math.max(kpStorm ?? 0, Math.min(9, hp.hp)) : kpStorm;
   // Technical alerts (Chaser): read only when someone has one switched on.
-  const [wind, power] = active.some(technical) ? await Promise.all([solarWindSeries(), hemiPowerSeries()]) : [[], []];
+  const any = (...keys: string[]) => active.some(s => on(s, ...keys));
+  const [wind, power, xrays, sims] = await Promise.all([
+    any('bz', 'sub', 'coupling', 'cme') ? solarWindSeries() : [],
+    any('sub') ? hemiPowerSeries() : [],
+    any('flare') ? xrayRecent() : [],
+    any('cme') ? enlilSims() : null,
+  ]);
   const bz = bzSouth(wind, now);
   const jump = { north: powerJump(power, 'north', now), south: powerJump(power, 'south', now) };
+  const coupling = couplingHigh(wind, now);
+  const shock = shockArrival(wind, now);
+  const flare = flareNow(xrays, now);
+  const cme = sims ? cmeComing(earthCmes(sims as never, now), now) : null;
   // Cloud forecasts are shared between users with places close together.
   const clouds = new Map<string, Promise<CloudForecast | null>>();
   const cloudAt = (lat: number, lon: number) => {
@@ -97,7 +114,7 @@ export async function runAlerts(admin: SupabaseClient, now = Date.now()): Promis
     const [profilesRes, locsRes, logRes] = await Promise.all([
       admin.from('profiles').select('id, plan, subscription_status, trial_ends_at, locale').in('id', ids),
       admin.from('locations').select('id, user_id, name, lat, lon, is_home').in('user_id', ids),
-      admin.from('alert_log').select('user_id, location_id, kind, created_at').in('user_id', ids).gte('created_at', new Date(now - 12 * 36e5).toISOString()),
+      admin.from('alert_log').select('user_id, location_id, kind, value, created_at').in('user_id', ids).gte('created_at', new Date(now - 72 * 36e5).toISOString()),
     ]);
     // Without plans, places or the recent log, alerts could go out wrongly or twice: skip the batch.
     const readError = profilesRes.error ?? locsRes.error ?? logRes.error;
@@ -109,9 +126,9 @@ export async function runAlerts(admin: SupabaseClient, now = Date.now()): Promis
     const profiles = new Map((profilesRes.data as Profile[]).map(p => [p.id, p]));
     const locsBy = new Map<string, Loc[]>();
     for (const l of locsRes.data as Loc[]) locsBy.set(l.user_id, [...(locsBy.get(l.user_id) ?? []), l]);
-    const recent = logRes.data as { user_id: string; location_id: string | null; kind: AlertKind; created_at: string }[];
-    const sentWithin = (user: string, loc: string | null, kinds: AlertKind[], hours: number) =>
-      recent.some(r => r.user_id === user && r.location_id === loc && kinds.includes(r.kind) && Date.parse(r.created_at) > now - hours * 36e5);
+    const recent = logRes.data as { user_id: string; location_id: string | null; kind: AlertKind; value: number | null; created_at: string }[];
+    const sentWithin = (user: string, loc: string | null, kinds: AlertKind[], hours: number, match: (value: number | null) => boolean = () => true) =>
+      recent.some(r => r.user_id === user && r.location_id === loc && kinds.includes(r.kind) && Date.parse(r.created_at) > now - hours * 36e5 && match(r.value));
 
     const processUser = async (s: Settings) => {
       summary.users++;
@@ -129,9 +146,28 @@ export async function runAlerts(admin: SupabaseClient, now = Date.now()): Promis
         const quiet = inQuietHours(rules, now, s.time_zone);
         const all = locsBy.get(s.user_id) ?? [];
 
-        // Bz turns south and substorm onset: Chaser, while it's dark at Home and outside quiet hours.
+        // Technical alerts (Chaser), never in quiet hours. Flares and CMEs whatever the time of day.
+        if (chaser && !quiet) {
+          // A flare: once in 2 hours, unless it grows from M to X.
+          if (s.triggers?.flare && flare && (!sentWithin(s.user_id, null, ['flare'], REPEAT_HOURS.flare)
+            || (flare.flux >= FLARE_X && !sentWithin(s.user_id, null, ['flare'], REPEAT_HOURS.flare, v => (v ?? 0) >= FLARE_X)))) {
+            alerts.push({ kind: 'flare', location: null, level: null, score: null, kp, value: flare.flux });
+          }
+          if (s.triggers?.cme && shock && !sentWithin(s.user_id, null, ['shock'], REPEAT_HOURS.shock)) {
+            alerts.push({ kind: 'shock', location: null, level: null, score: null, kp, value: shock.to, from: shock.from });
+          }
+          // A CME forecast: once per expected arrival (logged in hours since 1970), however often the model reruns.
+          const arrivalH = cme ? Math.round(cme.arrival / 36e5) : null;
+          if (s.triggers?.cme && cme && arrivalH !== null && !sentWithin(s.user_id, null, ['cme'], 72, v => v !== null && Math.abs(v - arrivalH) < 12)) {
+            alerts.push({ kind: 'cme', location: null, level: null, score: null, kp: cme.kp, value: arrivalH, when: cme.arrival, glancing: cme.glancing });
+          }
+        }
+        // Bz, substorm onset and strong coupling: Chaser, while it's dark at Home and outside quiet hours.
         const home = all.find(l => l.is_home) ?? null;
         if (chaser && home && !quiet && sunAltitude(now, home.lat, home.lon) <= -6) {
+          if (s.triggers?.coupling && coupling && !sentWithin(s.user_id, null, ['coupling'], REPEAT_HOURS.coupling)) {
+            alerts.push({ kind: 'coupling', location: null, level: null, score: null, kp, value: coupling.value });
+          }
           if (s.triggers?.bz && bz && !sentWithin(s.user_id, null, ['bz'], REPEAT_HOURS.bz)) {
             alerts.push({ kind: 'bz', location: null, level: null, score: null, kp, value: bz.bz });
           }
@@ -167,7 +203,7 @@ export async function runAlerts(admin: SupabaseClient, now = Date.now()): Promis
         summary.alerts += alerts.length;
 
         const locale: Locale = profile?.locale && isLocale(profile.locale) ? profile.locale : 'en';
-        const texts = await alertTexts(locale, alerts);
+        const texts = await alertTexts(locale, alerts, s.time_zone);
         const [email, push] = await Promise.all([deliverEmail(admin, s, texts), deliverPush(admin, s, chaser, texts)]);
         if (email === 'sent') summary.emailed++;
         if (push === 'sent') summary.pushed++;
@@ -294,9 +330,9 @@ interface AlertLine { kind: AlertKind; subject: string; body: string; look: stri
 interface AlertTexts { lines: AlertLine[]; url: string; cta: string; footer: string; /** Language of the email (html lang). */ lang: Locale }
 
 /** The wording of a run's alerts in one language, shared by email and push. */
-async function alertTexts(locale: Locale, alerts: Alert[]): Promise<AlertTexts> {
+async function alertTexts(locale: Locale, alerts: Alert[], timeZone: string | null = null): Promise<AlertTexts> {
   const { t } = await getI18n(locale);
-  const order: AlertKind[] = ['storm', 'substorm', 'aurora', 'bz', 'forecast'];
+  const order: AlertKind[] = ['storm', 'substorm', 'shock', 'aurora', 'bz', 'coupling', 'flare', 'cme', 'forecast'];
   const sorted = [...alerts].sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind));
   const line = (a: Alert) => {
     if (a.kind === 'storm') {
@@ -305,6 +341,16 @@ async function alertTexts(locale: Locale, alerts: Alert[]): Promise<AlertTexts> 
     }
     if (a.kind === 'bz') return { kind: a.kind, subject: t('mail.bz.subject', { bz: a.value ?? 0 }), body: t('mail.bz.body', { bz: a.value ?? 0 }), look: '' };
     if (a.kind === 'substorm') return { kind: a.kind, subject: t('mail.substorm.subject'), body: t('mail.substorm.body', { from: a.from ?? 0, to: a.value ?? 0 }), look: '' };
+    if (a.kind === 'coupling') return { kind: a.kind, subject: t('mail.coupling.subject'), body: t('mail.coupling.body', { value: Math.round((a.value ?? 0) / 1000) }), look: '' };
+    if (a.kind === 'flare') { const cls = xrayClass(a.value ?? 0); return { kind: a.kind, subject: t('mail.flare.subject', { cls }), body: t(cls.startsWith('X') ? 'mail.flare.bodyX' : 'mail.flare.body', { cls }), look: '' }; }
+    if (a.kind === 'shock') return { kind: a.kind, subject: t('mail.shock.subject'), body: t('mail.shock.body', { from: a.from ?? 0, to: a.value ?? 0 }), look: '' };
+    if (a.kind === 'cme') {
+      let when: string;
+      try { when = new Intl.DateTimeFormat(locale, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: timeZone ?? 'UTC', timeZoneName: 'short' }).format(a.when ?? 0); }
+      catch { when = new Intl.DateTimeFormat(locale, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC', timeZoneName: 'short' }).format(a.when ?? 0); }
+      const kp = a.kp === null ? '' : t('mail.cme.kp', { kp: a.kp });
+      return { kind: a.kind, subject: t('mail.cme.subject', { when }), body: t(a.glancing ? 'mail.cme.bodyGlancing' : 'mail.cme.body', { when, kp }), look: '' };
+    }
     const place = (a.location?.name ?? '').split(',')[0];
     const look = a.look === 'overhead' ? t('tonight.look.overhead') : t(`tonight.look.${a.look ?? 'low'}.${(a.location?.lat ?? 1) < 0 ? 'south' : 'north'}`);
     return a.kind === 'aurora'

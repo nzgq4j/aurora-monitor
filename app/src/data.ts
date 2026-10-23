@@ -76,11 +76,13 @@ export const polar = {
   }),
 };
 
-export type TriggerKey = 'kp' | 'cme' | 'clear' | 'bz' | 'sub';
+export type TriggerKey = 'kp' | 'cme' | 'clear' | 'bz' | 'sub' | 'coupling' | 'flare';
 export type ChannelKey = 'email' | 'push' | 'sms';
 
 /** [key, minimum tier index]; label `trigger.{key}`, detail `trigger.{key}.sub`. */
-export const TRIGGER_DEFS: [TriggerKey, number][] = [['kp', 0], ['cme', 0], ['clear', 1], ['bz', 1], ['sub', 1]];
+export const TRIGGER_DEFS: [TriggerKey, number][] = [['kp', 0], ['clear', 1], ['bz', 1], ['sub', 1], ['coupling', 1], ['cme', 1], ['flare', 1]];
+/** The alert types on the Alerts screen's "More alert types" list, in that order (all Chaser). */
+export const TECH_TRIGGERS = ['bz', 'sub', 'coupling', 'cme', 'flare'] as const;
 
 /** [key, minimum tier index]; label `channel.{key}`, detail `channel.{key}.sub` (email shows the account address instead). */
 export const CHANNEL_DEFS: [ChannelKey, number][] = [['email', 0], ['push', 1], ['sms', 1]];

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { enlilSims } from '../../../lib/feeds';
 import { earthCmes, parseGeomagProbs, sScale, xrayClass, type Cme, type StormDay } from '../../../lib/storm';
 
 /** Storm outlook (#40): NOAA SWPC forecasts and GOES measurements, and NASA DONKI's Earth-directed CMEs. */
@@ -36,16 +37,6 @@ async function get<T>(url: string, as: 'json' | 'text' = 'json', revalidate = 90
 
 const num = (v: unknown) => (v === null || v === undefined || v === '' ? null : Number.isFinite(+(v as number)) ? +(v as number) : null);
 
-/** DONKI's WSA-Enlil runs for the last week, from CCMC directly, else through api.nasa.gov. */
-async function enlil(now: number) {
-  const from = new Date(now - 7 * 864e5).toISOString().slice(0, 10);
-  const direct = await get<Row[]>(`https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/WSAEnlilSimulations?startDate=${from}`, 'json', 3600);
-  if (Array.isArray(direct)) return direct;
-  const key = process.env.NASA_API_KEY || 'DEMO_KEY';
-  const viaApi = await get<Row[]>(`https://api.nasa.gov/DONKI/WSAEnlilSimulations?startDate=${from}&api_key=${key}`, 'json', 3600);
-  return Array.isArray(viaApi) ? viaApi : null;
-}
-
 export async function GET() {
   const now = Date.now();
   const [geomag, scales, xrays, flareList, protons, ssn, sims] = await Promise.all([
@@ -55,7 +46,7 @@ export async function GET() {
     get<Row[]>(`${SWPC}/json/goes/primary/xray-flares-7-day.json`, 'json', 300),
     get<Row[]>(`${SWPC}/json/goes/primary/integral-protons-1-day.json`, 'json', 300),
     get<Row[]>(`${SWPC}/json/solar-cycle/swpc_observed_ssn.json`, 'json', 6 * 3600),
-    enlil(now),
+    enlilSims(),
   ]);
 
   const days = geomag ? parseGeomagProbs(geomag) : [];
