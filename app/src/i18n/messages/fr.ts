@@ -1250,6 +1250,7 @@ export const fr: Messages = {
   'gal.blockConfirm': "Bloquer",
   'gal.removeTitle': "Supprimer cette photo ?",
   'gal.removeText': "Elle est retirée de la galerie et effacée. Les points qu’elle a rapportés sont conservés.",
+  'gal.removeTextMany': "Elles sont retirées de la galerie et effacées. Les points qu’elles ont rapportés sont conservés.",
   'gal.removeConfirm': "Supprimer",
   'post.title': "Publier une photo",
   'post.signedOut': "Connectez-vous pour publier des photos dans la galerie.",

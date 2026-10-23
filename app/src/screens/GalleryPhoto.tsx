@@ -145,7 +145,7 @@ export function GalleryPhoto() {
 
       <div className="gal-foot-actions">
         {p.mine
-          ? <button type="button" className="btn gal-link" onClick={() => setSheet('remove')}>{t('gal.remove')}</button>
+          ? <button type="button" className="btn pill pill-ghost sheet-pill gal-delete" onClick={() => setSheet('remove')}>{t('gal.remove')}</button>
           : <>
               <button type="button" className="btn gal-link" onClick={() => (user ? setSheet('report') : go('signin'))}>{t('gal.report')}</button>
               {user && <button type="button" className="btn gal-link" onClick={() => setSheet('block')}>{t('gal.block', { handle: p.handle })}</button>}

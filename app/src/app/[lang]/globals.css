@@ -828,6 +828,13 @@ button.pill-primary.danger { background: var(--red); }
 .gal-card-meta { align-items: center; font-size: 14px; color: var(--muted); }
 .gal-card-likes { display: inline-flex; align-items: center; gap: 4px; }
 .gal-more { align-self: center; }
+.gal-select-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; color: var(--soft); font-size: 15px; }
+.gal-delete { color: var(--red); border-color: var(--red); }
+.gal-delete:disabled { opacity: .5; }
+.gal-card-pick { width: 100%; padding: 0; text-align: left; font: inherit; }
+.gal-card-pick.on { border-color: var(--green); }
+.gal-card-tick { inset: auto 12px 12px auto; width: 30px; height: 30px; }
+.gal-card-pick.on .gal-card-tick { background: var(--green); border-color: var(--green); color: #000; }
 .gal-foot { margin: 8px 0 0; font-size: 13px; color: var(--muted); }
 .gal-link { min-height: 44px; display: inline-flex; align-items: center; color: var(--soft); font-size: 15px; text-decoration: underline; }
 .gal-block-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--line); }

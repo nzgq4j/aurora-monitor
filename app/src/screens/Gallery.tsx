@@ -7,7 +7,7 @@ import { useLocations } from '../lib/locations';
 import { useStore } from '../store';
 import { useI18n } from '../i18n/I18n';
 import { rank } from '../lib/badges';
-import { feed, fileUrl, myBlocks, myMember, unblock, type Filter, type Photo } from '../lib/community';
+import { feed, fileUrl, myBlocks, myMember, removePhoto, unblock, type Filter, type Photo } from '../lib/community';
 import { pendingCount } from '../lib/moderation';
 import { BottomSheet } from '../components/BottomSheet';
 import type { MessageKey } from '../i18n/core';
@@ -33,10 +33,10 @@ export const kpThirds = (kp: number) => {
 export const kpColor = (kp: number | null) => (kp == null ? 'var(--muted)' : kp >= 6.66 ? 'var(--red)' : kp >= 4.66 ? 'var(--amber)' : 'var(--soft)');
 
 /** One photo in the feed. */
-export function PhotoCard({ p }: { p: Photo }) {
+export function PhotoCard({ p, pick }: { p: Photo; pick?: { on: boolean; toggle: () => void } }) {
   const { t, date } = useI18n();
-  return (
-    <Link href={`/gallery/photo?id=${p.id}`} className="gal-card">
+  const body = (
+    <>
       <div className="gal-card-img" style={{ aspectRatio: p.width && p.height ? `${p.width} / ${p.height}` : '4 / 3' }}>
         {/* eslint-disable-next-line @next/next/no-img-element -- public storage files, already sized */}
         <img src={fileUrl(p.thumb_path)} alt={p.caption || t('gal.photoAlt', { place: p.place ?? '' })} loading="lazy" />
@@ -44,6 +44,7 @@ export function PhotoCard({ p }: { p: Photo }) {
         <span className={'gal-chip gal-chip-src' + (p.source === 'app' ? ' is-app' : '')}>{t(p.source === 'app' ? 'gal.captured' : 'gal.uploaded')}</span>
         {p.featured && <span className="gal-chip gal-chip-feat">{t('gal.featured')}</span>}
         {p.status === 'pending' && <span className="gal-chip gal-chip-feat">{t('gal.pending')}</span>}
+        {pick && <span className="gallery-tick gal-card-tick" aria-hidden="true">{pick.on ? '✓' : ''}</span>}
       </div>
       <div className="gal-card-body">
         <div className="gal-card-row">
@@ -55,8 +56,12 @@ export function PhotoCard({ p }: { p: Photo }) {
           <span className="gal-card-likes" aria-label={t('gal.helpfulCount', { n: p.helpful })}><Svg d={HEART} size={16} fill={p.voted} />{p.helpful}</span>
         </div>
       </div>
-    </Link>
+    </>
   );
+  // Picking photos to delete (My gallery), a tap selects instead of opening the photo.
+  return pick
+    ? <button type="button" className={'btn gal-card gal-card-pick' + (pick.on ? ' on' : '')} aria-pressed={pick.on} onClick={pick.toggle}>{body}</button>
+    : <Link href={`/gallery/photo?id=${p.id}`} className="gal-card">{body}</Link>;
 }
 
 const noSubscribe = () => () => {};
@@ -69,7 +74,14 @@ export function Gallery({ kp }: { kp: number | null }) {
   const { t, tn, num } = useI18n();
   // Opened from You → My gallery (/gallery?f=mine) it starts on the member's own photos.
   const asked = useSyncExternalStore(noSubscribe, () => new URLSearchParams(window.location.search).get('f'), () => null);
-  const [chosen, setFilter] = useState<Filter | 'mine' | null>(null);
+  const [chosen, choose] = useState<Filter | 'mine' | null>(null);
+  // My gallery: pick photos to delete.
+  const [selecting, setSelecting] = useState(false);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [note, setNote] = useState('');
+  const setFilter = (f: Filter | 'mine') => { choose(f); setSelecting(false); setPicked(new Set()); setNote(''); };
   const filter: Filter | 'mine' = chosen ?? (asked === 'mine' && user ? 'mine' : 'recent');
   const [photos, setPhotos] = useState<Photo[] | null>(null);
   const [more, setMore] = useState(false);
@@ -133,10 +145,44 @@ export function Gallery({ kp }: { kp: number | null }) {
           {filter !== 'top' && !failed && <button type="button" className="btn pill pill-ghost sheet-pill" onClick={() => setFilter('top')}>{t('gal.seeTop')}</button>}
         </div>
       )}
+      {filter === 'mine' && !!photos?.length && (
+        <div className="gal-select-bar">
+          <span>{selecting ? tn('gallery.selected', picked.size) : ''}</span>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {selecting && (
+              <button type="button" className="btn pill pill-ghost sheet-pill gal-delete" disabled={!picked.size} onClick={() => setConfirming(true)}>
+                {t('gallery.delete')}{picked.size ? ` (${picked.size})` : ''}
+              </button>
+            )}
+            <button type="button" className="btn pill pill-ghost sheet-pill" onClick={() => { setSelecting(!selecting); setPicked(new Set()); setNote(''); }}>
+              {t(selecting ? 'gallery.cancel' : 'gallery.select')}
+            </button>
+          </div>
+        </div>
+      )}
+      {note && <p className="gal-note" role="alert" style={{ color: 'var(--red)', margin: 0 }}>{note}</p>}
       {photos && photos.length > 0 && (
         <div className="gal-grid">
-          {photos.map(p => <PhotoCard key={p.id} p={p} />)}
+          {photos.map(p => (
+            <PhotoCard key={p.id} p={p} pick={selecting && filter === 'mine' ? {
+              on: picked.has(p.id),
+              toggle: () => setPicked(s => { const n = new Set(s); if (n.has(p.id)) n.delete(p.id); else n.add(p.id); return n; }),
+            } : undefined} />
+          ))}
         </div>
+      )}
+      {confirming && (
+        <BottomSheet title={tn('gallery.deleteConfirm', picked.size)} onClose={() => !deleting && setConfirming(false)}>
+          <p className="you-sheet-text">{t(picked.size === 1 ? 'gal.removeText' : 'gal.removeTextMany')}</p>
+          <button type="button" className="btn pill pill-primary sheet-pill danger" disabled={deleting} onClick={async () => {
+            setDeleting(true);
+            const gone: string[] = [];
+            for (const id of picked) if (await removePhoto(id)) gone.push(id);
+            setPhotos(ps => ps?.filter(x => !gone.includes(x.id)) ?? ps);
+            setDeleting(false); setConfirming(false); setSelecting(false); setPicked(new Set());
+            setNote(gone.length < picked.size ? t('gal.actionFailed') : '');
+          }}>{deleting ? '…' : t('gal.removeConfirm')}</button>
+        </BottomSheet>
       )}
       {more && photos && <button type="button" className="btn pill pill-ghost sheet-pill gal-more" onClick={() => load(photos.length)}>{t('gal.more')}</button>}
 

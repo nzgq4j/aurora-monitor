@@ -1250,6 +1250,7 @@ export const nl: Messages = {
   'gal.blockConfirm': "Blokkeren",
   'gal.removeTitle': "Deze foto verwijderen?",
   'gal.removeText': "Hij wordt uit de galerij gehaald en verwijderd. De punten die hij opleverde blijven staan.",
+  'gal.removeTextMany': "Ze worden uit de galerij gehaald en verwijderd. De punten die ze opleverden blijven staan.",
   'gal.removeConfirm': "Verwijderen",
   'post.title': "Foto plaatsen",
   'post.signedOut': "Log in om foto's in de galerij te plaatsen.",

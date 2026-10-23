@@ -1250,6 +1250,7 @@ export const es: Messages = {
   'gal.blockConfirm': "Bloquear",
   'gal.removeTitle': "¿Eliminar esta foto?",
   'gal.removeText': "Se quita de la galería y se borra. Los puntos que consiguió se mantienen.",
+  'gal.removeTextMany': "Se quitan de la galería y se borran. Los puntos que consiguieron se mantienen.",
   'gal.removeConfirm': "Eliminar",
   'post.title': "Publicar una foto",
   'post.signedOut': "Inicia sesión para publicar fotos en la galería.",
