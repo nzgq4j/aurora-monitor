@@ -108,6 +108,10 @@ export function SunspotRegions() {
           </svg>
         )}
         <figcaption>{data ? t('spots.observed', { date: date(Date.parse(`${data.observed}T00:00:00Z`), { day: 'numeric', month: 'short', timeZone: 'UTC' }) }) : t('sky.checking')}</figcaption>
+        <details className="toggle-info">
+          <summary>{t('chart.explain')}</summary>
+          <p>{t('sdo.HMIIC.info')}</p>
+        </details>
       </figure>
 
       <div className="sun-table-wrap">
