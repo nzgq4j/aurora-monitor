@@ -110,6 +110,7 @@ function Outlook({ data }: { data: NowData }) {
           title={view === 'hour' ? t('feat.kp3h') : t('feat.outlook27')}
           body={view === 'hour' ? t('outlook.locked.hour') : t('outlook.locked.month')} />
       )}
+      <Explain>{t(`outlook.info.${view}`)}</Explain>
     </DetailCard>
   );
 }
