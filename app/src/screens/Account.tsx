@@ -124,7 +124,7 @@ function usePlanLine() {
     const trial = profile?.trialEndsAt ? ` · ${t('dash.trialEnds', { date: date(profile.trialEndsAt, { month: 'short', day: 'numeric', year: 'numeric' }) })}` : '';
     return price(profile?.billingCycle === 'annual') + trial;
   }
-  return planIndex === 0 ? t('dash.freeLine') : `${price(s.annual)} · ${t('dash.trial14')}`;
+  return planIndex === 0 ? t('dash.freeLine') : `${price(s.annual)} · ${t('dash.trial')}`;
 }
 
 const h2 = { fontSize: 'clamp(28px, 7.5vw, 34px)', lineHeight: 1 };

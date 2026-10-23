@@ -18,7 +18,7 @@ finds prices by lookup key, so no price IDs go into the code.
 | Monthly | $3.99 | Monthly | `chaser_monthly` |
 | Annual | $36.00 | Yearly | `chaser_annual` |
 
-Leave the trial empty on the prices; the app adds the 14-day trial for first-time members only.
+Leave the trial empty on the prices; the app adds the 7-day trial (`TRIAL_DAYS`) for first-time members only.
 
 ## 2. Stripe Tax
 

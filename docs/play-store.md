@@ -113,7 +113,7 @@ MADE FOR THE DARK
 • Available in English, German, Spanish, French and Dutch
 
 PLANS
-Polar Lights is free to use, with the live map, forecasts and alerts for one place. Chaser adds up to 10 places, instant push alerts, the technical alerts, the 3-hour Kp forecast and 27-day outlook, hour-by-hour cloud and darkness, solar wind graphs and the dark-sky spot map. Chaser is US$3.99 a month or US$36 a year (save 25%), with a 14-day free trial for new subscribers. Prices in other countries are shown in Google Play before you subscribe.
+Polar Lights is free to use, with the live map, forecasts and alerts for one place. Chaser adds up to 10 places, instant push alerts, the technical alerts, the 3-hour Kp forecast and 27-day outlook, hour-by-hour cloud and darkness, solar wind graphs and the dark-sky spot map. Chaser is US$3.99 a month or US$36 a year (save 25%), with a 7-day free trial for new subscribers. Prices in other countries are shown in Google Play before you subscribe.
 
 Data from NOAA's Space Weather Prediction Center, NASA, ESA, GFZ Potsdam, EUMETSAT and Open-Meteo. Polar Lights is independent and not affiliated with these organisations.
 
@@ -137,7 +137,8 @@ Privacy: https://www.polarlights.io/privacy
 
 - The PLANS paragraph follows the plan definitions in `app/src/data.ts`. SMS alerts are left out
   until they are available.
-- The 14-day trial applies in the app only once the `free-trial` offer exists on the `chaser`
-  subscription (billing setup step 2). Remove the trial wording if the listing goes live first.
+- The 7-day trial applies in the app through the trial offers on the `chaser` base plans
+  (`7-day-trial-monthly`, `7-day-trial-annual`). Keep it in step with `TRIAL_DAYS` in `app/src/data.ts`
+  (the website's Stripe trial).
 - The prices in the PLANS paragraph must match the `chaser` base plans in Play Console
   (`monthly` US$3.99, `annual` US$36) and `TIERS` in `app/src/data.ts`. Update all three together.
