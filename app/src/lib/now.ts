@@ -12,6 +12,9 @@ export interface NowData {
   fetchedAt: number;
 }
 
+/** The time a server render runs (cached pages keep it, so the browser can tell how old they are). */
+export const renderedAt = () => Date.now();
+
 export async function loadNow(): Promise<NowData> {
   const [kp, series, wind, hemi, oval, outlook] = await Promise.all([kpNow(), kpSeries(), solarWind(), hemiPower(), ovation(), outlook27()]);
   const from = Math.floor(Date.now() / 864e5) * 864e5 - 2 * 864e5;

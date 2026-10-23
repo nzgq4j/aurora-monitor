@@ -18,7 +18,7 @@ import { cloudify } from '../lib/cloudify';
 import { Globe } from '../components/Globe';
 import { useOnline } from '../lib/useOnline';
 import { SITE } from '../lib/site';
-import { AURORA_RAMP, auroraColor } from '../lib/auroraColor';
+import { AURORA_RAMP, AURORA_TICKS, auroraColor } from '../lib/auroraColor';
 import { sampleOval, smoothOval } from '../lib/ovalSmooth';
 import { BEST_RGB, LIGHTS_URL, afterPaint, bestAlpha, bestScore, loadCloudGrid, nightShade, paintEquirect, paintMercator, readLayers, sunAltitudeAt, writeLayers, type CloudGrid, type LayerId, type Layers, DEFAULT_LAYERS } from '../lib/mapLayers';
 import type { OvalGrid } from '../app/api/oval/route';
@@ -551,7 +551,11 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
         <div>
           <span className="label">{t('map.legend.prob')}{forecast ? ` · ${hhmm(forecast)} UT` : ''}</span>
           <div style={{ height: 10, borderRadius: 5, margin: '6px 0 4px', background: AURORA_RAMP }} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.muted }}><span>5%</span><span>30%</span><span>60%</span><span>90%</span></div>
+          <div style={{ position: 'relative', height: 14, fontSize: 11, color: C.muted }}>
+            {AURORA_TICKS.map(({ p, at }, i) => (
+              <span key={p} style={{ position: 'absolute', left: `${at}%`, transform: i === 0 ? 'none' : i === AURORA_TICKS.length - 1 ? 'translateX(-100%)' : 'translateX(-50%)' }}>{p}%</span>
+            ))}
+          </div>
         </div>
       )}
       {on.kp && (
@@ -576,8 +580,16 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
       {on.night && (
         <div>
           <span className="label">{t('map.legend.night')}</span>
-          <div style={{ height: 10, borderRadius: 5, margin: '6px 0 4px', background: 'linear-gradient(90deg, rgba(2,6,18,0), rgba(2,6,18,.62))', border: '1px solid var(--line-2)' }} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.muted }}><span>{t('map.legend.day')}</span><span>{t('map.legend.twilight')}</span><span>{t('map.legend.dark')}</span></div>
+          {/* The map's own night shading over a sample of land, so each band looks as it does on the map. */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4, margin: '6px 0 4px' }}>
+            {([['day', 0], ['twilight', 0.31], ['dark', 0.62]] as const).map(([k, a]) => (
+              <div key={k}>
+                <div style={{ height: 14, borderRadius: 4, background: `linear-gradient(rgba(2,6,18,${a}), rgba(2,6,18,${a})), #6f8aa3` }} />
+                <span style={{ display: 'block', fontSize: 11, color: k === 'dark' ? C.green : C.muted, marginTop: 3 }}>{t(`map.legend.${k}`)}</span>
+              </div>
+            ))}
+          </div>
+          <span style={{ display: 'block', fontSize: 11, color: C.muted }}>{t('map.legend.nightNote')}</span>
         </div>
       )}
       {on.best && (

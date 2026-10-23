@@ -100,24 +100,27 @@ export function YourSky({ kp }: { kp: number | null }) {
   const sat = cond?.satellite?.pct ?? null;
   const south = !!shown && shown.lat < 0;
   const look = south ? 'south' : 'north';
+  const aur = cond?.aurora?.nearby ?? null;
   let verdict = '', vc: string = C.muted;
   if (kp !== null && need !== null) {
     const v = { kp: num(kp, 1), need };
     if (kp >= need) {
       // Marginal: within one step of this sky's threshold, or Kp below 2 anywhere (any aurora is faint).
       const marginal = kp < need + 1 || kp < 2;
-      const lead = t(marginal ? 'sky.v.marginal' : 'sky.v.enough', v);
+      // Below Kp 2 the reason is the low activity, not this sky's threshold.
+      const lead = t(kp < need + 1 ? 'sky.v.marginal' : kp < 2 ? 'sky.v.low' : 'sky.v.enough', v);
       // "and" after a marginal reading, "but" after an otherwise good one.
       const mode = marginal ? 'and' : 'but';
       if (dark === false) { verdict = t(`sky.v.${mode}.notDark`, { lead }); vc = C.amber; }
       else if (cloud !== null && cloud >= 60) { verdict = t(`sky.v.${mode}.cloud`, { lead, cloud }); vc = C.amber; }
+      // The OVATION model sees little within reach right now (it accounts for the time of night, which Kp doesn't).
+      else if (aur !== null && aur < 10) { verdict = t('sky.v.ovationLow', { lead, pct: aur }); vc = C.amber; }
       else if (m && m.up && m.illumination >= 0.6) { verdict = t(`sky.v.${mode}.moon.${look}`, { lead, pct: Math.round(m.illumination * 100) }); vc = C.amber; }
       else if (marginal) { verdict = t(`sky.v.faint.${look}`, { lead }); vc = C.amber; }
       else { verdict = t(`sky.v.good.${look}`, { lead }); vc = C.green; }
     } else verdict = t('sky.v.below', v);
   }
 
-  const aur = cond?.aurora?.nearby ?? null;
   const stats = [
     { label: t('sky.stat.aurora'), value: aur === null ? '—' : `${aur}`, unit: aur === null ? '' : '%', note: t(`sky.auroraNote.${look}`), c: aur !== null && aur >= 10 ? C.green : C.soft },
     { label: t('sky.stat.cloud'), value: cloud === null ? '—' : `${cloud}`, unit: cloud === null ? '' : '%', note: !layers ? t('common.noData') : t('sky.cloud.layers', { ...layers }), c: cloud !== null && cloud < 30 ? C.green : C.soft },
