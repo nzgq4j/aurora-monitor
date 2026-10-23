@@ -953,6 +953,7 @@ export const fr: Messages = {
   'mail.footer': 'Vous recevez ces alertes car elles sont activées dans votre compte Polar Lights. Modifiez-les dans Mon espace → Alertes.',
   'mail.test.subject': "Alerte de test de {name}",
   'mail.test.body': "Ceci est un test de vos alertes d’aurores. Quand l’aurore atteindra votre niveau à l’un de vos lieux, l’alerte arrivera ainsi.",
+  'mail.test.bodySamples': 'Ceci est un test de vos alertes. Ci-dessous, chaque alerte technique telle qu’elle s’afficherait ; les valeurs sont des exemples, pas les conditions actuelles.',
   'trigger.kp': 'Seuil Kp atteint',
   'trigger.kp.sub': 'Utilise le niveau défini ci-dessus',
   'trigger.cme': 'CME : prévision et arrivée',
