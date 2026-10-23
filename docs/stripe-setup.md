@@ -15,8 +15,8 @@ finds prices by lookup key, so no price IDs go into the code.
 
 | Price | Amount | Interval | Lookup key |
 | --- | --- | --- | --- |
-| Monthly | $5.00 | Monthly | `chaser_monthly` |
-| Annual | $50.00 | Yearly | `chaser_annual` |
+| Monthly | $3.99 | Monthly | `chaser_monthly` |
+| Annual | $36.00 | Yearly | `chaser_annual` |
 
 Leave the trial empty on the prices; the app adds the 14-day trial for first-time members only.
 
@@ -25,7 +25,7 @@ Leave the trial empty on the prices; the app adds the 14-day trial for first-tim
 In Settings → Tax:
 1. Add the business's head office address.
 2. Choose a preset tax code for the product: "Software as a service (SaaS) – personal use", or the closest match.
-3. Set prices to **exclusive of tax**, so tax is added on top of $5 / $50.
+3. Set prices to **exclusive of tax**, so tax is added on top of $3.99 / $36.
 4. Add a registration for each country or US state where you're registered to collect tax. Stripe Tax's monitoring shows when you reach a threshold elsewhere.
 
 Checkout fails if Stripe Tax isn't set up, because the app requests automatic tax.
