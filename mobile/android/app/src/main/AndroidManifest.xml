@@ -18,6 +18,47 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- App Links: these polarlights.io pages open in the app (verified by /.well-known/assetlinks.json).
+                 The home page (alert emails), map, Sky, Alerts and gallery (shared photos) only: sign-in,
+                 checkout, dashboard and password reset stay in the browser where those flows began. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:host="www.polarlights.io" />
+                <data android:host="polarlights.io" />
+                <data android:path="/" />
+                <data android:path="/en" />
+                <data android:path="/es" />
+                <data android:path="/fr" />
+                <data android:path="/de" />
+                <data android:path="/nl" />
+                <data android:pathPrefix="/gallery" />
+                <data android:pathPrefix="/map" />
+                <data android:pathPrefix="/sky" />
+                <data android:pathPrefix="/alerts" />
+                <data android:pathPrefix="/en/gallery" />
+                <data android:pathPrefix="/en/map" />
+                <data android:pathPrefix="/en/sky" />
+                <data android:pathPrefix="/en/alerts" />
+                <data android:pathPrefix="/es/gallery" />
+                <data android:pathPrefix="/es/map" />
+                <data android:pathPrefix="/es/sky" />
+                <data android:pathPrefix="/es/alerts" />
+                <data android:pathPrefix="/fr/gallery" />
+                <data android:pathPrefix="/fr/map" />
+                <data android:pathPrefix="/fr/sky" />
+                <data android:pathPrefix="/fr/alerts" />
+                <data android:pathPrefix="/de/gallery" />
+                <data android:pathPrefix="/de/map" />
+                <data android:pathPrefix="/de/sky" />
+                <data android:pathPrefix="/de/alerts" />
+                <data android:pathPrefix="/nl/gallery" />
+                <data android:pathPrefix="/nl/map" />
+                <data android:pathPrefix="/nl/sky" />
+                <data android:pathPrefix="/nl/alerts" />
+            </intent-filter>
         </activity>
 
         <!-- Push alerts (Firebase): the status bar icon and accent colour. -->
