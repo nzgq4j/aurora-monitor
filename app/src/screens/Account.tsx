@@ -3,8 +3,9 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { PAYMENTS, initials, useAuth } from '../lib/auth';
-import { C, CHANNEL_DEFS, TIERS, TRIGGER_DEFS, f, kpBarColor, kpColor } from '../data';
+import { C, CHANNEL_DEFS, TECH_TRIGGERS, TIERS, TRIGGER_DEFS, f, kpBarColor, kpColor } from '../data';
 import { G_SCALE, kpNeeded, moon } from '../lib/astro';
+import { xrayClass } from '../lib/storm';
 import type { AccountData, KpSource } from '../lib/history';
 import { RankStrip } from './Badges';
 
@@ -390,7 +391,7 @@ function Alerts({ data }: { data: AccountData }) {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <span className="eyebrow" style={{ marginBottom: 8 }}>{t('alerts.moreTypes')}</span>
-          {TRIGGER_DEFS.filter(([k]) => k === 'bz' || k === 'sub').map(([k, need]) => {
+          {TECH_TRIGGERS.map(k => [k, TRIGGER_DEFS.find(([d]) => d === k)![1]] as const).map(([k, need]) => {
             const locked = planIndex < need;
             return (
               <div key={k} className="toggle-group">
@@ -399,7 +400,7 @@ function Alerts({ data }: { data: AccountData }) {
                 {/* What the alert watches and when it's sent, folded away until asked for. */}
                 <details className="toggle-info">
                   <summary>{t('alerts.explain')}</summary>
-                  <p>{t(`trigger.${k as 'bz' | 'sub'}.info`)}</p>
+                  <p>{t(`trigger.${k}.info`)}</p>
                 </details>
               </div>
             );
@@ -466,6 +467,10 @@ function RecentAlerts() {
     if (a.kind === 'storm') return t('alerts.recent.storm', { kp: num(a.kp ?? 0, 1) });
     if (a.kind === 'bz') return t('alerts.recent.bz', { bz: num(a.value ?? 0, 1) });
     if (a.kind === 'substorm') return t('alerts.recent.substorm', { gw: num(a.value ?? 0) });
+    if (a.kind === 'coupling') return t('alerts.recent.coupling', { value: num(Math.round((a.value ?? 0) / 1000)) });
+    if (a.kind === 'flare') return t('alerts.recent.flare', { cls: xrayClass(a.value ?? 0) });
+    if (a.kind === 'shock') return t('alerts.recent.shock', { speed: num(a.value ?? 0) });
+    if (a.kind === 'cme') return t('alerts.recent.cme', { when: date((a.value ?? 0) * 36e5, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) });
     const level = t(`alerts.level.${a.level ?? 'visible'}`);
     return t(a.kind === 'forecast' ? 'alerts.recent.forecast' : 'alerts.recent.aurora', { level, place });
   };
@@ -483,7 +488,7 @@ function RecentAlerts() {
                 <b>{title(a)}</b>
                 <small>{when(a.created_at)}</small>
               </span>
-              {a.kind !== 'storm' && a.kind !== 'bz' && a.kind !== 'substorm' && a.score != null && <span className="mono alert-recent-score">{a.score}</span>}
+              {(a.kind === 'aurora' || a.kind === 'forecast') && a.score != null && <span className="mono alert-recent-score">{a.score}</span>}
             </li>
           ))}
         </ol>

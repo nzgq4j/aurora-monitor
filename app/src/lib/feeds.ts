@@ -16,7 +16,7 @@ type Row = Record<string, unknown>;
 
 async function getJson(url: string, revalidate: number): Promise<unknown | null> {
   try {
-    const res = await fetch(url, { next: { revalidate }, headers: { 'User-Agent': 'polarlights.io (aurora forecasts)' } });
+    const res = await fetch(url, { next: { revalidate }, headers: { 'User-Agent': 'polarlights.io (aurora forecasts)' }, signal: AbortSignal.timeout(10_000) });
     if (!res.ok) return null;
     return await res.json();
   } catch {
@@ -26,7 +26,7 @@ async function getJson(url: string, revalidate: number): Promise<unknown | null>
 
 async function getText(url: string, revalidate: number): Promise<string | null> {
   try {
-    const res = await fetch(url, { next: { revalidate } });
+    const res = await fetch(url, { next: { revalidate }, signal: AbortSignal.timeout(10_000) });
     return res.ok ? await res.text() : null;
   } catch {
     return null;
@@ -129,7 +129,7 @@ export async function hemiPower(): Promise<{ t: number; north: number } | null> 
   return out;
 }
 
-export interface WindPoint { t: number; bz: number | null; bt: number | null; speed: number | null; density: number | null }
+export interface WindPoint { t: number; by: number | null; bz: number | null; bt: number | null; speed: number | null; density: number | null }
 
 /** Last 24 hours of real-time solar wind at L1, averaged into 5-minute bins. */
 export async function solarWindSeries(): Promise<WindPoint[]> {
@@ -138,18 +138,18 @@ export async function solarWindSeries(): Promise<WindPoint[]> {
     firstRows([`${SWPC}/products/solar-wind/plasma-1-day.json`, `${SWPC}/json/rtsw/rtsw_wind_1m.json`], FAST).then(activeOnly),
   ]);
   const BIN = 3e5;
-  const bins = new Map<number, Record<'bz' | 'bt' | 'speed' | 'density', number[]>>();
-  const add = (t: number | null, key: 'bz' | 'bt' | 'speed' | 'density', v: number | null) => {
+  const bins = new Map<number, Record<'by' | 'bz' | 'bt' | 'speed' | 'density', number[]>>();
+  const add = (t: number | null, key: 'by' | 'bz' | 'bt' | 'speed' | 'density', v: number | null) => {
     if (t === null || v === null) return;
     const k = Math.floor(t / BIN) * BIN;
     let b = bins.get(k);
-    if (!b) bins.set(k, (b = { bz: [], bt: [], speed: [], density: [] }));
+    if (!b) bins.set(k, (b = { by: [], bz: [], bt: [], speed: [], density: [] }));
     b[key].push(v);
   };
-  for (const r of mag) { const t = parseTime(r.time_tag); add(t, 'bz', num(r.bz_gsm ?? r.bz)); add(t, 'bt', num(r.bt)); }
+  for (const r of mag) { const t = parseTime(r.time_tag); add(t, 'by', num(r.by_gsm ?? r.by)); add(t, 'bz', num(r.bz_gsm ?? r.bz)); add(t, 'bt', num(r.bt)); }
   for (const r of plasma) { const t = parseTime(r.time_tag); add(t, 'speed', num(r.speed ?? r.proton_speed)); add(t, 'density', num(r.density ?? r.proton_density)); }
   const mean = (xs: number[]) => (xs.length ? Math.round((xs.reduce((a, b) => a + b, 0) / xs.length) * 100) / 100 : null);
-  const out = [...bins.entries()].sort((a, b) => a[0] - b[0]).map(([t, b]) => ({ t, bz: mean(b.bz), bt: mean(b.bt), speed: mean(b.speed), density: mean(b.density) }));
+  const out = [...bins.entries()].sort((a, b) => a[0] - b[0]).map(([t, b]) => ({ t, by: mean(b.by), bz: mean(b.bz), bt: mean(b.bt), speed: mean(b.speed), density: mean(b.density) }));
   const end = out.length ? out[out.length - 1].t : 0;
   return out.filter(p => p.t > end - 864e5);
 }
@@ -327,4 +327,32 @@ export function ovalGridBase64(oval: Oval): string {
   const bytes = new Uint8Array(181 * 360);
   oval.grid.forEach((row, i) => bytes.set(row, i * 360));
   return Buffer.from(bytes).toString('base64');
+}
+
+/** GOES 0.1–0.8 nm X-ray flux (W/m²), 1-minute values for the last 6 hours: the flare class scale. */
+export async function xrayRecent(): Promise<{ t: number; flux: number }[]> {
+  const json = await getJson(`${SWPC}/json/goes/primary/xrays-6-hour.json`, 60);
+  return rows(json).flatMap(r => {
+    const t = parseTime(r.time_tag), flux = num(r.flux);
+    return r.energy === '0.1-0.8nm' && t !== null && flux !== null && flux > 0 ? [{ t, flux }] : [];
+  });
+}
+
+/** GFZ Potsdam's half-hourly Hp30 index for the last 6 hours (Kp's scale, open-ended above 9), each stamped at its start. */
+export async function hp30Recent(): Promise<{ t: number; hp: number }[]> {
+  const end = new Date(), start = new Date(end.getTime() - 6 * 36e5);
+  const iso = (d: Date) => d.toISOString().replace(/\.\d{3}Z$/, 'Z');
+  const json = await getJson(`${GFZ}?start=${iso(start)}&end=${iso(end)}&index=Hp30`, FAST) as Row | null;
+  const ts = Array.isArray(json?.datetime) ? json!.datetime as string[] : [];
+  const vs = Array.isArray(json?.Hp30) ? json!.Hp30 as number[] : [];
+  return ts.flatMap((s, i) => (typeof vs[i] === 'number' && vs[i] >= 0 ? [{ t: Date.parse(s), hp: vs[i] }] : []));
+}
+
+/** NASA DONKI's WSA-Enlil CME runs for the last week, from CCMC directly, else through api.nasa.gov; null if neither answers. */
+export async function enlilSims(): Promise<Row[] | null> {
+  const from = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
+  const direct = await getJson(`https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/WSAEnlilSimulations?startDate=${from}`, SLOW);
+  if (Array.isArray(direct)) return direct as Row[];
+  const viaApi = await getJson(`https://api.nasa.gov/DONKI/WSAEnlilSimulations?startDate=${from}&api_key=${process.env.NASA_API_KEY || 'DEMO_KEY'}`, SLOW);
+  return Array.isArray(viaApi) ? viaApi as Row[] : null;
 }

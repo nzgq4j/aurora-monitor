@@ -53,7 +53,7 @@ export function normalizeRules(raw: unknown): AlertRules {
 export const DEFAULT_STORM_KP = 6;
 
 /** Don't repeat an alert of the same kind for the same place within these windows. */
-export const REPEAT_HOURS = { aurora: 6, forecast: 6, storm: 12, bz: 3, substorm: 2 } as const;
+export const REPEAT_HOURS = { aurora: 6, forecast: 6, storm: 12, bz: 3, substorm: 2, coupling: 3, flare: 2, shock: 6, cme: 24 } as const;
 
 export type AlertKind = keyof typeof REPEAT_HOURS;
 
@@ -133,4 +133,67 @@ export function powerJump(points: { observed: number; north: number; south: numb
   if (!before.length) return null;
   const from = Math.min(...before.map(p => p[hemi])), to = last[hemi];
   return to >= 30 && to >= 2 * from && to - from >= 20 ? { from, to } : null;
+}
+
+/** Flare alert: GOES X-ray flux at or above M1 (1e-5 W/m²). */
+export const FLARE_M = 1e-5;
+export const FLARE_X = 1e-4;
+
+/**
+ * A flare under way: the highest 1-minute X-ray flux in the last 10 minutes at M1 or above, with data no
+ * more than 15 minutes old. Returns the peak flux so far, or null.
+ */
+export function flareNow(points: { t: number; flux: number }[], now: number): { flux: number } | null {
+  const recent = points.filter(p => p.t > now - 10 * 6e4 && p.t <= now + 6e4);
+  if (!recent.length || now - Math.max(...recent.map(p => p.t)) > 15 * 6e4) return null;
+  const flux = Math.max(...recent.map(p => p.flux));
+  return flux >= FLARE_M ? { flux } : null;
+}
+
+/**
+ * An interplanetary shock (usually a CME's leading edge) passing L1: over the latest 10 minutes against
+ * 30 to 60 minutes earlier, the solar wind speeds up by 50 km/s or more and its density or field strength
+ * jumps by half or more. The newest data has to be recent. Returns the speeds before and after, or null.
+ */
+export function shockArrival(points: { t: number; speed: number | null; density: number | null; bt: number | null }[], now: number): { from: number; to: number } | null {
+  const BIN = 5 * 6e4;
+  const pts = [...points].sort((a, b) => a.t - b.t);
+  const last = pts[pts.length - 1];
+  if (!last || now - (last.t + BIN) > 15 * 6e4) return null;
+  const mean = (xs: (number | null)[]) => { const v = xs.filter((x): x is number => x !== null); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
+  const after = pts.filter(p => p.t >= last.t - BIN), before = pts.filter(p => p.t >= last.t - 60 * 6e4 && p.t < last.t - 30 * 6e4);
+  const [v1, v0] = [mean(after.map(p => p.speed)), mean(before.map(p => p.speed))];
+  if (v1 === null || v0 === null || v1 - v0 < 50) return null;
+  const jump = (k: 'density' | 'bt') => { const a = mean(after.map(p => p[k])), b = mean(before.map(p => p[k])); return a !== null && b !== null && b > 0 && a >= 1.5 * b; };
+  return jump('density') || jump('bt') ? { from: Math.round(v0), to: Math.round(v1) } : null;
+}
+
+/**
+ * Newell's coupling function, dΦ/dt = v^4/3 · B_T^2/3 · sin^8/3(θ/2): how fast the solar wind opens Earth's
+ * magnetic field (v in km/s; B_T the field across the Sun–Earth line and θ its clock angle, from By and Bz
+ * in nT). Quiet times run about 2,000 to 5,000 in these units; strong driving is several times that.
+ */
+export function newell(speed: number, by: number, bz: number): number {
+  const bt = Math.hypot(by, bz), theta = Math.atan2(Math.abs(by), bz);
+  return Math.pow(speed, 4 / 3) * Math.pow(bt, 2 / 3) * Math.pow(Math.sin(theta / 2), 8 / 3);
+}
+/** Coupling alert: the last 30 minutes averaging at least this (about four times a typical value). */
+export const COUPLING_HIGH = 15_000;
+
+/** Strong solar-wind driving: Newell coupling averaged over the latest 30 minutes, if every bin has data and it's recent. */
+export function couplingHigh(points: { t: number; speed: number | null; by: number | null; bz: number | null }[], now: number): { value: number } | null {
+  const BIN = 5 * 6e4;
+  const pts = [...points].sort((a, b) => a.t - b.t);
+  const last = pts[pts.length - 1];
+  if (!last || now - (last.t + BIN) > 15 * 6e4) return null;
+  const run = pts.filter(p => p.t > last.t - 30 * 6e4);
+  if (run.length < 5 || run.some(p => p.speed === null || p.by === null || p.bz === null)) return null;
+  const value = run.reduce((a, p) => a + newell(p.speed!, p.by!, p.bz!), 0) / run.length;
+  return value >= COUPLING_HIGH ? { value: Math.round(value) } : null;
+}
+
+/** CME forecast alert: an Earth-directed CME expected within 3 days, strong enough (model Kp 5+) to matter for aurora. */
+export function cmeComing(cmes: { arrival: number; glancing: boolean; kpHigh: number | null }[], now: number): { arrival: number; kp: number | null; glancing: boolean } | null {
+  const next = cmes.filter(c => c.arrival > now && c.arrival < now + 3 * 864e5 && (c.kpHigh === null || c.kpHigh >= 5)).sort((a, b) => a.arrival - b.arrival)[0];
+  return next ? { arrival: next.arrival, kp: next.kpHigh, glancing: next.glancing } : null;
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_RULES, bzSouth, decidePlace, inQuietHours, levelKp, normalizeRules, powerJump, stormKp, type AlertRules } from './alerts';
+import { COUPLING_HIGH, DEFAULT_RULES, bzSouth, cmeComing, couplingHigh, decidePlace, flareNow, inQuietHours, levelKp, newell, normalizeRules, powerJump, shockArrival, stormKp, type AlertRules } from './alerts';
 import type { HourScore } from './tonight';
 
 const hour = (score: number): HourScore => ({ t: 0, score, kp: 5, cloud: 0, sunAlt: -20, moonUp: false, f: { aurora: 1, dark: 1, cloud: 1, moon: 1 } });
@@ -93,5 +93,37 @@ describe('technical alerts', () => {
     expect(powerJump(hp([40, 45, 48, 50, 55, 60]), 'north', now)).toBeNull();
     expect(powerJump(hp([5, 6, 8, 12, 18, 24]), 'north', now)).toBeNull();
     expect(powerJump(hp([12, 14, 15, 22, 35, 48]), 'south', now)).toBeNull();
+  });
+});
+
+describe('scientific alerts', () => {
+  const now = Date.UTC(2026, 10, 20, 22);
+  it('flare: M1 or more in the last 10 minutes, with fresh data', () => {
+    const xr = (vals: number[]) => vals.map((flux, i) => ({ t: now - (vals.length - 1 - i) * 6e4, flux }));
+    expect(flareNow(xr([2e-6, 4e-6, 1.2e-5, 2.3e-5]), now)).toEqual({ flux: 2.3e-5 });
+    expect(flareNow(xr([2e-6, 4e-6, 6e-6]), now)).toBeNull();
+    expect(flareNow(xr([2e-5]), now + 36e5)).toBeNull();
+  });
+  const wind = (rows: [number, number, number][]) => rows.map(([speed, density, bt], i, a) => ({ t: now - (a.length - i) * 3e5, speed, density, bt, by: 3, bz: -5 }));
+  it('shock: a jump in speed with density or field', () => {
+    const quiet = Array.from({ length: 10 }, () => [400, 5, 6] as [number, number, number]);
+    expect(shockArrival(wind([...quiet, [520, 14, 18], [530, 15, 19]]), now)).toEqual({ from: 400, to: 525 });
+    expect(shockArrival(wind([...quiet, [420, 5, 6], [425, 5, 6]]), now)).toBeNull();
+    expect(shockArrival(wind([...quiet, [520, 5, 6], [530, 5, 6]]), now)).toBeNull();
+  });
+  it('coupling: Newell is near zero for northward field and large for strong southward field', () => {
+    expect(newell(400, 0, 5)).toBeCloseTo(0, 3);
+    expect(newell(400, 0, -5)).toBeGreaterThan(newell(400, 5, 0));
+    expect(Math.round(newell(600, 0, -15))).toBeGreaterThan(COUPLING_HIGH);
+  });
+  it('coupling: half an hour of strong driving', () => {
+    const run = (bz: number) => Array.from({ length: 7 }, (_, i) => ({ t: now - (7 - i) * 3e5, speed: 650, by: 2, bz }));
+    expect(couplingHigh(run(-15), now)).not.toBeNull();
+    expect(couplingHigh(run(-3), now)).toBeNull();
+  });
+  it('CME: the next Earth-directed arrival within 3 days that could matter', () => {
+    const cmes = [{ arrival: now - 36e5, glancing: false, kpHigh: 7 }, { arrival: now + 30 * 36e5, glancing: true, kpHigh: 4 }, { arrival: now + 40 * 36e5, glancing: false, kpHigh: 6 }];
+    expect(cmeComing(cmes, now)).toEqual({ arrival: now + 40 * 36e5, kp: 6, glancing: false });
+    expect(cmeComing([{ arrival: now + 5 * 864e5, glancing: false, kpHigh: 8 }], now)).toBeNull();
   });
 });

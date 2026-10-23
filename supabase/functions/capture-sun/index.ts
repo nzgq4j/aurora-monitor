@@ -1,5 +1,5 @@
-// Saves the current SDO images (AIA 193, AIA 171, the 211·193·171 composite, AIA 304, HMI and the HMI
-// magnetogram) to the sun-frames bucket for the time-lapse.
+// Saves the current SDO images (AIA 193, 171, 131, 94 and 304, the 211·193·171 composite, HMI and the HMI
+// magnetogram) and SOHO's LASCO C2 coronagraph to the sun-frames bucket for the time-lapse.
 // Scheduled hourly by pg_cron (see migrations/20261019000100_sun_frames.sql). Each image is kept once,
 // keyed by SDO's Last-Modified time; frames older than KEEP_DAYS are removed.
 // Uses the service role, which the Edge runtime provides as an env var. Callers must send pg_cron's key.
@@ -12,6 +12,10 @@ const CHANNELS = {
   '0304': 'https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0304.jpg',
   HMIIC: 'https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_HMIIC.jpg',
   HMIBC: 'https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_HMIBC.jpg',
+  '0131': 'https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0131.jpg',
+  '0094': 'https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0094.jpg',
+  // SOHO's LASCO C2 coronagraph (CMEs leaving the Sun).
+  C2: 'https://soho.nascom.nasa.gov/data/realtime/c2/512/latest.jpg',
 } as const;
 const BUCKET = 'sun-frames';
 const KEEP_DAYS = 28;

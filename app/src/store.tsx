@@ -98,7 +98,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     kpThreshold: DEFAULT_STORM_KP,
     alertRules: DEFAULT_RULES,
     channels: { email: true, push: true, sms: false },
-    triggers: { kp: true, cme: true, clear: true, bz: false, sub: false },
+    triggers: { kp: true, cme: false, clear: true, bz: false, sub: false, coupling: false, flare: false },
   }));
 
   // Demo mode: `?plan=` mirrors the design's "starting plan" setting.
