@@ -1185,7 +1185,7 @@ export const es: Messages = {
   'gal.f.near': "Cerca de mí",
   'gal.f.top': "Mejores",
   'gal.f.recent': "Recientes",
-  'gal.f.mine': "Mis fotos",
+  'gal.f.mine': "Mi galería",
   'gal.stormNow': "Kp {kp} ahora",
   'gal.tonightCount.one': "{n} foto esta noche",
   'gal.tonightCount.other': "{n} fotos esta noche",
