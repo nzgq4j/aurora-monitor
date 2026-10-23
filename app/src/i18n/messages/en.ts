@@ -524,6 +524,10 @@ export const en = {
   'solar.density': 'Solar wind density',
   'solar.bz': 'IMF Bz (GSM)',
   'solar.bzNote': 'Southward (negative) Bz lets solar-wind energy into the magnetosphere.',
+  'solar.hemiInfo': "NOAA's OVATION model estimates how much energy the aurora is putting into the upper atmosphere across the whole northern hemisphere, in gigawatts (GW). Below about 20 GW the aurora is quiet and stays far north. Around 30–50 GW it is usually visible at high latitudes. Above about 50 GW it brightens and spreads towards lower latitudes. A sudden rise of tens of gigawatts within an hour often marks a substorm, when the aurora flares up and moves quickly.",
+  'solar.speedInfo': "How fast the solar wind is passing the DSCOVR and ACE satellites at L1, about 1.5 million km towards the Sun, so what you see here reaches Earth roughly 30–60 minutes later. Typical wind is 300–400 km/s. Above about 500 km/s it carries more energy and helps the aurora, and 600–700 km/s or more is fast wind from a coronal hole or a CME. A sudden step up together with a jump in density is a shock, often the leading edge of a CME.",
+  'solar.densityInfo': "How many protons there are in each cubic centimetre of solar wind (p/cm³). Typical values are 2–10. Denser wind pushes harder on Earth's magnetic field, and a sharp rise, especially with a jump in speed, signals a shock or the dense front of a CME. Density on its own does little for the aurora; it matters most when Bz is south.",
+  'solar.bzInfo': "Bz is the north–south part of the magnetic field carried by the solar wind, measured in nanotesla (nT) in Earth's frame (GSM). It is the main switch for the aurora: when Bz points south (negative), it links up with Earth's field and lets solar-wind energy in. Around −5 nT for a while helps; −10 nT or lower for 15 minutes or more often brings strong aurora, especially with fast wind. When Bz points north (positive), little energy gets in, even if the wind is fast.",
 
   // ---- Your sky ----
   'sky.h2a': 'Your',
@@ -855,6 +859,7 @@ export const en = {
   'alerts.quietSub': 'Pause aurora alerts and heads-ups during these hours, in your time zone.',
   'alerts.comingSoon': 'Coming soon',
   'alerts.explain': 'What this means',
+  'chart.explain': "What this shows",
   'alerts.aurora': 'Aurora alerts',
   'alerts.aurora.sub': 'When aurora becomes visible at any of your saved locations.',
   'alerts.aurora.subFree': 'When aurora becomes visible at {place}. Chaser covers all your saved locations.',

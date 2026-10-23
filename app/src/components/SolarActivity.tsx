@@ -45,10 +45,10 @@ export function SolarActivity() {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(440px,100%),1fr))', gap: 14 }}>
       <LineChart title={t('solar.hemi')} unit="GW" color={C.green} points={data.hemi.map(p => ({ t: p.t, v: p.north }))} forecastAfter={now}
-        note={t('solar.hemiNote')} />
-      <LineChart title={t('solar.speed')} unit="km/s" color={C.green} points={wind('speed')} />
-      <LineChart title={t('solar.density')} unit="p/cm³" color={C.green} decimals={1} points={wind('density')} />
-      <LineChart title={t('solar.bz')} unit="nT" color="#7FD4FF" decimals={1} zero points={wind('bz')} note={t('solar.bzNote')} />
+        note={t('solar.hemiNote')} info={t('solar.hemiInfo')} />
+      <LineChart title={t('solar.speed')} unit="km/s" color={C.green} points={wind('speed')} info={t('solar.speedInfo')} />
+      <LineChart title={t('solar.density')} unit="p/cm³" color={C.green} decimals={1} points={wind('density')} info={t('solar.densityInfo')} />
+      <LineChart title={t('solar.bz')} unit="nT" color="#7FD4FF" decimals={1} zero points={wind('bz')} note={t('solar.bzNote')} info={t('solar.bzInfo')} />
     </div>
   );
 }

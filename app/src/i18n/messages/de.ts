@@ -524,6 +524,10 @@ export const de: Messages = {
   'solar.density': 'Sonnenwinddichte',
   'solar.bz': 'IMF Bz (GSM)',
   'solar.bzNote': 'Südwärts gerichtetes (negatives) Bz lässt Sonnenwindenergie in die Magnetosphäre.',
+  'solar.hemiInfo': "Das OVATION-Modell der NOAA schätzt, wie viel Energie die Polarlichter auf der gesamten Nordhalbkugel in die obere Atmosphäre einbringen, in Gigawatt (GW). Unter etwa 20 GW sind die Polarlichter ruhig und bleiben weit im Norden. Bei etwa 30–50 GW sind sie in hohen Breiten meist sichtbar. Über etwa 50 GW werden sie heller und breiten sich in niedrigere Breiten aus. Ein plötzlicher Anstieg um mehrere Dutzend Gigawatt innerhalb einer Stunde zeigt oft einen Teilsturm an, bei dem die Polarlichter aufflammen und sich schnell bewegen.",
+  'solar.speedInfo': "Wie schnell der Sonnenwind die Satelliten DSCOVR und ACE am Punkt L1 passiert, etwa 1,5 Millionen km in Richtung Sonne. Was hier zu sehen ist, erreicht die Erde also etwa 30–60 Minuten später. Üblich sind 300–400 km/s. Über etwa 500 km/s trägt der Wind mehr Energie und begünstigt Polarlichter; 600–700 km/s oder mehr ist schneller Wind aus einem koronalen Loch oder einem CME. Ein plötzlicher Sprung zusammen mit einem Anstieg der Dichte ist eine Schockfront, oft die Vorderkante eines CME.",
+  'solar.densityInfo': "Wie viele Protonen sich in jedem Kubikzentimeter Sonnenwind befinden (p/cm³). Üblich sind 2–10. Dichterer Wind drückt stärker auf das Erdmagnetfeld, und ein steiler Anstieg, besonders zusammen mit einem Geschwindigkeitssprung, deutet auf eine Schockfront oder die dichte Front eines CME hin. Allein bewirkt die Dichte wenig für Polarlichter; wichtig wird sie vor allem, wenn Bz nach Süden zeigt.",
+  'solar.bzInfo': "Bz ist die Nord-Süd-Komponente des Magnetfelds im Sonnenwind, gemessen in Nanotesla (nT) im Bezugssystem der Erde (GSM). Sie ist der wichtigste Schalter für Polarlichter: Zeigt Bz nach Süden (negativ), verbindet es sich mit dem Erdmagnetfeld und lässt Energie des Sonnenwinds herein. Etwa −5 nT über längere Zeit helfen; −10 nT oder weniger für 15 Minuten oder länger bringt oft starke Polarlichter, besonders bei schnellem Wind. Zeigt Bz nach Norden (positiv), gelangt wenig Energie herein, selbst bei schnellem Wind.",
 
   // ---- Your sky ----
   'sky.h2a': 'Ihr',
@@ -855,6 +859,7 @@ export const de: Messages = {
   'alerts.quietSub': 'Polarlicht-Alarme und Vorwarnungen in diesen Stunden pausieren, in Ihrer Zeitzone.',
   'alerts.comingSoon': 'Demnächst',
   'alerts.explain': 'Was das bedeutet',
+  'chart.explain': "Was das zeigt",
   'alerts.aurora': 'Polarlicht-Alarme',
   'alerts.aurora.sub': 'Wenn Polarlicht an einem Ihrer gespeicherten Orte sichtbar wird.',
   'alerts.aurora.subFree': 'Wenn Polarlicht in {place} sichtbar wird. Chaser deckt alle gespeicherten Orte ab.',
