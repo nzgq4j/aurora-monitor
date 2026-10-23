@@ -13,7 +13,7 @@ const mix = (a: number[], b: number[], k: number) => a.map((v, i) => v + (b[i] -
 export function auroraColor(p: number): { rgb: [number, number, number]; alpha: number } {
   // Turns yellow from 15 to 30 % and red from 30 to 40 %: everything from 40 % up is red.
   const col = mix(mix(GREEN, YELLOW, smooth(15, 30, p)), RED, smooth(30, 40, p));
-  // Opacity a little above the globe's main shell (1.1) to stand in for its wider glow shell.
+  // The globe's main shell uses the same opacity (AURORA_FRAG, strength 1.35).
   return { rgb: col.map(v => Math.round(toSrgb(v) * 255)) as [number, number, number], alpha: Math.min(0.95, smooth(3, 30, p) * 1.35) };
 }
 

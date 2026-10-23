@@ -108,7 +108,9 @@ const EARTH_FRAG = /* glsl */ `
   }`;
 
 // OVATION probability (0–100 %) as aurora light: green, through yellow, to red at the strongest.
-// Dimmer on the day side, where it can't be seen.
+// Dimmer on the day side, where it can't be seen. Drawn as a translucent layer over the Earth (normal
+// blending, as on the 2D map). Added on top instead, it washed out to white over snow, ice and cloud, and
+// red never showed.
 const AURORA_FRAG = /* glsl */ `
   uniform sampler2D oval;
   uniform vec3 sunDir;
@@ -124,7 +126,7 @@ const AURORA_FRAG = /* glsl */ `
     vec3 col = mix(vec3(0.35, 1.0, 0.23), vec3(1.0, 0.88, 0.3), smoothstep(15.0, 30.0, p));
     col = mix(col, vec3(1.0, 0.3, 0.3), smoothstep(30.0, 40.0, p));
     float night = 1.0 - smoothstep(-0.1, 0.15, dot(normalize(vNormal), sunDir));
-    gl_FragColor = vec4(col * a * strength * mix(0.35, 1.0, night), 1.0);
+    gl_FragColor = vec4(col, min(0.95, a * strength) * mix(0.35, 1.0, night));
     #include <colorspace_fragment>
   }`;
 
@@ -321,8 +323,9 @@ export function Globe({ clouds, night, lights, best, saved, places, sightings = 
         const grid = await res.json() as OvalGrid;
         if (disposed) return;
         const tex = liveTex = ovalTexture(T, Uint8Array.from(atob(grid.data), ch => ch.charCodeAt(0)));
-        for (const [r, strength] of [[R.aurora, 1.1], [R.auroraGlow, 0.35]] as const) {
-          const m = new T.ShaderMaterial({ uniforms: { oval: { value: tex }, sunDir: { value: sunDir }, strength: { value: strength } }, vertexShader: VERT, fragmentShader: AURORA_FRAG, transparent: true, depthWrite: false, blending: T.AdditiveBlending });
+        // The main shell at the 2D map's opacity (lib/auroraColor), and a faint wider halo.
+        for (const [r, strength] of [[R.aurora, 1.35], [R.auroraGlow, 0.25]] as const) {
+          const m = new T.ShaderMaterial({ uniforms: { oval: { value: tex }, sunDir: { value: sunDir }, strength: { value: strength } }, vertexShader: VERT, fragmentShader: AURORA_FRAG, transparent: true, depthWrite: false });
           const mesh = new T.Mesh(sphere(r), m);
           auroraMeshes.push(mesh);
           scene.add(mesh);
