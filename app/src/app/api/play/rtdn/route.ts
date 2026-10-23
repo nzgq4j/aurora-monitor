@@ -19,8 +19,15 @@ const same = (a: string, b: string) => a.length === b.length && timingSafeEqual(
 export async function POST(req: Request) {
   const secret = process.env.PLAY_RTDN_TOKEN;
   const token = new URL(req.url).searchParams.get('token') ?? '';
-  if (!secret || !same(token, secret)) return NextResponse.json({ error: 'unauthorised' }, { status: 401 });
-  if (!playAccount()) return NextResponse.json({ error: 'not_configured' }, { status: 503 });
+  if (!secret || !same(token, secret)) {
+    // Lengths only: enough to tell a missing, cut-off or wrong secret apart without logging it.
+    console.warn('play rtdn refused: token', secret ? `mismatch (got ${token.length} chars, expected ${secret.length})` : 'PLAY_RTDN_TOKEN not set');
+    return NextResponse.json({ error: 'unauthorised' }, { status: 401 });
+  }
+  if (!playAccount()) {
+    console.warn('play rtdn refused: PLAY_SERVICE_ACCOUNT missing or not a service-account JSON key');
+    return NextResponse.json({ error: 'not_configured' }, { status: 503 });
+  }
 
   type Note = { packageName?: string; subscriptionNotification?: { purchaseToken?: string; notificationType?: number }; testNotification?: object };
   const body = await req.json().catch(() => null) as ({ message?: { data?: string } } & Note) | null;
