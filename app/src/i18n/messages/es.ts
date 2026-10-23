@@ -524,6 +524,10 @@ export const es: Messages = {
   'solar.density': 'Densidad del viento solar',
   'solar.bz': 'Bz del IMF (GSM)',
   'solar.bzNote': 'Un Bz hacia el sur (negativo) deja entrar la energía del viento solar en la magnetosfera.',
+  'solar.hemiInfo': "El modelo OVATION de la NOAA estima cuánta energía aporta la aurora a la alta atmósfera en todo el hemisferio norte, en gigavatios (GW). Por debajo de unos 20 GW la aurora está tranquila y se queda muy al norte. Hacia 30–50 GW suele verse en latitudes altas. Por encima de unos 50 GW se intensifica y se extiende hacia latitudes más bajas. Una subida brusca de decenas de gigavatios en menos de una hora suele indicar una subtormenta, cuando la aurora se aviva y se mueve con rapidez.",
+  'solar.speedInfo': "La velocidad del viento solar al pasar por los satélites DSCOVR y ACE en L1, a unos 1,5 millones de km en dirección al Sol, así que lo que ves aquí llega a la Tierra unos 30–60 minutos después. Lo habitual son 300–400 km/s. Por encima de unos 500 km/s transporta más energía y favorece la aurora; 600–700 km/s o más es viento rápido de un agujero coronal o de una CME. Un salto brusco junto con un aumento de la densidad es un choque, a menudo el frente de una CME.",
+  'solar.densityInfo': "Cuántos protones hay en cada centímetro cúbico de viento solar (p/cm³). Lo habitual es 2–10. Un viento más denso empuja con más fuerza el campo magnético terrestre, y una subida brusca, sobre todo junto con un salto de velocidad, indica un choque o el frente denso de una CME. Por sí sola, la densidad apenas influye en la aurora; importa sobre todo cuando Bz apunta al sur.",
+  'solar.bzInfo': "Bz es la componente norte–sur del campo magnético que lleva el viento solar, medida en nanoteslas (nT) en el sistema de referencia de la Tierra (GSM). Es el interruptor principal de la aurora: cuando Bz apunta al sur (negativo), se conecta con el campo terrestre y deja entrar la energía del viento solar. Unos −5 nT durante un rato ayudan; −10 nT o menos durante 15 minutos o más suelen traer auroras intensas, sobre todo con viento rápido. Cuando Bz apunta al norte (positivo), entra poca energía, aunque el viento sea rápido.",
 
   // ---- Your sky ----
   'sky.h2a': 'Tu',
@@ -855,6 +859,7 @@ export const es: Messages = {
   'alerts.quietSub': 'Pausa las alertas de auroras y los avisos durante estas horas, en tu zona horaria.',
   'alerts.comingSoon': 'Próximamente',
   'alerts.explain': 'Qué significa',
+  'chart.explain': "Qué muestra",
   'alerts.aurora': 'Alertas de auroras',
   'alerts.aurora.sub': 'Cuando la aurora sea visible en cualquiera de tus ubicaciones guardadas.',
   'alerts.aurora.subFree': 'Cuando la aurora sea visible en {place}. Chaser cubre todas tus ubicaciones guardadas.',

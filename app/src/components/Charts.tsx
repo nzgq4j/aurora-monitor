@@ -209,10 +209,12 @@ interface LineProps {
   /** Always include zero on the axis and draw it brighter (for Bz). */
   zero?: boolean;
   note?: string;
+  /** What the chart shows and how to read it, folded away until asked for. */
+  info?: string;
 }
 
 /** Time series panel with the latest value, UT time axis and gaps where data is missing. */
-export function LineChart({ title, unit, points, color, decimals = 0, forecastAfter, zero, note }: LineProps) {
+export function LineChart({ title, unit, points, color, decimals = 0, forecastAfter, zero, note, info }: LineProps) {
   const [ref, W] = useWidth<HTMLDivElement>();
   const { t, num } = useI18n();
   const H = 190, X0 = 44, X1 = W - 10, TOP = 10, BOT = 160;
@@ -268,6 +270,12 @@ export function LineChart({ title, unit, points, color, decimals = 0, forecastAf
         {W > 0 && pts.length <= 1 && <div style={{ height: H, display: 'grid', placeItems: 'center', color: C.muted, fontWeight: 600 }}>{t('chart.noRecent')}</div>}
       </div>
       {note && <span style={{ fontSize: 12, color: C.muted }}>{note}</span>}
+      {info && (
+        <details className="toggle-info">
+          <summary>{t('chart.explain')}</summary>
+          <p>{info}</p>
+        </details>
+      )}
     </figure>
   );
 }

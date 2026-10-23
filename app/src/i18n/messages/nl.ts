@@ -524,6 +524,10 @@ export const nl: Messages = {
   'solar.density': 'Dichtheid zonnewind',
   'solar.bz': 'IMF Bz (GSM)',
   'solar.bzNote': 'Een zuidwaartse (negatieve) Bz laat energie uit de zonnewind de magnetosfeer binnen.',
+  'solar.hemiInfo': "Het OVATION-model van de NOAA schat hoeveel energie het noorderlicht over het hele noordelijk halfrond in de hoge atmosfeer brengt, in gigawatt (GW). Onder ongeveer 20 GW is het noorderlicht rustig en blijft het ver in het noorden. Rond 30–50 GW is het op hoge breedten meestal zichtbaar. Boven ongeveer 50 GW wordt het feller en breidt het zich uit naar lagere breedten. Een plotselinge stijging van tientallen gigawatt binnen een uur wijst vaak op een substorm, waarbij het noorderlicht opvlamt en snel beweegt.",
+  'solar.speedInfo': "Hoe snel de zonnewind langs de satellieten DSCOVR en ACE bij L1 gaat, zo’n 1,5 miljoen km richting de zon. Wat je hier ziet, bereikt de aarde dus ongeveer 30–60 minuten later. Gebruikelijk is 300–400 km/s. Boven ongeveer 500 km/s draagt de wind meer energie en helpt hij het noorderlicht; 600–700 km/s of meer is snelle wind uit een coronagat of een CME. Een plotselinge sprong samen met een stijging van de dichtheid is een schokgolf, vaak de voorkant van een CME.",
+  'solar.densityInfo': "Hoeveel protonen er in elke kubieke centimeter zonnewind zitten (p/cm³). Gebruikelijk is 2–10. Dichtere wind duwt harder tegen het aardmagnetisch veld, en een scherpe stijging, vooral samen met een sprong in snelheid, wijst op een schokgolf of de dichte voorkant van een CME. Op zichzelf doet de dichtheid weinig voor het noorderlicht; ze telt vooral als Bz naar het zuiden wijst.",
+  'solar.bzInfo': "Bz is de noord-zuidcomponent van het magnetisch veld dat de zonnewind meevoert, gemeten in nanotesla (nT) in het referentiekader van de aarde (GSM). Het is de belangrijkste schakelaar voor het noorderlicht: wijst Bz naar het zuiden (negatief), dan koppelt het aan het aardmagnetisch veld en laat het energie van de zonnewind binnen. Ongeveer −5 nT een tijdje helpt; −10 nT of lager gedurende 15 minuten of langer geeft vaak sterk noorderlicht, vooral bij snelle wind. Wijst Bz naar het noorden (positief), dan komt er weinig energie binnen, ook al is de wind snel.",
 
   // ---- Your sky ----
   'sky.h2a': 'Jouw',
@@ -855,6 +859,7 @@ export const nl: Messages = {
   'alerts.quietSub': 'Pauzeer noorderlichtmeldingen en vooraankondigingen tijdens deze uren, in je eigen tijdzone.',
   'alerts.comingSoon': 'Binnenkort',
   'alerts.explain': 'Wat dit betekent',
+  'chart.explain': "Wat dit laat zien",
   'alerts.aurora': 'Noorderlichtmeldingen',
   'alerts.aurora.sub': 'Als noorderlicht zichtbaar wordt op een van je opgeslagen locaties.',
   'alerts.aurora.subFree': 'Als noorderlicht zichtbaar wordt in {place}. Chaser dekt al je opgeslagen locaties.',

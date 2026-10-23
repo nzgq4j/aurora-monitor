@@ -524,6 +524,10 @@ export const fr: Messages = {
   'solar.density': 'Densité du vent solaire',
   'solar.bz': 'Bz de l’IMF (GSM)',
   'solar.bzNote': 'Un Bz orienté vers le sud (négatif) laisse entrer l’énergie du vent solaire dans la magnétosphère.',
+  'solar.hemiInfo': "Le modèle OVATION de la NOAA estime l’énergie que l’aurore dépose dans la haute atmosphère sur tout l’hémisphère nord, en gigawatts (GW). En dessous d’environ 20 GW, l’aurore est calme et reste loin au nord. Vers 30–50 GW, elle est généralement visible aux hautes latitudes. Au-delà d’environ 50 GW, elle s’intensifie et s’étend vers des latitudes plus basses. Une hausse soudaine de plusieurs dizaines de gigawatts en moins d’une heure signale souvent une sous-tempête, lorsque l’aurore s’embrase et bouge rapidement.",
+  'solar.speedInfo': "La vitesse du vent solaire au passage des satellites DSCOVR et ACE au point L1, à environ 1,5 million de km en direction du Soleil : ce que vous voyez ici atteint la Terre environ 30 à 60 minutes plus tard. Le vent habituel va de 300 à 400 km/s. Au-delà d’environ 500 km/s, il transporte plus d’énergie et favorise l’aurore ; 600–700 km/s ou plus correspond à un vent rapide issu d’un trou coronal ou d’une CME. Un saut brusque accompagné d’une hausse de densité est un choc, souvent le front d’une CME.",
+  'solar.densityInfo': "Le nombre de protons dans chaque centimètre cube de vent solaire (p/cm³). Les valeurs habituelles vont de 2 à 10. Un vent plus dense pousse plus fort sur le champ magnétique terrestre, et une forte hausse, surtout avec un saut de vitesse, signale un choc ou le front dense d’une CME. À elle seule, la densité influe peu sur l’aurore ; elle compte surtout lorsque Bz est orienté vers le sud.",
+  'solar.bzInfo': "Bz est la composante nord–sud du champ magnétique transporté par le vent solaire, mesurée en nanoteslas (nT) dans le repère de la Terre (GSM). C’est l’interrupteur principal de l’aurore : lorsque Bz est orienté vers le sud (négatif), il se connecte au champ terrestre et laisse entrer l’énergie du vent solaire. Environ −5 nT pendant un moment aide ; −10 nT ou moins pendant 15 minutes ou plus apporte souvent une aurore intense, surtout avec un vent rapide. Lorsque Bz est orienté vers le nord (positif), peu d’énergie entre, même si le vent est rapide.",
 
   // ---- Your sky ----
   'sky.h2a': 'Votre',
@@ -855,6 +859,7 @@ export const fr: Messages = {
   'alerts.quietSub': 'Suspend les alertes aurores et les préavis pendant ces heures, dans votre fuseau horaire.',
   'alerts.comingSoon': 'Bientôt disponible',
   'alerts.explain': 'Ce que cela signifie',
+  'chart.explain': "Ce que cela montre",
   'alerts.aurora': 'Alertes aurores',
   'alerts.aurora.sub': 'Quand une aurore devient visible depuis l’un de vos lieux enregistrés.',
   'alerts.aurora.subFree': 'Quand une aurore devient visible depuis {place}. Chaser couvre tous vos lieux enregistrés.',
