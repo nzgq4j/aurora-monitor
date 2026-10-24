@@ -16,8 +16,8 @@
   --soft: #C9D0CB;
   --placeholder: #5f6762;
 
-  --f-display: 'Archivo', sans-serif;
-  --f-body: 'Barlow', sans-serif;
+  --f-display: 'Archivo', 'Montserrat', sans-serif;
+  --f-body: 'Barlow', 'Golos Text', sans-serif;
   --f-mono: 'JetBrains Mono', monospace;
 
   /* Page side padding and fluid headline sizes (desktop values are the design's). */
@@ -72,6 +72,9 @@ button.btn:focus-visible { outline: 2px solid var(--green); outline-offset: 2px;
 
 /* ---- Type ---- */
 .display { margin: 0; font-family: var(--f-display); font-weight: 900; font-stretch: 112%; text-transform: uppercase; }
+/* Headings set their own tight line height inline. Capitals with marks (Ä, Ö, Å, Ё, É) would touch the line
+   above, so other languages get a little more room. */
+:root:not(:lang(en)) .display { line-height: 1 !important; }
 .hl { color: var(--green); }
 .mono { font-family: var(--f-mono); }
 .label { font-family: var(--f-mono); font-size: 11px; color: var(--muted); }

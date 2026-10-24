@@ -231,12 +231,12 @@ function Overview({ data }: { data: AccountData }) {
             return (
               <g key={wk.from}>
                 {wk.kp !== null && <rect x={f(x + 10)} y={f(210 - wk.kp * 20)} width={f(w - 20)} height={f(wk.kp * 20)} style={{ fill: kpColor(wk.kp) }}><title>{t('dash.season.week', { date: shortDate(wk.from), kp: num(wk.kp, 2) })}</title></rect>}
-                <text x={f(x + w / 2)} y="230" style={{ fill: C.soft, font: "600 11px 'Barlow'", textAnchor: 'middle' }}>{shortDate(wk.from)}</text>
+                <text x={f(x + w / 2)} y="230" style={{ fill: C.soft, font: "600 11px 'Barlow', 'Golos Text'", textAnchor: 'middle' }}>{shortDate(wk.from)}</text>
               </g>
             );
           })}
           <line x1="30" x2="890" y1="210" y2="210" style={{ stroke: C.muted }} />
-          {days.length === 0 && <text x="460" y="120" style={{ fill: C.muted, font: "600 14px 'Barlow'", textAnchor: 'middle' }}>{t('dash.historyUnavailable')}</text>}
+          {days.length === 0 && <text x="460" y="120" style={{ fill: C.muted, font: "600 14px 'Barlow', 'Golos Text'", textAnchor: 'middle' }}>{t('dash.historyUnavailable')}</text>}
         </svg></div>
       </div>
 
@@ -371,7 +371,7 @@ function Alerts({ data }: { data: AccountData }) {
             <line x1="0" x2="450" y1="170" y2="170" style={{ stroke: C.muted }} />
             {last30.length > 0 && <text x="0" y="186" style={{ fill: C.muted, font: "10px 'JetBrains Mono'" }}>{shortDate(last30[0].t).toUpperCase()}</text>}
             <text x="450" y="186" style={{ fill: C.muted, font: "10px 'JetBrains Mono'", textAnchor: 'end' }}>{t('alerts.today')}</text>
-            {last30.length === 0 && <text x="225" y="90" style={{ fill: C.muted, font: "600 13px 'Barlow'", textAnchor: 'middle' }}>{t('dash.historyUnavailable')}</text>}
+            {last30.length === 0 && <text x="225" y="90" style={{ fill: C.muted, font: "600 13px 'Barlow', 'Golos Text'", textAnchor: 'middle' }}>{t('dash.historyUnavailable')}</text>}
           </svg>
           <span style={{ fontSize: 13, color: 'var(--muted)' }}>
             {home ? t('alerts.levelNote', { place: home.name.split(',')[0], need, level: t(`alerts.level.${r.level}`), kp: num(kp, 1) })
@@ -601,7 +601,7 @@ function LocationCard({ loc, paused, index }: { loc: SavedLocation; paused: bool
         <ellipse cx="120" cy="72" rx="110" ry={f(8 + glow * .45)} style={{ fill: '#59FF3A', opacity: f(Math.min(.9, .08 + glow / 70)), filter: `url(#lb${index})` }} />
         <line x1="0" x2="240" y1="72" y2="72" style={{ stroke: '#fff' }} />
         <rect x="0" y="72" width="240" height="18" style={{ fill: '#000' }} />
-        <text x="120" y="86" style={{ fill: C.muted, font: "700 10px 'Barlow'", textAnchor: 'middle' }}>{t(loc.lat >= 0 ? 'dir.N' : 'dir.S')}</text>
+        <text x="120" y="86" style={{ fill: C.muted, font: "700 10px 'Barlow', 'Golos Text'", textAnchor: 'middle' }}>{t(loc.lat >= 0 ? 'dir.N' : 'dir.S')}</text>
       </svg>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
         <div style={{ display: 'flex', flexDirection: 'column' }}><span style={mono10}>{t('sky.stat.aurora')}</span><span style={{ ...big, color: ac }}>{aur === null ? '—' : `${aur}%`}</span></div>

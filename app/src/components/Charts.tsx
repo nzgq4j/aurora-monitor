@@ -68,7 +68,7 @@ export function PolarOval({ points, edge, marker }: PolarProps) {
         {cities.map(c => (
           <g key={c.name}>
             <circle cx={c.x} cy={c.y} r="2.6" style={{ fill: '#fff' }} />
-            <text x={c.tx} y={c.ty} style={{ fill: '#fff', font: "600 11.5px 'Barlow'", textAnchor: c.anchor }}>{c.name}</text>
+            <text x={c.tx} y={c.ty} style={{ fill: '#fff', font: "600 11.5px 'Barlow', 'Golos Text'", textAnchor: c.anchor }}>{c.name}</text>
           </g>
         ))}
       </g>
@@ -79,12 +79,12 @@ export function PolarOval({ points, edge, marker }: PolarProps) {
           <circle cx={m.x} cy={m.y} r="11" style={{ fill: 'none', stroke: C.green, strokeWidth: 1.5, opacity: .6 }} />
           <circle cx={m.x} cy={m.y} r="4.5" style={{ fill: '#fff', stroke: '#000', strokeWidth: 2 }} />
           <text x={m.right ? m.x + 16 : m.x - 16} y={m.y + 4}
-            style={{ fill: C.green, font: "700 13px 'Barlow'", textAnchor: m.right ? 'start' : 'end', paintOrder: 'stroke', stroke: '#000', strokeWidth: 4, strokeLinejoin: 'round' }}>
+            style={{ fill: C.green, font: "700 13px 'Barlow', 'Golos Text'", textAnchor: m.right ? 'start' : 'end', paintOrder: 'stroke', stroke: '#000', strokeWidth: 4, strokeLinejoin: 'round' }}>
             {m.isHome ? `${m.name.split(',')[0]} · Home` : m.name.split(',')[0]}
           </text>
         </g>
       )}
-      {points.length === 0 && <text x="240" y="244" style={{ fill: C.muted, font: "600 13px 'Barlow'", textAnchor: 'middle' }}>{t('chart.ovalUnavailable')}</text>}
+      {points.length === 0 && <text x="240" y="244" style={{ fill: C.muted, font: "600 13px 'Barlow', 'Golos Text'", textAnchor: 'middle' }}>{t('chart.ovalUnavailable')}</text>}
     </svg>
   );
 }
@@ -157,7 +157,7 @@ export function KpBarChart({ bars, unit, now, minBar = 0, label }: { bars: KpBar
           {nowX !== null && (
             <>
               <line x1={f(nowX)} x2={f(nowX)} y1={TOP - 8} y2={Y1 + 2} style={{ stroke: '#fff', strokeWidth: 2, strokeDasharray: '6 4' }} />
-              <text x={f(nowX)} y={TOP - 12} style={{ fill: '#fff', font: "700 11px 'Barlow'", textAnchor: 'middle' }}>{t('chart.now')}</text>
+              <text x={f(nowX)} y={TOP - 12} style={{ fill: '#fff', font: "700 11px 'Barlow', 'Golos Text'", textAnchor: 'middle' }}>{t('chart.now')}</text>
             </>
           )}
           {bars.map((b, i) => {
@@ -167,20 +167,20 @@ export function KpBarChart({ bars, unit, now, minBar = 0, label }: { bars: KpBar
                 <rect x={f(x + 2)} y={f(Y1 - h)} width={f(Math.max(1, bw - 4))} height={f(h)} rx="2" style={{ fill: kpBarColor(b.kp), opacity: b.past ? .62 : 1 }}>
                   <title>{`${new Date(b.t).toISOString().slice(0, 16).replace('T', ' ')} UT · Kp ${num(b.kp, 2)} · ${b.past ? t('chart.observed') : t('chart.forecast')}`}</title>
                 </rect>
-                <text x={f(x + bw / 2)} y={f(Y1 - h - 6)} style={{ fill: b.past ? C.soft : '#fff', font: `600 ${fs}px 'Barlow'`, textAnchor: 'middle' }}>{num(b.kp, 2)}</text>
+                <text x={f(x + bw / 2)} y={f(Y1 - h - 6)} style={{ fill: b.past ? C.soft : '#fff', font: `600 ${fs}px 'Barlow', 'Golos Text'`, textAnchor: 'middle' }}>{num(b.kp, 2)}</text>
                 {unit === 'hour'
                   ? <text x={f(x + bw / 2)} y={Y1 + 18} style={{ ...monoText(10), textAnchor: 'middle' }}>{new Date(b.t).toISOString().slice(11, 13)}</text>
                   : (
                     <>
-                      <text x={f(x + bw / 2)} y={Y1 + 20} style={{ fill: C.soft, font: `600 ${fs}px 'Barlow'`, textAnchor: 'middle' }}>{weekday(b.t)}</text>
-                      <text x={f(x + bw / 2)} y={Y1 + 38} style={{ fill: C.muted, font: `500 ${Math.min(fs, 12)}px 'Barlow'`, textAnchor: 'middle' }}>{dayLabel(b.t)}</text>
+                      <text x={f(x + bw / 2)} y={Y1 + 20} style={{ fill: C.soft, font: `600 ${fs}px 'Barlow', 'Golos Text'`, textAnchor: 'middle' }}>{weekday(b.t)}</text>
+                      <text x={f(x + bw / 2)} y={Y1 + 38} style={{ fill: C.muted, font: `500 ${Math.min(fs, 12)}px 'Barlow', 'Golos Text'`, textAnchor: 'middle' }}>{dayLabel(b.t)}</text>
                     </>
                   )}
               </g>
             );
           })}
           {days.map(d => (
-            <text key={d.t} x={f(X0 + ((d.i0 + d.i1 + 1) / 2) * bw)} y={Y1 + 44} style={{ fill: C.soft, font: "600 13px 'Barlow'", textAnchor: 'middle' }}>{`${weekday(d.t)} ${dayLabel(d.t)}`}</text>
+            <text key={d.t} x={f(X0 + ((d.i0 + d.i1 + 1) / 2) * bw)} y={Y1 + 44} style={{ fill: C.soft, font: "600 13px 'Barlow', 'Golos Text'", textAnchor: 'middle' }}>{`${weekday(d.t)} ${dayLabel(d.t)}`}</text>
           ))}
         </svg>
       )}

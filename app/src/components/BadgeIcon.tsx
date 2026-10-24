@@ -22,7 +22,7 @@ export function BadgeIcon({ tier, glyph, label, size = 96, title }: { tier: Tier
       <g transform="translate(39 30) scale(1.75)" fill="none" stroke={c.ink} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" opacity={label ? 0.3 : 1}>
         <path d={GLYPHS[glyph]} />
       </g>
-      {label && <text x="60" y="88" textAnchor="middle" fontFamily="Archivo, sans-serif" fontWeight={900} fontSize={label.length > 3 ? 17 : 20} fill={c.ink}>{label}</text>}
+      {label && <text x="60" y="88" textAnchor="middle" fontFamily="Archivo, Montserrat, sans-serif" fontWeight={900} fontSize={label.length > 3 ? 17 : 20} fill={c.ink}>{label}</text>}
     </svg>
   );
 }

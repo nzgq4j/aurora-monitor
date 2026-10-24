@@ -63,10 +63,12 @@ export default async function RootLayout({ children, params }: Props & { childre
         <script dangerouslySetInnerHTML={{ __html: NIGHT_BOOT }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        {/* Loaded as a stylesheet (not next/font) so the SVG charts can reference the families by name. */}
+        {/* Loaded as a stylesheet (not next/font) so the SVG charts can reference the families by name.
+            Montserrat and Golos Text supply Cyrillic (Russian), which Archivo and Barlow lack; browsers
+            only download them for pages that use those letters. */}
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Montserrat:wght@600..900&family=Golos+Text:wght@400..700&display=swap"
         />
       </head>
       <body>
