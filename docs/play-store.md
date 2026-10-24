@@ -113,6 +113,9 @@ Data from NOAA's Space Weather Prediction Center, NASA, ESA, GFZ Potsdam, EUMETS
 Privacy: https://www.polarlights.io/privacy
 ```
 
+Translations for Norwegian, Danish, Swedish, Finnish and Russian are in
+[`play-store-listings.md`](play-store-listings.md).
+
 **Other fields**
 
 | Field | Value |
