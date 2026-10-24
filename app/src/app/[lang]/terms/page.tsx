@@ -53,7 +53,7 @@ const sections: LegalSection[] = [
   },
   {
     h: 'Your content',
-    body: <p>Photos you take in Sky view stay yours and stay on your device unless you share or post them. When you report a sighting, you allow us to store it and to show it, without anything that identifies you, on the map and in summaries of aurora activity.</p>,
+    body: <p>Photos you post to the gallery stay yours. When you report a sighting, you allow us to store it and to show it, without anything that identifies you, on the map and in summaries of aurora activity.</p>,
   },
   {
     id: 'community',

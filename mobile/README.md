@@ -39,8 +39,8 @@ After changing `capacitor.config.ts`, `www/` or the plugins, run `npx cap sync a
 | All pages, maps, globe, forecasts, alerts settings | Works (the live site) |
 | Sign in with email and password | Works |
 | Sign in with Google | Android's account picker (`GoogleSignInPlugin.java`), then Supabase `signInWithIdToken`. Needs Google switched on in Supabase, an Android OAuth client (package + SHA-1) and `NEXT_PUBLIC_GOOGLE_CLIENT_ID` on Vercel. Apple sign-in is hidden in the app. |
-| Sky view camera and location | Works (Android asks for permission) |
-| Night photos in Sky view | Long exposures through Camera2 (`LongExposurePlugin.java`: manual exposure up to the phone's limit, ISO set for the length, focus at infinity, no flash) on phones that allow 1 s or more; elsewhere the website's stacked Night shot. |
+| Location (Your sky) | Works (Android asks for permission) |
+| Sky view camera | Paused: no camera permission, and `LongExposurePlugin.java` is not registered (see `MainActivity.java`). The web code (`SkyView.tsx`) stays for later. |
 | Gallery: Save to Photos / Share | Works: saves into a **Polar Lights** album (Pictures/Polar Lights) and opens Android's share sheet (`PhotoLibraryPlugin.java`) |
 | Push notifications | Works: Firebase Cloud Messaging (`@capacitor/push-notifications`; alert icon `ic_stat_aurora`, channel `aurora`, shown as a banner). Uses `android/app/google-services.json` (Firebase project io-polarlights-app), and on Vercel `FCM_SERVICE_ACCOUNT` (secret) and `NEXT_PUBLIC_APP_PUSH=1`. |
 | Links to www.polarlights.io | Android App Links: the home page (alert emails), map, Sky, Alerts and gallery links open in the app (`AndroidManifest.xml` intent filter; `AppLinks.tsx` opens the page). Verified by `/.well-known/assetlinks.json`, from `ANDROID_PACKAGE_NAME` and `ANDROID_CERT_SHA256` on Vercel: the SHA-256 of the debug key (Run ▶ builds) and of Play's app signing key, comma-separated. Sign-in, checkout, dashboard and password reset stay in the browser. |
