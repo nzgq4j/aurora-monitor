@@ -16,8 +16,8 @@
   --soft: #C9D0CB;
   --placeholder: #5f6762;
 
-  --f-display: 'Archivo', sans-serif;
-  --f-body: 'Barlow', sans-serif;
+  --f-display: 'Archivo', 'Montserrat', sans-serif;
+  --f-body: 'Barlow', 'Golos Text', sans-serif;
   --f-mono: 'JetBrains Mono', monospace;
 
   /* Page side padding and fluid headline sizes (desktop values are the design's). */

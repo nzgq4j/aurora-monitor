@@ -103,7 +103,7 @@ COMMUNITY
 
 MADE FOR THE DARK
 • Red night mode protects your night vision
-• Available in English, German, Spanish, French and Dutch
+• Available in English, German, Spanish, French, Dutch, Norwegian, Danish, Swedish, Finnish and Russian
 
 PLANS
 Polar Lights is free to use, with the live map, forecasts and alerts for one place. Chaser adds up to 10 places, instant push alerts, the technical alerts, the 3-hour Kp forecast and 27-day outlook, hour-by-hour cloud and darkness, solar wind graphs and the dark-sky spot map. Chaser is US$3.99 a month or US$36 a year (save 25%), with a 7-day free trial for new subscribers. Prices in other countries are shown in Google Play before you subscribe.

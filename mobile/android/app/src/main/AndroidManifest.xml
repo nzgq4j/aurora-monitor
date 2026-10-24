@@ -35,6 +35,11 @@
                 <data android:path="/fr" />
                 <data android:path="/de" />
                 <data android:path="/nl" />
+                <data android:path="/nb" />
+                <data android:path="/da" />
+                <data android:path="/sv" />
+                <data android:path="/fi" />
+                <data android:path="/ru" />
                 <data android:pathPrefix="/gallery" />
                 <data android:pathPrefix="/map" />
                 <data android:pathPrefix="/sky" />
@@ -59,6 +64,26 @@
                 <data android:pathPrefix="/nl/map" />
                 <data android:pathPrefix="/nl/sky" />
                 <data android:pathPrefix="/nl/alerts" />
+                <data android:pathPrefix="/nb/gallery" />
+                <data android:pathPrefix="/nb/map" />
+                <data android:pathPrefix="/nb/sky" />
+                <data android:pathPrefix="/nb/alerts" />
+                <data android:pathPrefix="/da/gallery" />
+                <data android:pathPrefix="/da/map" />
+                <data android:pathPrefix="/da/sky" />
+                <data android:pathPrefix="/da/alerts" />
+                <data android:pathPrefix="/sv/gallery" />
+                <data android:pathPrefix="/sv/map" />
+                <data android:pathPrefix="/sv/sky" />
+                <data android:pathPrefix="/sv/alerts" />
+                <data android:pathPrefix="/fi/gallery" />
+                <data android:pathPrefix="/fi/map" />
+                <data android:pathPrefix="/fi/sky" />
+                <data android:pathPrefix="/fi/alerts" />
+                <data android:pathPrefix="/ru/gallery" />
+                <data android:pathPrefix="/ru/map" />
+                <data android:pathPrefix="/ru/sky" />
+                <data android:pathPrefix="/ru/alerts" />
             </intent-filter>
         </activity>
 

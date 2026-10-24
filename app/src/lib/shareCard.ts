@@ -24,7 +24,7 @@ export async function shareCardBlob(d: ShareCardData): Promise<Blob | null> {
   if (!g) return null;
   // Use the page's fonts once they're ready, so the card matches the site.
   try { await document.fonts.ready; } catch { /* system fonts */ }
-  const body = "'Barlow', 'Helvetica Neue', Arial, sans-serif";
+  const body = "'Barlow', 'Golos Text', 'Helvetica Neue', Arial, sans-serif";
 
   drawSky(g, S, d.score);
   drawBrand(g);
@@ -36,13 +36,13 @@ export async function shareCardBlob(d: ShareCardData): Promise<Blob | null> {
 
   // Verdict, shrunk to fit one line.
   let size = 128;
-  g.font = `800 ${size}px 'Archivo', sans-serif`;
-  while (g.measureText(d.verdict.toUpperCase()).width > S - 160 && size > 60) { size -= 4; g.font = `800 ${size}px 'Archivo', sans-serif`; }
+  g.font = `800 ${size}px 'Archivo', 'Montserrat', sans-serif`;
+  while (g.measureText(d.verdict.toUpperCase()).width > S - 160 && size > 60) { size -= 4; g.font = `800 ${size}px 'Archivo', 'Montserrat', sans-serif`; }
   g.fillStyle = d.verdictColor; g.shadowColor = d.verdictColor; g.shadowBlur = 28;
   g.fillText(d.verdict.toUpperCase(), 80, 330 + 40 + size);
   g.shadowBlur = 0;
   const yScore = 330 + 40 + size + 120;
-  g.fillStyle = '#fff'; g.font = `800 110px 'Archivo', sans-serif`; g.fillText(String(d.score), 80, yScore);
+  g.fillStyle = '#fff'; g.font = `800 110px 'Archivo', 'Montserrat', sans-serif`; g.fillText(String(d.score), 80, yScore);
   const sw = g.measureText(String(d.score)).width;
   g.fillStyle = '#9AA39D'; g.font = `500 40px ${body}`; g.fillText(`/100 ${d.scoreLabel}`, 80 + sw + 18, yScore);
   g.fillStyle = '#fff'; g.font = `600 40px ${body}`; g.fillText(d.line, 80, yScore + 76, S - 160);
@@ -69,7 +69,7 @@ function drawBrand(g: CanvasRenderingContext2D) {
   g.strokeStyle = '#6CFF2B'; g.lineWidth = 9; g.shadowColor = '#6CFF2B'; g.shadowBlur = 18;
   g.beginPath(); g.ellipse(0, 0, 44, 28, 0, 0, Math.PI * 2); g.stroke(); g.restore();
   g.fillStyle = '#fff'; g.beginPath(); g.arc(112, 112, 8, 0, Math.PI * 2); g.fill();
-  g.font = "800 44px 'Archivo', sans-serif"; g.textBaseline = 'middle';
+  g.font = "800 44px 'Archivo', 'Montserrat', sans-serif"; g.textBaseline = 'middle';
   g.fillStyle = '#fff'; g.fillText('POLAR', 186, 112);
   g.fillStyle = '#6CFF2B'; g.fillText('LIGHTS', 186 + g.measureText('POLAR ').width, 112);
   g.textBaseline = 'alphabetic';
@@ -103,7 +103,7 @@ export async function nowCardBlob(d: NowCardData, oval: SVGSVGElement | null): P
   const g = c.getContext('2d');
   if (!g) return null;
   try { await document.fonts.ready; } catch { /* system fonts */ }
-  const body = "'Barlow', 'Helvetica Neue', Arial, sans-serif";
+  const body = "'Barlow', 'Golos Text', 'Helvetica Neue', Arial, sans-serif";
   g.fillStyle = '#000'; g.fillRect(0, 0, S, S);
 
   // The oval filling the top-right quarter: the card's own polar chart (480 × 480, pole at the centre,
@@ -140,8 +140,8 @@ export async function nowCardBlob(d: NowCardData, oval: SVGSVGElement | null): P
   // Headline, each line shrunk to fit.
   const fit = (text: string, start: number) => {
     let size = start;
-    g.font = `800 ${size}px 'Archivo', sans-serif`;
-    while (g.measureText(text).width > S - 160 && size > 56) { size -= 4; g.font = `800 ${size}px 'Archivo', sans-serif`; }
+    g.font = `800 ${size}px 'Archivo', 'Montserrat', sans-serif`;
+    while (g.measureText(text).width > S - 160 && size > 56) { size -= 4; g.font = `800 ${size}px 'Archivo', 'Montserrat', sans-serif`; }
     return size;
   };
   const s1 = fit(d.l1.toUpperCase(), 92);
@@ -249,7 +249,7 @@ export async function badgeCardBlob(d: BadgeCardData, badge: SVGSVGElement | nul
   const g = c.getContext('2d');
   if (!g) return null;
   try { await document.fonts.ready; } catch { /* system fonts */ }
-  const body = "'Barlow', 'Helvetica Neue', Arial, sans-serif";
+  const body = "'Barlow', 'Golos Text', 'Helvetica Neue', Arial, sans-serif";
   drawSky(g, S, 45);
   // Darken the sky so the badge and text stand out.
   g.fillStyle = 'rgba(0,0,0,0.45)'; g.fillRect(0, 0, S, S);
@@ -271,8 +271,8 @@ export async function badgeCardBlob(d: BadgeCardData, badge: SVGSVGElement | nul
   g.textAlign = 'center';
   g.fillStyle = '#6CFF2B'; g.font = `600 34px 'JetBrains Mono', monospace`; g.fillText(d.kicker.toUpperCase(), S / 2, 730);
   let size = 92;
-  g.font = `800 ${size}px 'Archivo', sans-serif`;
-  while (g.measureText(d.name).width > S - 160 && size > 52) { size -= 4; g.font = `800 ${size}px 'Archivo', sans-serif`; }
+  g.font = `800 ${size}px 'Archivo', 'Montserrat', sans-serif`;
+  while (g.measureText(d.name).width > S - 160 && size > 52) { size -= 4; g.font = `800 ${size}px 'Archivo', 'Montserrat', sans-serif`; }
   g.fillStyle = '#fff'; g.fillText(d.name, S / 2, 730 + 20 + size);
   let y = 730 + 20 + size;
   if (d.tier) { y += 60; g.fillStyle = d.color; g.font = `700 46px ${body}`; g.fillText(d.tier, S / 2, y); }
