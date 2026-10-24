@@ -11,7 +11,8 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(PhotoLibraryPlugin.class);
         registerPlugin(GoogleSignInPlugin.class);
         registerPlugin(PlayBillingPlugin.class);
-        registerPlugin(LongExposurePlugin.class);
+        // LongExposurePlugin (Sky view's long-exposure camera) is not registered while Sky view is paused;
+        // registering it again also needs the CAMERA permission back in AndroidManifest.xml.
         super.onCreate(savedInstanceState);
     }
 }
