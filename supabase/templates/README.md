@@ -4,8 +4,8 @@ Polar Lights–branded templates for Supabase Auth (black and green, LIGHTS word
 bulletproof button). Table layout with inline styles so they render in Gmail, Outlook and Apple Mail.
 The icon loads from `https://www.polarlights.io/icons/icon-192.png`.
 
-**Languages (#28):** every template and subject holds English, Spanish, French, German and Dutch and picks
-one with Go-template conditionals on the user's saved language (`{{ .Data.locale }}`, user metadata set at
+**Languages (#28):** every template and subject holds English, Spanish, French, German, Dutch, Norwegian Bokmål,
+Danish, Swedish, Finnish and Russian and picks one with Go-template conditionals on the user's saved language (`{{ .Data.locale }}`, user metadata set at
 sign-up and by the app). Anyone without a saved language gets English.
 
 Edit `build.py` and run `python3 supabase/templates/build.py` to regenerate. Then, for each row, paste the
