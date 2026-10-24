@@ -24,6 +24,7 @@ import { PHONE_QUERY, usePhone } from '../lib/usePhone';
 import { INSTALL_EVENT } from '../components/InstallPrompt';
 import { useStore, type Tab } from '../store';
 import { Field } from '../components/Field';
+import { FeedbackForm } from '../components/Feedback';
 import { Plans } from './Plans';
 import { applyLocale, useI18n, type I18n } from '../i18n/I18n';
 import { LOCALES, LOCALE_NAMES, isLocale } from '../i18n/config';
@@ -827,6 +828,11 @@ function AccountSettings() {
       <Language />
       <Billing />
       <ChangePassword email={email} />
+      <section aria-labelledby="feedback-h" style={{ display: 'flex', flexDirection: 'column', gap: 12, borderTop: '1px solid var(--line)', paddingTop: 24 }}>
+        <h2 id="feedback-h" className="display" style={h2}>{t('feedback.h2a')} <span className="hl">{t('feedback.h2b')}</span></h2>
+        <span style={{ fontSize: 14, color: 'var(--soft)' }}>{t('feedback.intro')}</span>
+        <div style={{ maxWidth: 640 }}><FeedbackForm /></div>
+      </section>
       <section aria-labelledby="signout-h" style={{ display: 'flex', flexDirection: 'column', gap: 12, borderTop: '1px solid var(--line)', paddingTop: 24 }}>
         <h2 id="signout-h" className="display" style={h2}>{t('logout.h2a')} <span className="hl">{t('logout.h2b')}</span></h2>
         <span style={{ fontSize: 14, color: 'var(--soft)' }}>{t('logout.body')}</span>

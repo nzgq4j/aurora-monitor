@@ -6,7 +6,6 @@ import { initials, useAuth } from '../lib/auth';
 import { TIERS } from '../data';
 import { useStore } from '../store';
 import { useLocations } from '../lib/locations';
-import { listPhotos } from '../lib/gallery';
 import { feed, myMember } from '../lib/community';
 import { rank } from '../lib/badges';
 import { SITE } from '../lib/site';
@@ -14,7 +13,7 @@ import { useI18n } from '../i18n/I18n';
 import { applyLocale } from '../i18n/I18n';
 import { LOCALES, LOCALE_NAMES } from '../i18n/config';
 import { useNightMode, type NightSetting } from '../components/NightMode';
-import { SkyGallery } from '../components/SkyGallery';
+import { FeedbackForm } from '../components/Feedback';
 import { BottomSheet } from '../components/BottomSheet';
 import { Plans } from './Plans';
 import { Billing, ChangePassword, Locations, useAccountDeletion } from './Account';
@@ -29,7 +28,7 @@ import type { MessageKey } from '../i18n/core';
 type View = '' | 'locations' | 'plans' | 'billing' | 'password';
 const VIEWS: View[] = ['locations', 'plans', 'billing', 'password'];
 const TITLES: Record<Exclude<View, ''>, MessageKey> = { locations: 'you.locations', plans: 'dash.tab.plans', billing: 'you.plan', password: 'you.password' };
-type Sheet = null | 'language' | 'night' | 'logout' | 'delete';
+type Sheet = null | 'language' | 'night' | 'logout' | 'delete' | 'feedback';
 
 const readView = (): View => {
   const v = window.location.hash.slice(1) as View;
@@ -41,7 +40,7 @@ const P = {
   back: 'M15 5l-7 7 7 7',
   pin: 'M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Zm0-8.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
   photo: 'M4 6h16v13H4zM8.5 11a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM20 16l-5-5-8 8',
-  camera: 'M4 8h3l2-3h6l2 3h3v11H4zM12 16.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z',
+  chat: 'M5 5h14v10H10l-4 4v-4H5z',
   globe: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm-9 9h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z',
   moon: 'M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z',
   bell: 'M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15L6 16Zm4 4.5a2.2 2.2 0 0 0 4 0',
@@ -94,8 +93,6 @@ export function You() {
   const { locations, load } = useLocations();
   const [view, setView] = useState<View>('');
   const [sheet, setSheet] = useState<Sheet>(null);
-  const [gallery, setGallery] = useState(false);
-  const [photos, setPhotos] = useState<number | null>(null);
   // Photos this member has posted to the community gallery (pending ones included); a page holds at most 60.
   const [posted, setPosted] = useState<number | null>(null);
   const [langBusy, setLangBusy] = useState(false);
@@ -107,7 +104,6 @@ export function You() {
   useEffect(() => { load(); }, [load]);
   useEffect(() => { if (auth.user) void myMember().then(m => setPoints(m?.points ?? null)); }, [auth.user]);
   useEffect(() => { if (auth.user) void feed('mine', { limit: 60 }).then(r => setPosted(r?.length ?? null)); }, [auth.user]);
-  useEffect(() => { listPhotos().then(p => setPhotos(p.length)).catch(() => setPhotos(0)); }, [gallery]);
   useEffect(() => {
     const sync = () => { const v = readView(); if (!v) depth.current = 0; setView(v); setSheet(null); };
     sync();
@@ -204,7 +200,6 @@ export function You() {
       <Group label={t('you.group.aurora')}>
         <Row icon={P.pin} label={t('you.locations')} value={String(locations.length)} onClick={() => open('locations')} />
         {signedIn && <Row icon={P.badge} label={t('badges.title')} value={points === null ? '' : t(`rank.${rank(points).id}` as MessageKey)} onClick={() => go('badges')} />}
-        <Row icon={P.camera} label={t('gallery.title')} value={photos === null ? '' : String(photos)} onClick={() => setGallery(true)} />
         {signedIn && <Row icon={P.photo} label={t('you.myGallery')} value={posted === null ? '' : posted >= 60 ? '60+' : String(posted)} href="/gallery?f=mine" />}
       </Group>
 
@@ -218,6 +213,9 @@ export function You() {
         <>
           <Group label={t('you.group.membership')}>
             <Row icon={P.card} label={t('you.plan')} value={t(`tier.${plan.id}`)} onClick={() => open('billing')} />
+          </Group>
+          <Group label={t('you.group.support')}>
+            <Row icon={P.chat} label={t('feedback.row')} onClick={() => setSheet('feedback')} />
           </Group>
           <Group label={t('you.group.account')}>
             {hasPassword && <Row icon={P.lock} label={t('you.password')} onClick={() => open('password')} />}
@@ -281,7 +279,11 @@ export function You() {
         </BottomSheet>
       )}
 
-      {gallery && <SkyGallery onClose={() => setGallery(false)} />}
+      {sheet === 'feedback' && (
+        <BottomSheet title={t('feedback.title')} onClose={close}>
+          <FeedbackForm onSent={() => { close(); set({ toast: t('feedback.thanks') }); }} />
+        </BottomSheet>
+      )}
     </main>
   );
 }

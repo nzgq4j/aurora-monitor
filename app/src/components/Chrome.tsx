@@ -35,10 +35,6 @@ export function Header({ kpLabel }: { kpLabel: string }) {
                 </button>
               );
             })}
-            {/* Tablets (touch screens wider than the phone layout) get Sky view in the header. */}
-            <button type="button" className={'btn nav-item nav-sky' + (current === 'sky' ? ' on' : '')} aria-current={current === 'sky' ? 'page' : undefined} onClick={() => go('sky')}>
-              {t('nav.sky')}
-            </button>
           </nav>
         </div>
         <div className="header-right">
@@ -64,7 +60,7 @@ export function Header({ kpLabel }: { kpLabel: string }) {
 const ICONS: Record<string, string> = {
   now: 'M4 18c2-6 5-10 8-10s6 4 8 10M7 18c1.4-3.6 3-5.5 5-5.5s3.6 1.9 5 5.5M3 21h18',
   map: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm-9 9h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z',
-  sky: 'M4 8h3l1.6-2.4h6.8L17 8h3v11H4zM12 16.6a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8Z',
+  gallery: 'M4 6h16v13H4zM8.5 11a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM20 16l-5-5-8 8',
   alerts: 'M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15L6 16Zm4 4.5a2.2 2.2 0 0 0 4 0',
   account: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7.5 8.5c.9-3.6 3.8-5.5 7.5-5.5s6.6 1.9 7.5 5.5',
 };
@@ -87,8 +83,7 @@ export function TabBar() {
     <nav className="tabbar" aria-label={t('nav.main')}>
       {tab('now', t('nav.now'), screen === 'home', () => go('home'))}
       {tab('map', t('nav.map'), screen === 'map', () => go('map'))}
-      {/* The Sky tab: the community gallery, with Sky view's camera a tap away. */}
-      {tab('sky', t('nav.sky'), screen === 'sky' || screen === 'gallery', () => go('gallery'))}
+      {tab('gallery', t('nav.gallery'), screen === 'gallery', () => go('gallery'))}
       {tab('alerts', t('nav.alerts'), screen === 'alerts', () => go('alerts'))}
       {tab('account', t('nav.you'), you, () => go('account', { tab: 'overview' }))}
     </nav>
