@@ -15,7 +15,6 @@ import type { MessageKey } from '../i18n/core';
 const FILTERS: Filter[] = ['recent', 'tonight', 'storm', 'near', 'top'];
 /** Recent shows this many photos in all (the database stops there too). */
 const RECENT = 20;
-const CAMERA = 'M4 8h3l1.6-2.4h6.8L17 8h3v11H4zM12 16.6a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8Z';
 const PLUS = 'M12 5v14M5 12h14';
 const HEART = 'M12 20s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 9c0 6-8 11-8 11z';
 
@@ -116,7 +115,6 @@ export function Gallery({ kp }: { kp: number | null }) {
       <div className="gal-head">
         <h1 className="you-title">{t('gal.title')}</h1>
         <div className="gal-head-actions">
-          <button type="button" className="btn gal-icon-btn gal-camera" onClick={() => go('sky')} aria-label={t('gal.openCamera')}><Svg d={CAMERA} size={22} /></button>
           {user
             ? <Link href="/gallery/post" className="gal-post"><Svg d={PLUS} size={18} />{t('gal.post')}</Link>
             : <button type="button" className="btn gal-post" onClick={() => go('signin')}><Svg d={PLUS} size={18} />{t('gal.post')}</button>}

@@ -33,7 +33,7 @@ works without an account, and each of these is opt-in).
 | Location → **Precise location** | Coordinates of saved places, including a device position the user saves | App functionality |
 | Financial info → **Purchase history** | Plan, subscription status and renewal date | App functionality, Account management |
 | Photos and videos → **Photos** | Photos the user posts to the community gallery | App functionality |
-| App activity → **Other user-generated content** | Captions, sighting reports, helpful votes, reports and blocks | App functionality |
+| App activity → **Other user-generated content** | Captions, sighting reports, helpful votes, reports and blocks, and issue reports or feature requests sent from the dashboard | App functionality |
 | Device or other IDs → **Device or other IDs** | Firebase push token, for push alerts | App functionality |
 
 Not collected (leave unticked): contacts, messages, health and fitness, audio, files and docs,
@@ -47,8 +47,6 @@ Why:
   chooses to post publicly.
 - **Payment info isn't collected.** Card details never reach the app: Google Play handles purchases
   in the app and Stripe handles them on the website.
-- **Sky view photos aren't collected.** They stay on the phone unless the user posts one (the Photos
-  row).
 - **Server logs aren't declared.** Hosting and database logs (IP address, browser type) are standard
   security logs and aren't used to infer location.
 
@@ -65,13 +63,13 @@ description 80, full description 4,000 characters.
 Polar Lights: Aurora Forecast
 ```
 
-**Short description** (74 characters)
+**Short description** (71 characters)
 
 ```
-Aurora forecasts, alerts and a sky camera for chasing the northern lights.
+Aurora forecasts, live maps and alerts for chasing the northern lights.
 ```
 
-**Full description** (about 2,600 characters)
+**Full description** (about 2,400 characters)
 
 ```
 Know when to look up. Polar Lights turns live space weather into a simple answer for where you are: is the aurora worth going out for tonight, and when?
@@ -97,11 +95,6 @@ FORECASTS AND SPACE WEATHER
 • Solar wind speed, density, Bz and hemispheric power over the last 24 hours
 • The Sun now: the latest images from NASA's SDO and the SOHO coronagraph, plus a time-lapse
 • Every chart has a short "What this shows" explanation, so you learn as you go
-
-SKY VIEW CAMERA
-• Point your phone at the sky to see where the aurora oval lies
-• Night photos with long exposures on supported phones
-• Save to a Polar Lights album or share in one tap
 
 COMMUNITY
 • Tap "I saw it" to report a sighting and help others nearby

@@ -1,17 +1,7 @@
-import type { Metadata } from 'next';
-import { getI18n, routeLocale } from '../../../i18n/server';
-import { loadNow } from '../../../lib/now';
-import { Sky } from '../../../screens/Sky';
+import { redirect } from 'next/navigation';
 
-// The current Kp for the oval's edge; rebuilt in the background like the Now page.
-export const revalidate = 120;
-
-export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
-  const { t } = await getI18n(await routeLocale(params));
-  return { title: t('title.sky') };
-}
-
-export default async function Page() {
-  const data = await loadNow();
-  return <Sky kp={data.kp?.kp ?? null} />;
+/** Sky view (the camera) is paused for now; old links and the installed app's history land on the gallery. */
+export default async function Page({ params }: { params: Promise<{ lang: string }> }) {
+  const { lang } = await params;
+  redirect(`/${lang}/gallery`);
 }

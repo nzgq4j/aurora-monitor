@@ -610,8 +610,6 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 .sky-save { align-self: center; font-size: 16px; padding: 12px 22px; }
 
 /* Sky view in the menus: touch devices only (phones in the tab bar, tablets in the header). */
-.nav-item.nav-sky { display: none; }
-@media (pointer: coarse) and (max-width: 1024px) { .nav-item.nav-sky { display: inline-flex; } }
 /* The Sky tab opens the gallery, so it shows on every phone; the gallery's camera button only on touch screens. */
 .gal-camera { display: none !important; }
 @media (pointer: coarse) and (max-width: 1024px) { .gal-camera { display: flex !important; } }
@@ -886,3 +884,9 @@ button.pill-primary.danger { background: var(--red); }
 .mod-body p { margin: 4px 0; color: var(--soft); }
 .mod-meta { font-size: 13px; color: var(--muted); }
 .mod-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+
+/* Report an issue / request a feature (components/Feedback) */
+.feedback { display: flex; flex-direction: column; gap: 14px; }
+.feedback .gal-chips { margin: 0; padding: 0; flex-wrap: wrap; overflow: visible; }
+.feedback-done { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; font-size: 15px; color: var(--soft); }
+.feedback-done b { color: var(--green); font-size: 17px; }
