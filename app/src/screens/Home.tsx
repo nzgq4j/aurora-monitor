@@ -16,6 +16,7 @@ import { Tonight } from '../components/Tonight';
 import { G_SCALE } from '../lib/astro';
 import { SDO_IMAGES } from '../lib/sdo';
 import { SunTimelapse } from '../components/SunTimelapse';
+import { SunImages } from '../components/SunImages';
 import { useLocations } from '../lib/locations';
 import { useConditions } from '../lib/useConditions';
 import { INTL_TAG } from '../i18n/config';
@@ -319,23 +320,7 @@ export function Home({ data, season }: { data: NowData; season?: AccountData }) 
         summary={spots?.regions.length ? `${tn('detail.sunRegions', spots.regions.length)} · ${t('detail.sun', { n: SDO_IMAGES.length })}` : t('detail.sun', { n: SDO_IMAGES.length })}>
         <span style={{ fontSize: 13, color: 'var(--muted)' }}>{t('home.sun.source')}</span>
         <SunspotRegions />
-        {/* The visible-light (HMI) view is the labelled disc above. */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(220px,100%),1fr))', gap: 16 }}>
-          {SDO_IMAGES.filter(img => img.id !== 'HMIIC').map(img => (
-            <figure key={img.id} style={{ margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img.url} alt={t('home.sun.alt', { band: img.label })} loading="lazy" width={512} height={512}
-                style={{ width: '100%', height: 'auto', aspectRatio: '1', borderRadius: 12, background: '#050605', border: '1px solid var(--line)' }} />
-              <figcaption style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 13 }}>
-                <span style={{ fontWeight: 700 }}>{img.label}</span><span style={{ color: 'var(--muted)' }}>{t(`sdo.${img.id}`)}</span>
-              </figcaption>
-              <details className="toggle-info">
-                <summary>{t('chart.explain')}</summary>
-                <p>{t(`sdo.${img.id}.info`)}</p>
-              </details>
-            </figure>
-          ))}
-        </div>
+        <SunImages />
         <SunTimelapse />
       </DetailCard>
 

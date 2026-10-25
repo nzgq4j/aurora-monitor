@@ -11,3 +11,7 @@ export const SDO_IMAGES = [
   // Not a disc image: SOHO's coronagraph blocks the Sun (the white circle marks its edge) to show CMEs leaving it.
   { id: 'C2' as const, label: 'LASCO C2', url: 'https://soho.nascom.nasa.gov/data/realtime/c2/512/latest.jpg' },
 ];
+
+/** The same image at another size: SDO publishes 512, 1024 and 2048 px; LASCO C2 goes up to 1024. */
+export const sdoAt = (url: string, size: 1024 | 2048) =>
+  url.replace('/latest_512_', `/latest_${size}_`).replace('/c2/512/', '/c2/1024/');
