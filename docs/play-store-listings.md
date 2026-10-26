@@ -1,9 +1,13 @@
 # Google Play: translated store listings
 
-Translations of the English store listing in [`play-store.md`](play-store.md) for the five languages added
-in October 2026. Paste each into Play Console → **Grow → Store presence → Main store listing → Manage
+Translations of the English store listing in [`play-store.md`](play-store.md) for the other nine app
+languages. Paste each into Play Console → **Grow → Store presence → Main store listing → Manage
 translations → Add your own translations**, choosing the language shown. Limits: title 30, short
 description 80, full description 4,000 characters; every entry below is within them.
+
+[`play-store-listings.csv`](play-store-listings.csv) holds the same text plus English, one row per
+language (Play language code, app name, short description, full description), for **Import a file** on
+the store listing page.
 
 Terms follow the app's own translations (`app/src/i18n/messages/`), so the listing and the app use the
 same words. If the English listing, prices or trial change, update these too.
@@ -296,4 +300,236 @@ Polar Lights можно пользоваться бесплатно: онлай�
 Данные: Space Weather Prediction Center NOAA, NASA, ESA, GFZ Potsdam, EUMETSAT и Open-Meteo. Polar Lights — независимый сервис, не связанный с этими организациями.
 
 Конфиденциальность: https://www.polarlights.io/privacy
+```
+
+## Spanish (Español), `es-ES`
+
+**App name**
+
+```
+Polar Lights: Auroras boreales
+```
+
+**Short description**
+
+```
+Previsiones de auroras, mapas en directo y alertas para cazar auroras boreales.
+```
+
+**Full description**
+
+```
+Sabe cuándo mirar al cielo. Polar Lights convierte el clima espacial del momento en una respuesta sencilla para donde estás: ¿merece la pena salir a ver la aurora esta noche, y cuándo?
+
+¿SALIR AHORA O MÁS TARDE?
+• Una puntuación para salir en tu lugar, que combina la previsión de auroras, las nubes, la oscuridad y la Luna
+• La mejor franja para observar en las próximas 12 horas, hora a hora
+• Tu cielo: la probabilidad de aurora cerca de ti, las nubes por capas, cuándo oscurece y el Kp que necesita tu lugar
+
+MAPA DE AURORAS EN DIRECTO
+• La previsión de auroras OVATION de la NOAA en un globo 3D y un mapa con zoom
+• Un control de tiempo para recorrer las últimas 24 horas del óvalo auroral
+• Luces de ciudades, zonas oscuras, los mejores lugares para observar y avistamientos recientes de otros miembros
+
+ALERTAS QUE IMPORTAN
+• Alertas cuando es probable ver auroras donde estás, por correo o notificación push al instante, con horas de silencio
+• Alertas de cielo despejado cuando se abren las nubes durante la actividad
+• Para los más aficionados: Bz hacia el sur, inicio de subtormentas, fuerte acoplamiento del viento solar, llegada de CME y fulguraciones solares
+
+PREVISIONES Y CLIMA ESPACIAL
+• Previsión de Kp en bloques de 3 horas, el pico del día y la perspectiva de 27 días de la NOAA
+• Perspectiva de tormentas con probabilidades de tormentas geomagnéticas, previsiones de CME y actividad de fulguraciones
+• Velocidad y densidad del viento solar, Bz y potencia hemisférica de las últimas 24 horas
+• El Sol ahora: las imágenes más recientes del SDO de la NASA y del coronógrafo SOHO, además de un timelapse
+• Cada gráfico incluye una breve explicación, «Qué muestra», para que aprendas sobre la marcha
+
+COMUNIDAD
+• Toca «La he visto» para avisar de un avistamiento y ayudar a otros cerca de ti
+• Publica tus mejores fotos en la galería moderada de la comunidad
+• Consigue insignias y rangos por avistamientos confirmados
+
+HECHA PARA LA NOCHE
+• El modo nocturno rojo protege tu visión nocturna
+• Disponible en español, inglés, francés, alemán, neerlandés, noruego, danés, sueco, finés y ruso
+
+PLANES
+Polar Lights es gratuita, con el mapa en directo, las previsiones y las alertas para un lugar. Chaser añade hasta 10 lugares, alertas push al instante, las alertas técnicas, la previsión de Kp en bloques de 3 horas y la perspectiva de 27 días, nubes y oscuridad hora a hora, gráficos del viento solar y el mapa de lugares oscuros. Chaser cuesta 3,99 USD al mes o 36 USD al año (ahorra un 25 %), con 7 días de prueba gratis para nuevos suscriptores. El precio en tu país aparece en Google Play antes de suscribirte.
+
+Datos del Space Weather Prediction Center de la NOAA, la NASA, la ESA, el GFZ Potsdam, EUMETSAT y Open-Meteo. Polar Lights es independiente y no está afiliada a estas organizaciones.
+
+Privacidad: https://www.polarlights.io/privacy
+```
+
+## French (Français), `fr-FR`
+
+**App name**
+
+```
+Polar Lights: Aurores boréales
+```
+
+**Short description**
+
+```
+Prévisions d’aurores, cartes en direct et alertes pour chasser les aurores.
+```
+
+**Full description**
+
+```
+Sachez quand lever les yeux. Polar Lights transforme la météo spatiale du moment en une réponse simple pour votre lieu : l’aurore vaut-elle la peine de sortir ce soir, et à quelle heure ?
+
+SORTIR MAINTENANT OU PLUS TARD ?
+• Un score de sortie pour votre lieu, qui combine la prévision d’aurores, les nuages, l’obscurité et la Lune
+• Le meilleur créneau d’observation des 12 prochaines heures, heure par heure
+• Votre ciel : la probabilité d’aurore près de chez vous, les nuages par couche, l’heure de la nuit noire et le Kp dont votre lieu a besoin
+
+CARTE DES AURORES EN DIRECT
+• La prévision d’aurores OVATION de la NOAA sur un globe 3D et une carte zoomable
+• Un curseur temporel pour parcourir les 24 dernières heures de l’ovale auroral
+• Lumières des villes, zones sombres, meilleurs points d’observation et observations récentes des autres membres
+
+DES ALERTES UTILES
+• Des alertes quand une aurore est probable chez vous, par e-mail ou notification push instantanée, avec des heures calmes
+• Des alertes ciel dégagé quand les nuages s’ouvrent pendant l’activité
+• Pour les passionnés : Bz orienté sud, début de sous-orage, fort couplage du vent solaire, arrivée de CME et éruptions solaires
+
+PRÉVISIONS ET MÉTÉO SPATIALE
+• Prévision du Kp par tranches de 3 heures, le pic du jour et les perspectives à 27 jours de la NOAA
+• Perspectives d’orages avec les probabilités d’orages géomagnétiques, les prévisions de CME et l’activité éruptive
+• Vitesse et densité du vent solaire, Bz et puissance hémisphérique sur les 24 dernières heures
+• Le Soleil maintenant : les dernières images du SDO de la NASA et du coronographe SOHO, plus un timelapse
+• Chaque graphique a une courte explication, « Ce que cela montre », pour apprendre au fil de l’eau
+
+COMMUNAUTÉ
+• Touchez « Je l’ai vue » pour signaler une observation et aider les autres à proximité
+• Publiez vos plus belles photos dans la galerie modérée de la communauté
+• Gagnez des badges et des rangs pour vos observations confirmées
+
+PENSÉE POUR LA NUIT
+• Le mode nuit rouge préserve votre vision nocturne
+• Disponible en français, anglais, allemand, espagnol, néerlandais, norvégien, danois, suédois, finnois et russe
+
+FORMULES
+Polar Lights est gratuite, avec la carte en direct, les prévisions et les alertes pour un lieu. Chaser ajoute jusqu’à 10 lieux, les alertes push instantanées, les alertes techniques, la prévision du Kp par tranches de 3 heures et les perspectives à 27 jours, les nuages et l’obscurité heure par heure, les graphiques du vent solaire et la carte des sites sombres. Chaser coûte 3,99 USD par mois ou 36 USD par an (25 % d’économie), avec 7 jours d’essai gratuit pour les nouveaux abonnés. Le prix dans votre pays est indiqué dans Google Play avant l’abonnement.
+
+Données du Space Weather Prediction Center de la NOAA, de la NASA, de l’ESA, du GFZ Potsdam, d’EUMETSAT et d’Open-Meteo. Polar Lights est indépendante et n’est pas affiliée à ces organisations.
+
+Confidentialité : https://www.polarlights.io/privacy
+```
+
+## German (Deutsch), `de-DE`
+
+**App name**
+
+```
+Polar Lights: Polarlichter
+```
+
+**Short description**
+
+```
+Polarlicht-Vorhersagen, Live-Karten und Alarme für die Jagd nach Nordlichtern.
+```
+
+**Full description**
+
+```
+Wissen, wann Sie nach oben schauen sollten. Polar Lights macht aus dem aktuellen Weltraumwetter eine einfache Antwort für Ihren Ort: Lohnt es sich heute Nacht, für das Polarlicht hinauszugehen, und wann?
+
+JETZT RAUS ODER SPÄTER?
+• Ein Ausgeh-Wert für Ihren Ort aus Polarlicht-Vorhersage, Bewölkung, Dunkelheit und Mond
+• Das beste Beobachtungsfenster der nächsten 12 Stunden, Stunde für Stunde
+• Ihr Himmel: die Polarlicht-Chance in Ihrer Nähe, Wolken nach Schichten, wann es dunkel wird und welchen Kp Ihr Ort braucht
+
+LIVE-POLARLICHTKARTE
+• Die OVATION-Polarlichtvorhersage der NOAA auf einem 3D-Globus und einer zoombaren Karte
+• Ein Zeitregler durch die letzten 24 Stunden des Polarlichtovals
+• Stadtlichter, dunkle Gebiete, die besten Beobachtungsorte und aktuelle Sichtungen anderer Mitglieder
+
+ALARME, DIE ZÄHLEN
+• Alarme, wenn bei Ihnen Polarlicht wahrscheinlich ist, per E-Mail oder sofort als Push-Benachrichtigung, mit Ruhezeiten
+• Klarsicht-Alarme, wenn die Wolken während aktiver Phasen aufreißen
+• Für Enthusiasten: südwärts gerichtetes Bz, Substurm-Beginn, starke Sonnenwind-Kopplung, CME-Ankünfte und Sonneneruptionen
+
+VORHERSAGEN UND WELTRAUMWETTER
+• Kp-Vorhersage in 3-Stunden-Blöcken, der Tageshöchstwert und der 27-Tage-Ausblick der NOAA
+• Sturmausblick mit Wahrscheinlichkeiten für geomagnetische Stürme, CME-Vorhersagen und Eruptionsaktivität
+• Sonnenwind-Geschwindigkeit und -Dichte, Bz und hemisphärische Leistung der letzten 24 Stunden
+• Die Sonne jetzt: die neuesten Bilder von NASAs SDO und dem SOHO-Koronografen, dazu ein Zeitraffer
+• Jedes Diagramm hat eine kurze Erklärung, „Was das zeigt“, damit Sie nebenbei dazulernen
+
+COMMUNITY
+• Tippen Sie auf „Ich sehe es“, um eine Sichtung zu melden und anderen in der Nähe zu helfen
+• Veröffentlichen Sie Ihre besten Aufnahmen in der moderierten Community-Galerie
+• Sammeln Sie Abzeichen und Ränge für bestätigte Sichtungen
+
+GEMACHT FÜR DIE NACHT
+• Der rote Nachtmodus schont Ihre Nachtsicht
+• Verfügbar auf Deutsch, Englisch, Spanisch, Französisch, Niederländisch, Norwegisch, Dänisch, Schwedisch, Finnisch und Russisch
+
+TARIFE
+Polar Lights ist kostenlos nutzbar, mit Live-Karte, Vorhersagen und Alarmen für einen Ort. Chaser bietet bis zu 10 Orte, sofortige Push-Alarme, die technischen Alarme, die Kp-Vorhersage in 3-Stunden-Blöcken und den 27-Tage-Ausblick, Bewölkung und Dunkelheit Stunde für Stunde, Sonnenwind-Diagramme und die Karte dunkler Beobachtungsorte. Chaser kostet 3,99 USD pro Monat oder 36 USD pro Jahr (25 % gespart), mit 7 Tagen kostenlosem Test für neue Abonnenten. Der Preis in Ihrem Land wird in Google Play angezeigt, bevor Sie abonnieren.
+
+Daten vom Space Weather Prediction Center der NOAA, NASA, ESA, GFZ Potsdam, EUMETSAT und Open-Meteo. Polar Lights ist unabhängig und nicht mit diesen Organisationen verbunden.
+
+Datenschutz: https://www.polarlights.io/privacy
+```
+
+## Dutch (Nederlands), `nl-NL`
+
+**App name**
+
+```
+Polar Lights: Noorderlicht
+```
+
+**Short description**
+
+```
+Noorderlichtverwachtingen, livekaarten en meldingen voor noorderlichtjagers.
+```
+
+**Full description**
+
+```
+Weet wanneer je omhoog moet kijken. Polar Lights maakt van het actuele ruimteweer een eenvoudig antwoord voor jouw plek: is het noorderlicht vanavond de moeite waard om naar buiten te gaan, en wanneer?
+
+NU NAAR BUITEN OF LATER?
+• Een ga-naar-buiten-score voor jouw plek, op basis van de noorderlichtverwachting, bewolking, duisternis en de maan
+• Het beste kijkmoment in de komende 12 uur, uur voor uur
+• Jouw hemel: de kans op noorderlicht bij jou in de buurt, wolken per laag, wanneer het donker wordt en welke Kp jouw plek nodig heeft
+
+LIVE NOORDERLICHTKAART
+• De OVATION-noorderlichtverwachting van de NOAA op een 3D-globe en een zoombare kaart
+• Een tijdschuif door de afgelopen 24 uur van de poolovaal
+• Stadslicht, donkere gebieden, de beste kijkplekken en recente waarnemingen van andere leden
+
+MELDINGEN DIE ERTOE DOEN
+• Meldingen als noorderlicht waarschijnlijk is bij jou, per e-mail of direct als pushmelding, met stille uren
+• Heldere-hemelmeldingen als de wolken openbreken tijdens activiteit
+• Voor fanatieke jagers: zuidwaartse Bz, begin van substormen, sterke koppeling met de zonnewind, aankomst van CME's en zonnevlammen
+
+VERWACHTINGEN EN RUIMTEWEER
+• Kp-verwachting in blokken van 3 uur, de piek van de dag en de 27-daagse vooruitblik van de NOAA
+• Stormvooruitblik met kansen op geomagnetische stormen, CME-verwachtingen en vlamactiviteit
+• Snelheid en dichtheid van de zonnewind, Bz en hemisferisch vermogen van de afgelopen 24 uur
+• De zon nu: de nieuwste beelden van NASA's SDO en de SOHO-coronagraaf, plus een timelapse
+• Elke grafiek heeft een korte uitleg, 'Wat dit laat zien', zodat je onderweg bijleert
+
+COMMUNITY
+• Tik op 'Ik zie het' om een waarneming te melden en anderen in de buurt te helpen
+• Plaats je mooiste foto's in de gemodereerde communitygalerij
+• Verdien badges en rangen voor bevestigde waarnemingen
+
+GEMAAKT VOOR HET DONKER
+• De rode nachtmodus beschermt je nachtzicht
+• Beschikbaar in het Nederlands, Engels, Duits, Spaans, Frans, Noors, Deens, Zweeds, Fins en Russisch
+
+ABONNEMENTEN
+Polar Lights is gratis te gebruiken, met de livekaart, verwachtingen en meldingen voor één plek. Chaser voegt tot 10 plekken toe, directe pushmeldingen, de technische meldingen, de Kp-verwachting in blokken van 3 uur en de 27-daagse vooruitblik, bewolking en duisternis per uur, zonnewindgrafieken en de kaart met donkere kijkplekken. Chaser kost 3,99 USD per maand of 36 USD per jaar (bespaar 25%), met 7 dagen gratis proberen voor nieuwe abonnees. De prijs in jouw land zie je in Google Play voordat je een abonnement neemt.
+
+Gegevens van het Space Weather Prediction Center van de NOAA, NASA, ESA, GFZ Potsdam, EUMETSAT en Open-Meteo. Polar Lights is onafhankelijk en niet verbonden aan deze organisaties.
+
+Privacy: https://www.polarlights.io/privacy
 ```
