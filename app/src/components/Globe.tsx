@@ -343,22 +343,34 @@ export function Globe({ clouds, night, lights, best, saved, places, sightings = 
       const kpLinesByK = new Map<number, InstanceType<typeof Line2>[]>();
       for (let k = 1; k <= 9; k++) {
         const [r, g, b] = kpColor(k);
-        for (const south of [false, true]) {
-          const pos = kpLine(k, south).flatMap(([la, lo]) => toVector(T, la, lo, R.kpLines).toArray());
-          const geo = new LineGeometry();
-          geo.setPositions(pos);
+        for (let i = 0; i < 2; i++) {
           const mat = new LineMaterial({ color: new T.Color().setRGB(r / 255, g / 255, b / 255, T.SRGBColorSpace).getHex(), linewidth: 1.4, transparent: true, opacity: 0.75, dashed: true, dashSize: 0.012, gapSize: 0.02 });
-          const line = new Line2(geo, mat);
-          line.computeLineDistances();
+          const line = new Line2(new LineGeometry(), mat);
           kpMats.push(mat);
           kpLinesByK.set(k, [...(kpLinesByK.get(k) ?? []), line]);
           kpGroup.add(line);
         }
       }
+      // The lines follow the oval's shape at the current time (lib/kpLines), so they're redrawn as it turns.
+      let kpDrawnAt = 0;
+      const drawKp = () => {
+        const t = Date.now();
+        for (const [k, lines] of kpLinesByK) lines.forEach((line, i) => {
+          const geo = new LineGeometry();
+          geo.setPositions(kpLine(k, i === 1, t).flatMap(([la, lo]) => toVector(T, la, lo, R.kpLines).toArray()));
+          line.geometry.dispose();
+          line.geometry = geo;
+          line.computeLineDistances();
+        });
+        kpDrawnAt = t;
+      };
+      const kpTimer = setInterval(() => { if (kpGroup.visible) drawKp(); }, 6e5);
+      cleanups.push(() => clearInterval(kpTimer));
       kpGroup.visible = false;
       scene.add(kpGroup);
       const setKp = (on: boolean, now: number | null) => {
         kpGroup.visible = on;
+        if (on && Date.now() - kpDrawnAt > 6e5) drawKp();
         const current = now === null ? null : Math.max(1, Math.min(9, Math.round(now)));
         for (const [k, lines] of kpLinesByK) for (const line of lines) {
           const bold = k === current, mat = line.material;

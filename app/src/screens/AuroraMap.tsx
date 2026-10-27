@@ -278,20 +278,6 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
         }
       }
 
-      // Kp reach lines (both hemispheres), coloured on the same scale.
-      const group = L.layerGroup();
-      for (let k = 1; k <= 9; k++) {
-        const on = k === current;
-        const style = { pane: 'kplines', color: rgb(kpColor(k)), weight: on ? 3 : 1.4, opacity: on ? 1 : 0.75, dashArray: on ? undefined : '3 5', interactive: false };
-        const north = kpLine(k), south = kpLine(k, true);
-        const label = north.find(p => p[1] === -60);
-        for (const dx of COPIES) {
-          L.polyline(north.map(([la, lo]) => [la, lo + dx] as [number, number]), style).addTo(group);
-          L.polyline(south.map(([la, lo]) => [la, lo + dx] as [number, number]), style).addTo(group);
-          if (label) L.marker([label[0], label[1] + dx], { pane: 'labels', interactive: false, keyboard: false, icon: L.divIcon({ className: on ? 'map-kp map-kp-on' : 'map-kp', html: `<span style="color:${rgb(kpColor(k))}">Kp ${k}</span>`, iconSize: undefined }) }).addTo(group);
-        }
-      }
-      layers.current.kp = group;
 
       // GridLayer wraps tile columns itself, so clouds repeat across every world copy.
       const CloudLayer = L.GridLayer.extend({
@@ -323,7 +309,36 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
       if (!cancelled) setReady(true);
     })();
     return () => { cancelled = true; mapRef.current?.remove(); mapRef.current = null; cityMarkers.current = []; };
-  }, [current]); // eslint-disable-line react-hooks/exhaustive-deps -- t is fixed for the page's lifetime
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- t is fixed for the page's lifetime
+
+  // Kp reach lines (both hemispheres), coloured on the same scale. They follow the oval's shape at the
+  // current time (lib/kpLines), so they're redrawn every ten minutes while shown.
+  const [kpTick, setKpTick] = useState(0);
+  useEffect(() => {
+    if (!on.kp) return;
+    const id = setInterval(() => setKpTick(n => n + 1), 6e5);
+    return () => clearInterval(id);
+  }, [on.kp]);
+  useEffect(() => {
+    const map = mapRef.current, L = LRef.current;
+    if (!map || !L || !ready || !on.kp) return;
+    const t0 = Date.now();
+    const group = L.layerGroup();
+    for (let k = 1; k <= 9; k++) {
+      const bold = k === current;
+      const style = { pane: 'kplines', color: rgb(kpColor(k)), weight: bold ? 3 : 1.4, opacity: bold ? 1 : 0.75, dashArray: bold ? undefined : '3 5', interactive: false };
+      const north = kpLine(k, false, t0), south = kpLine(k, true, t0);
+      const label = north.find(p => p[1] === -60);
+      for (const dx of COPIES) {
+        L.polyline(north.map(([la, lo]) => [la, lo + dx] as [number, number]), style).addTo(group);
+        L.polyline(south.map(([la, lo]) => [la, lo + dx] as [number, number]), style).addTo(group);
+        if (label) L.marker([label[0], label[1] + dx], { pane: 'labels', interactive: false, keyboard: false, icon: L.divIcon({ className: bold ? 'map-kp map-kp-on' : 'map-kp', html: `<span style="color:${rgb(kpColor(k))}">Kp ${k}</span>`, iconSize: undefined }) }).addTo(group);
+      }
+    }
+    layers.current.kp?.remove();
+    layers.current.kp = group;
+    group.addTo(map);
+  }, [ready, on.kp, current, kpTick]);
 
   // Show the chosen layers.
   useEffect(() => {

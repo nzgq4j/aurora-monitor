@@ -1,4 +1,4 @@
-import { magLat } from './astro';
+import { magLat, magLocalTime, ovalShift } from './astro';
 
 // Light blue → green → yellow → red, for the Kp reach lines (the aurora itself uses lib/auroraColor).
 const STOPS: [number, [number, number, number]][] = [
@@ -15,15 +15,19 @@ function ramp(t: number): [number, number, number] {
 export const rgb = (c: [number, number, number]) => `rgb(${c[0]},${c[1]},${c[2]})`;
 const kpT = (k: number) => (k - 1) / 8;
 
-/** Geographic line where geomagnetic latitude equals the oval's equatorward edge for this Kp (≈ 66° − 2·Kp). */
-export function kpLine(k: number, south = false): [number, number][] {
-  const target = (66 - 2 * k) * (south ? -1 : 1);
+/**
+ * Geographic line where geomagnetic latitude equals the oval's equatorward edge for this Kp (≈ 66° − 2·Kp
+ * near magnetic midnight). With a time `t`, the edge also follows the oval's daily shape: furthest from
+ * the pole around midnight and drawn in by up to 6° towards the day side (see ovalShift), as the aurora is.
+ */
+export function kpLine(k: number, south = false, t?: number): [number, number][] {
+  const edge = (lat: number, lon: number) => (66 - 2 * k + (t === undefined ? 0 : ovalShift(magLocalTime(lat, lon, t)))) * (south ? -1 : 1);
   const pts: [number, number][] = [];
   for (let lon = -180; lon <= 180; lon += 2) {
     let lo = south ? -89.9 : 0, hi = south ? 0 : 89.9;
     for (let n = 0; n < 40; n++) {
       const mid = (lo + hi) / 2;
-      if (magLat(mid, lon) < target) lo = mid; else hi = mid;
+      if (magLat(mid, lon) < edge(mid, lon)) lo = mid; else hi = mid;
     }
     pts.push([(lo + hi) / 2, lon]);
   }
