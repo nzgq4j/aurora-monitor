@@ -1,7 +1,7 @@
 'use client';
 
 import { supabase } from './supabase';
-import type { Achievement, MemberInfo } from './badges';
+import type { Achievement, MemberInfo, SpecialRow } from './badges';
 
 /**
  * The community gallery and badges, through the database functions in
@@ -63,6 +63,24 @@ export async function myAchievements(): Promise<Achievement[]> {
   if (!a) return [];
   const { data } = await a.sb.from('achievements').select('kind, ref, at, value, points').order('at');
   return (data as Achievement[] | null) ?? [];
+}
+
+/** The member's special badges (the others stay secret): supabase/migrations/20261027000100_special_badges.sql. */
+export async function mySpecialBadges(): Promise<SpecialRow[]> {
+  const a = await session();
+  if (!a) return [];
+  const { data } = await a.sb.rpc('my_special_badges');
+  return (data as SpecialRow[] | null) ?? [];
+}
+
+export type RedeemStatus = 'ok' | 'invalid' | 'expired' | 'used' | 'have' | 'limit' | 'error';
+
+/** Redeems a tour code. On 'ok' (and 'have') the slug of the badge it gives. */
+export async function redeemBadgeCode(code: string): Promise<{ status: RedeemStatus; slug?: string }> {
+  const a = await session();
+  if (!a) return { status: 'error' };
+  const { data, error } = await a.sb.rpc('redeem_badge_code', { p_code: code });
+  return error || !data ? { status: 'error' } : (data as { status: RedeemStatus; slug?: string });
 }
 
 export async function setHandle(handle: string): Promise<'ok' | 'invalid' | 'taken' | 'error'> {

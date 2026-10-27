@@ -6,22 +6,23 @@ import { useStore } from '../store';
 import { useI18n } from '../i18n/I18n';
 import { BadgeIcon } from '../components/BadgeIcon';
 import { BottomSheet } from '../components/BottomSheet';
-import { FAMILIES, TIERS, TIER_COLORS, badges, rank, type Badge } from '../lib/badges';
+import { FAMILIES, TIERS, TIER_COLORS, badges, rank, specialBadges, type Badge } from '../lib/badges';
 import { badgeCardBlob } from '../lib/shareCard';
 import { SITE } from '../lib/site';
-import { myAchievements, myMember, setHandle } from '../lib/community';
+import { myAchievements, myMember, mySpecialBadges, redeemBadgeCode, setHandle, type RedeemStatus } from '../lib/community';
+import { markSeen } from '../components/BadgeWatcher';
 import type { MemberInfo } from '../lib/badges';
 import type { MessageKey } from '../i18n/core';
 
 const BACK = 'M15 5l-7 7 7 7';
 
-/** The badge's name: storm days are named for their storm, the rest from messages. */
+/** The badge's name: storm days are named for their storm, special badges carry their own, the rest from messages. */
 export function useBadgeText() {
   const { t, num, date } = useI18n();
   const day = (d: string) => date(`${d}T12:00:00Z`, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
   return {
-    name: (b: Badge) => (b.day ? t('badge.storm.name', { g: b.g ?? 3 }) : t(`badge.${b.id}.name` as MessageKey)),
-    desc: (b: Badge) => (b.day ? t('badge.storm.desc', { g: b.g ?? 3, date: day(b.day) })
+    name: (b: Badge) => b.title ?? (b.day ? t('badge.storm.name', { g: b.g ?? 3 }) : t(`badge.${b.id}.name` as MessageKey)),
+    desc: (b: Badge) => b.text ?? (b.day ? t('badge.storm.desc', { g: b.g ?? 3, date: day(b.day) })
       : b.id === 'furthest' && b.value != null ? t('badge.furthest.got', { lat: num(b.value, 1) })
       : t(`badge.${b.id}.desc` as MessageKey)),
     tierName: (b: Badge) => (b.steps.length === 1 ? '' : b.level ? t(`badgeTier.${TIERS[b.level - 1]}` as MessageKey) : ''),
@@ -34,6 +35,7 @@ function useSubline() {
   const text = useBadgeText();
   return (b: Badge) => {
     if (b.day) return t('badges.limited');
+    if (b.family === 'special') return t('badges.earned');
     if (b.steps.length === 1) return b.level ? t('badges.earned') : b.id === 'yearRound' ? t('badges.ofN', { n: b.count, of: 4 }) : t('badges.notYet');
     if (!b.level) return t('badges.ofN', { n: b.count, of: b.next ?? 0 });
     return `${text.tierName(b)} · ${tn('badges.count', b.count)}`;
@@ -43,19 +45,35 @@ function useSubline() {
 export function Badges() {
   const { go } = useStore();
   const { user, ready } = useAuth();
-  const { t, num } = useI18n();
+  const { t, num, locale } = useI18n();
   const text = useBadgeText();
   const sub = useSubline();
   const [member, setMember] = useState<MemberInfo | null>(null);
   const [list, setList] = useState<Badge[] | null>(null);
+  const [specials, setSpecials] = useState<Badge[]>([]);
   const [open, setOpen] = useState<Badge | null>(null);
+  const [fresh, setFresh] = useState(false);
   const [naming, setNaming] = useState(false);
+  const [mystery, setMystery] = useState(false);
+  const [redeeming, setRedeeming] = useState(false);
 
-  const load = () => Promise.all([myMember(), myAchievements()]).then(([m, a]) => {
+  const load = () => Promise.all([myMember(), myAchievements(), mySpecialBadges()]).then(([m, a, sp]) => {
     setMember(m);
     setList(m ? badges(a, m) : []);
+    const special = specialBadges(sp, locale);
+    setSpecials(special);
+    return special;
   });
-  useEffect(() => { if (user) void load(); }, [user]);  
+  // A redeemed code: show its badge as new, and tell the watcher it has been seen.
+  const redeemed = async (slug: string) => {
+    setRedeeming(false);
+    const b = (await load()).find(x => x.id === `special:${slug}`);
+    if (!b) return;
+    if (user) markSeen(user.id, b);
+    setFresh(true);
+    setOpen(b);
+  };
+  useEffect(() => { if (user) void load(); }, [user, locale]); // eslint-disable-line react-hooks/exhaustive-deps -- load is remade each render
 
   if (ready && !user) {
     return (
@@ -117,9 +135,47 @@ export function Badges() {
           </section>
         );
       })}
+      {list && (
+        <section className="badges-family" aria-labelledby="fam-special">
+          <div className="badges-family-head">
+            <h2 id="fam-special">{t('badges.family.special')}</h2>
+          </div>
+          <p className="badges-secret">{t('badges.secretFound', { n: specials.length })}</p>
+          <div className="badges-grid">
+            {specials.map(b => (
+              <button key={b.id} type="button" className="btn badges-item" onClick={() => setOpen(b)}>
+                <BadgeIcon tier={b.tier} glyph={b.glyph} size={88} />
+                <span className="badges-item-name">{text.name(b)}</span>
+                <span className="badges-item-sub">{sub(b)}</span>
+              </button>
+            ))}
+            {/* Secret until earned: one mystery tile, with no hint of how many there are or what they need. */}
+            <button type="button" className="btn badges-item" onClick={() => setMystery(true)}>
+              <BadgeIcon tier="locked" glyph="question" size={88} />
+              <span className="badges-item-name">{t('badges.mystery.name')}</span>
+              <span className="badges-item-sub locked">{t('badges.mystery.sub')}</span>
+            </button>
+          </div>
+          <button type="button" className="btn badges-redeem" onClick={() => setRedeeming(true)}>
+            {t('badges.redeem.ask')} <span className="hl">{t('badges.redeem.open')}</span>
+          </button>
+        </section>
+      )}
       <p className="you-foot">{t('badges.how')}</p>
 
-      {open && <BadgeSheet b={open} onClose={() => setOpen(null)} />}
+      {open && <BadgeSheet b={open} fresh={fresh} onClose={() => { setOpen(null); setFresh(false); }} />}
+      {mystery && (
+        <BottomSheet title={t('badges.mystery.name')} onClose={() => setMystery(false)}>
+          <div className="badge-sheet">
+            <BadgeIcon tier="locked" glyph="question" size={160} />
+            <p className="you-sheet-text" style={{ textAlign: 'center', margin: 0 }}>{t('badges.mystery.text')}</p>
+            <div className="badge-sheet-actions">
+              <button type="button" className="btn pill pill-ghost sheet-pill" onClick={() => setMystery(false)}>{t('common.done')}</button>
+            </div>
+          </div>
+        </BottomSheet>
+      )}
+      {redeeming && <RedeemSheet onClose={() => setRedeeming(false)} onRedeemed={redeemed} />}
       {naming && member && <HandleSheet current={member.handle} onClose={() => setNaming(false)} onSaved={h => { setMember({ ...member, handle: h }); setNaming(false); }} />}
     </main>
   );
@@ -127,7 +183,7 @@ export function Badges() {
 
 /** A badge up close: its tier ladder and what the next tier needs. */
 export function BadgeSheet({ b, onClose, fresh }: { b: Badge; onClose: () => void; fresh?: boolean }) {
-  const { t, tn, date } = useI18n();
+  const { t, tn, num, date } = useI18n();
   const text = useBadgeText();
   const tiered = b.steps.length > 1;
   const icon = useRef<HTMLDivElement>(null);
@@ -180,6 +236,7 @@ export function BadgeSheet({ b, onClose, fresh }: { b: Badge; onClose: () => voi
             </ol>
           </>
         )}
+        {b.family === 'special' && b.value != null && <p className="badge-sheet-when">{t('badges.magLat', { lat: num(b.value, 1) })}</p>}
         {b.family === 'reporter' && <p className="badge-sheet-note">{t('badges.confirmed')}</p>}
         {!tiered && !b.level && b.id === 'yearRound' && <p className="badge-sheet-when">{tn('badges.seasonsLeft', 4 - b.count)}</p>}
         <div className="badge-sheet-actions">
@@ -187,6 +244,38 @@ export function BadgeSheet({ b, onClose, fresh }: { b: Badge; onClose: () => voi
           <button type="button" className="btn pill pill-ghost sheet-pill" onClick={onClose}>{t('common.done')}</button>
         </div>
       </div>
+    </BottomSheet>
+  );
+}
+
+/** A badge code from a tour or event: letters and numbers, with or without the dash. */
+function RedeemSheet({ onClose, onRedeemed }: { onClose: () => void; onRedeemed: (slug: string) => void }) {
+  const { t } = useI18n();
+  const [v, setV] = useState('');
+  const [err, setErr] = useState('');
+  const [busy, setBusy] = useState(false);
+  const errors: Record<Exclude<RedeemStatus, 'ok'>, MessageKey> = {
+    invalid: 'badges.redeem.invalid', expired: 'badges.redeem.expired', used: 'badges.redeem.used',
+    have: 'badges.redeem.have', limit: 'badges.redeem.limit', error: 'badges.redeem.failed',
+  };
+  const redeem = async () => {
+    setBusy(true); setErr('');
+    const r = await redeemBadgeCode(v);
+    setBusy(false);
+    if (r.status === 'ok' && r.slug) onRedeemed(r.slug);
+    else setErr(t(errors[r.status === 'ok' ? 'error' : r.status]));
+  };
+  const ready = v.replace(/[^a-z0-9]/gi, '').length >= 6;
+  return (
+    <BottomSheet title={t('badges.redeem.title')} onClose={onClose}>
+      <p className="you-sheet-text">{t('badges.redeem.text')}</p>
+      <label className="field">
+        <span className="label">{t('badges.redeem.label')}</span>
+        <input className="input mono" value={v} maxLength={24} autoCapitalize="characters" autoCorrect="off" autoComplete="off" spellCheck={false}
+          placeholder="XXXX-XXXX" onChange={e => setV(e.target.value.toUpperCase())} onKeyDown={e => { if (e.key === 'Enter' && ready && !busy) void redeem(); }} />
+      </label>
+      {err && <p className="you-sheet-text" role="alert" style={{ color: 'var(--red)' }}>{err}</p>}
+      <button type="button" className="btn pill pill-primary sheet-pill" disabled={busy || !ready} onClick={redeem}>{t('badges.redeem.button')}</button>
     </BottomSheet>
   );
 }

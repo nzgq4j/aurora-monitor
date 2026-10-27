@@ -803,6 +803,9 @@ button.pill-primary.danger { background: var(--red); }
 .badges-item-name { font-size: 14px; font-weight: 600; line-height: 1.2; }
 .badges-item-sub { font-size: 12px; line-height: 1.25; color: var(--soft); }
 .badges-item-sub.locked { color: var(--muted); }
+.badges-secret { margin: -4px 0 14px; font-size: 13px; color: var(--muted); }
+.badges-redeem { display: block; margin: 16px auto 0; padding: 10px 14px; border-radius: 12px; font-size: 14px; color: var(--soft); }
+.badges-redeem:focus-visible { outline: 2px solid var(--green); }
 .badge-sheet { display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .badge-sheet-name { margin: 0; font: 900 22px var(--f-display); text-align: center; }
 .badge-sheet-when { margin: 0; font-size: 13px; color: var(--muted); }
