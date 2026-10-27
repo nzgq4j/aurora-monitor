@@ -108,6 +108,17 @@ export function playStatus(sub: PlaySubscription, now = Date.now()) {
  * Copy a Play subscription onto the user's profile. A Stripe subscription that is still paying is never
  * overwritten by an ended Play one (and the app won't sell Play to someone paying through Stripe).
  */
+/**
+ * Whether a signed-in member may take a Play purchase: one made in the app carries their ID as the
+ * obfuscated account ID; one started outside the app (a promo code redeemed in the Play Store) carries
+ * none, and goes to the first member who sends it from a phone with that Google account, unless another
+ * member already holds the token.
+ */
+export function purchaseOwner(accountId: string | null | undefined, userId: string, tokenHolder: string | null): 'own' | 'claim' | 'other' {
+  if (accountId) return accountId === userId ? 'own' : 'other';
+  return tokenHolder && tokenHolder !== userId ? 'other' : 'claim';
+}
+
 export async function syncPlay(userId: string, token: string, sub: PlaySubscription): Promise<ReturnType<typeof playStatus>> {
   const s = playStatus(sub);
   const db = supabaseAdmin();

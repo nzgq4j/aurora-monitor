@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { needsAcknowledging, playStatus, type PlaySubscription } from './play';
+import { needsAcknowledging, playStatus, purchaseOwner, type PlaySubscription } from './play';
 
 const now = Date.parse('2026-10-22T12:00:00Z');
 const sub = (state: string, o: { expiry?: string; trial?: boolean; plan?: string; autoRenew?: boolean } = {}): PlaySubscription => ({
@@ -40,5 +40,18 @@ describe('needsAcknowledging', () => {
   it('is false when already acknowledged or while the payment is pending', () => {
     expect(needsAcknowledging({ subscriptionState: 'SUBSCRIPTION_STATE_ACTIVE', acknowledgementState: 'ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED' })).toBe(false);
     expect(needsAcknowledging({ subscriptionState: 'SUBSCRIPTION_STATE_PENDING', acknowledgementState: 'ACKNOWLEDGEMENT_STATE_PENDING' })).toBe(false);
+  });
+});
+
+describe('purchaseOwner', () => {
+  it('lets members take purchases made for them, never ones made for someone else', () => {
+    expect(purchaseOwner('u1', 'u1', null)).toBe('own');
+    expect(purchaseOwner('u2', 'u1', null)).toBe('other');
+  });
+
+  it('lets a member claim a purchase with no account (a redeemed promo code) unless another member holds it', () => {
+    expect(purchaseOwner(undefined, 'u1', null)).toBe('claim');
+    expect(purchaseOwner(null, 'u1', 'u1')).toBe('claim');
+    expect(purchaseOwner(undefined, 'u1', 'u2')).toBe('other');
   });
 });
