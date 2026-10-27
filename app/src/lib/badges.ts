@@ -129,7 +129,7 @@ export const TIER_METALS: Record<Tier, { metal: string[]; glass: [[string, strin
   bronze: { metal: ['#f6c896', '#c98a55', '#6e3f1e', '#e2a873', '#8a5229', '#f0bd8a'], glass: [['#8a3524', '#3a1009'], ['#e08a3a', '#8a3c12'], ['#5a1f0c', '#220a04']] },
   silver: { metal: ['#ffffff', '#c9d0cb', '#6f7873', '#eef1ef', '#8d9590', '#f6f8f7'], glass: [['#3f7fb0', '#173b5e'], ['#6fb2e0', '#2a5d8a'], ['#1d4a72', '#0a1e33']] },
   gold: { metal: ['#fff3b0', '#e6b800', '#7a5c00', '#ffd84a', '#a88400', '#fff0a0'], glass: [['#2f9a5c', '#0f4a2e'], ['#4fd48c', '#18704a'], ['#167a6c', '#062e2a']] },
-  platinum: { metal: ['#ffffff', '#dcecf2', '#7f9aa4', '#f1fafd', '#a3bcc5', '#ffffff'], glass: [['#2f8fb0', '#123e5e'], ['#5fc6e6', '#2a62a0'], ['#6a5ad0', '#241c66']] },
+  platinum: { metal: ['#ffffff', '#dcecf2', '#7f9aa4', '#f1fafd', '#a3bcc5', '#ffffff'], glass: [['#62b9d6', '#2b7896'], ['#9be3f5', '#4f97cc'], ['#a493ee', '#5548b4']] },
   aurora: { metal: ['#f4fff0', '#c6f7b4', '#6f8c80', '#efe2ff', '#9aa9d6', '#f7fff2'], glass: [['#2e8f3a', '#0e3a1c'], ['#6CFF2B', '#1f7a3a'], ['#B07CFF', '#3d1f80']] },
   locked: { metal: ['#6a706c', '#454b47', '#1f2321', '#565c58', '#2c312e', '#5d635f'], glass: [['#2a3230', '#121615'], ['#232a28', '#0e1211'], ['#1c2220', '#0a0d0c']] },
 };
