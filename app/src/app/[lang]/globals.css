@@ -246,8 +246,6 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 .map-city span { position: absolute; left: 7px; top: -9px; }
 .map-label { white-space: nowrap; font: 600 12px var(--f-body); letter-spacing: .04em; }
 .map-label-dim { color: var(--muted); transform: translate(0, -16px); }
-.map-kp { white-space: nowrap; font: 700 11px var(--f-mono); text-shadow: 0 0 3px #000, 0 0 3px #000; transform: translate(4px, -14px); }
-.map-kp-on { font-size: 13px; }
 .map-you { position: relative; }
 .map-you b { position: absolute; left: -6px; top: -6px; width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 2px solid #000; box-sizing: border-box; }
 .map-you .map-pulse-ring { position: absolute; left: -9px; top: -9px; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--green); animation: map-ring 2s ease-out infinite; }

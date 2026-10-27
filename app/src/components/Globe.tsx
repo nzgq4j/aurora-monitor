@@ -5,7 +5,6 @@ import type * as THREE from 'three';
 import { subsolarPoint } from '../lib/astro';
 import { cloudify } from '../lib/cloudify';
 import { createTileLayer, TILE_TEXELS_PER_DEG } from '../lib/globeTiles';
-import { kpColor, kpLine } from '../lib/kpLines';
 import { OVAL_H, OVAL_W, smoothOval } from '../lib/ovalSmooth';
 import type { Place } from '../lib/locations';
 import type { OvalGrid } from '../app/api/oval/route';
@@ -15,8 +14,8 @@ import type { MessageKey } from '../i18n/core';
 const NO_POINTS: { lat: number; lon: number }[] = [];
 const HOUSE = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5M5.5 9.5V20h5v-6h3v6h5V9.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>';
 
-/** Shell radii (Earth = 1): Kp lines on the ground, clouds just above, the aurora above them. */
-const R = { kpLines: 1.003, clouds: 1.006, aurora: 1.014, auroraGlow: 1.03, marker: 1.016 };
+/** Shell radii (Earth = 1): clouds just above the ground, the aurora above them. */
+const R = { clouds: 1.006, aurora: 1.014, auroraGlow: 1.03, marker: 1.016 };
 /** Radius the opening framing is measured against (a little beyond the ground). */
 const FRAME_R = 1.15;
 /**
@@ -160,9 +159,6 @@ interface Props {
   sightings?: { lat: number; lon: number }[];
   /** Show the OVATION aurora. */
   aurora: boolean;
-  /** Show the Kp reach lines; the line for the current Kp is drawn bold. */
-  kpLines: boolean;
-  kp: number | null;
   /** Place to mark (and centre on first), e.g. Home. */
   place: Place | null;
   /** Home location for the zoom-to-Home button; null shows a hint instead. */
@@ -186,16 +182,16 @@ interface Props {
 }
 
 /** Interactive 3D Earth with the live OVATION aurora, the day/night line, satellite clouds and your location. */
-export function Globe({ clouds, night, lights, best, saved, places, sightings = NO_POINTS, frame = null, aurora, kpLines, kp, place, home, pick = null, onPick, onStatus, onForecast, onZoomPast, active = true }: Props) {
+export function Globe({ clouds, night, lights, best, saved, places, sightings = NO_POINTS, frame = null, aurora, place, home, pick = null, onPick, onStatus, onForecast, onZoomPast, active = true }: Props) {
   const { t } = useI18n();
   const box = useRef<HTMLDivElement>(null);
   const label = useRef<HTMLDivElement>(null);
-  const api = useRef<{ setClouds: (on: boolean) => void; setAurora: (on: boolean) => void; setKp: (on: boolean, kp: number | null) => void; setPlace: (p: Place | null) => void; setPick: (p: { lat: number; lon: number } | null) => void; setShade: (night: boolean, lights: boolean) => void; setBest: (c: HTMLCanvasElement | null) => void; setSaved: (s: Place[]) => void; setPlaces: (p: { lat: number; lon: number }[]) => void; setFrame: (f: Uint8Array | null) => void; setSightings: (s: { lat: number; lon: number }[]) => void; flyTo: (p: Place) => void; reactivate: () => void } | null>(null);
+  const api = useRef<{ setClouds: (on: boolean) => void; setAurora: (on: boolean) => void; setPlace: (p: Place | null) => void; setPick: (p: { lat: number; lon: number } | null) => void; setShade: (night: boolean, lights: boolean) => void; setBest: (c: HTMLCanvasElement | null) => void; setSaved: (s: Place[]) => void; setPlaces: (p: { lat: number; lon: number }[]) => void; setFrame: (f: Uint8Array | null) => void; setSightings: (s: { lat: number; lon: number }[]) => void; flyTo: (p: Place) => void; reactivate: () => void } | null>(null);
   const shown = useRef(active);
   shown.current = active;
   // Latest layer choices, applied once the scene is built (props can change while it loads).
-  const latest = useRef({ aurora, kpLines, kp, pick, onPick, onZoomPast, night, lights, best, saved, places, frame, sightings });
-  latest.current = { aurora, kpLines, kp, pick, onPick, onZoomPast, night, lights, best, saved, places, frame, sightings };
+  const latest = useRef({ aurora, pick, onPick, onZoomPast, night, lights, best, saved, places, frame, sightings });
+  latest.current = { aurora, pick, onPick, onZoomPast, night, lights, best, saved, places, frame, sightings };
   const placeLabels = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
   const [notice, setNotice] = useState('');
@@ -205,12 +201,7 @@ export function Globe({ clouds, night, lights, best, saved, places, sightings = 
     const cleanups: (() => void)[] = [];
     (async () => {
       const T = await import('three');
-      const [{ OrbitControls }, { Line2 }, { LineGeometry }, { LineMaterial }] = await Promise.all([
-        import('three/examples/jsm/controls/OrbitControls.js'),
-        import('three/examples/jsm/lines/Line2.js'),
-        import('three/examples/jsm/lines/LineGeometry.js'),
-        import('three/examples/jsm/lines/LineMaterial.js'),
-      ]);
+      const { OrbitControls } = await import('three/examples/jsm/controls/OrbitControls.js');
       // Let the page paint first (e.g. the pressed 3D button), then build the scene.
       await new Promise(res => requestAnimationFrame(() => setTimeout(res, 0)));
       const el = box.current;
@@ -336,37 +327,6 @@ export function Globe({ clouds, night, lights, best, saved, places, sightings = 
         onStatus('map.auroraUnavailable');
       }
 
-      // Kp reach lines, both hemispheres, on the same colours as the 2D map. Drawn in screen pixels so they
-      // stay crisp at any zoom; hidden behind the Earth by the depth test.
-      const kpGroup = new T.Group();
-      const kpMats: InstanceType<typeof LineMaterial>[] = [];
-      const kpLinesByK = new Map<number, InstanceType<typeof Line2>[]>();
-      for (let k = 1; k <= 9; k++) {
-        const [r, g, b] = kpColor(k);
-        for (const south of [false, true]) {
-          const pos = kpLine(k, south).flatMap(([la, lo]) => toVector(T, la, lo, R.kpLines).toArray());
-          const geo = new LineGeometry();
-          geo.setPositions(pos);
-          const mat = new LineMaterial({ color: new T.Color().setRGB(r / 255, g / 255, b / 255, T.SRGBColorSpace).getHex(), linewidth: 1.4, transparent: true, opacity: 0.75, dashed: true, dashSize: 0.012, gapSize: 0.02 });
-          const line = new Line2(geo, mat);
-          line.computeLineDistances();
-          kpMats.push(mat);
-          kpLinesByK.set(k, [...(kpLinesByK.get(k) ?? []), line]);
-          kpGroup.add(line);
-        }
-      }
-      kpGroup.visible = false;
-      scene.add(kpGroup);
-      const setKp = (on: boolean, now: number | null) => {
-        kpGroup.visible = on;
-        const current = now === null ? null : Math.max(1, Math.min(9, Math.round(now)));
-        for (const [k, lines] of kpLinesByK) for (const line of lines) {
-          const bold = k === current, mat = line.material;
-          mat.linewidth = bold ? 3 : 1.4;
-          mat.opacity = bold ? 1 : 0.75;
-          mat.dashed = !bold;
-        }
-      };
       const setAurora = (on: boolean) => { for (const m of auroraMeshes) m.visible = on; };
 
       // Location marker: a bright dot with a soft halo; its label is an HTML overlay that hides on the far side.
@@ -475,7 +435,6 @@ export function Globe({ clouds, night, lights, best, saved, places, sightings = 
         const w = el.clientWidth, h = el.clientHeight;
         if (!w || !h) return;
         renderer.setSize(w, h, false);
-        for (const m of kpMats) m.resolution.set(w, h);
         renderer.domElement.style.width = '100%';
         renderer.domElement.style.height = '100%';
         camera.aspect = w / h;
@@ -618,7 +577,6 @@ export function Globe({ clouds, night, lights, best, saved, places, sightings = 
       api.current = {
         setClouds: on => { cloudsWanted = on; setClouds(on); },
         setAurora,
-        setKp,
         setPlace,
         setPick,
         setShade,
@@ -646,7 +604,6 @@ export function Globe({ clouds, night, lights, best, saved, places, sightings = 
       setPick(latest.current.pick);
       setClouds(clouds);
       setAurora(latest.current.aurora);
-      setKp(latest.current.kpLines, latest.current.kp);
       cleanups.push(() => {
         scene.traverse(o => {
           const mesh = o as THREE.Mesh;
@@ -665,7 +622,6 @@ export function Globe({ clouds, night, lights, best, saved, places, sightings = 
 
   useEffect(() => { api.current?.setClouds(clouds); }, [clouds]);
   useEffect(() => { api.current?.setAurora(aurora); }, [aurora]);
-  useEffect(() => { api.current?.setKp(kpLines, kp); }, [kpLines, kp]);
   useEffect(() => { api.current?.setPlace(place); }, [place]);
   useEffect(() => { api.current?.setPick(pick); }, [pick]);
   useEffect(() => { api.current?.setShade(night, lights); }, [night, lights]);
