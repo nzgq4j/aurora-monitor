@@ -5,7 +5,6 @@ import { startTransition, useCallback, useEffect, useMemo, useRef, useState } fr
 import type * as Leaflet from 'leaflet';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import { C } from '../data';
-import { kpColor, kpLine, rgb } from '../lib/kpLines';
 import { placeName, useLocations, type Place } from '../lib/locations';
 import type { KpPoint } from '../lib/feeds';
 import { MapPanel } from '../components/MapPanel';
@@ -71,7 +70,7 @@ const NO_PLACES: Place[] = [];
 export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[] }) {
   const box = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Leaflet.Map | null>(null);
-  const layers = useRef<{ prob?: Leaflet.Layer; kp?: Leaflet.LayerGroup; marker?: Leaflet.Layer; pin?: Leaflet.Layer; clouds?: Leaflet.GridLayer; lights?: Leaflet.TileLayer; night?: Leaflet.Layer; best?: Leaflet.Layer; places?: Leaflet.Layer; saved?: Leaflet.Layer; sightings?: Leaflet.Layer }>({});
+  const layers = useRef<{ prob?: Leaflet.Layer; marker?: Leaflet.Layer; pin?: Leaflet.Layer; clouds?: Leaflet.GridLayer; lights?: Leaflet.TileLayer; night?: Leaflet.Layer; best?: Leaflet.Layer; places?: Leaflet.Layer; saved?: Leaflet.Layer; sightings?: Leaflet.Layer }>({});
   // Smoothed OVATION field, kept for the best-spots layer.
   const oval = useRef<Float32Array | null>(null);
   const LRef = useRef<typeof Leaflet | null>(null);
@@ -179,7 +178,6 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
   }, [view]);
   const { shownPlace, locations, load } = useLocations();
   const online = useOnline();
-  const current = kp === null ? null : Math.max(1, Math.min(9, Math.round(kp)));
 
   useEffect(() => { load(); }, [load]);
   // Start with the legend collapsed on phones so it doesn't cover the map.
@@ -249,7 +247,6 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
       // Clouds sit above the land and below the aurora, so the aurora colours stay readable.
       map.createPane('clouds').style.zIndex = '350';
       map.createPane('aurora').style.zIndex = '400';
-      map.createPane('kplines').style.zIndex = '450';
       map.createPane('labels').style.zIndex = '500';
       // Canvas keeps three copies of the basemap fast on phones.
       const landCanvas = L.canvas({ pane: 'land', padding: 0.5 });
@@ -278,20 +275,6 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
         }
       }
 
-      // Kp reach lines (both hemispheres), coloured on the same scale.
-      const group = L.layerGroup();
-      for (let k = 1; k <= 9; k++) {
-        const on = k === current;
-        const style = { pane: 'kplines', color: rgb(kpColor(k)), weight: on ? 3 : 1.4, opacity: on ? 1 : 0.75, dashArray: on ? undefined : '3 5', interactive: false };
-        const north = kpLine(k), south = kpLine(k, true);
-        const label = north.find(p => p[1] === -60);
-        for (const dx of COPIES) {
-          L.polyline(north.map(([la, lo]) => [la, lo + dx] as [number, number]), style).addTo(group);
-          L.polyline(south.map(([la, lo]) => [la, lo + dx] as [number, number]), style).addTo(group);
-          if (label) L.marker([label[0], label[1] + dx], { pane: 'labels', interactive: false, keyboard: false, icon: L.divIcon({ className: on ? 'map-kp map-kp-on' : 'map-kp', html: `<span style="color:${rgb(kpColor(k))}">Kp ${k}</span>`, iconSize: undefined }) }).addTo(group);
-        }
-      }
-      layers.current.kp = group;
 
       // GridLayer wraps tile columns itself, so clouds repeat across every world copy.
       const CloudLayer = L.GridLayer.extend({
@@ -323,16 +306,16 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
       if (!cancelled) setReady(true);
     })();
     return () => { cancelled = true; mapRef.current?.remove(); mapRef.current = null; cityMarkers.current = []; };
-  }, [current]); // eslint-disable-line react-hooks/exhaustive-deps -- t is fixed for the page's lifetime
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- t is fixed for the page's lifetime
 
   // Show the chosen layers.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    const { prob, kp: kpl, clouds, lights } = layers.current;
+    const { prob, clouds, lights } = layers.current;
     const show = (layer: Leaflet.Layer | undefined, yes: boolean) => { if (layer) { if (yes) layer.addTo(map); else layer.remove(); } };
-    show(prob, on.aurora); show(kpl, on.kp); show(clouds, on.clouds); show(lights, on.lights);
-  }, [on.aurora, on.kp, on.clouds, on.lights, ready]);
+    show(prob, on.aurora); show(clouds, on.clouds); show(lights, on.lights);
+  }, [on.aurora, on.clouds, on.lights, ready]);
 
   // Night shading and best spots depend on the time: redrawn every five minutes while shown.
   const [tick, setTick] = useState(0);
@@ -472,7 +455,6 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
   }, [locations, shownPlace, on.saved, ready]); // eslint-disable-line react-hooks/exhaustive-deps
   const ICON: Record<LayerId | 'globe', string> = {
     aurora: 'M3 17c3-7 6-10 9-10s6 3 9 10M6 17c1.8-3.8 3.8-6 6-6s4.2 2.2 6 6',
-    kp: 'M3 8c4-2 14-2 18 0M3 13c4-2 14-2 18 0M3 18c4-2 14-2 18 0',
     clouds: 'M7 18.5h10.5a4 4 0 0 0 .4-8A6 6 0 0 0 6.4 9.2 4.7 4.7 0 0 0 7 18.5Z',
     night: 'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z',
     best: 'm12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6-4.5-4.2 6.1-.7L12 3Z',
@@ -482,10 +464,10 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
     globe: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm-9 9h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z',
   };
   const LABEL: Record<LayerId | 'globe', MessageKey> = {
-    aurora: 'map.layer.aurora', kp: 'map.layer.kp', clouds: 'map.clouds', night: 'map.layer.night',
+    aurora: 'map.layer.aurora', clouds: 'map.clouds', night: 'map.layer.night',
     best: 'map.layer.best', sightings: 'map.layer.sightings', saved: 'map.layer.saved', lights: 'map.layer.lights', globe: 'map.layer.globe',
   };
-  const ORDER: (LayerId | 'globe')[] = ['aurora', 'clouds', 'night', 'best', 'sightings', 'kp', 'saved', 'lights', 'globe'];
+  const ORDER: (LayerId | 'globe')[] = ['aurora', 'clouds', 'night', 'best', 'sightings', 'saved', 'lights', 'globe'];
   const pressed = (id: LayerId | 'globe') => (id === 'globe' ? view === '3d' : on[id]);
   const press = (id: LayerId | 'globe') => (id === 'globe' ? chooseView(view === '3d' ? '2d' : '3d') : toggle(id));
   const icon = (id: LayerId | 'globe', size: number) => (
@@ -558,17 +540,6 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
           </div>
         </div>
       )}
-      {on.kp && (
-        <div>
-          <span className="label">{t('map.legend.kp')}</span>
-          <div style={{ display: 'flex', gap: 4, marginTop: 6 }}>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(k => (
-              <span key={k} style={{ flex: 1, textAlign: 'center', fontSize: 11, fontWeight: 700, padding: '3px 0', borderRadius: 4, color: '#000', background: rgb(kpColor(k)), outline: k === current ? '2px solid #fff' : 'none' }}>{k}</span>
-            ))}
-          </div>
-          <span style={{ display: 'block', fontSize: 11, color: C.muted, marginTop: 4 }}>{kp === null ? t('map.legend.kpUnavailable') : t('map.legend.kpNow', { kp: num(kp, 2) })}</span>
-        </div>
-      )}
       {on.clouds && (
         <div>
           <span className="label">{t('map.legend.clouds')}</span>
@@ -635,7 +606,7 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
         {/* Phones have no header, so the map (and globe) carries the logo. */}
         <img className="map-logo" src="/icons/logo.svg" alt={SITE.name} width={56} height={43} />
         <div ref={box} className="aurora-map" role="application" aria-label={t('map.aria')} style={view === '3d' ? { display: 'none' } : undefined} />
-        {globeBuilt && <Globe active={view === '3d'} clouds={on.clouds} night={on.night} lights={on.lights} best={bestGlobe} saved={on.saved ? others : NO_PLACES} places={globePlaces} sightings={globeSightings} aurora={on.aurora} kpLines={on.kp} kp={kp} place={shownPlace} home={locations.find(l => l.isHome) ?? null}
+        {globeBuilt && <Globe active={view === '3d'} clouds={on.clouds} night={on.night} lights={on.lights} best={bestGlobe} saved={on.saved ? others : NO_PLACES} places={globePlaces} sightings={globeSightings} aurora={on.aurora} place={shownPlace} home={locations.find(l => l.isHome) ?? null}
           frame={frames[fi] ? frameBytes : null} pick={pick} onPick={(la, lo, name) => (name ? setPick({ name, lat: la, lon: lo }) : pickAt.current(la, lo))} onStatus={setGlobeStatus} onForecast={setForecast} onZoomPast={zoomPast} />}
         {view === '2d' && (notice || status) && <div className="map-status" role="status">{t((notice || status) as MessageKey)}</div>}
         {view === '3d' && globeStatus && <div className="map-status" role="status">{t(globeStatus)}</div>}

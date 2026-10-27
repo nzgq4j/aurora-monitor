@@ -3,10 +3,10 @@ import { CLOUD_HI, CLOUD_LO } from './cloudify';
 import { sampleOval } from './ovalSmooth';
 
 /** Map layers, shared by the 2D map and the 3D globe and remembered per device. */
-export type LayerId = 'aurora' | 'kp' | 'clouds' | 'night' | 'best' | 'sightings' | 'saved' | 'lights';
+export type LayerId = 'aurora' | 'clouds' | 'night' | 'best' | 'sightings' | 'saved' | 'lights';
 export type Layers = Record<LayerId, boolean>;
-export const LAYER_IDS: LayerId[] = ['aurora', 'kp', 'clouds', 'night', 'best', 'sightings', 'saved', 'lights'];
-export const DEFAULT_LAYERS: Layers = { aurora: true, kp: false, clouds: false, night: false, best: false, sightings: true, saved: true, lights: true };
+export const LAYER_IDS: LayerId[] = ['aurora', 'clouds', 'night', 'best', 'sightings', 'saved', 'lights'];
+export const DEFAULT_LAYERS: Layers = { aurora: true, clouds: false, night: false, best: false, sightings: true, saved: true, lights: true };
 const KEY = 'pl.map.layers';
 
 export function readLayers(): Layers {
