@@ -12,5 +12,5 @@ export const LEGAL = {
   email: 'privacy@polarlights.io',
   governingLaw: 'Arizona',
   /** Date shown as "Last updated" on both pages; change it with any change to their text. */
-  updated: 'October 24, 2026',
+  updated: 'October 27, 2026',
 } as const;
