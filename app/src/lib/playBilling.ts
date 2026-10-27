@@ -86,14 +86,15 @@ export async function buyWithPlay(cycle: Cycle, trialUsed: boolean, userId: stri
 
 /**
  * When the app starts: a Play purchase for this account that the server hasn't confirmed yet (the app
- * closed mid-purchase, or the network dropped) is sent again, so it's never left unacknowledged.
- * Returns true when something was sent.
+ * closed mid-purchase, or the network dropped) is sent again, so it's never left unacknowledged. So is
+ * one with no account, started outside the app (a promo code redeemed in the Play Store): the server
+ * links it to this member unless another member already holds it. Returns true when something was sent.
  */
 export async function resendPlayPurchases(userId: string, known: string | null, verify: (token: string) => Promise<boolean>): Promise<boolean> {
   const pb = playBilling();
   if (!pb) return false;
   const { purchases } = await pb.queryPurchases();
-  const todo = purchases.filter(p => p.state === 'purchased' && p.accountId === userId && p.products.includes(PLAY_PRODUCT) && (!p.acknowledged || p.purchaseToken !== known));
+  const todo = purchases.filter(p => p.state === 'purchased' && (p.accountId === userId || !p.accountId) && p.products.includes(PLAY_PRODUCT) && (!p.acknowledged || p.purchaseToken !== known));
   if (!todo.length) return false;
   await Promise.all(todo.map(p => verify(p.purchaseToken)));
   return true;
