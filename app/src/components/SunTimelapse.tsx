@@ -36,8 +36,8 @@ async function loadFrames(channel: Channel, hours: number): Promise<Frame[] | nu
 }
 
 /**
- * Time-lapse of the Sun from the SDO images the capture-sun edge function saves every hour: pick the
- * view (AIA 193, AIA 171 or HMI) and the span (a day, a week, or a full rotation of about 27 days).
+ * Time-lapse of the Sun from the images the capture-sun edge function saves every hour: pick the
+ * view (any of the live views in lib/sdo.ts) and the span (a day, a week, or a full rotation of about 27 days).
  * Frames are loaded before playing so playback is smooth.
  */
 export function SunTimelapse() {

@@ -12,7 +12,7 @@ const DESKTOP = '(min-width: 900px) and (hover: hover)';
 const subscribe = (on: () => void) => { const mq = window.matchMedia(DESKTOP); mq.addEventListener('change', on); return () => mq.removeEventListener('change', on); };
 const useDesktop = () => useSyncExternalStore(subscribe, () => window.matchMedia(DESKTOP).matches, () => false);
 
-/** The latest SDO and SOHO images: one column on phones, two on laptops, with a lightbox on desktop. */
+/** The latest SDO, SOHO and NOAA images: one column on phones, two on laptops, with a lightbox on desktop. */
 export function SunImages() {
   const { t } = useI18n();
   const desktop = useDesktop();
@@ -35,7 +35,7 @@ export function SunImages() {
         {IMAGES.map((img, i) => {
           const pic = (
             /* eslint-disable-next-line @next/next/no-img-element */
-            <img src={img.url} srcSet={`${img.url} 512w, ${sdoAt(img.url, 1024)} 1024w`} sizes="(min-width: 900px) 50vw, 100vw"
+            <img src={img.url} srcSet={img.sized ? `${img.url} 512w, ${sdoAt(img, 1024)} 1024w` : undefined} sizes="(min-width: 900px) 50vw, 100vw"
               alt={t('home.sun.alt', { band: img.label })} loading="lazy" width={512} height={512} />
           );
           return (
@@ -60,7 +60,7 @@ export function SunImages() {
         {shown && (
           <figure>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={sdoAt(shown.url, 2048)} alt={t('home.sun.alt', { band: shown.label })} width={1024} height={1024} />
+            <img src={sdoAt(shown, 2048)} alt={t('home.sun.alt', { band: shown.label })} width={1024} height={1024} />
             <figcaption>
               <span><b>{shown.label}</b> · {t(`sdo.${shown.id}`)}</span>
               <span style={{ color: 'var(--muted)' }}>{t(`sdo.${shown.id}.info`)}</span>
