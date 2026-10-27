@@ -17,7 +17,7 @@ const sections: LegalSection[] = [
   {
     h: 'Delete it yourself',
     body: <>
-      <p>In the Polar Lights app for Android or on the website, sign in and open <b>Dashboard → Account</b> (on a phone: <b>More → Account</b>). At the bottom, choose <b>Delete my account</b> and confirm. Your account is deleted straight away and you are signed out.</p>
+      <p>In the Polar Lights app for Android, open the <b>You</b> tab and choose <b>Delete account</b> at the bottom. On the website, sign in and open <b>Dashboard → Account</b>, then choose <b>Delete my account</b>. Confirm, and your account is deleted straight away and you are signed out.</p>
       <p><Link href="/signin?next=/dashboard">Sign in to delete your account</Link></p>
     </>,
   },
@@ -32,14 +32,28 @@ const sections: LegalSection[] = [
       <li>your saved locations;</li>
       <li>your alert settings and the history of alerts sent to you;</li>
       <li>the browsers and phones registered for push alerts;</li>
-      <li>your sightings.</li>
+      <li>your sightings, badges and points;</li>
+      <li>the photos you posted to the gallery, with their captions and helpful votes, and your reports and blocks;</li>
+      <li>the issue reports and feature requests you sent us.</li>
     </ul>,
+  },
+  {
+    h: 'Delete some of your data and keep your account',
+    body: <>
+      <p>You can remove parts of your data at any time without deleting your account. In the app, open the <b>You</b> tab; on the website, open the <b>Dashboard</b>.</p>
+      <ul>
+        <li><b>Saved locations:</b> open <b>Saved locations</b> (website: <b>Dashboard → Locations</b>) and choose <b>Remove</b> on any place.</li>
+        <li><b>Gallery photos:</b> open <b>My gallery</b>, choose <b>Select</b>, pick the photos and delete them, or open a photo and choose <b>Delete photo</b>. The photo files are removed from our storage.</li>
+        <li><b>Alerts and push:</b> open <b>Notifications</b> (website: <b>Dashboard → Alerts</b>) to turn alerts off, or turn off push alerts on the device you are using, which removes it from our list.</li>
+      </ul>
+      <p>For anything else, such as your sightings or messages you sent us, email {mail} from the address on your account and say what you want removed. We confirm by email and complete it within 30 days.</p>
+    </>,
   },
   {
     h: 'Subscriptions and what is kept',
     body: <>
       <p>A Chaser subscription bought on the website is cancelled immediately when you delete your account, and you won&rsquo;t be charged again. A subscription bought in the Android app through Google Play is set not to renew when you delete your account, so you won&rsquo;t be charged again; it shows in the Google Play Store app under <b>Payments &amp; subscriptions</b> until the time already paid for runs out.</p>
-      <p>Records of past payments are kept by our payment provider (Stripe) or Google Play for as long as tax and accounting law requires. Photos you took in Sky view are stored only on your device and are not affected; delete them in the app&rsquo;s gallery or your photo library. Standard server logs are deleted by our providers on their usual schedule.</p>
+      <p>Records of past payments are kept by our payment provider (Stripe) or Google Play for as long as tax and accounting law requires. Standard server logs are deleted by our providers on their usual schedule.</p>
     </>,
   },
 ];
@@ -51,6 +65,6 @@ export default async function DeleteAccount({ params }: Props) {
   return (
     <LegalPage kicker={t('legal.kicker')} title={[t('deleteAccount.h1a'), t('deleteAccount.h1b')]} updated={LEGAL.updated} sections={sections}
       note={locale === 'en' ? null : t('legal.englishOnly')}
-      intro={<p>You can delete your Polar Lights account and the data stored with it at any time. Polar Lights is operated by {LEGAL.operator}.</p>} />
+      intro={<p>You can delete your Polar Lights account and the data stored with it at any time, or delete only some of your data and keep your account. Polar Lights is operated by {LEGAL.operator}.</p>} />
   );
 }
