@@ -120,6 +120,20 @@ export const TIER_COLORS: Record<Tier, { rim: string; face: string; band: string
   locked: { rim: '#2a302c', face: '#0b0d0c', band: '#2a302c', band2: '#1d211e', ink: '#7d857f' },
 };
 
+/**
+ * Badge finish by tier (components/BadgeIcon): the metal's tones from highlight to shadow, and the glass
+ * in the face's three cells, each a [light, dark] pair. Glass is garnet and amber for bronze, ice blue for
+ * silver, aurora green for gold, cyan to violet for platinum, and green to violet for aurora and storms.
+ */
+export const TIER_METALS: Record<Tier, { metal: string[]; glass: [[string, string], [string, string], [string, string]] }> = {
+  bronze: { metal: ['#f6c896', '#c98a55', '#6e3f1e', '#e2a873', '#8a5229', '#f0bd8a'], glass: [['#8a3524', '#3a1009'], ['#e08a3a', '#8a3c12'], ['#5a1f0c', '#220a04']] },
+  silver: { metal: ['#ffffff', '#c9d0cb', '#6f7873', '#eef1ef', '#8d9590', '#f6f8f7'], glass: [['#3f7fb0', '#173b5e'], ['#6fb2e0', '#2a5d8a'], ['#1d4a72', '#0a1e33']] },
+  gold: { metal: ['#fff3b0', '#e6b800', '#7a5c00', '#ffd84a', '#a88400', '#fff0a0'], glass: [['#2f9a5c', '#0f4a2e'], ['#4fd48c', '#18704a'], ['#167a6c', '#062e2a']] },
+  platinum: { metal: ['#ffffff', '#dcecf2', '#7f9aa4', '#f1fafd', '#a3bcc5', '#ffffff'], glass: [['#2f8fb0', '#123e5e'], ['#5fc6e6', '#2a62a0'], ['#6a5ad0', '#241c66']] },
+  aurora: { metal: ['#f4fff0', '#c6f7b4', '#6f8c80', '#efe2ff', '#9aa9d6', '#f7fff2'], glass: [['#2e8f3a', '#0e3a1c'], ['#6CFF2B', '#1f7a3a'], ['#B07CFF', '#3d1f80']] },
+  locked: { metal: ['#6a706c', '#454b47', '#1f2321', '#565c58', '#2c312e', '#5d635f'], glass: [['#2a3230', '#121615'], ['#232a28', '#0e1211'], ['#1c2220', '#0a0d0c']] },
+};
+
 export const GLYPHS: Record<Glyph, string> = {
   eye: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6z',
   sunrise: 'M3 18h18M6 18a6 6 0 0 1 12 0M12 4v4M4.9 9.9l2 2M19.1 9.9l-2 2',
