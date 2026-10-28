@@ -24,6 +24,7 @@ export const da: Messages = {
   'night.label': "Nattilstand: {mode}",
   'night.toggle': "Rød nattilstand",
   'nav.alerts': "Varsler",
+  'nav.sun': "Sol",
   'common.dismiss': "LUK",
   'footer.sources': "Data: NOAA SWPC, GFZ Potsdam, NASA/SDO. Tider i UT.",
   'title.privacy': "Privatlivspolitik",
@@ -46,6 +47,7 @@ export const da: Messages = {
   // ---- Page titles ----
   'title.map': "Nordlyskort",
   'title.alerts': "Varsler",
+  'title.sun': "Solen og rumvejr",
   'title.dashboard': "Oversigt",
   'title.plans': "Abonnementer",
   'title.checkout': "Betaling",
@@ -1149,7 +1151,6 @@ export const da: Messages = {
   'you.group.membership': "Medlemskab",
   'you.group.account': "Konto",
   'you.group.about': "Om",
-  'you.notifications': "Notifikationer",
   'you.sources': "Datakilder",
   'you.logoutQ': "Log ud af Polar Lights?",
   'you.nightBody': "Viser appen i dæmpet rødt, så dine øjne forbliver vænnet til mørket. Auto slår det til, når det er mørkt, hvor du er.",

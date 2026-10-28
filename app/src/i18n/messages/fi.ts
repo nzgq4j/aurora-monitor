@@ -24,6 +24,7 @@ export const fi: Messages = {
   'night.label': "Yötila: {mode}",
   'night.toggle': "Punainen yötila",
   'nav.alerts': "Hälytykset",
+  'nav.sun': "Aurinko",
   'common.dismiss': "SULJE",
   'footer.sources': "Data: NOAA SWPC, GFZ Potsdam, NASA/SDO. Ajat UT-ajassa.",
   'title.privacy': "Tietosuojaseloste",
@@ -46,6 +47,7 @@ export const fi: Messages = {
   // ---- Page titles ----
   'title.map': "Revontulikartta",
   'title.alerts': "Hälytykset",
+  'title.sun': "Aurinko ja avaruussää",
   'title.dashboard': "Ohjauspaneeli",
   'title.plans': "Tilaukset",
   'title.checkout': "Kassa",
@@ -1149,7 +1151,6 @@ export const fi: Messages = {
   'you.group.membership': "Jäsenyys",
   'you.group.account': "Tili",
   'you.group.about': "Tietoja",
-  'you.notifications': "Ilmoitukset",
   'you.sources': "Datalähteet",
   'you.logoutQ': "Kirjaudutaanko ulos Polar Lightsista?",
   'you.nightBody': "Piirtää sovelluksen himmeän punaisena, jotta silmäsi pysyvät tottuneina pimeään. Autom. laittaa sen päälle, kun sijainnissasi on pimeää.",

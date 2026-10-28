@@ -1,4 +1,5 @@
 import type { KpPoint, SolarWind, WindPoint } from './feeds';
+import type { I18n } from '../i18n/I18n';
 
 /**
  * One-line summaries for the Now page's collapsible detail cards (#65). Each returns a message
@@ -44,4 +45,10 @@ export function solarLine(wind: WindPoint[], now: number): Line {
   const d = recent - before;
   const vars = { from: Math.round(before), to: Math.round(recent), speed: Math.round(recent) };
   return d >= 50 ? { key: 'solar.rising', vars } : d <= -50 ? { key: 'solar.falling', vars } : { key: 'solar.steady', vars };
+}
+
+/** A card summary's message (`detail.{key}`), numbers in the page's format, with an optional formatted day. */
+export function summaryText({ t, num }: Pick<I18n, 't' | 'num'>, line: Line, day?: string) {
+  const vars = Object.fromEntries(Object.entries(line.vars ?? {}).map(([k, v]) => [k, typeof v === 'number' ? num(v, Number.isInteger(v) ? 0 : 1) : v]));
+  return t(`detail.${line.key}`, { ...vars, ...(day ? { day } : {}) });
 }

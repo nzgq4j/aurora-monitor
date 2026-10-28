@@ -24,6 +24,7 @@ export const sv: Messages = {
   'night.label': "Nattläge: {mode}",
   'night.toggle': "Rött nattläge",
   'nav.alerts': "Aviseringar",
+  'nav.sun': "Sol",
   'common.dismiss': "STÄNG",
   'footer.sources': "Data: NOAA SWPC, GFZ Potsdam, NASA/SDO. Tider i UT.",
   'title.privacy': "Integritetspolicy",
@@ -46,6 +47,7 @@ export const sv: Messages = {
   // ---- Page titles ----
   'title.map': "Norrskenskarta",
   'title.alerts': "Aviseringar",
+  'title.sun': "Solen och rymdväder",
   'title.dashboard': "Översikt",
   'title.plans': "Planer",
   'title.checkout': "Kassa",
@@ -1149,7 +1151,6 @@ export const sv: Messages = {
   'you.group.membership': "Medlemskap",
   'you.group.account': "Konto",
   'you.group.about': "Om",
-  'you.notifications': "Aviseringar",
   'you.sources': "Datakällor",
   'you.logoutQ': "Logga ut från Polar Lights?",
   'you.nightBody': "Visar appen i dämpat rött så att dina ögon förblir vana vid mörkret. Auto slår på det när det blir mörkt där du är.",

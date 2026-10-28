@@ -24,6 +24,7 @@ export const nb: Messages = {
   'night.label': "Nattmodus: {mode}",
   'night.toggle': "Rød nattmodus",
   'nav.alerts': "Varsler",
+  'nav.sun': "Sol",
   'common.dismiss': "LUKK",
   'footer.sources': "Data: NOAA SWPC, GFZ Potsdam, NASA/SDO. Tider i UT.",
   'title.privacy': "Personvernerklæring",
@@ -46,6 +47,7 @@ export const nb: Messages = {
   // ---- Page titles ----
   'title.map': "Nordlyskart",
   'title.alerts': "Varsler",
+  'title.sun': "Sola og romvær",
   'title.dashboard': "Dashbord",
   'title.plans': "Planer",
   'title.checkout': "Betaling",
@@ -1149,7 +1151,6 @@ export const nb: Messages = {
   'you.group.membership': "Medlemskap",
   'you.group.account': "Konto",
   'you.group.about': "Om",
-  'you.notifications': "Varslinger",
   'you.sources': "Datakilder",
   'you.logoutQ': "Logge ut av Polar Lights?",
   'you.nightBody': "Viser appen i svakt rødt så øynene beholder mørkesynet. Auto slår det på når det blir mørkt der du er.",

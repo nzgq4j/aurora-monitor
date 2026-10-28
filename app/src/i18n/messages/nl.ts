@@ -24,6 +24,7 @@ export const nl: Messages = {
   'night.label': 'Nachtmodus: {mode}',
   'night.toggle': 'Rode nachtmodus',
   'nav.alerts': 'Meldingen',
+  'nav.sun': "Zon",
   'common.dismiss': 'SLUITEN',
   'footer.sources': 'Data: NOAA SWPC, GFZ Potsdam, NASA/SDO. Tijden in UT.',
   'title.privacy': "Privacybeleid",
@@ -46,6 +47,7 @@ export const nl: Messages = {
   // ---- Page titles ----
   'title.map': 'Poollichtkaart',
   'title.alerts': 'Meldingen',
+  'title.sun': "De zon en ruimteweer",
   'title.dashboard': 'Dashboard',
   'title.plans': 'Abonnementen',
   'title.checkout': 'Afrekenen',
@@ -1149,7 +1151,6 @@ export const nl: Messages = {
   'you.group.membership': "Lidmaatschap",
   'you.group.account': "Account",
   'you.group.about': "Over",
-  'you.notifications': "Meldingen",
   'you.sources': "Gegevensbronnen",
   'you.logoutQ': "Uitloggen bij Polar Lights?",
   'you.nightBody': "Toont de app in gedempt rood, zodat je ogen aan het donker gewend blijven. Automatisch gaat hij aan zodra het donker is waar je bent.",

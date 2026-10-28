@@ -24,6 +24,7 @@ export const ru: Messages = {
   'night.label': "Ночной режим: {mode}",
   'night.toggle': "Красный ночной режим",
   'nav.alerts': "Оповещения",
+  'nav.sun': "Солнце",
   'common.dismiss': "ЗАКРЫТЬ",
   'footer.sources': "Данные: NOAA SWPC, GFZ Potsdam, NASA/SDO. Время в UT.",
   'title.privacy': "Политика конфиденциальности",
@@ -46,6 +47,7 @@ export const ru: Messages = {
   // ---- Page titles ----
   'title.map': "Карта сияний",
   'title.alerts': "Оповещения",
+  'title.sun': "Солнце и космическая погода",
   'title.dashboard': "Панель",
   'title.plans': "Тарифы",
   'title.checkout': "Оформление",
@@ -1175,7 +1177,6 @@ export const ru: Messages = {
   'you.group.membership': "Подписка",
   'you.group.account': "Аккаунт",
   'you.group.about': "О приложении",
-  'you.notifications': "Уведомления",
   'you.sources': "Источники данных",
   'you.logoutQ': "Выйти из Polar Lights?",
   'you.nightBody': "Окрашивает приложение в приглушённый красный, чтобы глаза не отвыкали от темноты. «Авто» включает режим, когда у вас стемнеет.",

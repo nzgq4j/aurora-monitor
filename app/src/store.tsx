@@ -10,12 +10,13 @@ import { supabase } from './lib/supabase';
 import { useI18n } from './i18n/I18n';
 import { LOCALES } from './i18n/config';
 
-export type Screen = 'home' | 'map' | 'alerts' | 'plans' | 'checkout' | 'signin' | 'account' | 'sky' | 'gallery' | 'badges';
+export type Screen = 'home' | 'map' | 'sun' | 'alerts' | 'plans' | 'checkout' | 'signin' | 'account' | 'sky' | 'gallery' | 'badges';
 export type Tab = 'overview' | 'alerts' | 'locations' | 'plans' | 'account';
 
 export const PATHS: Record<Screen, string> = {
   home: '/',
   map: '/map',
+  sun: '/sun',
   alerts: '/alerts',
   plans: '/plans',
   checkout: '/checkout',

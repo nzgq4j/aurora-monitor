@@ -169,6 +169,8 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 /* Time fields shrink so longer labels (Finnish "Alkaen") still fit two columns on narrow phones. */
 .alert-quiet input { min-width: 0; flex: 0 1 132px; }
 .alerts-page { padding: 36px var(--gutter) 56px; display: flex; flex-direction: column; gap: 28px; }
+.alerts-back { display: none; }
+@media (max-width: 640px) { .alerts-back { display: flex; align-self: flex-start; margin: -12px 0 -12px -12px; } }
 .alert-status { display: flex; flex-direction: column; gap: 10px; padding: 8px 22px 20px; border: 1px solid var(--line-2); border-radius: 18px; }
 .alert-status.on { border-color: rgba(108, 255, 43, .45); background: rgba(108, 255, 43, .04); }
 .alert-status-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 20px; margin: 0; }

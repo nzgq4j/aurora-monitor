@@ -500,12 +500,16 @@ function RecentAlerts() {
 
 /** /alerts: the phone Alerts tab. Signed in, the alert settings; signed out, what alerts do and how to get them. */
 export function AlertsPage({ data }: { data: AccountData }) {
-  const { signedIn, live } = useStore();
+  const { signedIn, live, go } = useStore();
   const auth = useAuth();
   const { t } = useI18n();
   if (live && !auth.ready) return <main className="wrap" style={{ padding: '64px var(--gutter)', color: 'var(--muted)' }}>{t('dash.loading')}</main>;
   return (
     <main data-screen-label="Alerts" className="wrap alerts-page">
+      {/* On phones Alerts opens from You (the header's Dashboard covers it on wider screens). */}
+      <button type="button" className="btn you-back alerts-back" onClick={() => go('account')} aria-label={t('you.back')}>
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      </button>
       {signedIn ? <Alerts data={data} /> : <AlertsIntro />}
     </main>
   );

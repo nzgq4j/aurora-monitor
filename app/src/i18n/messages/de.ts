@@ -24,6 +24,7 @@ export const de: Messages = {
   'night.label': 'Nachtmodus: {mode}',
   'night.toggle': 'Roter Nachtmodus',
   'nav.alerts': 'Alarme',
+  'nav.sun': "Sonne",
   'common.dismiss': 'SCHLIESSEN',
   'footer.sources': 'Daten: NOAA SWPC, GFZ Potsdam, NASA/SDO. Zeiten in UT.',
   'title.privacy': "Datenschutzerklärung",
@@ -46,6 +47,7 @@ export const de: Messages = {
   // ---- Page titles ----
   'title.map': 'Polarlichtkarte',
   'title.alerts': 'Alarme',
+  'title.sun': "Sonne und Weltraumwetter",
   'title.dashboard': 'Dashboard',
   'title.plans': 'Tarife',
   'title.checkout': 'Kasse',
@@ -1149,7 +1151,6 @@ export const de: Messages = {
   'you.group.membership': "Mitgliedschaft",
   'you.group.account': "Konto",
   'you.group.about': "Info",
-  'you.notifications': "Benachrichtigungen",
   'you.sources': "Datenquellen",
   'you.logoutQ': "Von Polar Lights abmelden?",
   'you.nightBody': "Zeigt die App in gedämpftem Rot, damit Ihre Augen an die Dunkelheit gewöhnt bleiben. Automatisch schaltet er sich ein, sobald es bei Ihnen dunkel ist.",
