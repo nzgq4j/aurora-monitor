@@ -11,6 +11,7 @@ import type { HourScore, Level } from '../lib/tonight';
 import { usePointVerdict } from '../lib/usePointVerdict';
 import { INTL_TAG } from '../i18n/config';
 import { useI18n } from '../i18n/I18n';
+import { BottomSheet } from './BottomSheet';
 import { Explain } from './Explain';
 import { USEFUL_EVENT } from './InstallPrompt';
 import { Sighting } from './Sighting';
@@ -54,13 +55,14 @@ function SkyScene({ look, strength, cloud, light }: { look: 'low' | 'high' | 'ov
 export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }) {
   const { t, num, locale } = useI18n();
   const { shownPlace, locations, setViewPlace } = useLocations();
-  // Saved locations for the place picker, Home first; the one on show is selected (an unsaved place gets its own entry).
+  // Saved locations for the place picker (a sheet, like the app's other pickers), Home first; the one on show is ticked.
   const places = [...locations].sort((x, y) => Number(y.isHome) - Number(x.isHome));
   const savedShown = shownPlace ? places.find(l => l.lat === shownPlace.lat && l.lon === shownPlace.lon && (l.isHome || !shownPlace.isHome)) : undefined;
-  const placeValue = savedShown?.id ?? 'view';
-  const pickPlace = (value: string) => {
-    if (value === 'other') { toYourSky(); return; }
-    const l = places.find(x => x.id === value);
+  const [picking, setPicking] = useState(false);
+  const pickPlace = (id: string) => {
+    setPicking(false);
+    if (id === 'other') { toYourSky(); return; }
+    const l = places.find(x => x.id === id);
     if (l) setViewPlace(l.isHome ? null : { name: l.name, lat: l.lat, lon: l.lon });
   };
   const { cond, loading, now, result, offline, savedAt } = usePointVerdict(shownPlace, kp, series);
@@ -158,19 +160,11 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
   return (
     <section className="tonight" aria-label={t('tonight.h')} style={card}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-        {/* A native select over the pill: the phone's own picker lists the saved locations (Home first). */}
-        <label className="tonight-place">
+        <button type="button" className="btn tonight-place" aria-haspopup="dialog" onClick={() => setPicking(true)} aria-label={t('tonight.changePlace', { place: shownPlace.name })}>
           <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Zm0-8.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" fill="none" stroke="currentColor" strokeWidth="2" /></svg>
           <span>{shownPlace.name.split(',')[0]}</span>
           <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          <select value={placeValue} onChange={e => pickPlace(e.target.value)} aria-label={t('tonight.changePlace', { place: shownPlace.name })}>
-            {!savedShown && <option value="view">{shownPlace.name.split(',')[0]}</option>}
-            {places.map(l => (
-              <option key={l.id} value={l.id}>{l.isHome ? t('tonight.placeHome', { place: l.name.split(',')[0] }) : l.name.split(',')[0]}</option>
-            ))}
-            <option value="other">{t('tonight.otherPlace')}</option>
-          </select>
-        </label>
+        </button>
         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {now !== null && !offline && <span className="label" style={{ fontSize: 11 }}>{t('tonight.updated', { time: time(now) })}</span>}
           {result && (
@@ -243,6 +237,37 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
           </div>
         </div>
       )}
+      {picking && (
+        <BottomSheet title={t('you.locations')} onClose={() => setPicking(false)}>
+          <div className="you-group-rows">
+            {!savedShown && (
+              <button type="button" className="btn you-row" aria-pressed onClick={() => setPicking(false)}>
+                <span className="you-row-label sun-lapse-option"><b>{shownPlace.name.split(',')[0]}</b><small>{placeDetail(shownPlace.name)}</small></span>
+                <Check />
+              </button>
+            )}
+            {places.map(l => (
+              <button key={l.id} type="button" className="btn you-row" aria-pressed={savedShown?.id === l.id} onClick={() => pickPlace(l.id)}>
+                <span className="you-row-label sun-lapse-option">
+                  <b>{l.name.split(',')[0]}</b>
+                  <small>{[l.isHome ? t('map.panel.home') : '', placeDetail(l.name)].filter(Boolean).join(' · ')}</small>
+                </span>
+                {savedShown?.id === l.id && <Check />}
+              </button>
+            ))}
+            <button type="button" className="btn you-row" onClick={() => pickPlace('other')}>
+              <span className="you-row-label">{t('tonight.otherPlace')}</span>
+            </button>
+          </div>
+        </BottomSheet>
+      )}
     </section>
   );
 }
+
+/** The rest of a place's name after the town (region, country). */
+const placeDetail = (name: string) => name.split(',').slice(1).map(x => x.trim()).filter(Boolean).join(', ');
+
+const Check = () => (
+  <span style={{ color: 'var(--green)', display: 'flex' }}><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
+);

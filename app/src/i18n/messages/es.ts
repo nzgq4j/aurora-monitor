@@ -655,7 +655,6 @@ export const es: Messages = {
   'tonight.noPlace': 'Indica tu ubicación para saber si merece la pena salir esta noche.',
   'tonight.setPlace': 'Elegir ubicación',
   'tonight.changePlace': 'Cambiar ubicación ({place})',
-  'tonight.placeHome': "{place} (principal)",
   'tonight.otherPlace': "Otro lugar…",
   'tonight.updated': 'Actualizado {time}',
   'offline.banner': 'Sin conexión · actualizado por última vez {time}',
