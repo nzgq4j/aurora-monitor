@@ -671,6 +671,8 @@ export const ru: Messages = {
   'tonight.noPlace': "Укажите место, чтобы узнать, стоит ли выходить сегодня ночью.",
   'tonight.setPlace': "Указать место",
   'tonight.changePlace': "Сменить место ({place})",
+  'tonight.placeHome': "{place} (дом)",
+  'tonight.otherPlace': "Другое место…",
   'tonight.updated': "Обновлено {time}",
   'offline.banner': "Нет сети · обновлено {time}",
   'offline.bannerNoTime': "Нет сети · показаны сохранённые данные",

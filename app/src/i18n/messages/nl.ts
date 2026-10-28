@@ -655,6 +655,8 @@ export const nl: Messages = {
   'tonight.noPlace': 'Stel je locatie in om te zien of het vannacht de moeite waard is.',
   'tonight.setPlace': 'Locatie instellen',
   'tonight.changePlace': 'Locatie wijzigen ({place})',
+  'tonight.placeHome': "{place} (thuis)",
+  'tonight.otherPlace': "Andere plaats…",
   'tonight.updated': 'Bijgewerkt {time}',
   'offline.banner': 'Offline · laatst bijgewerkt {time}',
   'offline.bannerNoTime': 'Offline · opgeslagen gegevens',

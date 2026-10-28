@@ -53,7 +53,16 @@ function SkyScene({ look, strength, cloud, light }: { look: 'low' | 'high' | 'ov
  */
 export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }) {
   const { t, num, locale } = useI18n();
-  const { shownPlace } = useLocations();
+  const { shownPlace, locations, setViewPlace } = useLocations();
+  // Saved locations for the place picker, Home first; the one on show is selected (an unsaved place gets its own entry).
+  const places = [...locations].sort((x, y) => Number(y.isHome) - Number(x.isHome));
+  const savedShown = shownPlace ? places.find(l => l.lat === shownPlace.lat && l.lon === shownPlace.lon && (l.isHome || !shownPlace.isHome)) : undefined;
+  const placeValue = savedShown?.id ?? 'view';
+  const pickPlace = (value: string) => {
+    if (value === 'other') { toYourSky(); return; }
+    const l = places.find(x => x.id === value);
+    if (l) setViewPlace(l.isHome ? null : { name: l.name, lat: l.lat, lon: l.lon });
+  };
   const { cond, loading, now, result, offline, savedAt } = usePointVerdict(shownPlace, kp, series);
   // Offline (#68): hours already past grey out against the real clock; back online, the page reloads its data.
   const [clock, setClock] = useState<number | null>(null);
@@ -149,11 +158,19 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
   return (
     <section className="tonight" aria-label={t('tonight.h')} style={card}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-        <button type="button" className="btn tonight-place" onClick={toYourSky} aria-label={t('tonight.changePlace', { place: shownPlace.name })}>
+        {/* A native select over the pill: the phone's own picker lists the saved locations (Home first). */}
+        <label className="tonight-place">
           <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Zm0-8.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" fill="none" stroke="currentColor" strokeWidth="2" /></svg>
           <span>{shownPlace.name.split(',')[0]}</span>
           <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-        </button>
+          <select value={placeValue} onChange={e => pickPlace(e.target.value)} aria-label={t('tonight.changePlace', { place: shownPlace.name })}>
+            {!savedShown && <option value="view">{shownPlace.name.split(',')[0]}</option>}
+            {places.map(l => (
+              <option key={l.id} value={l.id}>{l.isHome ? t('tonight.placeHome', { place: l.name.split(',')[0] }) : l.name.split(',')[0]}</option>
+            ))}
+            <option value="other">{t('tonight.otherPlace')}</option>
+          </select>
+        </label>
         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {now !== null && !offline && <span className="label" style={{ fontSize: 11 }}>{t('tonight.updated', { time: time(now) })}</span>}
           {result && (
