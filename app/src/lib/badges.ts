@@ -4,11 +4,14 @@
  * Points are added up in the database (members.points) so others see the same rank.
  */
 
-/** 'special' is the finish of the secret special-event badges, outside the bronze to aurora ladder. */
-export type Tier = 'locked' | 'bronze' | 'silver' | 'gold' | 'platinum' | 'aurora' | 'special';
+/**
+ * 'special' (rose gold) and 'borealis' (aurora green, red and purple) are finishes of the secret special-event
+ * badges, outside the bronze to aurora ladder.
+ */
+export type Tier = 'locked' | 'bronze' | 'silver' | 'gold' | 'platinum' | 'aurora' | 'special' | 'borealis';
 export const TIERS: Tier[] = ['bronze', 'silver', 'gold', 'platinum', 'aurora'];
 
-export type Glyph = 'eye' | 'sunrise' | 'check2' | 'bolt' | 'camera' | 'heart' | 'star' | 'notes' | 'pin' | 'route' | 'equinox' | 'snow' | 'moon' | 'globe' | 'ticket' | 'flag' | 'question';
+export type Glyph = 'eye' | 'sunrise' | 'check2' | 'bolt' | 'camera' | 'heart' | 'star' | 'notes' | 'pin' | 'route' | 'equinox' | 'snow' | 'moon' | 'globe' | 'ticket' | 'flag' | 'question' | 'camp';
 
 export type Family = 'reporter' | 'storm' | 'contributor' | 'explorer' | 'seasoned' | 'special';
 export const FAMILIES: Family[] = ['reporter', 'storm', 'contributor', 'explorer', 'seasoned'];
@@ -97,7 +100,7 @@ export function badges(a: Achievement[], m: MemberInfo): Badge[] {
 }
 
 /** A special badge as public.my_special_badges() returns it: names and descriptions by language. */
-export interface SpecialRow { slug: string; kind: string; name: Record<string, string>; description: Record<string, string>; glyph: string; at: string; value: number | null }
+export interface SpecialRow { slug: string; kind: string; name: Record<string, string>; description: Record<string, string>; glyph: string; finish?: string; at: string; value: number | null }
 
 /**
  * Special badges: secret until earned (Low Latitude, named storm events, tour codes), so only the ones a
@@ -105,7 +108,7 @@ export interface SpecialRow { slug: string; kind: string; name: Record<string, s
  */
 export function specialBadges(rows: SpecialRow[], locale: string): Badge[] {
   return rows.map(r => ({
-    id: `special:${r.slug}`, family: 'special', glyph: r.glyph in GLYPHS ? (r.glyph as Glyph) : 'star', tier: 'special',
+    id: `special:${r.slug}`, family: 'special', glyph: r.glyph in GLYPHS ? (r.glyph as Glyph) : 'star', tier: r.finish === 'borealis' ? 'borealis' : 'special',
     level: 3, count: 1, next: null, steps: [1], at: r.at, value: r.value,
     title: r.name[locale] ?? r.name.en, text: r.description[locale] ?? r.description.en,
   }));
@@ -137,6 +140,7 @@ export const TIER_COLORS: Record<Tier, { rim: string; face: string; band: string
   platinum: { rim: '#9FE3F5', face: '#0b1417', band: '#9FE3F5', band2: '#4c8c9c', ink: '#D4F5FF' },
   aurora: { rim: '#6CFF2B', face: '#07100a', band: '#6CFF2B', band2: '#B07CFF', ink: '#C9FFB0' },
   special: { rim: '#E8A58F', face: '#160a12', band: '#E86FC8', band2: '#6A3FD0', ink: '#FFD6EC' },
+  borealis: { rim: '#6CFF2B', face: '#0a0710', band: '#FF4D6D', band2: '#9B5CFF', ink: '#D8FFC4' },
   locked: { rim: '#2a302c', face: '#0b0d0c', band: '#2a302c', band2: '#1d211e', ink: '#7d857f' },
 };
 
@@ -144,7 +148,8 @@ export const TIER_COLORS: Record<Tier, { rim: string; face: string; band: string
  * Badge finish by tier (components/BadgeIcon): the metal's tones from highlight to shadow, and the glass
  * in the face's three cells, each a [light, dark] pair. Glass is garnet and amber for bronze, ice blue for
  * silver, aurora green for gold, cyan to violet for platinum, green to violet for aurora and storms, and
- * magenta to violet in rose gold for the secret special badges.
+ * magenta to violet in rose gold for the secret special badges; borealis is the aurora's own colours (green,
+ * red and purple) in silver.
  */
 export const TIER_METALS: Record<Tier, { metal: string[]; glass: [[string, string], [string, string], [string, string]] }> = {
   bronze: { metal: ['#f6c896', '#c98a55', '#6e3f1e', '#e2a873', '#8a5229', '#f0bd8a'], glass: [['#8a3524', '#3a1009'], ['#e08a3a', '#8a3c12'], ['#5a1f0c', '#220a04']] },
@@ -153,6 +158,7 @@ export const TIER_METALS: Record<Tier, { metal: string[]; glass: [[string, strin
   platinum: { metal: ['#ffffff', '#dcecf2', '#7f9aa4', '#f1fafd', '#a3bcc5', '#ffffff'], glass: [['#62b9d6', '#2b7896'], ['#9be3f5', '#4f97cc'], ['#a493ee', '#5548b4']] },
   aurora: { metal: ['#f4fff0', '#c6f7b4', '#6f8c80', '#efe2ff', '#9aa9d6', '#f7fff2'], glass: [['#2e8f3a', '#0e3a1c'], ['#6CFF2B', '#1f7a3a'], ['#B07CFF', '#3d1f80']] },
   special: { metal: ['#ffe9df', '#e8a58f', '#7a4034', '#f6c4b2', '#a2604f', '#ffe0d4'], glass: [['#a03a8c', '#4a0f42'], ['#e86fc8', '#8a2a7a'], ['#6a3fd0', '#251060']] },
+  borealis: { metal: ['#ffffff', '#d5dcda', '#6c7a76', '#f2f6f4', '#8f9b97', '#fbfdfc'], glass: [['#3fd46a', '#0d5a2a'], ['#ff5a7a', '#a81c3c'], ['#a35cff', '#3a1580']] },
   locked: { metal: ['#6a706c', '#454b47', '#1f2321', '#565c58', '#2c312e', '#5d635f'], glass: [['#2a3230', '#121615'], ['#232a28', '#0e1211'], ['#1c2220', '#0a0d0c']] },
 };
 
@@ -173,5 +179,6 @@ export const GLYPHS: Record<Glyph, string> = {
   globe: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 3a4 9 0 1 0 0 18a4 9 0 1 0 0-18zM4 8.5h16M3.5 15h17',
   ticket: 'M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4zM15 8v2M15 14v2',
   flag: 'M5 21V4M5 4h12l-2.5 4.5L17 13H5',
+  camp: 'M2.5 20h19M5 20l7-13 7 13M9.5 20l2.5-5 2.5 5M10.5 4.5 12 7l1.5-2.5',
   question: 'M8.5 8.5a3.5 3.5 0 1 1 5.2 3.1c-1.1.6-1.7 1.3-1.7 2.6M12 18.5v.01',
 };

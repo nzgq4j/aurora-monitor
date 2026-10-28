@@ -256,7 +256,7 @@ function RedeemSheet({ onClose, onRedeemed }: { onClose: () => void; onRedeemed:
   const [busy, setBusy] = useState(false);
   const errors: Record<Exclude<RedeemStatus, 'ok'>, MessageKey> = {
     invalid: 'badges.redeem.invalid', expired: 'badges.redeem.expired', used: 'badges.redeem.used',
-    have: 'badges.redeem.have', limit: 'badges.redeem.limit', error: 'badges.redeem.failed',
+    have: 'badges.redeem.have', plan: 'badges.redeem.plan', limit: 'badges.redeem.limit', error: 'badges.redeem.failed',
   };
   const redeem = async () => {
     setBusy(true); setErr('');

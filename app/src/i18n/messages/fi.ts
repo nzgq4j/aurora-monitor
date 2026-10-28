@@ -1215,6 +1215,7 @@ export const fi: Messages = {
   'badges.redeem.expired': "Koodi on vanhentunut.",
   'badges.redeem.used': "Koodi on jo käytetty.",
   'badges.redeem.have': "Sinulla on jo tämä merkki.",
+  'badges.redeem.plan': "Tämä koodi on Chaser-jäsenille. Siirry Chaseriin ja yritä uudelleen.",
   'badges.redeem.limit': "Liian monta yritystä. Yritä uudelleen tunnin kuluttua.",
   'badges.redeem.failed': "Koodin lunastus epäonnistui. Yritä uudelleen.",
   'badges.magLat': "Magneettinen leveysaste {lat}°",

@@ -1215,6 +1215,7 @@ export const es: Messages = {
   'badges.redeem.expired': "Ese código ha caducado.",
   'badges.redeem.used': "Ese código ya se ha usado.",
   'badges.redeem.have': "Ya tienes esta insignia.",
+  'badges.redeem.plan': "Este código es para miembros Chaser. Pásate a Chaser y vuelve a intentarlo.",
   'badges.redeem.limit': "Demasiados intentos. Vuelve a intentarlo dentro de una hora.",
   'badges.redeem.failed': "No se pudo canjear el código. Inténtalo de nuevo.",
   'badges.magLat': "Latitud magnética {lat}°",

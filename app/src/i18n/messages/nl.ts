@@ -1215,6 +1215,7 @@ export const nl: Messages = {
   'badges.redeem.expired': "Die code is verlopen.",
   'badges.redeem.used': "Die code is al gebruikt.",
   'badges.redeem.have': "Je hebt deze badge al.",
+  'badges.redeem.plan': "Deze code is voor Chaser-leden. Stap over op Chaser en probeer het opnieuw.",
   'badges.redeem.limit': "Te veel pogingen. Probeer het over een uur opnieuw.",
   'badges.redeem.failed': "Code verzilveren mislukt. Probeer het opnieuw.",
   'badges.magLat': "Magnetische breedte {lat}°",
