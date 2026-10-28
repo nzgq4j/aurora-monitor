@@ -408,10 +408,7 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 .tonight-word { font-size: clamp(30px, 9vw, 40px); line-height: .95; margin: 0; }
 .tonight-score { font-size: 30px; }
 .tonight-scene { flex: none; display: block; width: 120px; height: 80px; border-radius: 12px; }
-.tonight-place { position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line-2); background: #0b0d0c; color: #fff; font: 600 15px var(--f-body); cursor: pointer; }
-/* The select covers the pill, invisible, so a tap opens the device's own picker. */
-.tonight-place select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font-size: 16px; }
-.tonight-place:focus-within { outline: 2px solid var(--green); outline-offset: 2px; }
+.tonight-place { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line-2); background: #0b0d0c; color: #fff; font: 600 15px var(--f-body); }
 .tonight-share { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 999px; border: 1px solid var(--line-2); background: #0b0d0c; color: #fff; }
 .tonight-share:active { border-color: var(--green); color: var(--green); }
 .tonight-badges { display: flex; flex-wrap: wrap; gap: 6px; }

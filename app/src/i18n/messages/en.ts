@@ -655,7 +655,6 @@ export const en = {
   'tonight.noPlace': 'Set your location to see whether it’s worth going out tonight.',
   'tonight.setPlace': 'Set location',
   'tonight.changePlace': 'Change location ({place})',
-  'tonight.placeHome': "{place} (Home)",
   'tonight.otherPlace': "Another place…",
   'tonight.updated': 'Updated {time}',
   'offline.banner': 'Offline · last updated {time}',
