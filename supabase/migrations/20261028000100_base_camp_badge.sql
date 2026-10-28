@@ -21,9 +21,9 @@ insert into public.special_events (slug, kind, glyph, points, finish, requires_p
    "fi": "Yksi Polar Lightsin 500 ensimmäisestä Chaser-jäsenestä.",
    "ru": "Один из первых 500 участников Chaser в Polar Lights."}');
 
--- The badge's finish now goes to the app with the rest.
-drop function public.my_special_badges();
-create function public.my_special_badges()
+-- my_special_badges() with the badge's finish. A new name, since a function's columns can't be changed in
+-- place; the app reads this one from now on, and my_special_badges() stays only for older app versions.
+create function public.my_special_badges_v2()
 returns table (slug text, kind text, name jsonb, description jsonb, glyph text, finish text, at timestamptz, value real)
 language sql
 stable
@@ -36,8 +36,8 @@ as $$
   where a.user_id = (select auth.uid()) and a.kind = 'special'
   order by a.at;
 $$;
-revoke execute on function public.my_special_badges() from public, anon;
-grant execute on function public.my_special_badges() to authenticated;
+revoke execute on function public.my_special_badges_v2() from public, anon;
+grant execute on function public.my_special_badges_v2() to authenticated;
 
 -- Adds the plan check (status 'plan'), made before a use of the code is counted.
 create or replace function public.redeem_badge_code(p_code text)

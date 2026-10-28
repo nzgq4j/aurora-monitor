@@ -65,11 +65,11 @@ export async function myAchievements(): Promise<Achievement[]> {
   return (data as Achievement[] | null) ?? [];
 }
 
-/** The member's special badges (the others stay secret): supabase/migrations/20261027000100_special_badges.sql. */
+/** The member's special badges (the others stay secret): supabase/migrations/20261028000100_base_camp_badge.sql. */
 export async function mySpecialBadges(): Promise<SpecialRow[]> {
   const a = await session();
   if (!a) return [];
-  const { data } = await a.sb.rpc('my_special_badges');
+  const { data } = await a.sb.rpc('my_special_badges_v2');
   return (data as SpecialRow[] | null) ?? [];
 }
 
