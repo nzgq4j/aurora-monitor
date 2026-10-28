@@ -24,6 +24,7 @@ export const fr: Messages = {
   'night.label': 'Mode nuit : {mode}',
   'night.toggle': 'Mode nuit rouge',
   'nav.alerts': 'Alertes',
+  'nav.sun': "Soleil",
   'common.dismiss': 'FERMER',
   'footer.sources': 'Données : NOAA SWPC, GFZ Potsdam, NASA/SDO. Heures en UT.',
   'title.privacy': "Politique de confidentialité",
@@ -46,6 +47,7 @@ export const fr: Messages = {
   // ---- Page titles ----
   'title.map': 'Carte des aurores',
   'title.alerts': 'Alertes',
+  'title.sun': "Le Soleil et la météo spatiale",
   'title.dashboard': 'Tableau de bord',
   'title.plans': 'Offres',
   'title.checkout': 'Paiement',
@@ -1149,7 +1151,6 @@ export const fr: Messages = {
   'you.group.membership': "Abonnement",
   'you.group.account': "Compte",
   'you.group.about': "À propos",
-  'you.notifications': "Notifications",
   'you.sources': "Sources des données",
   'you.logoutQ': "Se déconnecter de Polar Lights ?",
   'you.nightBody': "Affiche l’app en rouge atténué pour que vos yeux restent habitués à l’obscurité. En automatique, il s’active dès qu’il fait nuit là où vous êtes.",

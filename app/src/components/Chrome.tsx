@@ -7,7 +7,7 @@ import { useI18n } from '../i18n/I18n';
 import type { MessageKey } from '../i18n/core';
 import Link from 'next/link';
 
-const NAV: [MessageKey, Screen][] = [['nav.now', 'home'], ['nav.map', 'map'], ['nav.gallery', 'gallery'], ['nav.dashboard', 'account']];
+const NAV: [MessageKey, Screen][] = [['nav.now', 'home'], ['nav.map', 'map'], ['nav.gallery', 'gallery'], ['nav.sun', 'sun'], ['nav.dashboard', 'account']];
 
 export function Header({ kpLabel }: { kpLabel: string }) {
   const { signedIn, live, screen: current, plan, go, goAccount } = useStore();
@@ -26,8 +26,8 @@ export function Header({ kpLabel }: { kpLabel: string }) {
           </button>
           <nav className="nav">
             {NAV.map(([label, screen]) => {
-              // Plans and checkout live under the Dashboard.
-              const on = current === screen || (screen === 'account' && (current === 'plans' || current === 'checkout' || current === 'badges'));
+              // Plans, checkout, badges and alerts live under the Dashboard.
+              const on = current === screen || (screen === 'account' && (current === 'plans' || current === 'checkout' || current === 'badges' || current === 'alerts'));
               return (
                 <button key={screen} type="button" className={'btn nav-item' + (on ? ' on' : '')} aria-current={on ? 'page' : undefined}
                   onClick={screen === 'account' ? goAccount : () => go(screen)}>
@@ -61,7 +61,7 @@ const ICONS: Record<string, string> = {
   now: 'M4 18c2-6 5-10 8-10s6 4 8 10M7 18c1.4-3.6 3-5.5 5-5.5s3.6 1.9 5 5.5M3 21h18',
   map: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm-9 9h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z',
   gallery: 'M4 6h16v13H4zM8.5 11a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM20 16l-5-5-8 8',
-  alerts: 'M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15L6 16Zm4 4.5a2.2 2.2 0 0 0 4 0',
+  sun: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0-5v2m0 14v2M3 12h2m14 0h2M5.6 5.6l1.4 1.4m10 10 1.4 1.4M5.6 18.4 7 17m10-10 1.4-1.4',
   account: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7.5 8.5c.9-3.6 3.8-5.5 7.5-5.5s6.6 1.9 7.5 5.5',
 };
 const Icon = ({ id }: { id: string }) => (
@@ -72,8 +72,8 @@ const Icon = ({ id }: { id: string }) => (
 export function TabBar() {
   const { screen, go } = useStore();
   const { t } = useI18n();
-  // You holds the account, plans, sign-in and settings.
-  const you = screen === 'account' || screen === 'plans' || screen === 'checkout' || screen === 'signin' || screen === 'badges';
+  // You holds the account, plans, sign-in, badges, alerts and settings.
+  const you = screen === 'account' || screen === 'plans' || screen === 'checkout' || screen === 'signin' || screen === 'badges' || screen === 'alerts';
   const tab = (id: string, label: string, on: boolean, onClick: () => void) => (
     <button key={id} type="button" className={`btn tabbar-item tab-${id}` + (on ? ' on' : '')} aria-current={on ? 'page' : undefined} onClick={onClick}>
       <Icon id={id} /><span>{label}</span>
@@ -84,7 +84,7 @@ export function TabBar() {
       {tab('now', t('nav.now'), screen === 'home', () => go('home'))}
       {tab('map', t('nav.map'), screen === 'map', () => go('map'))}
       {tab('gallery', t('nav.gallery'), screen === 'gallery', () => go('gallery'))}
-      {tab('alerts', t('nav.alerts'), screen === 'alerts', () => go('alerts'))}
+      {tab('sun', t('nav.sun'), screen === 'sun', () => go('sun'))}
       {tab('account', t('nav.you'), you, () => go('account', { tab: 'overview' }))}
     </nav>
   );

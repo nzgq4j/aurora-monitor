@@ -199,6 +199,7 @@ export function You() {
 
       <Group label={t('you.group.aurora')}>
         <Row icon={P.pin} label={t('you.locations')} value={String(locations.length)} onClick={() => open('locations')} />
+        <Row icon={P.bell} label={t('nav.alerts')} onClick={() => go('alerts')} />
         {signedIn && <Row icon={P.badge} label={t('badges.title')} value={points === null ? '' : t(`rank.${rank(points).id}` as MessageKey)} onClick={() => go('badges')} />}
         {signedIn && <Row icon={P.photo} label={t('you.myGallery')} value={posted === null ? '' : posted >= 60 ? '60+' : String(posted)} href="/gallery?f=mine" />}
       </Group>
@@ -206,7 +207,6 @@ export function You() {
       <Group label={t('you.group.settings')}>
         <Row icon={P.globe} label={t('lang.h2')} value={LOCALE_NAMES[locale]} onClick={() => setSheet('language')} />
         <Row icon={P.moon} label={t('night.title')} value={t(`night.${night.setting}`)} onClick={() => setSheet('night')} />
-        <Row icon={P.bell} label={t('you.notifications')} onClick={() => go('alerts')} />
       </Group>
 
       {signedIn && (

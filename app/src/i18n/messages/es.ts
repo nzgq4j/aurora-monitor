@@ -24,6 +24,7 @@ export const es: Messages = {
   'night.label': 'Modo nocturno: {mode}',
   'night.toggle': 'Modo nocturno rojo',
   'nav.alerts': 'Alertas',
+  'nav.sun': "Sol",
   'common.dismiss': 'CERRAR',
   'footer.sources': 'Datos: NOAA SWPC, GFZ Potsdam, NASA/SDO. Horas en UT.',
   'title.privacy': "Política de privacidad",
@@ -46,6 +47,7 @@ export const es: Messages = {
   // ---- Page titles ----
   'title.map': 'Mapa de auroras',
   'title.alerts': 'Alertas',
+  'title.sun': "El Sol y el clima espacial",
   'title.dashboard': 'Panel',
   'title.plans': 'Planes',
   'title.checkout': 'Pago',
@@ -1149,7 +1151,6 @@ export const es: Messages = {
   'you.group.membership': "Suscripción",
   'you.group.account': "Cuenta",
   'you.group.about': "Información",
-  'you.notifications': "Notificaciones",
   'you.sources': "Fuentes de datos",
   'you.logoutQ': "¿Cerrar sesión en Polar Lights?",
   'you.nightBody': "Muestra la app en rojo tenue para que tus ojos sigan adaptados a la oscuridad. En automático se activa cuando ya es de noche donde estás.",

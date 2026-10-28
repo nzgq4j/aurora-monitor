@@ -24,6 +24,7 @@ export const en = {
   'night.label': 'Night mode: {mode}',
   'night.toggle': 'Red night mode',
   'nav.alerts': 'Alerts',
+  'nav.sun': "Sun",
   'common.dismiss': 'DISMISS',
   'footer.sources': 'Data: NOAA SWPC, GFZ Potsdam, NASA/SDO. Times in UT.',
   'title.privacy': "Privacy policy",
@@ -46,6 +47,7 @@ export const en = {
   // ---- Page titles ----
   'title.map': 'Aurora map',
   'title.alerts': 'Alerts',
+  'title.sun': "The Sun and space weather",
   'title.dashboard': 'Dashboard',
   'title.plans': 'Plans',
   'title.checkout': 'Checkout',
@@ -1149,7 +1151,6 @@ export const en = {
   'you.group.membership': "Membership",
   'you.group.account': "Account",
   'you.group.about': "About",
-  'you.notifications': "Notifications",
   'you.sources': "Data sources",
   'you.logoutQ': "Log out of Polar Lights?",
   'you.nightBody': "Draws the app in dim red so your eyes stay used to the dark. Auto turns it on once it’s dark where you are.",
