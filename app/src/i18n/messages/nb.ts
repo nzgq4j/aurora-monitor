@@ -655,6 +655,8 @@ export const nb: Messages = {
   'tonight.noPlace': "Velg sted for å se om det er verdt å gå ut i natt.",
   'tonight.setPlace': "Velg sted",
   'tonight.changePlace': "Bytt sted ({place})",
+  'tonight.placeHome': "{place} (hjem)",
+  'tonight.otherPlace': "Et annet sted…",
   'tonight.updated': "Oppdatert {time}",
   'offline.banner': "Frakoblet · sist oppdatert {time}",
   'offline.bannerNoTime': "Frakoblet · viser lagrede data",

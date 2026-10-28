@@ -655,6 +655,8 @@ export const fi: Messages = {
   'tonight.noPlace': "Aseta sijaintisi nähdäksesi, kannattaako tänä yönä lähteä ulos.",
   'tonight.setPlace': "Aseta sijainti",
   'tonight.changePlace': "Vaihda sijainti ({place})",
+  'tonight.placeHome': "{place} (koti)",
+  'tonight.otherPlace': "Muu paikka…",
   'tonight.updated': "Päivitetty {time}",
   'offline.banner': "Offline · päivitetty viimeksi {time}",
   'offline.bannerNoTime': "Offline · näytetään tallennettua dataa",

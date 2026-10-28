@@ -655,6 +655,8 @@ export const de: Messages = {
   'tonight.noPlace': 'Legen Sie Ihren Standort fest, um zu sehen, ob es sich heute Nacht lohnt.',
   'tonight.setPlace': 'Standort festlegen',
   'tonight.changePlace': 'Standort ändern ({place})',
+  'tonight.placeHome': "{place} (Heimatort)",
+  'tonight.otherPlace': "Anderer Ort…",
   'tonight.updated': 'Aktualisiert {time}',
   'offline.banner': 'Offline · zuletzt aktualisiert {time}',
   'offline.bannerNoTime': 'Offline · gespeicherte Daten',

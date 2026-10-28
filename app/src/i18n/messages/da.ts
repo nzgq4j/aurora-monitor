@@ -655,6 +655,8 @@ export const da: Messages = {
   'tonight.noPlace': "Angiv din placering for at se, om det er værd at gå ud i nat.",
   'tonight.setPlace': "Angiv placering",
   'tonight.changePlace': "Skift placering ({place})",
+  'tonight.placeHome': "{place} (hjem)",
+  'tonight.otherPlace': "Et andet sted…",
   'tonight.updated': "Opdateret {time}",
   'offline.banner': "Offline · sidst opdateret {time}",
   'offline.bannerNoTime': "Offline · viser gemte data",

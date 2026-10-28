@@ -655,6 +655,8 @@ export const sv: Messages = {
   'tonight.noPlace': "Ange din plats för att se om det är värt att gå ut i kväll.",
   'tonight.setPlace': "Ange plats",
   'tonight.changePlace': "Byt plats ({place})",
+  'tonight.placeHome': "{place} (hem)",
+  'tonight.otherPlace': "En annan plats…",
   'tonight.updated': "Uppdaterad {time}",
   'offline.banner': "Offline · senast uppdaterad {time}",
   'offline.bannerNoTime': "Offline · visar sparad data",
