@@ -73,7 +73,7 @@ export async function mySpecialBadges(): Promise<SpecialRow[]> {
   return (data as SpecialRow[] | null) ?? [];
 }
 
-export type RedeemStatus = 'ok' | 'invalid' | 'expired' | 'used' | 'have' | 'limit' | 'error';
+export type RedeemStatus = 'ok' | 'invalid' | 'expired' | 'used' | 'have' | 'plan' | 'limit' | 'error';
 
 /** Redeems a tour code. On 'ok' (and 'have') the slug of the badge it gives. */
 export async function redeemBadgeCode(code: string): Promise<{ status: RedeemStatus; slug?: string }> {

@@ -1245,6 +1245,7 @@ export const ru: Messages = {
   'badges.redeem.expired': "Срок действия кода истёк.",
   'badges.redeem.used': "Этот код уже использован.",
   'badges.redeem.have': "У вас уже есть этот значок.",
+  'badges.redeem.plan': "Этот код только для участников Chaser. Перейдите на Chaser и попробуйте снова.",
   'badges.redeem.limit': "Слишком много попыток. Попробуйте через час.",
   'badges.redeem.failed': "Не удалось активировать код. Попробуйте снова.",
   'badges.magLat': "Магнитная широта {lat}°",

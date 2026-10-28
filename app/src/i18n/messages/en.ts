@@ -1215,6 +1215,7 @@ export const en = {
   'badges.redeem.expired': "That code has expired.",
   'badges.redeem.used': "That code has already been used.",
   'badges.redeem.have': "You already have this badge.",
+  'badges.redeem.plan': "This code is for Chaser members. Upgrade to Chaser, then try again.",
   'badges.redeem.limit': "Too many tries. Try again in an hour.",
   'badges.redeem.failed': "Couldn’t redeem the code. Try again.",
   'badges.magLat': "Magnetic latitude {lat}°",

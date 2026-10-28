@@ -1215,6 +1215,7 @@ export const de: Messages = {
   'badges.redeem.expired': "Dieser Code ist abgelaufen.",
   'badges.redeem.used': "Dieser Code wurde bereits verwendet.",
   'badges.redeem.have': "Du hast dieses Abzeichen bereits.",
+  'badges.redeem.plan': "Dieser Code ist für Chaser-Mitglieder. Wechsle zu Chaser und versuche es dann noch einmal.",
   'badges.redeem.limit': "Zu viele Versuche. Versuche es in einer Stunde noch einmal.",
   'badges.redeem.failed': "Code konnte nicht eingelöst werden. Versuche es noch einmal.",
   'badges.magLat': "Magnetische Breite {lat}°",

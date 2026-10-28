@@ -56,5 +56,9 @@ describe('specialBadges', () => {
     expect(specialBadges([row], 'sv')[0]).toMatchObject({ id: 'special:low-latitude', tier: 'special', level: 3, title: 'Låg latitud', text: 'Far south.' });
     expect(specialBadges([row], 'fi')[0].title).toBe('Low Latitude');
   });
+  it('uses the borealis finish when the event asks for it', () => {
+    expect(specialBadges([{ ...row, finish: 'borealis' }], 'en')[0].tier).toBe('borealis');
+    expect(specialBadges([{ ...row, finish: 'other' }], 'en')[0].tier).toBe('special');
+  });
   it('uses a star for a glyph the app doesn’t know', () => expect(specialBadges([{ ...row, glyph: 'nope' }], 'en')[0].glyph).toBe('star'));
 });

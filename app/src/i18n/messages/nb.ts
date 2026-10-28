@@ -1215,6 +1215,7 @@ export const nb: Messages = {
   'badges.redeem.expired': "Koden har utløpt.",
   'badges.redeem.used': "Koden er allerede brukt.",
   'badges.redeem.have': "Du har allerede dette merket.",
+  'badges.redeem.plan': "Denne koden er for Chaser-medlemmer. Oppgrader til Chaser og prøv igjen.",
   'badges.redeem.limit': "For mange forsøk. Prøv igjen om en time.",
   'badges.redeem.failed': "Kunne ikke løse inn koden. Prøv igjen.",
   'badges.magLat': "Magnetisk breddegrad {lat}°",

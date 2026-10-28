@@ -6,7 +6,7 @@ Each one is a row in `public.special_events`. Earning it adds an achievement of 
 
 Each badge's name and description are stored per language. English (`en`) is required and is the fallback. The other codes are `es fr de nl nb da sv fi ru`.
 
-Glyphs: `globe`, `ticket`, `flag`, `star` (the default), `bolt`, `eye`, `sunrise`, `camera`, `heart`, `pin`, `route`, `equinox`, `snow` and `moon`.
+Glyphs: `globe`, `ticket`, `flag`, `camp`, `star` (the default), `bolt`, `eye`, `sunrise`, `camera`, `heart`, `pin`, `route`, `equinox`, `snow` and `moon`.
 
 ## Built in
 
@@ -18,6 +18,19 @@ Glyphs: `globe`, `ticket`, `flag`, `star` (the default), `bolt`, `eye`, `sunrise
 Magnetic latitude is calculated from a centred dipole, `public.mag_lat(lat, lon)`. For reference, London is about 53°, Minneapolis 53°, Edinburgh 58° and Fairbanks 66°.
 
 A sighting counts as confirmed by the same rules as every other badge: another member reported aurora within 50 km and an hour, or the OVATION model showed 10% or more nearby. Awards run every 15 minutes, for reports more than an hour old.
+
+Two optional columns:
+
+- `finish`: `special` (rose gold, the default) or `borealis` (aurora green, red and purple in silver).
+- `requires_plan`: set it to `chaser` so that only Chaser members can redeem the event's codes. Members on a Chaser trial count. Anyone else is told the code is for Chaser members, and that attempt does not use up any of the code's uses.
+
+## Base Camp
+
+`base-camp` is for the first 500 Chaser members. It has the `borealis` finish, the `camp` glyph and 100 points, and it is limited to the Chaser plan. One shared code allows 500 uses. Check how many are left:
+
+```sql
+select code, uses, max_uses from public.badge_codes where slug = 'base-camp';
+```
 
 ## A named storm event
 
