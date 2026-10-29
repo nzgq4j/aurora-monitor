@@ -23,6 +23,7 @@ import { BEST_RGB, LIGHTS_URL, afterPaint, bestAlpha, bestScore, loadCloudGrid, 
 import type { OvalGrid } from '../app/api/oval/route';
 import { useI18n } from '../i18n/I18n';
 import type { MessageKey } from '../i18n/core';
+import { headLead } from '../i18n/core';
 
 const LAT_MAX = 85;
 /** Longitude offsets of the world copies drawn side by side for seamless wrapping. */
@@ -589,7 +590,7 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
       {/* On phones this row is hidden (the title stays for screen readers) and the layers menu on the map takes over. */}
       <div className="wrap map-head" style={{ width: '100%', padding: '16px var(--gutter)', display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <h1 className="display" style={{ fontSize: 'clamp(28px, 7vw, 40px)', lineHeight: 1 }}>{t('map.h1a')} <span className="hl">{t('map.h1b')}</span></h1>
+          <h1 className="display" style={{ fontSize: 'clamp(28px, 7vw, 40px)', lineHeight: 1 }}>{headLead(t('map.h1a'))}<span className="hl">{t('map.h1b')}</span></h1>
           <div role="group" aria-label={t('map.view')} style={{ display: 'flex', padding: 3, border: '1px solid var(--line-2)', borderRadius: 999, background: '#111', flex: 'none' }}>
             {(['2d', '3d'] as const).map(v => (
               <button key={v} type="button" className="btn mono" aria-pressed={view === v} onClick={() => chooseView(v)}

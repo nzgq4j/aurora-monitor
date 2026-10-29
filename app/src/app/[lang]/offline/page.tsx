@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { getI18n, routeLocale } from '../../../i18n/server';
 import { Retry } from './Retry';
+import { headLead } from '../../../i18n/core';
 
 type Props = { params: Promise<{ lang: string }> };
 
@@ -15,7 +16,7 @@ export default async function Offline({ params }: Props) {
   return (
     <main className="wrap" style={{ padding: '56px var(--gutter)', display: 'flex', flexDirection: 'column', gap: 18, maxWidth: 640 }}>
       <span className="kicker">{t('offline.kicker')}</span>
-      <h1 className="display" style={{ fontSize: 'var(--h-hero)', lineHeight: .88 }}>{t('offline.h1a')} <span className="hl">{t('offline.h1b')}</span></h1>
+      <h1 className="display" style={{ fontSize: 'var(--h-hero)', lineHeight: .88 }}>{headLead(t('offline.h1a'))}<span className="hl">{t('offline.h1b')}</span></h1>
       <p style={{ margin: 0, fontSize: 17, lineHeight: 1.5, color: 'var(--soft)' }}>{t('offline.body')}</p>
       <Retry />
     </main>

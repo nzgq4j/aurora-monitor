@@ -6,6 +6,7 @@ import { kpNeeded, moon } from '../lib/astro';
 import type { AccountData } from '../lib/history';
 import { useLocations } from '../lib/locations';
 import { useI18n } from '../i18n/I18n';
+import { headLead } from '../i18n/core';
 import { Explain } from './Explain';
 
 const DAY = 864e5;
@@ -40,7 +41,7 @@ export function SeasonCards({ data }: { data: AccountData }) {
     <div className="season-cards">
       <section className="season-card season-card-list" aria-labelledby="best-card-h">
         <div className="season-card-head">
-          <h2 id="best-card-h">{t('dash.best.h2a')} {t('dash.best.h2b')}</h2>
+          <h2 id="best-card-h">{headLead(t('dash.best.h2a'))}{t('dash.best.h2b')}</h2>
           <span className="mono">{t('now.best.source')}</span>
         </div>
         {best.length ? best.map(u => {
@@ -64,7 +65,7 @@ export function SeasonCards({ data }: { data: AccountData }) {
 
       <section className="season-card" aria-labelledby="season-card-h">
         <div className="season-card-head">
-          <h2 id="season-card-h">{t('dash.season.h2a')} {t('dash.season.h2b')}</h2>
+          <h2 id="season-card-h">{headLead(t('dash.season.h2a'))}{t('dash.season.h2b')}</h2>
           <span className="mono">{t('now.season.weeks')}</span>
         </div>
         {days.length > 0 ? (

@@ -29,6 +29,7 @@ import { Plans } from './Plans';
 import { applyLocale, useI18n, type I18n } from '../i18n/I18n';
 import { LOCALES, LOCALE_NAMES, isLocale } from '../i18n/config';
 import type { MessageKey } from '../i18n/core';
+import { headLead } from '../i18n/core';
 
 const TABS: Tab[] = ['overview', 'alerts', 'locations', 'plans', 'account'];
 
@@ -212,7 +213,7 @@ function Overview({ data }: { data: AccountData }) {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12 }}>
-          <h2 className="display" style={h2}>{t('dash.season.h2a')} <span className="hl">{t('dash.season.h2b')}</span></h2>
+          <h2 className="display" style={h2}>{headLead(t('dash.season.h2a'))}<span className="hl">{t('dash.season.h2b')}</span></h2>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 16px', fontSize: 13, color: 'var(--soft)' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 11, height: 11, background: C.darkGreen }} />{t('dash.season.weekly', { src: kpSourceLabel(data.sources, true) })}</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 16, borderTop: `2px dashed ${C.amber}` }} />{home ? t('dash.season.visibleFrom', { place: home.name, need }) : t('dash.season.typical', { need })}</span>
@@ -242,7 +243,7 @@ function Overview({ data }: { data: AccountData }) {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12, marginBottom: 8 }}>
-          <h2 className="display" style={h2}>{t('dash.best.h2a')} <span className="hl">{t('dash.best.h2b')}</span></h2>
+          <h2 className="display" style={h2}>{headLead(t('dash.best.h2a'))}<span className="hl">{t('dash.best.h2b')}</span></h2>
           <span style={{ fontSize: 13, color: 'var(--muted)' }}>{t('dash.best.source')}</span>
         </div>
         {(() => {
@@ -301,7 +302,7 @@ function Alerts({ data }: { data: AccountData }) {
   const soon = (sub: string) => `${sub} · ${t('alerts.comingSoon')}`;
   return (
     <div data-screen-label="Dashboard · Alerts" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-      <h1 className="display" style={h1}>{t('alerts.h1a')} <span className="hl">{t('alerts.h1b')}</span></h1>
+      <h1 className="display" style={h1}>{headLead(t('alerts.h1a'))}<span className="hl">{t('alerts.h1b')}</span></h1>
       <AlertStatus />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(300px,100%),1fr))', gap: 20, alignItems: 'start' }}>
@@ -502,7 +503,7 @@ function AlertsIntro() {
   const points: [string, MessageKey][] = [['email', 'alerts.intro.1'], ['push', 'alerts.intro.2'], ['storm', 'alerts.intro.3']];
   return (
     <div className="alerts-intro">
-      <h1 className="display" style={h1}>{t('alerts.intro.h1a')} <span className="hl">{t('alerts.intro.h1b')}</span></h1>
+      <h1 className="display" style={h1}>{headLead(t('alerts.intro.h1a'))}<span className="hl">{t('alerts.intro.h1b')}</span></h1>
       <p style={{ margin: 0, fontSize: 17, lineHeight: 1.45, color: 'var(--soft)' }}>{t('alerts.intro.body')}</p>
       <ul>
         {points.map(([id, key]) => <li key={id}><span className="alert-recent-dot" aria-hidden="true" />{t(key)}</li>)}
@@ -651,7 +652,7 @@ export function Locations({ bare = false }: { bare?: boolean }) {
   return (
     <div data-screen-label="Dashboard · Locations" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' }}>
-        {!bare && <h1 className="display" style={h1}>{t('loc.h1a')} <span className="hl">{t('loc.h1b')}</span></h1>}
+        {!bare && <h1 className="display" style={h1}>{headLead(t('loc.h1a'))}<span className="hl">{t('loc.h1b')}</span></h1>}
         <span className="mono" style={{ fontSize: 13, color: 'var(--muted)' }}>{t('loc.active', { n: active, limit: limit > 10 ? '∞' : limit })}</span>
       </div>
       {error && <span role="status" style={{ fontSize: 14, color: C.amber }}>{error}</span>}
@@ -785,12 +786,12 @@ function AccountSettings() {
       <Billing />
       <ChangePassword email={email} />
       <section aria-labelledby="feedback-h" style={{ display: 'flex', flexDirection: 'column', gap: 12, borderTop: '1px solid var(--line)', paddingTop: 24 }}>
-        <h2 id="feedback-h" className="display" style={h2}>{t('feedback.h2a')} <span className="hl">{t('feedback.h2b')}</span></h2>
+        <h2 id="feedback-h" className="display" style={h2}>{headLead(t('feedback.h2a'))}<span className="hl">{t('feedback.h2b')}</span></h2>
         <span style={{ fontSize: 14, color: 'var(--soft)' }}>{t('feedback.intro')}</span>
         <div style={{ maxWidth: 640 }}><FeedbackForm /></div>
       </section>
       <section aria-labelledby="signout-h" style={{ display: 'flex', flexDirection: 'column', gap: 12, borderTop: '1px solid var(--line)', paddingTop: 24 }}>
-        <h2 id="signout-h" className="display" style={h2}>{t('logout.h2a')} <span className="hl">{t('logout.h2b')}</span></h2>
+        <h2 id="signout-h" className="display" style={h2}>{headLead(t('logout.h2a'))}<span className="hl">{t('logout.h2b')}</span></h2>
         <span style={{ fontSize: 14, color: 'var(--soft)' }}>{t('logout.body')}</span>
         <button type="button" className="btn pill pill-ghost" onClick={signOut} style={{ alignSelf: 'flex-start', fontSize: 15, padding: '12px 22px', color: C.red, borderColor: C.red }}>{t('logout.button')}</button>
       </section>
@@ -831,7 +832,7 @@ function DeleteAccount() {
   const confirm = async () => { if (await run()) setAsking(false); };
   return (
     <section aria-labelledby="delete-h" style={{ display: 'flex', flexDirection: 'column', gap: 12, borderTop: '1px solid var(--line)', paddingTop: 24 }}>
-      <h2 id="delete-h" className="display" style={h2}>{t('delete.h2a')} <span className="hl">{t('delete.h2b')}</span></h2>
+      <h2 id="delete-h" className="display" style={h2}>{headLead(t('delete.h2a'))}<span className="hl">{t('delete.h2b')}</span></h2>
       <span style={{ fontSize: 14, color: 'var(--soft)' }}>{t('delete.body')}</span>
       {!asking ? (
         <button type="button" className="btn" onClick={() => setAsking(true)} style={{ alignSelf: 'flex-start', fontWeight: 600, fontSize: 14, color: C.red }}>{t('delete.button')}</button>
@@ -880,7 +881,7 @@ export function ChangePassword({ email, bare = false }: { email: string; bare?: 
   };
   return (
     <section aria-labelledby="password-h" style={{ display: 'flex', flexDirection: 'column', gap: 16, borderTop: '1px solid var(--line)', paddingTop: 24 }}>
-      <h2 id="password-h" className={bare ? 'sr-only' : 'display'} style={bare ? undefined : h2}>{t('pw.h2a')} <span className="hl">{t('pw.h2b')}</span></h2>
+      <h2 id="password-h" className={bare ? 'sr-only' : 'display'} style={bare ? undefined : h2}>{headLead(t('pw.h2a'))}<span className="hl">{t('pw.h2b')}</span></h2>
       <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 420 }}>
         {/* Hidden username helps password managers update the right entry. */}
         <input type="email" name="username" autoComplete="username" value={email} readOnly hidden />

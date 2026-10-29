@@ -14,6 +14,7 @@ import { SDO_IMAGES } from '../lib/sdo';
 import type { NowData } from '../lib/now';
 import { useStore } from '../store';
 import { useI18n } from '../i18n/I18n';
+import { headLead } from '../i18n/core';
 
 function SolarSection() {
   const { planIndex } = useStore();
@@ -26,7 +27,7 @@ function SolarSection() {
   useEffect(() => setNow(Date.now()), [data]);
   const summary = !can ? t('detail.solar.locked') : data && now !== null ? summaryText(i18n, solarLine(data.wind, now)) : t('detail.loading');
   return (
-    <DetailCard id="solar" title={<>{t('solar.h2a')} <span className="hl">{t('solar.h2b')}</span></>} summary={summary}>
+    <DetailCard id="solar" title={<>{headLead(t('solar.h2a'))}<span className="hl">{t('solar.h2b')}</span></>} summary={summary}>
       <span style={{ fontSize: 13, color: 'var(--muted)' }}>{t('solar.source')}</span>
       {can ? <SolarActivity /> : (
         <Locked tier={ENTITLEMENTS.solarGraphs} title={t('feat.solarGraphs')}
@@ -71,7 +72,7 @@ export function Sun({ data }: { data: NowData }) {
     <main data-screen-label="Sun" className="wrap" style={{ padding: '40px var(--gutter) 48px', display: 'flex', flexDirection: 'column', gap: 36 }}>
       <h1 className="you-title">{t('nav.sun')}</h1>
 
-      <DetailCard id="space" title={<>{t('detail.space.h2a')} <span className="hl">{t('detail.space.h2b')}</span></>} summary={summaryText(i18n, spaceLine(w))}>
+      <DetailCard id="space" title={<>{headLead(t('detail.space.h2a'))}<span className="hl">{t('detail.space.h2b')}</span></>} summary={summaryText(i18n, spaceLine(w))}>
         <div className="now-stats">
           {stats.map(s => (
             <div key={s.label} className="now-stat">
@@ -88,7 +89,7 @@ export function Sun({ data }: { data: NowData }) {
 
       <SolarSection />
 
-      <DetailCard id="sun" title={<>{t('home.sun.h2a')} <span className="hl">{t('home.sun.h2b')}</span></>}
+      <DetailCard id="sun" title={<>{headLead(t('home.sun.h2a'))}<span className="hl">{t('home.sun.h2b')}</span></>}
         summary={spots?.regions.length ? `${tn('detail.sunRegions', spots.regions.length)} · ${t('detail.sun', { n: SDO_IMAGES.length })}` : t('detail.sun', { n: SDO_IMAGES.length })}>
         <span style={{ fontSize: 13, color: 'var(--muted)' }}>{t('home.sun.source')}</span>
         <SunspotRegions />

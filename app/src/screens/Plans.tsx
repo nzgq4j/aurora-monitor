@@ -5,6 +5,7 @@ import { C, COMPARE, TIERS, TRIAL_DAYS } from '../data';
 import { useStore } from '../store';
 import { useAuth } from '../lib/auth';
 import { useI18n } from '../i18n/I18n';
+import { headLead } from '../i18n/core';
 
 /** Annual saving on the paid plan versus paying monthly, e.g. 17%. */
 const SAVING = Math.round((1 - TIERS[1].y / (TIERS[1].m * 12)) * 100);
@@ -58,7 +59,7 @@ export function Plans({ embedded = false }: { embedded?: boolean }) {
   return (
     <Wrapper {...wrapperProps}>
       {embedded ? (
-        <h2 className="display" style={{ fontSize: 'clamp(28px, 7.5vw, 34px)', lineHeight: 1 }}>{t('plans.h2a')} <span className="hl">{t('plans.h2b')}</span></h2>
+        <h2 className="display" style={{ fontSize: 'clamp(28px, 7.5vw, 34px)', lineHeight: 1 }}>{headLead(t('plans.h2a'))}<span className="hl">{t('plans.h2b')}</span></h2>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <span className="kicker">{t('plans.kicker')}</span>

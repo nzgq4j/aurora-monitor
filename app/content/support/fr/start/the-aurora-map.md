@@ -13,7 +13,7 @@ Faites glisser pour vous déplacer, et pincez ou faites défiler pour zoomer. Le
 
 ## Consulter n’importe quel point
 
-Touchez n’importe où sur la carte. Le panneau en bas affiche la chance d’aurore, les nuages et l’obscurité à cet endroit, ainsi que les prochaines heures. Depuis ce panneau, vous pouvez choisir **Enregistrer le lieu** ou **Définir comme principal**. **Retirer le repère** l’efface.
+Touchez n’importe où sur la carte. Le panneau en bas affiche la chance d’aurore, les nuages et l’obscurité à cet endroit, ainsi que les prochaines heures. Depuis ce panneau, vous pouvez choisir **Enregistrer le lieu** ou **Définir comme domicile**. **Retirer le repère** l’efface.
 
 ## Calques
 
