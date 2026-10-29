@@ -11,4 +11,4 @@ Tänä yönä -kortin **Näin ne** -painike toimii, kun:
 
 ![Näin ne -painike odottamassa pimeää](screen:tonight-saw-it)
 
-Ilmoitukset näkyvät kartalla 24 tuntia ilman mitään sinut tunnistavaa tietoa, ja ne auttavat muita lähistöllä olevia jäseniä.
+Ilmoitukset näkyvät kartalla 3 tuntia ilman mitään sinut tunnistavaa tietoa, ja ne auttavat muita lähistöllä olevia jäseniä.

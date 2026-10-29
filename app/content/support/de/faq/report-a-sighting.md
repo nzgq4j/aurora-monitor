@@ -11,4 +11,4 @@ Die Schaltfläche **Ich sehe es** auf der Karte Heute Nacht funktioniert, wenn:
 
 ![Die Schaltfläche „Ich sehe es“, bis es dunkel ist](screen:tonight-saw-it)
 
-Meldungen erscheinen 24 Stunden lang auf der Karte, ohne etwas, das Sie identifiziert, und helfen anderen Mitgliedern in der Nähe.
+Meldungen erscheinen 3 Stunden lang auf der Karte, ohne etwas, das Sie identifiziert, und helfen anderen Mitgliedern in der Nähe.

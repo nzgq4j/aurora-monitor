@@ -11,4 +11,4 @@ De knop **Ik zie het** op de kaart Vannacht werkt als aan deze voorwaarden is vo
 
 ![De knop Ik zie het, in afwachting van het donker](screen:tonight-saw-it)
 
-Waarnemingen staan 24 uur op de poollichtkaart, zonder iets wat naar jou herleidbaar is, en helpen andere leden in de buurt.
+Waarnemingen staan 3 uur op de poollichtkaart, zonder iets wat naar jou herleidbaar is, en helpen andere leden in de buurt.

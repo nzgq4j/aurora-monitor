@@ -11,4 +11,4 @@ The **I saw it** button on the Tonight card works when:
 
 ![The I saw it button, waiting until it's dark](screen:tonight-saw-it)
 
-Reports appear on the map for 24 hours, without anything that identifies you, and help other members nearby.
+Reports appear on the map for 3 hours, without anything that identifies you, and help other members nearby.

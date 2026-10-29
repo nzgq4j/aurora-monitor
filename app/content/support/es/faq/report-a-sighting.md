@@ -11,4 +11,4 @@ El botón **La he visto** de la tarjeta Esta noche funciona cuando:
 
 ![El botón La he visto, a la espera de que oscurezca](screen:tonight-saw-it)
 
-Los avisos aparecen en el mapa durante 24 horas, sin nada que te identifique, y ayudan a otros miembros cercanos.
+Los avisos aparecen en el mapa durante 3 horas, sin nada que te identifique, y ayudan a otros miembros cercanos.

@@ -11,4 +11,4 @@ Knappen **Jeg så det** på I nat-kortet virker, når:
 
 ![Jeg så det-knappen, der venter på, at det bliver mørkt](screen:tonight-saw-it)
 
-Observationer vises på nordlyskortet i 24 timer uden noget, der kan identificere dig, og hjælper andre medlemmer i nærheden.
+Observationer vises på nordlyskortet i 3 timer uden noget, der kan identificere dig, og hjælper andre medlemmer i nærheden.

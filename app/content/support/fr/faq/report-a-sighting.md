@@ -11,4 +11,4 @@ Le bouton **Je l’ai vue** de la carte Ce soir fonctionne quand :
 
 ![Le bouton Je l’ai vue, en attendant qu’il fasse nuit](screen:tonight-saw-it)
 
-Les signalements apparaissent sur la carte pendant 24 heures, sans rien qui permette de vous identifier, et aident les autres membres à proximité.
+Les signalements apparaissent sur la carte pendant 3 heures, sans rien qui permette de vous identifier, et aident les autres membres à proximité.
