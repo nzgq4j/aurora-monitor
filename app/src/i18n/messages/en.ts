@@ -478,6 +478,7 @@ export const en = {
   'detail.solar.rising': 'Speed rising over the last 6 h: {from} → {to} km/s',
   'detail.solar.falling': 'Speed falling over the last 6 h: {from} → {to} km/s',
   'detail.solar.steady': 'Speed steady around {speed} km/s over the last 6 h',
+  'detail.solar.delayed': 'Feed delayed: last reading {speed} km/s at {time}',
   'detail.solar.none': 'Solar wind data unavailable',
   'detail.solar.locked': 'Chaser: the last 24 h of solar wind and hemispheric power',
   'detail.sun': "{n} live views from NASA, ESA and NOAA",

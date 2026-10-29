@@ -478,6 +478,7 @@ export const de: Messages = {
   'detail.solar.rising': 'Geschwindigkeit steigt seit 6 Std.: {from} → {to} km/s',
   'detail.solar.falling': 'Geschwindigkeit sinkt seit 6 Std.: {from} → {to} km/s',
   'detail.solar.steady': 'Geschwindigkeit seit 6 Std. stabil um {speed} km/s',
+  'detail.solar.delayed': 'Daten verzögert: letzte Messung {speed} km/s um {time}',
   'detail.solar.none': 'Keine Sonnenwinddaten',
   'detail.solar.locked': 'Chaser: die letzten 24 Std. Sonnenwind und hemisphärische Leistung',
   'detail.sun': "{n} Live-Ansichten von NASA, ESA und NOAA",

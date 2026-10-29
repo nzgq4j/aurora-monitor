@@ -478,6 +478,7 @@ export const nb: Messages = {
   'detail.solar.rising': "Farten har økt de siste 6 t: {from} → {to} km/s",
   'detail.solar.falling': "Farten har falt de siste 6 t: {from} → {to} km/s",
   'detail.solar.steady': "Jevn fart rundt {speed} km/s de siste 6 t",
+  'detail.solar.delayed': "Data forsinket: siste måling {speed} km/s kl. {time}",
   'detail.solar.none': "Solvinddata utilgjengelige",
   'detail.solar.locked': "Chaser: de siste 24 t med solvind og hemisfærisk effekt",
   'detail.sun': "{n} sanntidsbilder fra NASA, ESA og NOAA",

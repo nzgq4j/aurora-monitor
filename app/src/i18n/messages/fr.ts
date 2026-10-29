@@ -478,6 +478,7 @@ export const fr: Messages = {
   'detail.solar.rising': 'Vitesse en hausse sur 6 h : {from} → {to} km/s',
   'detail.solar.falling': 'Vitesse en baisse sur 6 h : {from} → {to} km/s',
   'detail.solar.steady': 'Vitesse stable autour de {speed} km/s sur 6 h',
+  'detail.solar.delayed': 'Données en retard : dernière mesure {speed} km/s à {time}',
   'detail.solar.none': 'Données de vent solaire indisponibles',
   'detail.solar.locked': 'Chaser : les dernières 24 h de vent solaire et de puissance hémisphérique',
   'detail.sun': "{n} vues en direct de la NASA, de l’ESA et de la NOAA",

@@ -478,6 +478,7 @@ export const sv: Messages = {
   'detail.solar.rising': "Hastigheten ökar de senaste 6 h: {from} → {to} km/s",
   'detail.solar.falling': "Hastigheten minskar de senaste 6 h: {from} → {to} km/s",
   'detail.solar.steady': "Hastigheten stadig kring {speed} km/s de senaste 6 h",
+  'detail.solar.delayed': "Data försenade: senaste mätningen {speed} km/s kl. {time}",
   'detail.solar.none': "Solvindsdata inte tillgänglig",
   'detail.solar.locked': "Chaser: solvind och hemisfärisk effekt de senaste 24 h",
   'detail.sun': "{n} realtidsvyer från NASA, ESA och NOAA",
