@@ -1027,3 +1027,12 @@ html.intro-open { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) { .intro { animation: none; } }
 .intro-alerts { display: flex; flex-direction: column; gap: 10px; }
 .intro-alerts .toggle-row { padding: 10px 0; text-align: left; }
+
+/* ---- Place picker (components/PlacePicker): find a place, then show it or make it Home. ---- */
+.place-find, .place-found { display: flex; flex-direction: column; gap: 12px; padding: 4px 0 8px; }
+.place-find .place-device, .place-found > .pill, .intro-step .place-device { justify-content: center; font-size: 15px; padding: 13px 20px; }
+.place-or { align-self: center; font-size: 13px; color: var(--muted); }
+.place-found small { margin-top: -6px; font-size: 13px; color: var(--muted); }
+.place-found .sun-lapse-option b { font-size: 20px; }
+.place-msg { font-size: 14px; color: var(--amber, #F5B83D); }
+.place-back { align-self: flex-start; min-height: 40px; font-size: 15px; font-weight: 600; color: var(--muted); }

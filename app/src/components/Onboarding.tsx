@@ -1,13 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../lib/auth';
-import { devicePlace, searchPlaces, useLocations, type Place, type PlaceResult } from '../lib/locations';
+import { useLocations } from '../lib/locations';
 import { ALERT_LEVELS } from '../lib/alerts';
 import { useStore } from '../store';
 import { PushRow, ToggleRow } from './AlertControls';
+import { PlaceSearch, type Found } from './PlacePicker';
 import { useI18n } from '../i18n/I18n';
 import { headLead } from '../i18n/core';
 
@@ -103,32 +104,18 @@ function Welcome({ heading, next }: Heading & { next: () => void }) {
 }
 
 function PlaceStep({ heading, next }: Heading & { next: () => void }) {
-  const { t, tx } = useI18n();
+  const { t } = useI18n();
   const { plan } = useStore();
   const { locations, saveAsHome, error } = useLocations();
   const home = locations.find(l => l.isHome);
-  const [q, setQ] = useState('');
-  const [results, setResults] = useState<PlaceResult[] | null>(null);
-  const [busy, setBusy] = useState<'device' | 'search' | 'save' | null>(null);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  const save = async (p: Place, source: 'manual' | 'device') => {
-    setBusy('save'); setMsg(null);
-    const saved = await saveAsHome({ ...p, source }, plan.locs);
-    setBusy(null);
+  // The same search as the place picker on Now; here the place found becomes Home straight away.
+  const save = async (p: Found) => {
+    setSaving(true);
+    const saved = await saveAsHome(p, plan.locs);
+    setSaving(false);
     if (saved) next();
-  };
-  const useDevice = async () => {
-    setBusy('device'); setMsg(null);
-    try { const p = await devicePlace(); setBusy(null); await save(p, 'device'); }
-    catch (e) { setBusy(null); setMsg(tx((e as Error).message)); }
-  };
-  const search = async (e: FormEvent) => {
-    e.preventDefault();
-    setBusy('search'); setMsg(null);
-    try { const r = await searchPlaces(q); setResults(r); if (!r.length) setMsg(t('search.none')); }
-    catch { setMsg(t('search.unavailable')); }
-    finally { setBusy(null); }
   };
 
   return (
@@ -136,27 +123,8 @@ function PlaceStep({ heading, next }: Heading & { next: () => void }) {
       <H heading={heading}>{t('intro.place.h')}</H>
       <p className="intro-text">{t('intro.place.body')}</p>
       {home && <p className="intro-note">{t('intro.place.current', { place: home.name.split(',')[0] })}</p>}
-      <button type="button" className="btn pill pill-primary intro-go" disabled={!!busy} onClick={useDevice}>
-        {busy === 'device' ? t('loc.finding') : t('loc.useCurrent')}
-      </button>
-      <span className="intro-or">{t('common.or')}</span>
-      <form onSubmit={search} className="intro-search">
-        <input className="input" value={q} onChange={e => setQ(e.target.value)} placeholder={t('search.placeholder')} aria-label={t('search.placeholder')} />
-        <button type="submit" className="btn pill pill-ghost" disabled={!!busy || q.trim().length < 2}>{busy === 'search' ? '…' : t('search.button')}</button>
-      </form>
-      {results && results.length > 0 && (
-        <ul className="intro-results">
-          {results.map(r => (
-            <li key={`${r.lat},${r.lon}`}>
-              <button type="button" className="btn" disabled={!!busy}
-                onClick={() => save({ name: r.detail ? `${r.name}, ${r.detail.split(', ')[0]}` : r.name, lat: r.lat, lon: r.lon }, 'manual')}>
-                <b>{r.name}</b><span>{r.detail}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-      {(msg || error) && <p className="intro-note warn" role="status">{msg || error}</p>}
+      <PlaceSearch onFound={save} disabled={saving} />
+      {error && <p className="intro-note warn" role="status">{error}</p>}
       <button type="button" className="btn intro-link" onClick={next}>{home ? t('intro.keep') : t('intro.skipStep')}</button>
     </div>
   );
