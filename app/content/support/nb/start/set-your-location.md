@@ -7,22 +7,29 @@ Alt på **Nå**-siden er beregnet for ett sted: om det er mørkt der, hvor skyet
 
 ## Velg Hjem
 
-På **Nå**-siden trykker du på **Velg sted** på **I natt**-kortet. Da åpnes stedsvelgeren i **Din himmel**, litt lenger ned. Deretter kan du enten:
+På **Nå**-siden trykker du på **Velg sted** på **I natt**-kortet. Da åpnes **Finn et sted**. Deretter kan du enten:
 
 - trykke på **Bruk posisjonen min** og gi tilgang til posisjon, eller
 - skrive inn et sted i **Søk etter et sted**, trykke på **Søk** og velge riktig treff.
 
-Velg **Lagre som Hjem** for å beholde det. Varslene dine gjelder også for dette stedet.
+Velg så **Lagre som Hjem**. Varslene dine gjelder også for dette stedet.
 
 ## Bytt mellom steder
 
-Trykk på stedsnavnet på **I natt**-kortet. **Lagrede steder** viser stedene dine; trykk på et for å se varselet for i natt der. Med **Et annet sted…** kan du se på et nytt sted uten å lagre det.
+Trykk på stedsnavnet øverst på **I natt**-kortet. **Lagrede steder** viser stedene dine; trykk på et for å se varselet for i natt der. **Din himmel**, lenger ned, viser alltid det samme stedet, og knappen **Bytt sted** der åpner den samme listen.
 
-![Stedslisten på I natt-kortet, med Hjem avkrysset](screen:tonight-places)
+![Stedslisten: lagrede steder, Et annet sted… og Administrer lagrede steder](screen:tonight-places)
+
+## Se på et annet sted
+
+Trykk på **Et annet sted…** i listen, og finn stedet på samme måte. Velg deretter:
+
+- **Vis dette stedet** for å se varselet der nå uten å lagre det. **Tilbake til Hjem** i **Din himmel** tar deg tilbake til Hjem.
+- **Lagre som Hjem** for å gjøre det til Hjem. Med Gratis-planen erstatter dette Hjem-stedet du har nå.
 
 ## Administrer stedene dine
 
-På mobilen åpner du **Deg** → **Lagrede steder**. På en datamaskin åpner du **Dashbord** → **Steder**. Hvert sted viser himmelen der akkurat nå. Herfra kan du velge:
+Trykk på **Administrer lagrede steder** nederst i listen, eller åpne **Deg** → **Lagrede steder** på mobilen. På en datamaskin åpner du **Dashbord** → **Steder**. Hvert sted viser himmelen der akkurat nå. Herfra kan du velge:
 
 - **Legg til et sted**,
 - **Gjør til Hjem** for å flytte Hjem til et annet lagret sted,

@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { C } from '../data';
 import { moon, type MoonState } from '../lib/astro';
-import { devicePlace, searchPlaces, useLocations, type Place, type PlaceResult } from '../lib/locations';
+import { useLocations } from '../lib/locations';
 import { useConditions } from '../lib/useConditions';
-import { useStore } from '../store';
 import { useI18n, type I18n } from '../i18n/I18n';
 import { Explain } from './Explain';
+import { PlacePicker } from './PlacePicker';
 import { headLead } from '../i18n/core';
 
 const hhmmUT = (t: number) => `${new Date(t).toISOString().slice(11, 16)} UT`;
@@ -38,19 +38,12 @@ function MoonDisc({ m, south, size = 44 }: { m: MoonState; south: boolean; size?
   );
 }
 
-/** "Your sky" panel on Now: pick a location (device or search), optionally save it as Home, and see its live conditions. */
+/** "Your sky" panel on Now: the live conditions for the place the Tonight card shows. Changing it opens the shared place picker. */
 export function YourSky({ kp }: { kp: number | null }) {
-  const { plan } = useStore();
   const i18n = useI18n();
-  const { t, tx, tn, num } = i18n;
-  const planName = t(`tier.${plan.id}`);
-  const { locations, load, saveAsHome, error: locError, viewPlace: view, setViewPlace, shownPlace: shown } = useLocations();
+  const { t, num } = i18n;
+  const { locations, load, viewPlace: view, setViewPlace, shownPlace: shown } = useLocations();
   const [picking, setPicking] = useState(false);
-  const [saveHome, setSaveHome] = useState(true);
-  const [q, setQ] = useState('');
-  const [results, setResults] = useState<PlaceResult[] | null>(null);
-  const [busy, setBusy] = useState<'device' | 'search' | 'save' | null>(null);
-  const [msg, setMsg] = useState<string | null>(null);
 
   useEffect(() => { load(); }, [load]);
 
@@ -62,36 +55,6 @@ export function YourSky({ kp }: { kp: number | null }) {
   useEffect(() => { const id = setInterval(() => setNow(Date.now()), 3e5); return () => clearInterval(id); }, []);
   const m = shown ? moon(now, shown.lat, shown.lon) : null;
   const effect = m ? moonEffect(m, i18n) : null;
-
-  const choose = async (place: Place, source: 'manual' | 'device') => {
-    setMsg(null);
-    if (saveHome) {
-      setBusy('save');
-      const saved = await saveAsHome({ ...place, source }, plan.locs);
-      setBusy(null);
-      if (!saved) return;
-      setViewPlace(null);
-    } else {
-      setViewPlace(place);
-    }
-    setPicking(false); setResults(null); setQ('');
-  };
-
-  const useDevice = async () => {
-    setBusy('device'); setMsg(null);
-    try { const p = await devicePlace(); setBusy(null); await choose(p, 'device'); }
-    catch (e) { setBusy(null); setMsg(tx((e as Error).message)); }
-  };
-
-  const search = async (e: FormEvent) => {
-    e.preventDefault();
-    setBusy('search'); setMsg(null);
-    try { const r = await searchPlaces(q); setResults(r); if (!r.length) setMsg(t('search.none')); }
-    catch { setMsg(t('search.unavailable')); }
-    finally { setBusy(null); }
-  };
-
-  const openPicker = () => { setPicking(true); setMsg(null); setSaveHome(true); };
 
   // Verdict: current Kp against what this spot needs, then darkness and cloud.
   const need = cond?.kpNeeded ?? null;
@@ -146,53 +109,15 @@ export function YourSky({ kp }: { kp: number | null }) {
             </div>
           )}
         </div>
-        {!picking && (
+        {(
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {view && home && <button type="button" className="btn pill pill-ghost" style={pill} onClick={() => setViewPlace(null)}>{t('sky.backHome')}</button>}
-            <button type="button" className="btn pill pill-primary" style={pill} onClick={openPicker}>{shown ? t('sky.change') : t('sky.set')}</button>
+            <button type="button" className="btn pill pill-primary" style={pill} onClick={() => setPicking(true)}>{shown ? t('sky.change') : t('sky.set')}</button>
           </div>
         )}
       </div>
 
-      {picking && (
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: 20 }}>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-            <button type="button" className="btn pill pill-primary" disabled={!!busy} onClick={useDevice} style={{ ...pill, opacity: busy ? .6 : 1 }}>
-              {busy === 'device' ? t('loc.finding') : t('loc.useCurrent')}
-            </button>
-            <span style={{ fontSize: 13, color: 'var(--muted)' }}>{t('common.or')}</span>
-            <form onSubmit={search} style={{ display: 'flex', gap: 8, flex: '1 1 260px', minWidth: 0 }}>
-              <input className="input" value={q} onChange={e => setQ(e.target.value)} placeholder={t('search.placeholder')} aria-label={t('search.placeholder')} style={{ padding: 11 }} />
-              <button type="submit" className="btn pill pill-ghost" disabled={!!busy || q.trim().length < 2} style={{ fontSize: 14, padding: '0 16px', flex: 'none' }}>{busy === 'search' ? '…' : t('search.button')}</button>
-            </form>
-          </div>
-          {results && results.length > 0 && (
-            <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-              {results.map(r => (
-                <li key={`${r.lat},${r.lon}`}>
-                  <button type="button" className="btn" disabled={!!busy} onClick={() => choose({ name: r.detail ? `${r.name}, ${r.detail.split(', ')[0]}` : r.name, lat: r.lat, lon: r.lon }, 'manual')}
-                    style={{ width: '100%', display: 'flex', justifyContent: 'space-between', gap: 8, padding: '10px 0', borderTop: '1px solid var(--line)' }}>
-                    <span style={{ fontWeight: 700 }}>{r.name}</span><span style={{ fontSize: 13, color: 'var(--muted)', textAlign: 'right' }}>{r.detail}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 15, fontWeight: 600, cursor: 'pointer' }}>
-            <input type="checkbox" checked={saveHome} onChange={e => setSaveHome(e.target.checked)} style={{ width: 18, height: 18, accentColor: C.green }} />
-            {t('sky.saveHome')}
-          </label>
-          <span style={{ fontSize: 13, color: 'var(--muted)', marginTop: -8 }}>
-            {saveHome
-              ? (locations.length >= plan.locs
-                ? t('sky.replacesHome', { plan: planName, locs: tn('sky.locs', plan.locs) })
-                : t('sky.adds'))
-              : t('sky.visitOnly')}
-          </span>
-          {(msg || locError) && <span role="status" style={{ fontSize: 14, color: C.amber }}>{msg || locError}</span>}
-          <button type="button" className="btn" onClick={() => { setPicking(false); setResults(null); setMsg(null); }} style={{ alignSelf: 'flex-start', fontSize: 14, fontWeight: 600, color: 'var(--muted)' }}>{t('common.cancel')}</button>
-        </div>
-      )}
+      {picking && <PlacePicker onClose={() => setPicking(false)} />}
 
       {shown ? (
         <>
@@ -235,7 +160,7 @@ export function YourSky({ kp }: { kp: number | null }) {
           {verdict && <span style={{ fontSize: 16, fontWeight: 600, color: vc }}>{verdict}</span>}
           {cloud !== null && <span style={{ fontSize: 12, color: 'var(--dim)' }}>{t('sky.cloud.weighting')}</span>}
         </>
-      ) : !picking && (
+      ) : (
         <span style={{ fontSize: 16, color: 'var(--soft)' }}>{t('sky.empty')}</span>
       )}
     </section>

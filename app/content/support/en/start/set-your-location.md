@@ -7,22 +7,29 @@ Everything on the **Now** page is worked out for one place: whether it's dark th
 
 ## Set Home
 
-On the **Now** page, tap **Set location** on the **Tonight** card. That opens the place finder in **Your sky**, a little further down. Then either:
+On the **Now** page, tap **Set location** on the **Tonight** card. **Find a place** opens. Either:
 
 - tap **Use my current location** and allow location access, or
 - type a town in **Search a town**, tap **Search** and pick the right result.
 
-Choose **Save as Home** to keep it. Your alerts are for this place too.
+Then choose **Save as Home**. Your alerts are for this place too.
 
 ## Switch between places
 
-Tap the place name on the **Tonight** card. **Saved locations** lists your places; tap one to see tonight's forecast there. **Another place…** lets you look somewhere new without saving it.
+Tap the place name at the top of the **Tonight** card. **Saved locations** lists your places; tap one to see tonight's forecast there. **Your sky**, further down, always shows the same place, and its **Change location** button opens the same list.
 
-![The Tonight card's place list, with Home ticked](screen:tonight-places)
+![The place list: saved places, Another place… and Manage saved locations](screen:tonight-places)
+
+## Look at another place
+
+In the list, tap **Another place…** and find it the same way. Then choose:
+
+- **Show this place** to see its forecast now without saving it. **Back to Home** in **Your sky** returns to Home.
+- **Save as Home** to make it your Home. On the Free plan, this replaces your current Home.
 
 ## Manage your places
 
-On a phone, open **You** → **Saved locations**. On a computer, open **Dashboard** → **Locations**. Each place shows its sky right now. From here you can:
+Tap **Manage saved locations** at the bottom of the list, or on a phone open **You** → **Saved locations**. On a computer, open **Dashboard** → **Locations**. Each place shows its sky right now. From here you can:
 
 - **Add a location**,
 - **Make home** to move Home to another saved place,

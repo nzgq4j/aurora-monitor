@@ -7,22 +7,29 @@ Alt på siden **Nu** beregnes for ét sted: om det er mørkt der, hvor skyet det
 
 ## Angiv Hjem
 
-Tryk på **Angiv placering** på **I nat**-kortet på siden **Nu**. Det åbner stedsøgningen i **Din himmel** lidt længere nede. Derefter kan du enten:
+Tryk på **Angiv placering** på **I nat**-kortet på siden **Nu**. Så åbnes **Find et sted**. Derefter kan du enten:
 
 - trykke på **Brug min nuværende placering** og give adgang til din placering, eller
 - skrive en by i **Søg efter en by**, trykke på **Søg** og vælge det rigtige resultat.
 
-Vælg **Gem som Hjem** for at beholde det. Dine varsler gælder også for dette sted.
+Vælg så **Gem som Hjem**. Dine varsler gælder også for dette sted.
 
 ## Skift mellem steder
 
-Tryk på stedets navn på **I nat**-kortet. **Gemte placeringer** viser dine steder; tryk på et af dem for at se nattens prognose der. Med **Et andet sted…** kan du kigge på et nyt sted uden at gemme det.
+Tryk på stedets navn øverst på **I nat**-kortet. **Gemte placeringer** viser dine steder; tryk på et af dem for at se nattens prognose der. **Din himmel** længere nede viser altid det samme sted, og dens knap **Skift placering** åbner den samme liste.
 
-![Stedlisten på I nat-kortet med Hjem markeret](screen:tonight-places)
+![Stedlisten: gemte steder, Et andet sted… og Administrer gemte placeringer](screen:tonight-places)
+
+## Se et andet sted
+
+Tryk på **Et andet sted…** i listen, og find stedet på samme måde. Vælg derefter:
+
+- **Vis dette sted** for at se prognosen der nu uden at gemme det. **Tilbage til Hjem** i **Din himmel** fører dig tilbage til Hjem.
+- **Gem som Hjem** for at gøre det til dit Hjem. Med abonnementet Gratis erstatter det dit nuværende Hjem.
 
 ## Administrer dine steder
 
-På en telefon åbner du **Dig** → **Gemte placeringer**. På en computer åbner du **Oversigt** → **Placeringer**. Hvert sted viser sin himmel lige nu. Herfra kan du:
+Tryk på **Administrer gemte placeringer** nederst i listen, eller åbn **Dig** → **Gemte placeringer** på en telefon. På en computer åbner du **Oversigt** → **Placeringer**. Hvert sted viser sin himmel lige nu. Herfra kan du:
 
 - **Tilføj en placering**,
 - **Gør til Hjem** for at flytte Hjem til et andet gemt sted,

@@ -11,7 +11,7 @@ import type { HourScore, Level } from '../lib/tonight';
 import { usePointVerdict } from '../lib/usePointVerdict';
 import { INTL_TAG } from '../i18n/config';
 import { useI18n } from '../i18n/I18n';
-import { BottomSheet } from './BottomSheet';
+import { PlacePicker } from './PlacePicker';
 import { Explain } from './Explain';
 import { USEFUL_EVENT } from './InstallPrompt';
 import { Sighting } from './Sighting';
@@ -20,8 +20,6 @@ export const LEVEL_COLOR: Record<Level, string> = { goNow: C.green, goLater: C.g
 /** Chance-score bars: grey below 20, amber from 20, red from 50 (the same direction as the Kp charts' storm scale). */
 export const scoreColor = (s: number) => (s >= 50 ? C.red : s >= 20 ? C.amber : '#3a403c');
 
-/** Open the location picker in "Your sky" further down the page. */
-const toYourSky = () => document.getElementById('your-sky')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
 /** A small night-sky scene: aurora glow at the height it should reach, clouds as thick as forecast. */
 function SkyScene({ look, strength, cloud, light }: { look: 'low' | 'high' | 'overhead'; strength: number; cloud: number; light: boolean }) {
@@ -54,17 +52,9 @@ function SkyScene({ look, strength, cloud, light }: { look: 'low' | 'high' | 'ov
  */
 export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }) {
   const { t, num, locale } = useI18n();
-  const { shownPlace, locations, setViewPlace } = useLocations();
-  // Saved locations for the place picker (a sheet, like the app's other pickers), Home first; the one on show is ticked.
-  const places = [...locations].sort((x, y) => Number(y.isHome) - Number(x.isHome));
-  const savedShown = shownPlace ? places.find(l => l.lat === shownPlace.lat && l.lon === shownPlace.lon && (l.isHome || !shownPlace.isHome)) : undefined;
+  const { shownPlace } = useLocations();
+  // The place picker (components/PlacePicker), shared with Your sky.
   const [picking, setPicking] = useState(false);
-  const pickPlace = (id: string) => {
-    setPicking(false);
-    if (id === 'other') { toYourSky(); return; }
-    const l = places.find(x => x.id === id);
-    if (l) setViewPlace(l.isHome ? null : { name: l.name, lat: l.lat, lon: l.lon });
-  };
   const { cond, loading, now, result, offline, savedAt } = usePointVerdict(shownPlace, kp, series);
   // Offline (#68): hours already past grey out against the real clock; back online, the page reloads its data.
   const [clock, setClock] = useState<number | null>(null);
@@ -139,7 +129,8 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
       <section className="tonight" aria-label={t('tonight.h')} style={card}>
         <span className="eyebrow">{t('tonight.h')}</span>
         <span style={{ fontSize: 17, color: 'var(--soft)' }}>{t('tonight.noPlace')}</span>
-        <button type="button" className="btn pill pill-primary" onClick={toYourSky} style={{ alignSelf: 'flex-start', fontSize: 15, padding: '12px 20px' }}>{t('tonight.setPlace')}</button>
+        <button type="button" className="btn pill pill-primary" onClick={() => setPicking(true)} style={{ alignSelf: 'flex-start', fontSize: 15, padding: '12px 20px' }}>{t('tonight.setPlace')}</button>
+        {picking && <PlacePicker onClose={() => setPicking(false)} />}
       </section>
     );
   }
@@ -237,37 +228,7 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
           </div>
         </div>
       )}
-      {picking && (
-        <BottomSheet title={t('you.locations')} onClose={() => setPicking(false)}>
-          <div className="you-group-rows">
-            {!savedShown && (
-              <button type="button" className="btn you-row" aria-pressed onClick={() => setPicking(false)}>
-                <span className="you-row-label sun-lapse-option"><b>{shownPlace.name.split(',')[0]}</b><small>{placeDetail(shownPlace.name)}</small></span>
-                <Check />
-              </button>
-            )}
-            {places.map(l => (
-              <button key={l.id} type="button" className="btn you-row" aria-pressed={savedShown?.id === l.id} onClick={() => pickPlace(l.id)}>
-                <span className="you-row-label sun-lapse-option">
-                  <b>{l.name.split(',')[0]}</b>
-                  <small>{[l.isHome ? t('map.panel.home') : '', placeDetail(l.name)].filter(Boolean).join(' · ')}</small>
-                </span>
-                {savedShown?.id === l.id && <Check />}
-              </button>
-            ))}
-            <button type="button" className="btn you-row" onClick={() => pickPlace('other')}>
-              <span className="you-row-label">{t('tonight.otherPlace')}</span>
-            </button>
-          </div>
-        </BottomSheet>
-      )}
+      {picking && <PlacePicker onClose={() => setPicking(false)} />}
     </section>
   );
 }
-
-/** The rest of a place's name after the town (region, country). */
-const placeDetail = (name: string) => name.split(',').slice(1).map(x => x.trim()).filter(Boolean).join(', ');
-
-const Check = () => (
-  <span style={{ color: 'var(--green)', display: 'flex' }}><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
-);

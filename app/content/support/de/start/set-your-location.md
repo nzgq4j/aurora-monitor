@@ -7,22 +7,29 @@ Alles auf der Seite **Jetzt** wird für einen Ort berechnet: ob es dort dunkel i
 
 ## Heimatort festlegen
 
-Tippen Sie auf der Seite **Jetzt** in der Karte **Heute Nacht** auf **Standort festlegen**. Dadurch öffnet sich die Ortssuche in **Ihr Himmel**, etwas weiter unten. Dann können Sie entweder:
+Tippen Sie auf der Seite **Jetzt** in der Karte **Heute Nacht** auf **Standort festlegen**. Es öffnet sich **Ort finden**. Dann können Sie entweder:
 
 - auf **Meinen aktuellen Standort verwenden** tippen und den Zugriff auf Ihren Standort erlauben, oder
 - einen Ort in **Ort suchen** eingeben, auf **Suchen** tippen und das richtige Ergebnis auswählen.
 
-Wählen Sie **Als Heimatort speichern**, um ihn zu behalten. Ihre Alarme gelten ebenfalls für diesen Ort.
+Wählen Sie anschließend **Als Heimatort speichern**. Ihre Alarme gelten ebenfalls für diesen Ort.
 
 ## Zwischen Orten wechseln
 
-Tippen Sie auf den Ortsnamen in der Karte **Heute Nacht**. Unter **Gespeicherte Orte** sind Ihre Orte aufgeführt; tippen Sie auf einen, um die Vorhersage für heute Nacht dort zu sehen. Mit **Anderer Ort…** sehen Sie sich einen neuen Ort an, ohne ihn zu speichern.
+Tippen Sie oben in der Karte **Heute Nacht** auf den Ortsnamen. Unter **Gespeicherte Orte** sind Ihre Orte aufgeführt; tippen Sie auf einen, um die Vorhersage für heute Nacht dort zu sehen. **Ihr Himmel** weiter unten zeigt immer denselben Ort, und die Schaltfläche **Ort ändern** dort öffnet dieselbe Liste.
 
-![Die Ortsliste der Karte Heute Nacht, mit Häkchen beim Heimatort](screen:tonight-places)
+![Die Ortsliste: gespeicherte Orte, Anderer Ort… und Gespeicherte Orte verwalten](screen:tonight-places)
+
+## Einen anderen Ort ansehen
+
+Tippen Sie in der Liste auf **Anderer Ort…** und suchen Sie ihn auf dieselbe Weise. Wählen Sie dann:
+
+- **Diesen Ort anzeigen**, um seine Vorhersage sofort zu sehen, ohne ihn zu speichern. Mit **Zurück zum Heimatort** in **Ihr Himmel** kehren Sie zum Heimatort zurück.
+- **Als Heimatort speichern**, um ihn zu Ihrem Heimatort zu machen. Im Tarif Kostenlos ersetzt er Ihren bisherigen Heimatort.
 
 ## Orte verwalten
 
-Öffnen Sie auf dem Handy **Profil** → **Gespeicherte Orte**. Öffnen Sie am Computer **Dashboard** → **Orte**. Zu jedem Ort sehen Sie den Himmel im Moment. Hier können Sie:
+Tippen Sie unten in der Liste auf **Gespeicherte Orte verwalten**, oder öffnen Sie auf dem Handy **Profil** → **Gespeicherte Orte**. Öffnen Sie am Computer **Dashboard** → **Orte**. Zu jedem Ort sehen Sie den Himmel im Moment. Hier können Sie:
 
 - mit **Ort hinzufügen** einen Ort hinzufügen,
 - mit **Als Heimatort** einen anderen gespeicherten Ort zum Heimatort machen,
