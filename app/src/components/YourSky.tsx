@@ -8,6 +8,7 @@ import { useConditions } from '../lib/useConditions';
 import { useStore } from '../store';
 import { useI18n, type I18n } from '../i18n/I18n';
 import { Explain } from './Explain';
+import { headLead } from '../i18n/core';
 
 const hhmmUT = (t: number) => `${new Date(t).toISOString().slice(11, 16)} UT`;
 
@@ -135,7 +136,7 @@ export function YourSky({ kp }: { kp: number | null }) {
     <section aria-labelledby="your-sky" className="rule-top" style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
-          <h2 id="your-sky" className="display" style={{ fontSize: 'var(--h-section)', lineHeight: 1 }}>{t('sky.h2a')} <span className="hl">{t('sky.h2b')}</span></h2>
+          <h2 id="your-sky" className="display" style={{ fontSize: 'var(--h-section)', lineHeight: 1 }}>{headLead(t('sky.h2a'))}<span className="hl">{t('sky.h2b')}</span></h2>
           {shown && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <span style={{ fontWeight: 700, fontSize: 18 }}>{shown.name}</span>

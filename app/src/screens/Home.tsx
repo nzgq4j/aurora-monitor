@@ -23,6 +23,7 @@ import { nowCardBlob } from '../lib/shareCard';
 import { SITE } from '../lib/site';
 import { useStore } from '../store';
 import { useI18n, type I18n } from '../i18n/I18n';
+import { headLead } from '../i18n/core';
 
 const hhmm = (t: number) => new Date(t).toISOString().slice(11, 16);
 
@@ -87,7 +88,7 @@ function Outlook({ data }: { data: NowData }) {
   );
   const line = outlookLine(data.series, data.fetchedAt);
   return (
-    <DetailCard id="outlook" title={<>{t('outlook.h2a')} <span className="hl">{t('outlook.h2b')}</span></>}
+    <DetailCard id="outlook" title={<>{headLead(t('outlook.h2a'))}<span className="hl">{t('outlook.h2b')}</span></>}
       summary={summaryText(i18n, line, line.at !== undefined ? date(line.at, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }) : undefined)}>
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <div role="group" aria-label={t('outlook.detail')} style={{ display: 'flex', padding: 4, border: '1px solid var(--line-2)', borderRadius: 999, background: '#111', flex: '1 1 300px', maxWidth: 420 }}>
@@ -121,7 +122,7 @@ function StormSection({ data }: { data: NowData }) {
   const top = ahead.length ? ahead.reduce((a, b) => (b.kp > a.kp ? b : a)) : null;
   const peak = top && { kp: top.kp, at: top.t };
   return (
-    <DetailCard id="storm" title={<>{t('storm.h2a')} <span className="hl">{t('storm.h2b')}</span></>} summary={stormSummary(storm, t, day)}>
+    <DetailCard id="storm" title={<>{headLead(t('storm.h2a'))}<span className="hl">{t('storm.h2b')}</span></>} summary={stormSummary(storm, t, day)}>
       <StormOutlook peak={peak} />
     </DetailCard>
   );
@@ -248,7 +249,7 @@ export function Home({ data, season }: { data: NowData; season?: AccountData }) 
       {planIndex === 0 && (
         <div className="cta-banner" style={{ border: '1px solid var(--line-2)', borderRadius: 16, background: 'radial-gradient(120% 140% at 100% 100%,rgba(89,255,58,.18),rgba(0,0,0,0) 60%)' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <span className="display" style={{ fontSize: 'var(--h-section)', lineHeight: 1 }}>{t('home.cta.h2a')} <span className="hl">{t('home.cta.h2b')}</span></span>
+            <span className="display" style={{ fontSize: 'var(--h-section)', lineHeight: 1 }}>{headLead(t('home.cta.h2a'))}<span className="hl">{t('home.cta.h2b')}</span></span>
             <span style={{ fontSize: 16, color: 'var(--soft)' }}>{t('home.cta.body')}</span>
           </div>
           <button type="button" className="btn pill pill-primary" onClick={() => go('plans')} style={{ fontSize: 15, padding: '14px 22px', whiteSpace: 'nowrap' }}>{t('common.seeMemberships')}</button>

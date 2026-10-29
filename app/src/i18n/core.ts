@@ -48,3 +48,10 @@ export function makeI18n(locale: Locale, messages: Messages): I18n {
   };
 }
 
+
+/**
+ * The first half of a two-part heading, ready to sit before the highlighted second half. Languages that build
+ * one compound word end it with a hyphen ("Rom-" + "vær"): the hyphen becomes a soft hyphen, shown only if the
+ * heading wraps there, and no space is added, so it reads "Romvær". Anything else gets the usual space.
+ */
+export const headLead = (s: string) => (s.endsWith('-') ? `${s.slice(0, -1)}­` : `${s} `);

@@ -45,5 +45,5 @@ Elke kaart heeft **Wat dit laat zien** met een uitgebreidere uitleg.
 Op een telefoon zijn deze kaarten ingeklapt tot een samenvatting van één regel; tik op een titel om hem te openen.
 
 - **Geomagnetische verwachting:** de Kp-verwachting. **Dagpiek** beslaat 3 dagen; Chaser voegt **Per 3 uur** en **27 dagen** toe.
-- **Storm verwachting:** de kansen van de NOAA op geomagnetische stormen in de komende drie dagen, zonnevlammen en straling, en eventuele coronale massa-ejecties (CME's) die op weg zijn naar de aarde.
+- **Stormverwachting:** de kansen van de NOAA op geomagnetische stormen in de komende drie dagen, zonnevlammen en straling, en eventuele coronale massa-ejecties (CME's) die op weg zijn naar de aarde.
 - **Laatste 12 weken** en **Beste nachten in aantocht:** hoe vaak je plek de Kp heeft gehaald die hij nodig heeft, en de nachten in de 27-daagse verwachting van de NOAA waarin dat zou moeten lukken. Alleen de beste nachten staan erin, niet elke nacht.

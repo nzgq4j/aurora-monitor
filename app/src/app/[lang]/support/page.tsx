@@ -6,6 +6,7 @@ import { SupportSearch } from '../../../components/SupportSearch';
 import { SupportContact } from '../../../components/SupportContact';
 import { ReplayIntroLink } from '../../../components/Onboarding';
 import type { MessageKey } from '../../../i18n/core';
+import { headLead } from '../../../i18n/core';
 
 type Props = { params: Promise<{ lang: string }> };
 
@@ -22,7 +23,7 @@ export default async function Page({ params }: Props) {
   const common = articles(locale, 'faq').slice(0, 6);
   return (
     <main className="wrap support">
-      <h1 className="display support-h1">{t('support.h1a')} <span className="hl">{t('support.h1b')}</span></h1>
+      <h1 className="display support-h1">{headLead(t('support.h1a'))}<span className="hl">{t('support.h1b')}</span></h1>
       <p className="support-lead">{t('support.intro')}</p>
       <SupportSearch index={searchIndex(locale)} />
 

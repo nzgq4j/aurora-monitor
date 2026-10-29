@@ -9,6 +9,7 @@ import { ALERT_LEVELS } from '../lib/alerts';
 import { useStore } from '../store';
 import { PushRow, ToggleRow } from './AlertControls';
 import { useI18n } from '../i18n/I18n';
+import { headLead } from '../i18n/core';
 
 /**
  * 'done' once finished or skipped; 'again' when replayed from You → Support (shows even with saved places);
@@ -94,7 +95,7 @@ function Welcome({ heading, next }: Heading & { next: () => void }) {
     <div className="intro-step">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img className="intro-mark" src="/icons/icon-512.png" alt="" width={120} height={120} />
-      <H heading={heading}>{t('intro.welcome.h1a')} <span className="hl">{t('intro.welcome.h1b')}</span></H>
+      <H heading={heading}>{headLead(t('intro.welcome.h1a'))}<span className="hl">{t('intro.welcome.h1b')}</span></H>
       <p className="intro-text">{t('intro.welcome.body')}</p>
       <button type="button" className="btn pill pill-primary intro-go" onClick={next}>{t('intro.start')}</button>
     </div>

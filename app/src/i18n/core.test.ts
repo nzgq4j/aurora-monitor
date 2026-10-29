@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { negotiate } from './config';
-import { makeI18n, type Messages } from './core';
+import { headLead, makeI18n, type Messages } from './core';
 
 describe('negotiate', () => {
   it('picks the best supported language', () => {
@@ -34,5 +34,14 @@ describe('tn', () => {
     expect(tn('x', 1)).toBe('one photo');
     expect(tn('x', 0)).toBe('0 photos');
     expect(tn('x', 4)).toBe('4 photos');
+  });
+});
+
+describe('headLead', () => {
+  it('joins a hyphenated first half into one word with a soft hyphen', () => {
+    expect(headLead('Rom-') + 'vær').toBe('Rom\u00ADvær');
+  });
+  it('adds a space otherwise', () => {
+    expect(headLead('Space') + 'weather').toBe('Space weather');
   });
 });
