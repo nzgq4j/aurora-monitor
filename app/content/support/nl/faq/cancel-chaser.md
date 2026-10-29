@@ -11,4 +11,6 @@ Open op een telefoon **Profiel → Abonnement en betaling**. Open op een compute
 
 Open **Profiel → Abonnement en betaling** en kies **Beheren in Google Play**. Of tik in de Play Store-app op je profielfoto en daarna op **Betalingen en abonnementen → Abonnementen → Polar Lights → Abonnement opzeggen**.
 
+![Abonnement en betaling in Profiel, met Beheren in Google Play omcirkeld](screen:you-billing)
+
 > Als je je account verwijdert, wordt een abonnement dat je met je kaart betaalt meteen opgezegd, en wordt een abonnement via Google Play niet meer verlengd.

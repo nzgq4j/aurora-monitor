@@ -10,4 +10,6 @@ Kp måler, hvor aktivt nordlyset er rundt om hele Jorden. **I nat**-kortet svare
 - **Skyer.** Tykke skyer skjuler det, uanset hvor kraftigt det er.
 - **Månen.** En lys måne overdøver svagere nordlys.
 
+![I nat-kortet: vurderingen og chancescoren, hovedårsagen nedenunder og de næste 12 timer](screen:tonight-card)
+
 Linjen under vurderingen nævner hovedårsagen, f.eks. *For lav aktivitet*, *For lyst*, *Skyet* eller *Lys måne*. Tjek søjlerne for **Næste 12 timer** på det samme kort: Der vises ofte en bedre time senere på natten.

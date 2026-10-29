@@ -9,3 +9,5 @@ En observation tjekkes **ca. en time efter, at du melder den**, så andre i nær
 - **NOAA's OVATION-prognose** viste mindst 10% chance for nordlys i nærheden af dig.
 
 Bekræftede observationer giver point og mærker. Tjekkene kører hvert 15. minut, og beskeden *Nyt mærke* vises, næste gang du åbner Polar Lights. Dine mærker og din rang finder du under **Dig → Mærker**.
+
+![Mærker-skærmen: dit niveau, dine point og dine mærker](screen:badges)

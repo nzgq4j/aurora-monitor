@@ -9,4 +9,6 @@ Knappen **Jeg så det** på I natt-kortet fungerer når:
 - **Du er logget inn.** Observasjoner knyttes til kontoen din, slik at de kan telle med for merkene dine.
 - **Du ikke har meldt noe de siste 12 timene.** Én melding gjelder for en hel natt.
 
+![Jeg så det-knappen, som venter til det blir mørkt](screen:tonight-saw-it)
+
 Observasjoner vises på kartet i 24 timer, uten noe som kan identifisere deg, og hjelper andre medlemmer i nærheten.

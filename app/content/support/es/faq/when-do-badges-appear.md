@@ -9,3 +9,5 @@ Un avistamiento se comprueba **aproximadamente una hora después de que informes
 - **la previsión OVATION de la NOAA** mostraba al menos un 10% de probabilidad de aurora cerca de ti.
 
 Los avisos confirmados te dan puntos e insignias. Las comprobaciones se hacen cada 15 minutos, y aparece un mensaje de *Nueva insignia* la próxima vez que abras Polar Lights. Tus insignias y tu rango están en **Perfil → Insignias**.
+
+![La pantalla de insignias: tu nivel, tus puntos y tus insignias](screen:badges)

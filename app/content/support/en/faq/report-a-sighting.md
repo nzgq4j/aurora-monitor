@@ -9,4 +9,6 @@ The **I saw it** button on the Tonight card works when:
 - **You're signed in.** Reports are linked to your account so they can count towards your badges.
 - **You haven't reported in the last 12 hours.** One report covers a whole night.
 
+![The I saw it button, waiting until it's dark](screen:tonight-saw-it)
+
 Reports appear on the map for 24 hours, without anything that identifies you, and help other members nearby.

@@ -10,4 +10,6 @@ Le Kp mesure l’activité des aurores sur l’ensemble de la planète. La carte
 - **Les nuages.** Une couche nuageuse épaisse la cache, quelle que soit son intensité.
 - **La Lune.** Une Lune brillante efface les aurores plus faibles.
 
+![La carte Ce soir : le verdict et le score de chance, la raison principale en dessous et les 12 prochaines heures](screen:tonight-card)
+
 La ligne sous le verdict indique la raison principale, par exemple *Activité trop faible*, *Trop clair*, *Nuageux* ou *Lune brillante*. Regardez les barres **12 prochaines heures** sur la même carte : une meilleure heure plus tard dans la nuit y apparaît souvent.

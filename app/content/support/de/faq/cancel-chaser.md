@@ -11,4 +11,6 @@ order: 50
 
 Öffnen Sie **Profil → Tarif und Abrechnung** und wählen Sie **In Google Play verwalten**. Oder tippen Sie in der Play Store App auf Ihr Profilbild und dann auf **Zahlungen und Abos → Abos → Polar Lights → Abo kündigen**.
 
+![Tarif und Abrechnung im Profil, „In Google Play verwalten“ markiert](screen:you-billing)
+
 > Wenn Sie Ihr Konto löschen, wird ein Abo mit Kartenzahlung sofort gekündigt und ein Google-Play-Abo nicht mehr verlängert.

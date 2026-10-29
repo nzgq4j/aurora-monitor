@@ -11,4 +11,6 @@ Avaa puhelimessa **Sinä → Tilaus ja laskutus**. Avaa tietokoneella **Ohjauspa
 
 Avaa **Sinä → Tilaus ja laskutus** ja valitse **Hallitse Google Playssa**. Voit myös avata Play Kauppa -sovelluksen, napauttaa profiilikuvaasi ja sitten **Maksut ja tilaukset → Tilaukset → Polar Lights → Peru tilaus**.
 
+![Tilaus ja laskutus Sinä-välilehdellä, Hallitse Google Playssa korostettuna](screen:you-billing)
+
 > Tilin poistaminen peruu korttitilauksen heti ja estää Google Play -tilausta uusiutumasta.

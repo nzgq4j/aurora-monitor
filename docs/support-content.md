@@ -43,6 +43,17 @@ The article, in Markdown.
 
 Write `![What the picture shows](screen:now-tonight)`. That uses `app/public/support/shots/{lang}/now-tonight.webp` if it exists, and otherwise the English picture. The text in brackets is read aloud by screen readers.
 
+The pictures are made by `app/scripts/support-shots.mjs`, in every language. It runs against a local build that uses sample data and a sample Chaser account, so it never touches a real account. It draws a green ring around the part an article talks about. It fixes the clock at midday in Tromsø so every language shows the same thing. To add a picture, add an entry to `SHOTS` in the script. To make them all again after a design change:
+
+```sh
+cd app
+# build and start the site with the sample feeds and the mock Supabase project, as for the store screenshots
+PW_ROOT=$(npm root -g) node scripts/support-shots.mjs              # every language and picture
+PW_ROOT=$(npm root -g) node scripts/support-shots.mjs en,de badges  # just some
+```
+
+Current pictures: `tonight-card`, `tonight-saw-it`, `badges`, `you-billing` and `you-delete`.
+
 ## Interface text
 
 The help centre's own labels, such as the section names, search and "Still need help?", are `support.*` keys in the message files.

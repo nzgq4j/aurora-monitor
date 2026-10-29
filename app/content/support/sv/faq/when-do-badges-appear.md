@@ -9,3 +9,5 @@ En observation kontrolleras **ungefär en timme efter att du rapporterat den**, 
 - **NOAA:s OVATION-prognos** visade minst 10 % chans till norrsken nära dig.
 
 Bekräftade rapporter ger poäng och märken. Kontrollerna körs var 15:e minut, och meddelandet *Nytt märke* visas nästa gång du öppnar Polar Lights. Dina märken och din rang finns under **Du → Märken**.
+
+![Skärmen Märken: din nivå, dina poäng och dina märken](screen:badges)

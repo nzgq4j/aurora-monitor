@@ -11,4 +11,6 @@ On a phone, open **You → Plan & billing**. On a computer, open **Dashboard →
 
 Open **You → Plan & billing** and choose **Manage in Google Play**. Or, in the Play Store app, tap your profile picture, then **Payments & subscriptions → Subscriptions → Polar Lights → Cancel subscription**.
 
+![Plan & billing in You, with Manage in Google Play ringed](screen:you-billing)
+
 > Deleting your account also cancels a card subscription straight away, and stops a Google Play subscription from renewing.

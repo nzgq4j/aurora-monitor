@@ -10,4 +10,6 @@ Kp meet hoe actief het poollicht rond de hele aarde is. De kaart **Vannacht** be
 - **Bewolking.** Dikke bewolking verbergt het, hoe sterk het ook is.
 - **De maan.** Een felle maan overstraalt zwakker noorderlicht.
 
+![De kaart Vannacht: het oordeel en de kansscore, de belangrijkste reden daaronder en de komende 12 uur](screen:tonight-card)
+
 De regel onder de verwachting noemt de belangrijkste reden, zoals *Te weinig activiteit*, *Te licht*, *Bewolkt* of *Felle maan*. Kijk ook naar de balken **Komende 12 uur** op dezelfde kaart: daar zie je vaak een beter uur later in de nacht.

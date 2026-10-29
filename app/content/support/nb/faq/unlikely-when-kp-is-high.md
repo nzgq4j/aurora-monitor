@@ -10,4 +10,6 @@ Kp måler hvor aktivt nordlyset er rundt hele jorda. **I natt**-kortet svarer p�
 - **Skyer.** Tykke skyer skjuler det, uansett hvor sterkt det er.
 - **Månen.** En lys måne visker ut svakere nordlys.
 
+![I natt-kortet: vurderingen og sjansescoren, hovedgrunnen under og de neste 12 timene](screen:tonight-card)
+
 Linjen under vurderingen nevner hovedårsaken, for eksempel *For lav aktivitet*, *For lyst*, *Skyet* eller *Lys måne*. Sjekk søylene for **Neste 12 timer** på det samme kortet: der ser du ofte en bedre time senere på natten.

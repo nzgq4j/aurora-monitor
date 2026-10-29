@@ -10,4 +10,6 @@ Kp measures how active the aurora is around the whole planet. The **Tonight** ca
 - **Cloud.** Thick cloud hides it, however strong it is.
 - **The Moon.** A bright Moon washes out fainter displays.
 
+![The Tonight card: the verdict and chance score, the main reason under them, and the next 12 hours](screen:tonight-card)
+
 The line under the verdict names the main reason, such as *Activity too low*, *Too light*, *Cloudy* or *Bright Moon*. Check the **Next 12 hours** bars on the same card: a better hour later in the night is often shown there.
