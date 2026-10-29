@@ -4,6 +4,7 @@ import { getI18n, routeLocale } from '../../../i18n/server';
 import { articles, liveSections, searchIndex } from '../../../lib/support';
 import { SupportSearch } from '../../../components/SupportSearch';
 import { SupportContact } from '../../../components/SupportContact';
+import { ReplayIntroLink } from '../../../components/Onboarding';
 import type { MessageKey } from '../../../i18n/core';
 
 type Props = { params: Promise<{ lang: string }> };
@@ -46,6 +47,7 @@ export default async function Page({ params }: Props) {
       )}
 
       <SupportContact />
+      <ReplayIntroLink />
     </main>
   );
 }

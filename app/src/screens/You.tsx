@@ -14,6 +14,7 @@ import { applyLocale } from '../i18n/I18n';
 import { LOCALES, LOCALE_NAMES } from '../i18n/config';
 import { useNightMode, type NightSetting } from '../components/NightMode';
 import { FeedbackForm } from '../components/Feedback';
+import { replayIntro } from '../components/Onboarding';
 import { BottomSheet } from '../components/BottomSheet';
 import { Plans } from './Plans';
 import { Billing, ChangePassword, Locations, useAccountDeletion } from './Account';
@@ -41,6 +42,7 @@ const P = {
   pin: 'M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Zm0-8.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
   photo: 'M4 6h16v13H4zM8.5 11a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM20 16l-5-5-8 8',
   chat: 'M5 5h14v10H10l-4 4v-4H5z',
+  spark: 'M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6',
   help: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm-2.5 6.5a2.5 2.5 0 1 1 3.8 2.1c-.8.5-1.3 1-1.3 1.9M12 16.5v.01',
   globe: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm-9 9h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z',
   moon: 'M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z',
@@ -224,6 +226,7 @@ export function You() {
 
       <Group label={t('you.group.support')}>
         <Row icon={P.help} label={t('support.title')} href="/support" />
+        <Row icon={P.spark} label={t('intro.replay')} onClick={() => { replayIntro(); go('home'); }} />
         {signedIn && <Row icon={P.chat} label={t('feedback.row')} onClick={() => setSheet('feedback')} />}
       </Group>
 

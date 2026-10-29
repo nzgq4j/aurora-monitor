@@ -18,6 +18,7 @@ import { INTL_TAG } from '../i18n/config';
 import type { NowData } from '../lib/now';
 import type { AccountData } from '../lib/history';
 import { SeasonCards } from '../components/SeasonCards';
+import { Onboarding } from '../components/Onboarding';
 import { nowCardBlob } from '../lib/shareCard';
 import { SITE } from '../lib/site';
 import { useStore } from '../store';
@@ -253,6 +254,7 @@ export function Home({ data, season }: { data: NowData; season?: AccountData }) 
           <button type="button" className="btn pill pill-primary" onClick={() => go('plans')} style={{ fontSize: 15, padding: '14px 22px', whiteSpace: 'nowrap' }}>{t('common.seeMemberships')}</button>
         </div>
       )}
+      <Onboarding />
     </main>
   );
 }
