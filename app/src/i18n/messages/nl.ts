@@ -1213,6 +1213,8 @@ export const nl: Messages = {
   'you.group.account': "Account",
   'you.group.about': "Over",
   'you.sources': "Gegevensbronnen",
+  'you.version': "Versie",
+  'you.versionWeb': "Website",
   'you.logoutQ': "Uitloggen bij Polar Lights?",
   'you.nightBody': "Toont de app in gedempt rood, zodat je ogen aan het donker gewend blijven. Automatisch gaat hij aan zodra het donker is waar je bent.",
   'now.season.weeks': "LAATSTE 12 WEKEN",

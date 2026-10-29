@@ -1241,6 +1241,8 @@ export const ru: Messages = {
   'you.group.account': "Аккаунт",
   'you.group.about': "О приложении",
   'you.sources': "Источники данных",
+  'you.version': "Версия",
+  'you.versionWeb': "Сайт",
   'you.logoutQ': "Выйти из Polar Lights?",
   'you.nightBody': "Окрашивает приложение в приглушённый красный, чтобы глаза не отвыкали от темноты. «Авто» включает режим, когда у вас стемнеет.",
   'now.season.weeks': "ПОСЛЕДНИЕ 12 НЕДЕЛЬ",

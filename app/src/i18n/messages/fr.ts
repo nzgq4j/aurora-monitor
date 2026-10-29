@@ -1213,6 +1213,8 @@ export const fr: Messages = {
   'you.group.account': "Compte",
   'you.group.about': "À propos",
   'you.sources': "Sources des données",
+  'you.version': "Version",
+  'you.versionWeb': "Site web",
   'you.logoutQ': "Se déconnecter de Polar Lights ?",
   'you.nightBody': "Affiche l’app en rouge atténué pour que vos yeux restent habitués à l’obscurité. En automatique, il s’active dès qu’il fait nuit là où vous êtes.",
   'now.season.weeks': "12 DERNIÈRES SEMAINES",

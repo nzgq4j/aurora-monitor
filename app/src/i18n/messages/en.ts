@@ -1213,6 +1213,8 @@ export const en = {
   'you.group.account': "Account",
   'you.group.about': "About",
   'you.sources': "Data sources",
+  'you.version': "Version",
+  'you.versionWeb': "Website",
   'you.logoutQ': "Log out of Polar Lights?",
   'you.nightBody': "Draws the app in dim red so your eyes stay used to the dark. Auto turns it on once it’s dark where you are.",
   'now.season.weeks': "LAST 12 WEEKS",
