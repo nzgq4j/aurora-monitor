@@ -1213,6 +1213,8 @@ export const nb: Messages = {
   'you.group.account': "Konto",
   'you.group.about': "Om",
   'you.sources': "Datakilder",
+  'you.version': "Versjon",
+  'you.versionWeb': "Nettsted",
   'you.logoutQ': "Logge ut av Polar Lights?",
   'you.nightBody': "Viser appen i svakt rødt så øynene beholder mørkesynet. Auto slår det på når det blir mørkt der du er.",
   'now.season.weeks': "SISTE 12 UKER",

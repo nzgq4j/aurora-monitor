@@ -1213,6 +1213,8 @@ export const fi: Messages = {
   'you.group.account': "Tili",
   'you.group.about': "Tietoja",
   'you.sources': "Datalähteet",
+  'you.version': "Versio",
+  'you.versionWeb': "Verkkosivusto",
   'you.logoutQ': "Kirjaudutaanko ulos Polar Lightsista?",
   'you.nightBody': "Piirtää sovelluksen himmeän punaisena, jotta silmäsi pysyvät tottuneina pimeään. Autom. laittaa sen päälle, kun sijainnissasi on pimeää.",
   'now.season.weeks': "VIIM. 12 VIIKKOA",

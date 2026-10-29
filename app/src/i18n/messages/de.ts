@@ -1213,6 +1213,8 @@ export const de: Messages = {
   'you.group.account': "Konto",
   'you.group.about': "Info",
   'you.sources': "Datenquellen",
+  'you.version': "Version",
+  'you.versionWeb': "Website",
   'you.logoutQ': "Von Polar Lights abmelden?",
   'you.nightBody': "Zeigt die App in gedämpftem Rot, damit Ihre Augen an die Dunkelheit gewöhnt bleiben. Automatisch schaltet er sich ein, sobald es bei Ihnen dunkel ist.",
   'now.season.weeks': "LETZTE 12 WOCHEN",

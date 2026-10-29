@@ -19,6 +19,10 @@ import { BottomSheet } from '../components/BottomSheet';
 import { Plans } from './Plans';
 import { Billing, ChangePassword, Locations, useAccountDeletion } from './Account';
 import type { MessageKey } from '../i18n/core';
+import { nativePlugin } from '../lib/native';
+
+/** The website build on screen: the first 7 characters of its git commit ('dev' locally). */
+const WEB_BUILD = (process.env.NEXT_PUBLIC_BUILD_ID ?? 'dev').slice(0, 7);
 
 /**
  * The You tab: the phone's Dashboard, laid out like an app's settings screen. A profile card, then
@@ -95,6 +99,12 @@ export function You() {
   const night = useNightMode();
   const { locations, load } = useLocations();
   const [view, setView] = useState<View>('');
+  // In the Android app: its version and build number (versionName and versionCode), shown with the site's build.
+  const [appVersion, setAppVersion] = useState<string | null>(null);
+  useEffect(() => {
+    nativePlugin<{ getInfo: () => Promise<{ version: string; build: string }> }>('App')?.getInfo()
+      .then(i => setAppVersion(`${i.version} (${i.build})`)).catch(() => {});
+  }, []);
   const [sheet, setSheet] = useState<Sheet>(null);
   // Photos this member has posted to the community gallery (pending ones included); a page holds at most 60.
   const [posted, setPosted] = useState<number | null>(null);
@@ -234,6 +244,7 @@ export function You() {
         <Row label={t('title.privacy')} href="/privacy" />
         <Row label={t('title.terms')} href="/terms" />
         <Row label={t('you.sources')} value="NOAA · GFZ · NASA" />
+        <Row label={t('you.version')} value={appVersion ? `${appVersion} · ${WEB_BUILD}` : `${t('you.versionWeb')} ${WEB_BUILD}`} />
         {signedIn && <Row label={t('footer.deleteAccount')} danger chevron={false} onClick={() => setSheet('delete')} />}
       </Group>
       <p className="you-foot mono">{SITE.name} · {SITE.domain}</p>
