@@ -11,4 +11,4 @@ Knappen **Jag såg det** på kortet I kväll fungerar när:
 
 ![Knappen Jag såg det, som väntar tills det blir mörkt](screen:tonight-saw-it)
 
-Rapporter visas på kartan i 24 timmar, utan något som identifierar dig, och hjälper andra medlemmar i närheten.
+Rapporter visas på kartan i 3 timmar, utan något som identifierar dig, och hjälper andra medlemmar i närheten.

@@ -11,4 +11,4 @@ Knappen **Jeg så det** på I natt-kortet fungerer når:
 
 ![Jeg så det-knappen, som venter til det blir mørkt](screen:tonight-saw-it)
 
-Observasjoner vises på kartet i 24 timer, uten noe som kan identifisere deg, og hjelper andre medlemmer i nærheten.
+Observasjoner vises på kartet i 3 timer, uten noe som kan identifisere deg, og hjelper andre medlemmer i nærheten.
