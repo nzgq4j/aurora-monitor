@@ -39,6 +39,7 @@ export function Header({ kpLabel }: { kpLabel: string }) {
         </div>
         <div className="header-right">
           <span className="mono header-kp" style={{ fontSize: 12, color: 'var(--muted)', whiteSpace: 'nowrap' }}>{kpLabel}</span>
+          <Link href="/support" className={'header-help' + (current === 'support' ? ' on' : '')} aria-current={current === 'support' ? 'page' : undefined}>{t('nav.help')}</Link>
           {signedIn ? (
             <button type="button" className="btn header-account" onClick={goAccount} aria-label={t('nav.dashboardPlan', { plan: planName })}>
               <span className="header-plan">{planName}</span>
@@ -72,8 +73,8 @@ const Icon = ({ id }: { id: string }) => (
 export function TabBar() {
   const { screen, go } = useStore();
   const { t } = useI18n();
-  // You holds the account, plans, sign-in, badges, alerts and settings.
-  const you = screen === 'account' || screen === 'plans' || screen === 'checkout' || screen === 'signin' || screen === 'badges' || screen === 'alerts';
+  // You holds the account, plans, sign-in, badges, alerts, settings and help.
+  const you = screen === 'account' || screen === 'plans' || screen === 'checkout' || screen === 'signin' || screen === 'badges' || screen === 'alerts' || screen === 'support';
   const tab = (id: string, label: string, on: boolean, onClick: () => void) => (
     <button key={id} type="button" className={`btn tabbar-item tab-${id}` + (on ? ' on' : '')} aria-current={on ? 'page' : undefined} onClick={onClick}>
       <Icon id={id} /><span>{label}</span>
@@ -111,6 +112,7 @@ export function Footer() {
       <div className="wrap" style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', padding: '18px var(--gutter)', fontSize: 12, color: 'var(--dim)' }}>
         <span>{t('footer.sources')}</span>
         <span style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 16px', alignItems: 'baseline' }}>
+          <Link href="/support" style={{ color: 'var(--dim)' }}>{t('support.title')}</Link>
           <Link href="/privacy" style={{ color: 'var(--dim)' }}>{t('footer.privacy')}</Link>
           <Link href="/terms" style={{ color: 'var(--dim)' }}>{t('footer.terms')}</Link>
           <Link href="/delete-account" style={{ color: 'var(--dim)' }}>{t('footer.deleteAccount')}</Link>
