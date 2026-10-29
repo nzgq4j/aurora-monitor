@@ -24,13 +24,21 @@ export function FitHeadings() {
       });
     };
     fit();
+    // Again whenever a web font arrives: the display font can land after the first fit (slow connections),
+    // and its wider letters would otherwise overflow.
     document.fonts?.ready.then(fit);
+    document.fonts?.addEventListener('loadingdone', fit);
     window.addEventListener('resize', fit);
+    // And whenever the page changes width without a resize event, as Android's app view can when it is first
+    // laid out or when the system text size changes.
+    let lastWidth = 0;
+    const ro = new ResizeObserver(([e]) => { const w = Math.round(e.contentRect.width); if (w !== lastWidth) { lastWidth = w; fit(); } });
+    ro.observe(document.documentElement);
     // Headings also appear without a page change (Dashboard tabs, sign-in modes).
     // Map tiles change constantly and hold no headings, so their changes are ignored.
     const mo = new MutationObserver(records => { if (records.some(r => !(r.target as Element).closest?.('.leaflet-container'))) fit(); });
     mo.observe(document.body, { childList: true, subtree: true, characterData: true });
-    return () => { cancelAnimationFrame(frame); window.removeEventListener('resize', fit); mo.disconnect(); };
+    return () => { cancelAnimationFrame(frame); document.fonts?.removeEventListener('loadingdone', fit); window.removeEventListener('resize', fit); ro.disconnect(); mo.disconnect(); };
   }, []);
   return null;
 }

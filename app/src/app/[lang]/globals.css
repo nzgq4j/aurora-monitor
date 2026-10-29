@@ -42,6 +42,10 @@ body { margin: 0; background: var(--bg); font-family: var(--f-body); color: #fff
 /* App-like touch behaviour: no grey tap flash, no font inflation, no pull-to-refresh bounce
    revealing white behind the page, and no 300 ms double-tap delay on controls. */
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; background: var(--bg); }
+/* Nothing may make the page wider than the screen. On Android, anything that sticks out (a heading at a large
+   system text size, say) otherwise widens the whole layout, so the tab bar and full-screen panels spill off the
+   right edge and headings get fitted to the wrong width. */
+html, body { overflow-x: clip; }
 body { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
 button, a, input, select, label { touch-action: manipulation; }
 /* Keep content clear of notches and the gesture bar when installed full-screen. */
