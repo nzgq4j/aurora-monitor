@@ -9,3 +9,5 @@ Eine Sichtung wird **etwa eine Stunde nach Ihrer Meldung** geprüft, damit ander
 - **die OVATION-Vorhersage der NOAA** eine Polarlicht-Wahrscheinlichkeit von mindestens 10 % in Ihrer Nähe gezeigt hat.
 
 Bestätigte Meldungen bringen Punkte und Abzeichen. Die Prüfungen laufen alle 15 Minuten, und beim nächsten Öffnen von Polar Lights erscheint eine Nachricht *Neues Abzeichen*. Ihre Abzeichen und Ihren Rang finden Sie unter **Profil → Abzeichen**.
+
+![Der Bildschirm „Abzeichen“: Ihre Stufe, Punkte und Abzeichen](screen:badges)

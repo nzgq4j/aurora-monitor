@@ -9,3 +9,5 @@ Havainto tarkistetaan **noin tunnin kuluttua ilmoituksestasi**, jotta muutkin l�
 - **NOAA:n OVATION-ennuste** näytti vähintään 10 %:n todennäköisyyttä revontulille lähelläsi.
 
 Vahvistetuista ilmoituksista saa pisteitä ja merkkejä. Tarkistukset tehdään 15 minuutin välein, ja *Uusi merkki* -ilmoitus näkyy, kun avaat Polar Lightsin seuraavan kerran. Merkkisi ja arvosi löytyvät kohdasta **Sinä → Merkit**.
+
+![Merkit-näkymä: tasosi, pisteesi ja merkkisi](screen:badges)

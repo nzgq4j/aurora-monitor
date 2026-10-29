@@ -11,4 +11,6 @@ På en telefon öppnar du **Du → Plan och fakturering**. På en dator öppnar 
 
 Öppna **Du → Plan och fakturering** och välj **Hantera i Google Play**. Du kan också öppna Play Butik-appen, trycka på din profilbild och sedan på **Betalningar och prenumerationer → Prenumerationer → Polar Lights → Säg upp prenumerationen**.
 
+![Abonnemang och betalning under Du, med Hantera i Google Play markerat](screen:you-billing)
+
 > Om du raderar ditt konto avslutas en kortprenumeration direkt, och en prenumeration via Google Play förnyas inte längre.

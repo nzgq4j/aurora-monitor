@@ -10,4 +10,6 @@ Kp mäter hur aktivt norrskenet är runt hela planeten. Kortet **I kväll** svar
 - **Moln.** Tjocka moln döljer det, hur starkt det än är.
 - **Månen.** En ljus måne bleker ut svagare norrsken.
 
+![Kortet I kväll: bedömningen och chanspoängen, huvudorsaken under och de kommande 12 timmarna](screen:tonight-card)
+
 Raden under bedömningen anger huvudorsaken, till exempel *För låg aktivitet*, *För ljust*, *Molnigt* eller *Ljus måne*. Titta på staplarna **Närmaste 12 timmarna** på samma kort: där syns ofta en bättre timme senare under natten.

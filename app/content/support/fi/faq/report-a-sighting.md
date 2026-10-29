@@ -9,4 +9,6 @@ Tänä yönä -kortin **Näin ne** -painike toimii, kun:
 - **Olet kirjautunut sisään.** Ilmoitukset liitetään tiliisi, jotta ne voidaan laskea mukaan merkkeihisi.
 - **Et ole ilmoittanut viimeisten 12 tunnin aikana.** Yksi ilmoitus kattaa koko yön.
 
+![Näin ne -painike odottamassa pimeää](screen:tonight-saw-it)
+
 Ilmoitukset näkyvät kartalla 24 tuntia ilman mitään sinut tunnistavaa tietoa, ja ne auttavat muita lähistöllä olevia jäseniä.

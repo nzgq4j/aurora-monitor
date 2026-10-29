@@ -10,4 +10,6 @@ Der Kp-Wert misst, wie aktiv das Polarlicht rund um den ganzen Planeten ist. Die
 - **Wolken.** Dichte Bewölkung verdeckt es, egal wie stark es ist.
 - **Der Mond.** Ein heller Mond überstrahlt schwächere Polarlichter.
 
+![Die Karte „Heute Nacht“: Einschätzung und Chancen-Index, der Hauptgrund darunter und die nächsten 12 Stunden](screen:tonight-card)
+
 Die Zeile unter der Einschätzung nennt den Hauptgrund, zum Beispiel *Zu wenig Aktivität*, *Zu hell*, *Bewölkt* oder *Heller Mond*. Sehen Sie sich die Balken **Nächste 12 Stunden** auf derselben Karte an: Dort ist oft eine bessere Stunde später in der Nacht zu sehen.

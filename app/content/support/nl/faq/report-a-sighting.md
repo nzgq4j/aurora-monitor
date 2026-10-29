@@ -9,4 +9,6 @@ De knop **Ik zie het** op de kaart Vannacht werkt als aan deze voorwaarden is vo
 - **Je bent ingelogd.** Waarnemingen worden aan je account gekoppeld, zodat ze kunnen meetellen voor je badges.
 - **Je hebt de afgelopen 12 uur niets gemeld.** Eén melding geldt voor een hele nacht.
 
+![De knop Ik zie het, in afwachting van het donker](screen:tonight-saw-it)
+
 Waarnemingen staan 24 uur op de poollichtkaart, zonder iets wat naar jou herleidbaar is, en helpen andere leden in de buurt.

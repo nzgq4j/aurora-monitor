@@ -9,4 +9,6 @@ Le bouton **Je l’ai vue** de la carte Ce soir fonctionne quand :
 - **Vous êtes connecté.** Les signalements sont liés à votre compte pour pouvoir compter dans vos badges.
 - **Vous n’avez rien signalé ces 12 dernières heures.** Un signalement couvre toute une nuit.
 
+![Le bouton Je l’ai vue, en attendant qu’il fasse nuit](screen:tonight-saw-it)
+
 Les signalements apparaissent sur la carte pendant 24 heures, sans rien qui permette de vous identifier, et aident les autres membres à proximité.

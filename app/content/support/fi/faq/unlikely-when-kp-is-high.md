@@ -10,4 +10,6 @@ Kp kertoo, kuinka aktiivisia revontulet ovat koko maapallon ympärillä. **Tän�
 - **Pilvet.** Paksu pilvipeite peittää ne, olivatpa ne kuinka voimakkaita tahansa.
 - **Kuu.** Kirkas Kuu himmentää heikommat revontulet näkymättömiin.
 
+![Tänä yönä -kortti: arvio ja mahdollisuuspisteet, tärkein syy niiden alla ja seuraavat 12 tuntia](screen:tonight-card)
+
 Arvion alla oleva rivi kertoo pääsyyn, esimerkiksi *Liian vähän aktiivisuutta*, *Liian valoisaa*, *Pilvistä* tai *Kirkas Kuu*. Katso saman kortin **Seuraavat 12 tuntia** -palkit: niissä näkyy usein parempi tunti myöhemmin yöllä.

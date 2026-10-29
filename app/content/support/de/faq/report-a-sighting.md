@@ -9,4 +9,6 @@ Die Schaltfläche **Ich sehe es** auf der Karte Heute Nacht funktioniert, wenn:
 - **Sie angemeldet sind.** Meldungen werden mit Ihrem Konto verknüpft, damit sie für Ihre Abzeichen zählen können.
 - **Sie in den letzten 12 Stunden nichts gemeldet haben.** Eine Meldung gilt für eine ganze Nacht.
 
+![Die Schaltfläche „Ich sehe es“, bis es dunkel ist](screen:tonight-saw-it)
+
 Meldungen erscheinen 24 Stunden lang auf der Karte, ohne etwas, das Sie identifiziert, und helfen anderen Mitgliedern in der Nähe.

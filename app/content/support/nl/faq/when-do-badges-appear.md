@@ -9,3 +9,5 @@ Een waarneming wordt **ongeveer een uur nadat je die meldt** gecontroleerd, zoda
 - **de OVATION-verwachting van de NOAA** minstens 10% kans op poollicht bij jou liet zien.
 
 Bevestigde waarnemingen leveren punten en badges op. De controles lopen elke 15 minuten, en de volgende keer dat je Polar Lights opent, verschijnt het bericht *Nieuwe badge*. Je badges en rang vind je onder **Profiel → Badges**.
+
+![Het scherm Badges: je niveau, punten en badges](screen:badges)

@@ -11,4 +11,6 @@ Sur un téléphone, ouvrez **Profil → Formule et facturation**. Sur un ordinat
 
 Ouvrez **Profil → Formule et facturation** et choisissez **Gérer dans Google Play**. Ou, dans l’app Play Store, appuyez sur votre photo de profil, puis sur **Paiements et abonnements → Abonnements → Polar Lights → Résilier l’abonnement**.
 
+![Abonnement et facturation dans Profil, avec Gérer dans Google Play entouré](screen:you-billing)
+
 > Supprimer votre compte annule aussi immédiatement un abonnement payé par carte, et empêche le renouvellement d’un abonnement Google Play.

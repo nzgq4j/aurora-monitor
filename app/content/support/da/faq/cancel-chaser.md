@@ -11,4 +11,6 @@ På en telefon åbner du **Dig → Abonnement og betaling**. På en computer åb
 
 Åbn **Dig → Abonnement og betaling**, og vælg **Administrer i Google Play**. Du kan også åbne Play Butik-appen, trykke på dit profilbillede og derefter på **Betalinger og abonnementer → Abonnementer → Polar Lights → Opsig abonnement**.
 
+![Abonnement og betaling under Dig, med Administrer i Google Play markeret](screen:you-billing)
+
 > Hvis du sletter din konto, opsiges et kortabonnement med det samme, og et Google Play-abonnement bliver ikke fornyet.

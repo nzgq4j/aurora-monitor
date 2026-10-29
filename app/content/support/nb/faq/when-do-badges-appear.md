@@ -9,3 +9,5 @@ En observasjon sjekkes **omtrent en time etter at du melder den**, slik at andre
 - **NOAAs OVATION-varsel** viste minst 10 % sjanse for nordlys nær deg.
 
 Bekreftede observasjoner gir poeng og merker. Sjekkene kjøres hvert 15. minutt, og meldingen *Nytt merke* vises neste gang du åpner Polar Lights. Merkene og rangen din finner du under **Deg → Merker**.
+
+![Merker-skjermen: nivået, poengene og merkene dine](screen:badges)

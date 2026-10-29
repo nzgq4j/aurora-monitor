@@ -9,4 +9,6 @@ Knappen **Jag såg det** på kortet I kväll fungerar när:
 - **Du är inloggad.** Rapporter kopplas till ditt konto så att de kan räknas till dina märken.
 - **Du inte har rapporterat de senaste 12 timmarna.** En rapport gäller för en hel natt.
 
+![Knappen Jag såg det, som väntar tills det blir mörkt](screen:tonight-saw-it)
+
 Rapporter visas på kartan i 24 timmar, utan något som identifierar dig, och hjälper andra medlemmar i närheten.

@@ -11,4 +11,6 @@ En el móvil, abre **Perfil → Plan y facturación**. En el ordenador, abre **P
 
 Abre **Perfil → Plan y facturación** y elige **Gestionar en Google Play**. O bien, en la app Play Store, toca tu foto de perfil y luego **Pagos y suscripciones → Suscripciones → Polar Lights → Cancelar suscripción**.
 
+![Plan y facturación en Perfil, con Gestionar en Google Play marcado](screen:you-billing)
+
 > Si eliminas tu cuenta, una suscripción con tarjeta se cancela al instante y una suscripción de Google Play deja de renovarse.

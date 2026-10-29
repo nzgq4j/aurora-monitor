@@ -9,4 +9,6 @@ Knappen **Jeg så det** på I nat-kortet virker, når:
 - **Du er logget ind.** Observationer knyttes til din konto, så de kan tælle med til dine mærker.
 - **Du ikke har meldt noget de seneste 12 timer.** Én melding dækker en hel nat.
 
+![Jeg så det-knappen, der venter på, at det bliver mørkt](screen:tonight-saw-it)
+
 Observationer vises på nordlyskortet i 24 timer uden noget, der kan identificere dig, og hjælper andre medlemmer i nærheden.

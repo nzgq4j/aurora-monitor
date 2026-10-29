@@ -10,4 +10,6 @@ El Kp mide la actividad de la aurora en todo el planeta. La tarjeta **Esta noche
 - **Las nubes.** Una capa espesa de nubes la oculta, por intensa que sea.
 - **La Luna.** Una Luna brillante apaga las auroras más débiles.
 
+![La tarjeta Esta noche: el veredicto y la puntuación de probabilidad, el motivo principal debajo y las próximas 12 horas](screen:tonight-card)
+
 La línea bajo la valoración indica el motivo principal, como *Actividad baja*, *Hay demasiada luz*, *Nublado* o *Luna brillante*. Mira las barras de **Próximas 12 horas** en la misma tarjeta: a menudo muestran una hora mejor más avanzada la noche.
