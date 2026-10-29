@@ -52,7 +52,12 @@ PW_ROOT=$(npm root -g) node scripts/support-shots.mjs              # every langu
 PW_ROOT=$(npm root -g) node scripts/support-shots.mjs en,de badges  # just some
 ```
 
-Current pictures: `tonight-card`, `tonight-saw-it`, `badges`, `you-billing` and `you-delete`.
+Current pictures:
+
+- FAQ: `tonight-card`, `tonight-saw-it`, `badges`, `you-billing` and `you-delete`.
+- Getting started: `signin` (signed out), `tonight-places`, `you-locations`, `now-top`, `your-sky`, `map`, `map-layers`, `sun`, `alerts`, `alerts-levels`, `gallery-post`, `badges-redeem`, `you-settings` and `plans`.
+
+An entry can set `signedOut: true` (no sample member), `full: true` (the whole screen, for sheets and the map), `wait` (milliseconds before anything is done, for slow pages) and `setup` (steps such as opening a sheet). The Sun images and the time-lapse need NASA's image servers, so they aren't pictured.
 
 ## Interface text
 

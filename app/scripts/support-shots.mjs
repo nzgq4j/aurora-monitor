@@ -54,6 +54,22 @@ const SHOTS = [
   { name: 'you-billing', path: '/dashboard', ring: l => `button:has-text("${msg(l, 'billing.playManage')}")`,
     setup: async (p, l) => { await p.locator('.you-row', { hasText: msg(l, 'you.plan') }).first().click(); await p.waitForTimeout(1200); } },
   { name: 'you-delete', path: '/dashboard', ring: l => `.you-row:has-text("${msg(l, 'footer.deleteAccount')}")`, scrollTo: l => `.you-row:has-text("${msg(l, 'footer.deleteAccount')}")` },
+  // Getting started guides (content/support/{lang}/start).
+  { name: 'signin', path: '/signin?mode=signup', signedOut: true },
+  { name: 'tonight-places', path: '', full: true, setup: async p => { await p.locator('.tonight-place').first().click(); await p.waitForTimeout(800); } },
+  { name: 'you-locations', path: '/dashboard', setup: async (p, l) => { await p.locator('.you-row', { hasText: msg(l, 'you.locations') }).first().click(); await p.waitForTimeout(1200); } },
+  { name: 'now-top', path: '' },
+  { name: 'your-sky', path: '', target: 'section[aria-labelledby="your-sky"]' },
+  { name: 'map', path: '/map', full: true, wait: 6000 },
+  { name: 'map-layers', path: '/map', full: true, wait: 6000, setup: async (p, l) => { await p.locator(`[aria-label="${msg(l, 'map.panel.expand')}"]`).first().click(); await p.waitForTimeout(1200);
+      await p.locator('.you-row', { hasText: msg(l, 'map.layers') }).first().click(); await p.waitForTimeout(1200); } },
+  { name: 'sun', path: '/sun', target: '.detail-card', wait: 4000, setup: async p => { await p.locator('.detail-toggle').first().click(); await p.waitForTimeout(1000); } },
+  { name: 'alerts', path: '/alerts' },
+  { name: 'alerts-levels', path: '/alerts', target: '.alert-rule' },
+  { name: 'gallery-post', path: '/gallery/post' },
+  { name: 'badges-redeem', path: '/badges', full: true, setup: async (p, l) => { await p.locator('button', { hasText: msg(l, 'badges.redeem.open') }).first().click(); await p.waitForTimeout(1000); } },
+  { name: 'you-settings', path: '/dashboard', ring: l => `.you-group:has(.you-row:has-text("${msg(l, 'lang.h2')}"))`, scrollTo: l => `.you-row:has-text("${msg(l, 'lang.h2')}")` },
+  { name: 'plans', path: '/plans' },
 ];
 
 const b = await chromium.launch();
@@ -66,14 +82,16 @@ for (const lang of LANGS) {
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, serviceWorkers: 'block', locale: lang });
     await ctx.addCookies([{ name: 'pl.lang', value: lang, url: BASE }]);
     await ctx.addInitScript(([sess, locs]) => {
-      localStorage.setItem('sb-mockref-auth-token', sess);
+      if (sess) localStorage.setItem('sb-mockref-auth-token', sess);
       localStorage.setItem('oval.locations.v1', JSON.stringify(locs.map(l => ({ id: l.id, name: l.name, lat: l.lat, lon: l.lon, source: 'search', isHome: l.is_home, createdAt: l.created_at }))));
       localStorage.setItem('pl.a2hs.dismissed', '1');
-    }, [JSON.stringify(session), LOCS]);
+      localStorage.setItem('pl.intro', 'done');
+    }, [s.signedOut ? null : JSON.stringify(session), LOCS]);
     await ctx.route('**/mockref.supabase.co/**', async route => {
       const r = route.request(), u = new URL(r.url());
       const obj = (r.headers()['accept'] || '').includes('vnd.pgrst.object');
       const json = d => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(d) });
+      if (s.signedOut) return json(obj ? null : []);
       if (u.pathname === '/auth/v1/user') return json(user);
       if (u.pathname.endsWith('/profiles')) return json(obj ? profile : [profile]);
       if (u.pathname.endsWith('/locations')) return json(LOCS);
@@ -87,8 +105,8 @@ for (const lang of LANGS) {
     await ctx.clock.install({ time: noon });
     const p = await ctx.newPage();
     await p.goto(`${BASE}/${lang}${s.path}`, { waitUntil: 'load', timeout: 60000 });
-    await p.waitForTimeout(2500);
-    if (s.setup) await s.setup(p, lang);
+    await p.waitForTimeout(s.wait ?? 2500);
+    if (s.setup) try { await s.setup(p, lang); } catch (e) { console.warn(lang, s.name, 'setup failed:', e.message.split('\n')[0]); }
     const scroll = typeof s.scrollTo === 'function' ? s.scrollTo(lang) : s.scrollTo;
     if (scroll) await p.locator(scroll).first().evaluate(el => window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 360));
     if (s.target) await p.locator(s.target).first().scrollIntoViewIfNeeded();
@@ -116,6 +134,9 @@ for (const lang of LANGS) {
         const card = await el.boundingBox();
         png = await p.screenshot({ clip: { x: card.x, y: box.y - 16, width: card.width, height: box.height + 32 } });
       } else png = await el.screenshot();
+    } else if (s.full) {
+      // The whole screen, for sheets and the map.
+      png = await p.screenshot();
     } else {
       // The screen as the user sees it, without the tab bar.
       await p.addStyleTag({ content: '.tabbar { display: none !important; }' });
