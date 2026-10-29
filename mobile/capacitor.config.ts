@@ -21,7 +21,9 @@ const config: CapacitorConfig = {
     backgroundColor: '#000000',
   },
   plugins: {
-    SplashScreen: { launchShowDuration: 800, backgroundColor: '#000000', showSpinner: false },
+    // The launch screen stays until the site has drawn its first screen (the site calls SplashScreen.hide(),
+    // see app/src/components/NativeSplash.tsx), and at most 3 seconds, then fades out.
+    SplashScreen: { launchShowDuration: 3000, launchAutoHide: true, launchFadeOutDuration: 250, backgroundColor: '#000000', showSpinner: false },
     // Edge to edge (Android 15+): the site sets viewport-fit=cover and pads with env(safe-area-inset-*).
     // Light status and navigation bar icons on the black app.
     SystemBars: { insetsHandling: 'native', initialViewportFitValueHint: 'cover', style: 'DARK' },
