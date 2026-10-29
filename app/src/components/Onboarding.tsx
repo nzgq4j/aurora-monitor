@@ -5,10 +5,15 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../lib/auth';
 import { devicePlace, searchPlaces, useLocations, type Place, type PlaceResult } from '../lib/locations';
+import { ALERT_LEVELS } from '../lib/alerts';
 import { useStore } from '../store';
+import { PushRow, ToggleRow } from './AlertControls';
 import { useI18n } from '../i18n/I18n';
 
-/** 'done' once finished or skipped; 'again' when replayed from You → Support (shows even with saved places). */
+/**
+ * 'done' once finished or skipped; 'again' when replayed from You → Support (shows even with saved places);
+ * 'alerts' while someone creates an account from the alerts step, so the introduction picks up there afterwards.
+ */
 export const INTRO_KEY = 'pl.intro';
 const read = () => { try { return localStorage.getItem(INTRO_KEY); } catch { return 'done'; } };
 const write = (v: string) => { try { localStorage.setItem(INTRO_KEY, v); } catch { /* storage unavailable */ } };
@@ -33,9 +38,10 @@ export function Onboarding() {
   useEffect(() => {
     if (!ready || (status !== 'ready' && status !== 'error')) return;
     const flag = read();
-    if (flag !== 'again' && (flag === 'done' || locations.length > 0)) return;
+    const resume = flag === 'alerts';
+    if (!resume && flag !== 'again' && (flag === 'done' || locations.length > 0)) return;
     // Just after the Now page has drawn, so it's there behind the dialog.
-    const id = setTimeout(() => setOpen(true), 0);
+    const id = setTimeout(() => { if (resume) setStep('alerts'); setOpen(true); }, 0);
     return () => clearTimeout(id);
   }, [ready, status]); // eslint-disable-line react-hooks/exhaustive-deps -- decided once, when locations have loaded
 
@@ -70,7 +76,7 @@ function IntroDialog({ step, index, next, back, close }: { step: Step; index: nu
         {step === 'welcome' && <Welcome heading={heading} next={next} />}
         {step === 'place' && <PlaceStep heading={heading} next={next} />}
         {step === 'read' && <ReadStep heading={heading} next={next} />}
-        {step === 'alerts' && <AlertsStep heading={heading} next={next} close={close} />}
+        {step === 'alerts' && <AlertsStep heading={heading} next={next} />}
         {step === 'done' && <Done heading={heading} close={close} />}
       </div>
     </div>
@@ -150,7 +156,7 @@ function PlaceStep({ heading, next }: Heading & { next: () => void }) {
         </ul>
       )}
       {(msg || error) && <p className="intro-note warn" role="status">{msg || error}</p>}
-      {home && <button type="button" className="btn intro-link" onClick={next}>{t('intro.keep')}</button>}
+      <button type="button" className="btn intro-link" onClick={next}>{home ? t('intro.keep') : t('intro.skipStep')}</button>
     </div>
   );
 }
@@ -174,24 +180,56 @@ function ReadStep({ heading, next }: Heading & { next: () => void }) {
   );
 }
 
-function AlertsStep({ heading, next, close }: Heading & { next: () => void; close: () => void }) {
+/**
+ * Alerts without leaving the introduction: aurora alerts on or off, the level to wait for, major storms and how they
+ * arrive. Saved as they change (the store syncs alert settings for signed-in members); the full settings stay in
+ * You → Aurora → Alerts. Signed out, creating an account comes back here afterwards.
+ */
+function AlertsStep({ heading, next }: Heading & { next: () => void }) {
   const { t } = useI18n();
   const { user } = useAuth();
-  const { go } = useStore();
+  const { s, set, planIndex } = useStore();
+  const { shownPlace } = useLocations();
   const router = useRouter();
-  return (
+  const r = s.alertRules;
+  const rules = (patch: Partial<typeof r>) => set(st => ({ alertRules: { ...st.alertRules, ...patch } }));
+
+  if (!user) return (
     <div className="intro-step">
       <H heading={heading}>{t('intro.alerts.h')}</H>
       <p className="intro-text">{t('intro.alerts.body')}</p>
       <ul className="intro-points">
         {(['alerts.intro.1', 'alerts.intro.2', 'alerts.intro.3'] as const).map(k => <li key={k}>{t(k)}</li>)}
       </ul>
-      {user ? (
-        <button type="button" className="btn pill pill-primary intro-go" onClick={() => { close(); go('alerts'); }}>{t('intro.alerts.setUp')}</button>
-      ) : (
-        <button type="button" className="btn pill pill-primary intro-go" onClick={() => { close(); router.push('/signin?mode=signup&next=/alerts'); }}>{t('alerts.intro.cta')}</button>
-      )}
+      <p className="intro-note">{t('intro.alerts.account')}</p>
+      <button type="button" className="btn pill pill-primary intro-go" onClick={() => { write('alerts'); router.push('/signin?mode=signup&next=/'); }}>{t('alerts.intro.cta')}</button>
       <button type="button" className="btn intro-link" onClick={next}>{t('intro.notNow')}</button>
+    </div>
+  );
+
+  return (
+    <div className="intro-step">
+      <H heading={heading}>{t('intro.alerts.h')}</H>
+      <div className="intro-alerts">
+        <ToggleRow label={t('alerts.aurora')} need={0} locked={false} on={r.aurora} onClick={() => rules({ aurora: !r.aurora })}
+          sub={shownPlace ? t('intro.alerts.where', { place: shownPlace.name.split(',')[0] }) : t('alerts.aurora.noHome')} />
+        <fieldset className="alert-levels" disabled={!r.aurora}>
+          <legend>{t('alerts.level.h')}</legend>
+          {ALERT_LEVELS.map(l => (
+            <label key={l} className={'alert-level alert-level-' + l}>
+              <input type="radio" name="intro-alert-level" checked={r.level === l} onChange={() => rules({ level: l })} />
+              <span><b>{t(`alerts.level.${l}`)}</b><small>{t(`alerts.level.${l}.sub`)}</small></span>
+            </label>
+          ))}
+        </fieldset>
+        <ToggleRow label={t('alerts.storm')} sub={t('alerts.storm.sub')} need={0} locked={false} on={r.storm} onClick={() => rules({ storm: !r.storm })} />
+        <ToggleRow label={t('channel.email')} sub={user.email ?? t('channel.email.sub')} need={0} locked={false} on={s.channels.email}
+          onClick={() => set(st => ({ channels: { ...st.channels, email: !st.channels.email } }))} />
+        {/* Push is a Chaser channel; Free members see it with the rest of the settings, not here. */}
+        {planIndex >= 1 && <PushRow need={1} locked={false} />}
+      </div>
+      <p className="intro-note">{t('intro.alerts.more', { alerts: t('nav.alerts') })}</p>
+      <button type="button" className="btn pill pill-primary intro-go" onClick={next}>{t('intro.next')}</button>
     </div>
   );
 }
