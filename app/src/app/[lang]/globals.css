@@ -986,3 +986,5 @@ button.pill-primary.danger { background: var(--red); }
 .support-contact p { margin: 0; color: var(--soft); font-size: 15px; line-height: 1.5; }
 .support-contact form, .support-contact > div { align-self: stretch; }
 @media (max-width: 640px) { .support { padding-top: 24px; gap: 22px; } .support-body { font-size: 16px; } }
+.support-card, .support-hits a, .support-index a, .support-list li a, .support-more, .support-crumbs a, .support-toc a, .header-help { text-decoration: none; }
+.support-list li a:hover, .support-crumbs a:hover, .support-toc a:hover, .support-more:hover { text-decoration: underline; }

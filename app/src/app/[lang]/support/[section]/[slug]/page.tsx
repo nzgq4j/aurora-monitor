@@ -10,9 +10,8 @@ import type { Locale } from '../../../../../i18n/config';
 
 type Props = { params: Promise<{ lang: string; section: string; slug: string }> };
 
-export async function generateStaticParams({ params }: { params: { section: string } }) {
-  return allPaths().filter(p => p.section === params.section).map(({ slug }) => ({ slug }));
-}
+// Both segments here: the section page's own list isn't passed down (only layouts pass params to children).
+export const generateStaticParams = () => allPaths();
 export const dynamicParams = false;
 
 async function find(params: Props['params']) {
