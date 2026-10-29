@@ -25,7 +25,10 @@ function SolarSection() {
   // Client clock only, so the server and browser renders agree.
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => setNow(Date.now()), [data]);
-  const summary = !can ? t('detail.solar.locked') : data && now !== null ? summaryText(i18n, solarLine(data.wind, now)) : t('detail.loading');
+  const line = data && now !== null ? solarLine(data.wind, now) : null;
+  const summary = !can ? t('detail.solar.locked') : line
+    ? summaryText(i18n, line, undefined, line.at !== undefined ? i18n.date(line.at, { hour: '2-digit', minute: '2-digit' }) : undefined)
+    : t('detail.loading');
   return (
     <DetailCard id="solar" title={<>{headLead(t('solar.h2a'))}<span className="hl">{t('solar.h2b')}</span></>} summary={summary}>
       <span style={{ fontSize: 13, color: 'var(--muted)' }}>{t('solar.source')}</span>

@@ -492,6 +492,7 @@ export const ru: Messages = {
   'detail.solar.rising': "Скорость растёт за последние 6 ч: {from} → {to} km/s",
   'detail.solar.falling': "Скорость падает за последние 6 ч: {from} → {to} km/s",
   'detail.solar.steady': "Скорость стабильна, около {speed} km/s за последние 6 ч",
+  'detail.solar.delayed': "Данные задерживаются: последнее значение {speed} km/s в {time}",
   'detail.solar.none': "Данные о солнечном ветре недоступны",
   'detail.solar.locked': "Chaser: солнечный ветер и мощность полушарий за последние 24 ч",
   'detail.sun': "Изображения NASA, ESA и NOAA в реальном времени: {n}",

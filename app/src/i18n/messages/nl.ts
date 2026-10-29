@@ -478,6 +478,7 @@ export const nl: Messages = {
   'detail.solar.rising': 'Snelheid stijgt de afgelopen 6 uur: {from} → {to} km/s',
   'detail.solar.falling': 'Snelheid daalt de afgelopen 6 uur: {from} → {to} km/s',
   'detail.solar.steady': 'Snelheid stabiel rond {speed} km/s de afgelopen 6 uur',
+  'detail.solar.delayed': 'Data vertraagd: laatste meting {speed} km/s om {time}',
   'detail.solar.none': 'Geen zonnewinddata',
   'detail.solar.locked': 'Chaser: de afgelopen 24 uur zonnewind en hemisferisch vermogen',
   'detail.sun': "{n} live beelden van NASA, ESA en NOAA",

@@ -478,6 +478,7 @@ export const da: Messages = {
   'detail.solar.rising': "Hastigheden stiger over de seneste 6 t: {from} → {to} km/s",
   'detail.solar.falling': "Hastigheden falder over de seneste 6 t: {from} → {to} km/s",
   'detail.solar.steady': "Hastigheden stabil omkring {speed} km/s over de seneste 6 t",
+  'detail.solar.delayed': "Data forsinket: seneste måling {speed} km/s kl. {time}",
   'detail.solar.none': "Solvinddata ikke tilgængelige",
   'detail.solar.locked': "Chaser: de seneste 24 t med solvind og hemisfærisk effekt",
   'detail.sun': "{n} livevisninger fra NASA, ESA og NOAA",

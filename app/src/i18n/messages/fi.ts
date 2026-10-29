@@ -478,6 +478,7 @@ export const fi: Messages = {
   'detail.solar.rising': "Nopeus kasvanut viim. 6 h: {from} → {to} km/s",
   'detail.solar.falling': "Nopeus laskenut viim. 6 h: {from} → {to} km/s",
   'detail.solar.steady': "Nopeus tasainen noin {speed} km/s viim. 6 h",
+  'detail.solar.delayed': "Data viivästynyt: viimeisin mittaus {speed} km/s klo {time}",
   'detail.solar.none': "Aurinkotuulidata ei saatavilla",
   'detail.solar.locked': "Chaser: aurinkotuuli ja pallonpuoliskon teho viim. 24 h",
   'detail.sun': "{n} reaaliaikaista näkymää NASAlta, ESAlta ja NOAAlta",
