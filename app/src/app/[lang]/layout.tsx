@@ -23,6 +23,7 @@ import { NativeSplash } from '../../components/NativeSplash';
 import { FitHeadings } from '../../components/FitHeadings';
 import { LOCALES } from '../../i18n/config';
 import { I18nProvider } from '../../i18n/I18n';
+import APPLE_SPLASH from '../../lib/apple-splash.json';
 import { getI18n, getMessages, routeLocale } from '../../i18n/server';
 
 // One prerendered copy of every page per language; the proxy picks which one a visitor gets.
@@ -38,7 +39,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: { default: `${SITE.name} · ${t('meta.tagline')}`, template: `%s · ${SITE.name}` },
     description: t('meta.description'),
     applicationName: SITE.name,
-    appleWebApp: { capable: true, title: SITE.name, statusBarStyle: 'black' },
+    appleWebApp: {
+      capable: true, title: SITE.name, statusBarStyle: 'black',
+      // The launch screen on iPhone and iPad Home Screens, one per screen size (scripts/apple-splash.mjs).
+      startupImage: APPLE_SPLASH.map(([w, h, dpr]) => ({
+        url: `/splash/apple-${w * dpr}x${h * dpr}.png`,
+        media: `(device-width: ${w}px) and (device-height: ${h}px) and (-webkit-device-pixel-ratio: ${dpr}) and (orientation: portrait)`,
+      })),
+    },
     openGraph: { type: 'website', siteName: SITE.name, url: '/', images: [{ url: '/icons/icon-512.png', width: 512, height: 512 }] },
     icons: {
       icon: [{ url: '/icons/icon.svg', type: 'image/svg+xml' }, { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }],
