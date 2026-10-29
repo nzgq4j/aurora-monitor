@@ -18,5 +18,9 @@
   <p>Polar Lights needs an internet connection for the live aurora forecast. Check your connection and try again.</p>
   <button type="button" onclick="location.href='https://www.polarlights.io'">Try again</button>
 </main>
+<script>
+  // The app keeps its launch screen until a page says it's ready (at most 3 seconds); this page is ready now.
+  window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.SplashScreen && window.Capacitor.Plugins.SplashScreen.hide().catch(function () {});
+</script>
 </body>
 </html>

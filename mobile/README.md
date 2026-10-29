@@ -12,6 +12,12 @@ push notifications, Google Play Billing).
   `npx @capacitor/assets@3.0.5 generate --android --iconBackgroundColor '#000000' --iconBackgroundColorDark '#000000' --splashBackgroundColor '#000000' --splashBackgroundColorDark '#000000'`
 - `android/`: the Android Studio project
 
+### Launch screen
+
+- **Android 12 and later:** the system launch screen shows the app icon's mark on black.
+- **Android 7 to 11:** the full splash image shows instead: the mark with a soft aurora glow and the POLAR LIGHTS wordmark (`assets/splash.png`, made into the `drawable*/splash.png` set by the command above).
+- **How long it stays:** until the website has drawn its first screen. The site calls `SplashScreen.hide()` from `app/src/components/NativeSplash.tsx`, and `www/offline.html` does the same when there's no connection. If neither reports in, the splash hides after 3 seconds and fades out over 0.25 seconds (`launchShowDuration` and `launchFadeOutDuration` in `capacitor.config.ts`).
+
 ## First run (Windows)
 
 Needs Android Studio (with the Android SDK from its Standard setup), Node.js 22 LTS and Git.
