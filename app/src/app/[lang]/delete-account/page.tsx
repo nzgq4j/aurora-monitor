@@ -44,7 +44,7 @@ const sections: LegalSection[] = [
       <ul>
         <li><b>Saved locations:</b> open <b>Saved locations</b> (website: <b>Dashboard → Locations</b>) and choose <b>Remove</b> on any place.</li>
         <li><b>Gallery photos:</b> open <b>My gallery</b>, choose <b>Select</b>, pick the photos and delete them, or open a photo and choose <b>Delete photo</b>. The photo files are removed from our storage.</li>
-        <li><b>Alerts and push:</b> open <b>Notifications</b> (website: <b>Dashboard → Alerts</b>) to turn alerts off, or turn off push alerts on the device you are using, which removes it from our list.</li>
+        <li><b>Alerts and push:</b> open <b>Alerts</b> under <b>Aurora</b> (website: <b>Dashboard → Alerts</b>) to turn alerts off, or turn off push alerts on the device you are using, which removes it from our list.</li>
       </ul>
       <p>For anything else, such as your sightings or messages you sent us, email {mail} from the address on your account and say what you want removed. We confirm by email and complete it within 30 days.</p>
     </>,

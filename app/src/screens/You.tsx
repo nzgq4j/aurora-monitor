@@ -41,6 +41,7 @@ const P = {
   pin: 'M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Zm0-8.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
   photo: 'M4 6h16v13H4zM8.5 11a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM20 16l-5-5-8 8',
   chat: 'M5 5h14v10H10l-4 4v-4H5z',
+  help: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm-2.5 6.5a2.5 2.5 0 1 1 3.8 2.1c-.8.5-1.3 1-1.3 1.9M12 16.5v.01',
   globe: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm-9 9h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z',
   moon: 'M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z',
   bell: 'M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15L6 16Zm4 4.5a2.2 2.2 0 0 0 4 0',
@@ -214,15 +215,17 @@ export function You() {
           <Group label={t('you.group.membership')}>
             <Row icon={P.card} label={t('you.plan')} value={t(`tier.${plan.id}`)} onClick={() => open('billing')} />
           </Group>
-          <Group label={t('you.group.support')}>
-            <Row icon={P.chat} label={t('feedback.row')} onClick={() => setSheet('feedback')} />
-          </Group>
           <Group label={t('you.group.account')}>
             {hasPassword && <Row icon={P.lock} label={t('you.password')} onClick={() => open('password')} />}
             <Row icon={P.logout} label={t('logout.button')} danger chevron={false} onClick={() => setSheet('logout')} />
           </Group>
         </>
       )}
+
+      <Group label={t('you.group.support')}>
+        <Row icon={P.help} label={t('support.title')} href="/support" />
+        {signedIn && <Row icon={P.chat} label={t('feedback.row')} onClick={() => setSheet('feedback')} />}
+      </Group>
 
       <Group label={t('you.group.about')}>
         <Row label={t('title.privacy')} href="/privacy" />

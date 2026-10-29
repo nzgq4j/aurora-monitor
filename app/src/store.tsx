@@ -10,7 +10,7 @@ import { supabase } from './lib/supabase';
 import { useI18n } from './i18n/I18n';
 import { LOCALES } from './i18n/config';
 
-export type Screen = 'home' | 'map' | 'sun' | 'alerts' | 'plans' | 'checkout' | 'signin' | 'account' | 'sky' | 'gallery' | 'badges';
+export type Screen = 'home' | 'map' | 'sun' | 'alerts' | 'plans' | 'checkout' | 'signin' | 'account' | 'sky' | 'gallery' | 'badges' | 'support';
 export type Tab = 'overview' | 'alerts' | 'locations' | 'plans' | 'account';
 
 export const PATHS: Record<Screen, string> = {
@@ -25,6 +25,7 @@ export const PATHS: Record<Screen, string> = {
   sky: '/sky',
   gallery: '/gallery',
   badges: '/badges',
+  support: '/support',
 };
 
 // While prerendering, the path still carries the proxy's language prefix (/de/map); in the browser it doesn't.

@@ -919,3 +919,72 @@ button.pill-primary.danger { background: var(--red); }
 .feedback .gal-chips { margin: 0; padding: 0; flex-wrap: wrap; overflow: visible; }
 .feedback-done { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; font-size: 15px; color: var(--soft); }
 .feedback-done b { color: var(--green); font-size: 17px; }
+
+/* ---- Help centre (/support): articles from content/support, see lib/support.ts. ---- */
+.header-help { font-size: 14px; font-weight: 600; color: var(--soft); white-space: nowrap; }
+.header-help:hover, .header-help.on { color: #fff; }
+.support { padding: 40px var(--gutter) 64px; display: flex; flex-direction: column; gap: 28px; max-width: 860px; }
+.support-h1 { font-size: var(--h-hero); line-height: .9; margin: 0; }
+.support-lead { margin: 0; font-size: 18px; line-height: 1.5; color: var(--soft); max-width: 640px; }
+.support-crumbs { display: flex; flex-wrap: wrap; gap: 8px; font-size: 14px; color: var(--muted); margin-bottom: -12px; }
+.support-crumbs a { color: var(--green); font-weight: 600; }
+.support-search .input { font-size: 17px; }
+.support-hits { margin-top: 10px; border: 1px solid var(--line-2); border-radius: 14px; overflow: hidden; }
+.support-hits ul { list-style: none; margin: 0; padding: 0; }
+.support-hits li + li { border-top: 1px solid var(--line); }
+.support-hits a { display: flex; flex-direction: column; gap: 2px; padding: 12px 16px; color: #fff; }
+.support-hits a:hover { background: #0e110f; }
+.support-hits small { color: var(--muted); font-size: 13px; }
+.support-hits p { margin: 0; padding: 14px 16px; color: var(--muted); }
+.support-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 14px; }
+.support-card { display: flex; flex-direction: column; gap: 6px; padding: 18px; border: 1px solid var(--line-2); border-radius: 16px; background: #070908; color: #fff; }
+.support-card:hover { border-color: var(--green); }
+.support-card b { font: 800 20px var(--f-display); }
+.support-card span { font-size: 15px; line-height: 1.45; color: var(--soft); }
+.support-card small { margin-top: auto; padding-top: 6px; font-size: 12px; color: var(--muted); }
+.support-list h2, .support-contact h2 { font: 800 22px var(--f-display); margin: 0 0 10px; }
+.support-list ul { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.support-list li { border-bottom: 1px solid var(--line); }
+.support-list li a { display: block; padding: 13px 0; font-size: 16px; color: #fff; }
+.support-list li a:hover { color: var(--green); }
+.support-more { display: inline-block; margin-top: 12px; font-size: 14px; font-weight: 700; color: var(--green); }
+.support-index { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.support-index a { display: flex; flex-direction: column; gap: 4px; padding: 16px 18px; border: 1px solid var(--line-2); border-radius: 14px; color: #fff; }
+.support-index a:hover { border-color: var(--green); }
+.support-index b { font-size: 17px; }
+.support-index span { font-size: 15px; color: var(--soft); line-height: 1.45; }
+.support-faq { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.support-faq details { border-bottom: 1px solid var(--line); padding: 4px 0; scroll-margin-top: 80px; }
+.support-faq summary { cursor: pointer; padding: 14px 0; font-size: 17px; font-weight: 700; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+.support-faq summary::-webkit-details-marker { display: none; }
+.support-faq summary::after { content: '+'; color: var(--green); font-weight: 700; }
+.support-faq details[open] summary::after { content: '−'; }
+.support-faq .support-more { margin: 0 0 14px; }
+.support-title { font: 900 clamp(30px, 7vw, 46px)/1.02 var(--f-display); margin: 0 0 14px; }
+.support-article article { display: flex; flex-direction: column; gap: 16px; }
+.support-toc { padding: 14px 18px; border: 1px solid var(--line-2); border-radius: 14px; display: flex; flex-direction: column; gap: 6px; }
+.support-toc ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.support-toc a { color: var(--green); font-size: 15px; }
+.support-body { font-size: 17px; line-height: 1.65; color: var(--soft); }
+.support-body > :first-child { margin-top: 0; }
+.support-body h2 { font: 800 24px var(--f-display); color: #fff; margin: 30px 0 10px; scroll-margin-top: 80px; }
+.support-body h3 { font-size: 18px; color: #fff; margin: 22px 0 8px; }
+.support-body p, .support-body ul, .support-body ol { margin: 0 0 14px; }
+.support-body ul, .support-body ol { padding-left: 22px; }
+.support-body li { margin-bottom: 6px; }
+.support-body strong { color: #fff; }
+.support-body a { color: var(--green); }
+.support-body blockquote { margin: 0 0 14px; padding: 12px 16px; border-left: 3px solid var(--green); background: #0a0f0b; border-radius: 0 10px 10px 0; }
+.support-body blockquote p:last-child { margin: 0; }
+.support-body table { width: 100%; border-collapse: collapse; margin: 0 0 14px; font-size: 15px; }
+.support-body th, .support-body td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.support-body th { color: #fff; }
+.support-body code { font-family: var(--f-mono); font-size: .9em; color: #fff; }
+.support-shot { margin: 6px 0 18px; }
+.support-shot img { display: block; width: 100%; max-width: 360px; height: auto; border-radius: 18px; border: 1px solid var(--line-2); }
+.support-contact { padding: 20px; border: 1px solid var(--line-2); border-radius: 16px; display: flex; flex-direction: column; gap: 12px; align-items: flex-start; scroll-margin-top: 80px; }
+.support-contact p { margin: 0; color: var(--soft); font-size: 15px; line-height: 1.5; }
+.support-contact form, .support-contact > div { align-self: stretch; }
+@media (max-width: 640px) { .support { padding-top: 24px; gap: 22px; } .support-body { font-size: 16px; } }
+.support-card, .support-hits a, .support-index a, .support-list li a, .support-more, .support-crumbs a, .support-toc a, .header-help { text-decoration: none; }
+.support-list li a:hover, .support-crumbs a:hover, .support-toc a:hover, .support-more:hover { text-decoration: underline; }
