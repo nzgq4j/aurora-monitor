@@ -18,10 +18,10 @@ import { searchPlaces, useLocations, type PlaceResult, type SavedLocation } from
 import { useConditions } from '../lib/useConditions';
 import { ALERT_LEVELS, levelKp, type AlertKind, type AlertLevel, type AlertRules } from '../lib/alerts';
 import { supabase } from '../lib/supabase';
-import { disablePush, enablePush, pushState, type PushState } from '../lib/push';
-import { inApp } from '../lib/native';
 import { PHONE_QUERY, usePhone } from '../lib/usePhone';
-import { INSTALL_EVENT } from '../components/InstallPrompt';
+import { disablePush } from '../lib/push';
+import { inApp } from '../lib/native';
+import { PushRow, ToggleRow } from '../components/AlertControls';
 import { useStore, type Tab } from '../store';
 import { Field } from '../components/Field';
 import { FeedbackForm } from '../components/Feedback';
@@ -279,27 +279,7 @@ function Overview({ data }: { data: AccountData }) {
   );
 }
 
-interface ToggleProps { label: string; sub: string; on: boolean; need: number; locked: boolean; onClick: () => void }
-
 /** Settings row with a switch. Rows above the user's plan are dimmed, labelled with the required tier, and link to Plans. */
-function ToggleRow({ label, sub, on, need, locked, onClick }: ToggleProps) {
-  const { t } = useI18n();
-  const tier = t(`tier.${TIERS[need].id}`);
-  const active = on && !locked;
-  return (
-    <button type="button" className="btn toggle-row" onClick={onClick} style={{ opacity: locked ? .55 : 1 }}
-      role={locked ? undefined : 'switch'} aria-checked={locked ? undefined : active}
-      aria-label={locked ? t('dash.requires', { label, plan: tier }) : undefined}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <span style={{ fontWeight: 700, fontSize: 16 }}>{label}</span>
-        <span style={{ fontSize: 13, color: 'var(--muted)' }}>{sub}</span>
-      </div>
-      <span style={{ fontSize: 11, fontWeight: 700, color: TIERS[need].accent, whiteSpace: 'nowrap' }}>{locked ? tier.toUpperCase() : ''}</span>
-      <span className={'switch' + (active ? ' on' : '')}><span className="switch-knob" /></span>
-    </button>
-  );
-}
-
 function Alerts({ data }: { data: AccountData }) {
   const { s, set, planIndex, go, live } = useStore();
   const { user } = useAuth();
@@ -542,34 +522,6 @@ function AlertsIntro() {
  * Push for this device: subscribing needs a tap (permission prompt), and iPhones only allow it once
  * Polar Lights is on the home screen, so that case opens the install steps instead.
  */
-function PushRow({ need, locked }: { need: number; locked: boolean }) {
-  const { set, go } = useStore();
-  const { t } = useI18n();
-  const [state, setState] = useState<PushState | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState('');
-  useEffect(() => { pushState().then(setState).catch(() => setState('unsupported')); }, []);
-  const sub = err || (state === null ? t('channel.push.sub')
-    : state === 'unconfigured' ? `${t('channel.push.sub')} · ${t('alerts.comingSoon')}`
-    : state === 'on' ? t('push.sub.on') : state === 'off' ? t('channel.push.sub') : t(`push.sub.${state === 'needs-install' ? 'needsInstall' : state === 'denied' && inApp() ? 'deniedApp' : state}`));
-  const toggle = async () => {
-    if (locked) return go('plans');
-    if (state === 'needs-install') return window.dispatchEvent(new Event(INSTALL_EVENT));
-    if (state !== 'on' && state !== 'off') return;
-    setBusy(true); setErr('');
-    try {
-      const next = state === 'on' ? await disablePush() : await enablePush(t('push.channel'));
-      setState(next);
-      set(st => ({ channels: { ...st.channels, push: next === 'on' } }));
-    } catch {
-      setErr(t('push.error'));
-    } finally {
-      setBusy(false);
-    }
-  };
-  return <ToggleRow label={t('channel.push')} sub={sub} need={need} locked={locked} on={state === 'on' && !busy} onClick={toggle} />;
-}
-
 const hhmmUT = (t: number) => `${new Date(t).toISOString().slice(11, 16)} UT`;
 const coords = (l: { lat: number; lon: number }, { t, num }: I18n) =>
   `${num(Math.abs(l.lat), 2)}°${t(l.lat >= 0 ? 'dir.N' : 'dir.S')} ${num(Math.abs(l.lon), 2)}°${t(l.lon >= 0 ? 'dir.E' : 'dir.W')}`;
