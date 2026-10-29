@@ -988,3 +988,40 @@ button.pill-primary.danger { background: var(--red); }
 @media (max-width: 640px) { .support { padding-top: 24px; gap: 22px; } .support-body { font-size: 16px; } }
 .support-card, .support-hits a, .support-index a, .support-list li a, .support-more, .support-crumbs a, .support-toc a, .header-help { text-decoration: none; }
 .support-list li a:hover, .support-crumbs a:hover, .support-toc a:hover, .support-more:hover { text-decoration: underline; }
+
+/* ---- First-run introduction (components/Onboarding): full screen on phones, a dialog on wider screens. ---- */
+html.intro-open { overflow: hidden; }
+.intro { position: fixed; inset: 0; z-index: 3000; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, .78); backdrop-filter: blur(6px); animation: intro-in .25s ease-out; }
+.intro-box { position: relative; width: min(520px, 100%); max-height: min(760px, 100%); overflow-y: auto; display: flex; flex-direction: column; gap: 18px; padding: 22px 26px 28px; border: 1px solid var(--line-2); border-radius: 22px;
+  background: radial-gradient(120% 70% at 50% 0%, rgba(108, 255, 43, .10), rgba(176, 124, 255, .05) 45%, rgba(0, 0, 0, 0) 75%), #050605; }
+.intro-top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; }
+.intro-top > :last-child { justify-self: end; }
+.intro-dots { display: flex; gap: 6px; list-style: none; margin: 0; padding: 0; }
+.intro-dots li { width: 8px; height: 8px; border-radius: 50%; background: var(--line-2); }
+.intro-dots li.on { background: var(--green); }
+.intro-link { min-height: 40px; font-size: 15px; font-weight: 600; color: var(--muted); }
+.intro-link:hover { color: #fff; }
+.intro-step { display: flex; flex-direction: column; gap: 14px; }
+.intro-mark { width: 120px; height: 120px; align-self: center; border-radius: 28px; }
+.intro-h { margin: 0; font-size: clamp(30px, 8vw, 40px); line-height: .95; outline: none; }
+.intro-text { margin: 0; font-size: 17px; line-height: 1.5; color: var(--soft); }
+.intro-note { margin: 0; font-size: 14px; color: var(--muted); }
+.intro-note.warn { color: var(--amber, #F5B83D); }
+.intro-go { align-self: stretch; justify-content: center; font-size: 16px; padding: 15px 22px; text-align: center; }
+.intro-or { align-self: center; font-size: 13px; color: var(--muted); }
+.intro-search { display: flex; gap: 8px; }
+.intro-search .input { flex: 1; min-width: 0; padding: 12px; font-size: 16px; }
+.intro-search .btn { flex: none; font-size: 14px; padding: 0 16px; }
+.intro-results { list-style: none; margin: 0; padding: 0; }
+.intro-results button { width: 100%; display: flex; justify-content: space-between; gap: 10px; padding: 12px 0; border-top: 1px solid var(--line); text-align: left; }
+.intro-results span { font-size: 13px; color: var(--muted); text-align: right; }
+.intro-read { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.intro-read img { width: 100%; max-width: 300px; height: auto; justify-self: center; border-radius: 16px; border: 1px solid var(--line-2); }
+.intro-read ol, .intro-points { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 15px; line-height: 1.45; color: var(--soft); }
+.intro-read b { color: #fff; }
+@media (max-width: 640px) {
+  .intro { align-items: stretch; background: #000; backdrop-filter: none; }
+  .intro-box { width: 100%; max-height: none; border: 0; border-radius: 0; padding: calc(12px + env(safe-area-inset-top)) var(--gutter) calc(24px + env(safe-area-inset-bottom)); }
+}
+@keyframes intro-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .intro { animation: none; } }
