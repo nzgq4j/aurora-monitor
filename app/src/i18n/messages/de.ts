@@ -719,7 +719,7 @@ export const de: Messages = {
   'tonight.setPlace': 'Standort festlegen',
   'tonight.changePlace': 'Standort ändern ({place})',
   'tonight.otherPlace': "Anderer Ort…",
-  'place.find': "Ort suchen",
+  'place.find': "Ort finden",
   'place.show': "Diesen Ort anzeigen",
   'place.manage': "Gespeicherte Orte verwalten",
   'tonight.updated': 'Aktualisiert {time}',

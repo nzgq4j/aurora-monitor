@@ -7,22 +7,29 @@ Tout ce qui figure sur la page **Direct** est calculé pour un lieu précis : s�
 
 ## Définir le Domicile
 
-Sur la page **Direct**, touchez **Choisir un lieu** sur la carte **Ce soir**. Le sélecteur de lieu s’ouvre dans **Votre ciel**, un peu plus bas. Ensuite :
+Sur la page **Direct**, touchez **Choisir un lieu** sur la carte **Ce soir**. **Trouver un lieu** s’ouvre. Ensuite :
 
 - touchez **Utiliser ma position actuelle** et autorisez l’accès à votre position, ou
 - saisissez une ville dans **Rechercher une ville**, touchez **Rechercher** et choisissez le bon résultat.
 
-Choisissez **Définir comme domicile** pour le conserver. Vos alertes portent aussi sur ce lieu.
+Choisissez ensuite **Définir comme domicile**. Vos alertes portent aussi sur ce lieu.
 
 ## Passer d’un lieu à l’autre
 
-Touchez le nom du lieu sur la carte **Ce soir**. **Lieux enregistrés** liste vos lieux ; touchez-en un pour voir la prévision de ce soir à cet endroit. **Un autre lieu…** vous permet de consulter un nouvel endroit sans l’enregistrer.
+Touchez le nom du lieu en haut de la carte **Ce soir**. **Lieux enregistrés** liste vos lieux ; touchez-en un pour voir la prévision de ce soir à cet endroit. **Votre ciel**, plus bas, affiche toujours le même lieu, et son bouton **Changer de lieu** ouvre la même liste.
 
-![La liste des lieux de la carte Ce soir, avec le Domicile coché](screen:tonight-places)
+![La liste des lieux : lieux enregistrés, Un autre lieu… et Gérer les lieux enregistrés](screen:tonight-places)
+
+## Consulter un autre lieu
+
+Dans la liste, touchez **Un autre lieu…** et trouvez-le de la même façon. Choisissez ensuite :
+
+- **Afficher ce lieu** pour voir sa prévision dès maintenant sans l’enregistrer. **Retour au domicile**, dans **Votre ciel**, vous ramène à votre Domicile.
+- **Définir comme domicile** pour en faire votre Domicile. Avec l’offre Gratuit, il remplace votre Domicile actuel.
 
 ## Gérer vos lieux
 
-Sur un téléphone, ouvrez **Profil** → **Lieux enregistrés**. Sur un ordinateur, ouvrez **Mon espace** → **Lieux**. Chaque lieu affiche l’état de son ciel en ce moment. Depuis cette page, vous pouvez :
+Touchez **Gérer les lieux enregistrés** en bas de la liste ou, sur un téléphone, ouvrez **Profil** → **Lieux enregistrés**. Sur un ordinateur, ouvrez **Mon espace** → **Lieux**. Chaque lieu affiche l’état de son ciel en ce moment. Depuis cette page, vous pouvez :
 
 - **Ajouter un lieu**,
 - **Définir comme domicile** pour faire d’un autre lieu enregistré votre Domicile,
