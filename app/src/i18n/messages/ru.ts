@@ -610,6 +610,7 @@ export const ru: Messages = {
   'sunLapse.frames.many': "{n} кадров",
   'sunLapse.frames.other': "{n} кадра",
   'sunLapse.loading': "Загрузка: {n} из {total}",
+  'sunLapse.all': "Показаны все сохранённые кадры ({saved}), примерно один раз в {hours} ч.",
   'sunLapse.sampled': "Показано кадров: {shown} из {saved} сохранённых, примерно один раз в {hours} ч, чтобы загрузка была небольшой.",
   'home.cta.h2a': "Не пропустите",
   'home.cta.h2b': "ни одной ночи",

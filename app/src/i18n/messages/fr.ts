@@ -594,6 +594,7 @@ export const fr: Messages = {
   'sunLapse.frames.one': '{n} image',
   'sunLapse.frames.other': '{n} images',
   'sunLapse.loading': 'Chargement {n} sur {total}',
+  'sunLapse.all': 'Les {saved} images enregistrées, environ une toutes les {hours} h.',
   'sunLapse.sampled': '{shown} images sur les {saved} enregistrées, environ une toutes les {hours} h, pour limiter le téléchargement.',
   'home.cta.h2a': 'Ne manquez',
   'home.cta.h2b': 'aucune nuit',

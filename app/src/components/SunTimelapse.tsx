@@ -80,8 +80,9 @@ export function SunTimelapse() {
   const when = (x: number) => date(x, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   const f = frames?.[index];
   const span = frames && frames.length > 1 ? frames[frames.length - 1].t - frames[0].t : 0;
-  // Hours between the frames shown, when they are a sample of the saved ones.
-  const every = frames && saved > frames.length && frames.length > 1 ? span / (frames.length - 1) / 36e5 : 0;
+  // Hours between the frames shown on average; a sample of the saved ones when there are more than MAX_FRAMES.
+  const every = frames && frames.length > 1 ? Math.round((span / (frames.length - 1) / 36e5) * 10) / 10 : 0;
+  const sampled = !!frames && saved > frames.length;
   const label = useMemo(() => SDO_IMAGES.find(i => i.id === channel)!.label, [channel]);
 
   return (
@@ -160,7 +161,7 @@ export function SunTimelapse() {
           </span>
         </div>
       )}
-      {every > 0 && <p className="storm-note">{t('sunLapse.sampled', { shown: frames!.length, saved, hours: num(every, every < 10 ? 1 : 0) })}</p>}
+      {every > 0 && <p className="storm-note">{t(sampled ? 'sunLapse.sampled' : 'sunLapse.all', { shown: frames!.length, saved, hours: num(every, Number.isInteger(every) || every >= 10 ? 0 : 1) })}</p>}
     </section>
   );
 }
