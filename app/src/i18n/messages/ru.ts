@@ -610,6 +610,7 @@ export const ru: Messages = {
   'sunLapse.frames.many': "{n} кадров",
   'sunLapse.frames.other': "{n} кадра",
   'sunLapse.loading': "Загрузка: {n} из {total}",
+  'sunLapse.sampled': "Показано кадров: {shown} из {saved} сохранённых, примерно один раз в {hours} ч, чтобы загрузка была небольшой.",
   'sunLapse.building': "Сохраняется с {date}. Кадры добавляются каждый час, а 27 дней кадров показывают полный оборот Солнца.",
   'home.cta.h2a': "Не пропустите",
   'home.cta.h2b': "ни одной ночи",

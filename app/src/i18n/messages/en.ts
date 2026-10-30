@@ -594,6 +594,7 @@ export const en = {
   'sunLapse.frames.one': '{n} frame',
   'sunLapse.frames.other': '{n} frames',
   'sunLapse.loading': 'Loading {n} of {total}',
+  'sunLapse.sampled': 'Showing {shown} of the {saved} saved frames, about one every {hours} h, to keep the download small.',
   'sunLapse.building': 'Saving since {date}. Frames are added every hour, and 27 days of them show one full rotation of the Sun.',
   'home.cta.h2a': 'Never miss',
   'home.cta.h2b': 'a night',

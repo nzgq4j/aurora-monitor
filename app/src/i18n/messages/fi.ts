@@ -594,6 +594,7 @@ export const fi: Messages = {
   'sunLapse.frames.one': "{n} kuva",
   'sunLapse.frames.other': "{n} kuvaa",
   'sunLapse.loading': "Ladataan {n}/{total}",
+  'sunLapse.sampled': "Näytetään {shown}/{saved} tallennetusta kuvasta, noin yksi {hours} tunnin välein, jotta lataus pysyy pienenä.",
   'sunLapse.building': "Tallennettu alkaen {date}. Kuvia lisätään tunneittain, ja 27 päivän kuvat näyttävät yhden täyden Auringon kierroksen.",
   'home.cta.h2a': "Älä missaa",
   'home.cta.h2b': "yhtään yötä",
