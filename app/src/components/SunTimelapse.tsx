@@ -23,7 +23,7 @@ type Range = (typeof RANGES)[number]['id'];
 const FPS = 8;
 
 /** The saved frames for a channel over the last `hours`, oldest first: every one, or MAX_FRAMES spread evenly. */
-async function loadFrames(channel: Channel, hours: number): Promise<Frame[] | null> {
+async function loadFrames(channel: Channel, hours: number): Promise<{ frames: Frame[]; saved: number } | null> {
   const db = supabase();
   if (!db) return null;
   const since = new Date(Date.now() - hours * 36e5).toISOString();
@@ -32,7 +32,8 @@ async function loadFrames(channel: Channel, hours: number): Promise<Frame[] | nu
   // The first and latest frames always stay in.
   const rows = data.length <= MAX_FRAMES ? data
     : Array.from({ length: MAX_FRAMES }, (_, i) => data[Math.round((i * (data.length - 1)) / (MAX_FRAMES - 1))]);
-  return rows.map(r => ({ t: Date.parse(r.taken_at), url: db.storage.from('sun-frames').getPublicUrl(r.path).data.publicUrl }));
+  const frames = rows.map(r => ({ t: Date.parse(r.taken_at), url: db.storage.from('sun-frames').getPublicUrl(r.path).data.publicUrl }));
+  return { frames, saved: data.length };
 }
 
 /**
@@ -41,10 +42,12 @@ async function loadFrames(channel: Channel, hours: number): Promise<Frame[] | nu
  * Frames are loaded before playing so playback is smooth.
  */
 export function SunTimelapse() {
-  const { t, tn, date } = useI18n();
+  const { t, tn, num, date } = useI18n();
   const [channel, setChannel] = useState<Channel>('HMIIC');
   const [range, setRange] = useState<Range>('week');
   const [frames, setFrames] = useState<Frame[] | null | undefined>(undefined);
+  // How many frames are saved for the span; more than MAX_FRAMES means the frames shown are a sample.
+  const [saved, setSaved] = useState(0);
   const [loaded, setLoaded] = useState(0);
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -56,9 +59,10 @@ export function SunTimelapse() {
   useEffect(() => {
     let live = true;
     setFrames(undefined); setLoaded(0); setPlaying(false);
-    loadFrames(channel, r.hours).then(f => {
+    loadFrames(channel, r.hours).then(res => {
       if (!live) return;
-      setFrames(f);
+      const f = res?.frames ?? null;
+      setFrames(f); setSaved(res?.saved ?? 0);
       setIndex(f?.length ? f.length - 1 : 0);
       // Preload every frame so playback doesn't wait on the network.
       f?.forEach(fr => { const im = new Image(); im.onload = im.onerror = () => live && setLoaded(n => n + 1); im.src = fr.url; });
@@ -78,6 +82,8 @@ export function SunTimelapse() {
   const span = frames && frames.length > 1 ? frames[frames.length - 1].t - frames[0].t : 0;
   // Still filling the span (frames are saved hourly), allowing a couple of missed hours.
   const building = !!frames?.length && span < (r.hours - 2) * 36e5;
+  // Hours between the frames shown, when they are a sample of the saved ones.
+  const every = frames && saved > frames.length && frames.length > 1 ? span / (frames.length - 1) / 36e5 : 0;
   const label = useMemo(() => SDO_IMAGES.find(i => i.id === channel)!.label, [channel]);
 
   return (
@@ -156,6 +162,7 @@ export function SunTimelapse() {
           </span>
         </div>
       )}
+      {every > 0 && <p className="storm-note">{t('sunLapse.sampled', { shown: frames!.length, saved, hours: num(every, every < 10 ? 1 : 0) })}</p>}
       {building && <p className="storm-note">{t('sunLapse.building', { date: when(frames![0].t) })}</p>}
     </section>
   );

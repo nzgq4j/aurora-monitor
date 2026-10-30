@@ -594,6 +594,7 @@ export const nl: Messages = {
   'sunLapse.frames.one': '{n} beeld',
   'sunLapse.frames.other': '{n} beelden',
   'sunLapse.loading': '{n} van {total} laden',
+  'sunLapse.sampled': '{shown} van de {saved} opgeslagen beelden, ongeveer één per {hours} uur, zodat de download klein blijft.',
   'sunLapse.building': 'Opgeslagen sinds {date}. Elk uur komt er een beeld bij; 27 dagen tonen een volledige rotatie van de zon.',
   'home.cta.h2a': 'Mis geen',
   'home.cta.h2b': 'enkele nacht',

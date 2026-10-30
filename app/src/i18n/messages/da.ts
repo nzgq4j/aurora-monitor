@@ -594,6 +594,7 @@ export const da: Messages = {
   'sunLapse.frames.one': "{n} billede",
   'sunLapse.frames.other': "{n} billeder",
   'sunLapse.loading': "Indlæser {n} af {total}",
+  'sunLapse.sampled': "Viser {shown} af de {saved} gemte billeder, cirka ét hver {hours}. time, så download holdes lille.",
   'sunLapse.building': "Gemmer siden {date}. Der tilføjes billeder hver time, og 27 dage af dem viser én hel rotation af Solen.",
   'home.cta.h2a': "Gå aldrig glip af",
   'home.cta.h2b': "en nat",
