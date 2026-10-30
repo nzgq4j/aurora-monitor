@@ -594,6 +594,7 @@ export const nl: Messages = {
   'sunLapse.frames.one': '{n} beeld',
   'sunLapse.frames.other': '{n} beelden',
   'sunLapse.loading': '{n} van {total} laden',
+  'sunLapse.all': 'Alle {saved} opgeslagen beelden, ongeveer één per {hours} uur.',
   'sunLapse.sampled': '{shown} van de {saved} opgeslagen beelden, ongeveer één per {hours} uur, zodat de download klein blijft.',
   'home.cta.h2a': 'Mis geen',
   'home.cta.h2b': 'enkele nacht',

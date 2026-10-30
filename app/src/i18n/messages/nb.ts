@@ -594,6 +594,7 @@ export const nb: Messages = {
   'sunLapse.frames.one': "{n} bilde",
   'sunLapse.frames.other': "{n} bilder",
   'sunLapse.loading': "Laster {n} av {total}",
+  'sunLapse.all': "Viser alle de {saved} lagrede bildene, omtrent ett hver {hours}. time.",
   'sunLapse.sampled': "Viser {shown} av de {saved} lagrede bildene, omtrent ett hver {hours}. time, så nedlastingen holdes liten.",
   'home.cta.h2a': "Gå aldri glipp",
   'home.cta.h2b': "av en natt",
