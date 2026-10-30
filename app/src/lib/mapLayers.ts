@@ -95,33 +95,6 @@ export function bestScore(oval: Float32Array, clouds: CloudGrid | null, t: numbe
   };
 }
 
-/** Best-spot colour: light blue, so it reads apart from the aurora's green-to-red scale. */
-export const BEST_RGB: [number, number, number] = [127, 212, 255];
-/** Opacity for a best-spot score: fades in from 0.1, full (0.75) from 0.5, so the zone has soft edges. */
-export const bestAlpha = (s: number) => (s <= 0.1 ? 0 : 0.75 * Math.min(1, (s - 0.1) / 0.4));
-
-/**
- * Paint a field into an equirectangular canvas (x = 0 at 180° W, y = 0 at 90° N), e.g. as a globe
- * texture: `fn` gives an RGBA colour (alpha 0–1) for a point, or null for nothing.
- */
-export function paintEquirect(w: number, h: number, fn: (lat: number, lon: number) => [number, number, number, number] | null) {
-  const c = document.createElement('canvas');
-  c.width = w; c.height = h;
-  const ctx = c.getContext('2d')!;
-  const img = ctx.createImageData(w, h);
-  for (let y = 0; y < h; y++) {
-    const lat = 90 - ((y + 0.5) / h) * 180;
-    for (let x = 0; x < w; x++) {
-      const v = fn(lat, -180 + ((x + 0.5) / w) * 360);
-      if (!v || v[3] <= 0) continue;
-      const o = (y * w + x) * 4;
-      img.data[o] = v[0]; img.data[o + 1] = v[1]; img.data[o + 2] = v[2]; img.data[o + 3] = Math.round(255 * v[3]);
-    }
-  }
-  ctx.putImageData(img, 0, 0);
-  return c;
-}
-
 /** The same for the 2D map: a Web-Mercator canvas between ±latMax, as a data URL for an image overlay. */
 export function paintMercator(w: number, latMax: number, fn: (lat: number, lon: number) => [number, number, number, number] | null) {
   const yMax = Math.log(Math.tan(Math.PI / 4 + (latMax * rad) / 2));

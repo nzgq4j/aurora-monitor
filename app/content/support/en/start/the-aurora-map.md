@@ -22,7 +22,7 @@ Drag the panel up, or tap **Show more**, then tap **Map layers** to choose what 
 - **Aurora:** the chance of aurora overhead.
 - **Clouds:** infrared satellite images of cloud, updated every hour.
 - **Night:** where it's dark, twilight or day. Aurora only shows where it's dark.
-- **Best spots:** where aurora is likely and it's dark and clear now, with named towns that have the best chance.
+- **Best spots:** named towns where aurora is likely and it's dark and clear now. Tap one for details.
 - **Sightings:** reports from members in the last 3 hours.
 - **Saved spots:** your saved places.
 - **City lights:** bright areas wash out faint aurora.

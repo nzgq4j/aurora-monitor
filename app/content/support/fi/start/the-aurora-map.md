@@ -22,7 +22,7 @@ Vedä paneelia ylöspäin tai napauta **Näytä lisää** ja napauta sitten **Ka
 - **Revontulet:** revontulten todennäköisyys yläpuolella.
 - **Pilvet:** pilvien infrapunasatelliittikuvat, päivittyvät tunnin välein.
 - **Yö:** missä on pimeää, hämärää tai päivä. Revontulet näkyvät vain pimeässä.
-- **Parhaat paikat:** missä revontulet ovat todennäköisiä ja nyt on pimeää ja selkeää, sekä nimetyt paikkakunnat, joilla on paras mahdollisuus.
+- **Parhaat paikat:** paikkakunnat, joilla revontulet ovat todennäköisiä ja nyt on pimeää ja selkeää. Napauta paikkaa nähdäksesi tiedot.
 - **Havainnot:** jäsenten ilmoitukset viimeisen 3 tunnin ajalta.
 - **Tallennetut paikat:** tallentamasi paikat.
 - **Kaupunkien valot:** kirkkaat alueet peittävät himmeät revontulet.

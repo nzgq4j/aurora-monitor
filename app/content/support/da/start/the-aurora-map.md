@@ -22,7 +22,7 @@ Træk panelet op, eller tryk på **Vis mere**, og tryk derefter på **Kortlag** 
 - **Nordlys:** chancen for nordlys lige over stedet.
 - **Skyer:** infrarøde satellitbilleder af skyer, opdateret hver time.
 - **Nat:** hvor det er mørkt, tusmørke eller dag. Nordlys ses kun, hvor det er mørkt.
-- **Bedste steder:** hvor der sandsynligvis er nordlys, og det er mørkt og klart nu, med navngivne byer, der har den bedste chance.
+- **Bedste steder:** navngivne byer, hvor der sandsynligvis er nordlys, og det er mørkt og klart nu. Tryk på en for detaljer.
 - **Observationer:** meldinger fra medlemmer de seneste 3 timer.
 - **Gemte steder:** dine gemte steder.
 - **Bylys:** lyse områder overdøver svagt nordlys.

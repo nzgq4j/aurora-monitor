@@ -846,7 +846,6 @@ export const fr: Messages = {
   'map.legend.twilight': 'Crépuscule',
   'map.legend.dark': 'Nuit noire',
   'map.legend.nightNote': 'L’aurore ne se voit que dans l’obscurité ; le crépuscule efface tout sauf les aurores intenses.',
-  'map.legend.best': 'Aurore probable, ciel noir et dégagé maintenant',
   'map.legend.bestNoCloud': 'Aurore probable et ciel noir maintenant (nuages indisponibles)',
   'map.legend.places': 'Lieux : les meilleures chances maintenant. Touchez-en un pour les détails.',
   'map.legend.noPlaces': 'Aucun lieu n’atteint une bonne chance pour le moment.',

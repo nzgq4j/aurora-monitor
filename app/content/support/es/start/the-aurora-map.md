@@ -22,7 +22,7 @@ Arrastra el panel hacia arriba o toca **Mostrar más**, y después toca **Capas 
 - **Aurora:** la probabilidad de aurora sobre cada punto.
 - **Nubes:** imágenes infrarrojas de las nubes tomadas por satélite, actualizadas cada hora.
 - **Noche:** dónde es de noche, de día o hay crepúsculo. La aurora solo se ve donde es de noche.
-- **Mejores zonas:** dónde es probable la aurora y ahora está oscuro y despejado, con las localidades que tienen más probabilidades.
+- **Mejores zonas:** localidades donde es probable la aurora y ahora está oscuro y despejado. Toca una para ver los detalles.
 - **Avistamientos:** avisos de miembros en las últimas 3 horas.
 - **Mis lugares:** tus ubicaciones guardadas.
 - **Luces urbanas:** las zonas iluminadas ocultan la aurora débil.

@@ -147,8 +147,6 @@ interface Props {
   /** Shade the night side (else daylight all round), and show city lights there. */
   night: boolean;
   lights: boolean;
-  /** Best spots now (aurora, dark and clear) as an equirectangular overlay, or null. */
-  best: HTMLCanvasElement | null;
   /** Saved locations, marked with small dots. */
   saved: Place[];
   /** A past aurora frame from the time slider (raw OVATION bytes), or null for the live one. */
@@ -182,16 +180,16 @@ interface Props {
 }
 
 /** Interactive 3D Earth with the live OVATION aurora, the day/night line, satellite clouds and your location. */
-export function Globe({ clouds, night, lights, best, saved, places, sightings = NO_POINTS, frame = null, aurora, place, home, pick = null, onPick, onStatus, onForecast, onZoomPast, active = true }: Props) {
+export function Globe({ clouds, night, lights, saved, places, sightings = NO_POINTS, frame = null, aurora, place, home, pick = null, onPick, onStatus, onForecast, onZoomPast, active = true }: Props) {
   const { t } = useI18n();
   const box = useRef<HTMLDivElement>(null);
   const label = useRef<HTMLDivElement>(null);
-  const api = useRef<{ setClouds: (on: boolean) => void; setAurora: (on: boolean) => void; setPlace: (p: Place | null) => void; setPick: (p: { lat: number; lon: number } | null) => void; setShade: (night: boolean, lights: boolean) => void; setBest: (c: HTMLCanvasElement | null) => void; setSaved: (s: Place[]) => void; setPlaces: (p: { lat: number; lon: number }[]) => void; setFrame: (f: Uint8Array | null) => void; setSightings: (s: { lat: number; lon: number }[]) => void; flyTo: (p: Place) => void; reactivate: () => void } | null>(null);
+  const api = useRef<{ setClouds: (on: boolean) => void; setAurora: (on: boolean) => void; setPlace: (p: Place | null) => void; setPick: (p: { lat: number; lon: number } | null) => void; setShade: (night: boolean, lights: boolean) => void; setSaved: (s: Place[]) => void; setPlaces: (p: { lat: number; lon: number }[]) => void; setFrame: (f: Uint8Array | null) => void; setSightings: (s: { lat: number; lon: number }[]) => void; flyTo: (p: Place) => void; reactivate: () => void } | null>(null);
   const shown = useRef(active);
   shown.current = active;
   // Latest layer choices, applied once the scene is built (props can change while it loads).
-  const latest = useRef({ aurora, pick, onPick, onZoomPast, night, lights, best, saved, places, frame, sightings });
-  latest.current = { aurora, pick, onPick, onZoomPast, night, lights, best, saved, places, frame, sightings };
+  const latest = useRef({ aurora, pick, onPick, onZoomPast, night, lights, saved, places, frame, sightings });
+  latest.current = { aurora, pick, onPick, onZoomPast, night, lights, saved, places, frame, sightings };
   const placeLabels = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
   const [notice, setNotice] = useState('');
@@ -354,18 +352,6 @@ export function Globe({ clouds, night, lights, best, saved, places, sightings = 
         if (p) pin.position.copy(toVector(T, p.lat, p.lon, R.marker));
       };
 
-      // Best spots: a transparent shell just above the clouds, painted by the map screen.
-      const bestMat = new T.MeshBasicMaterial({ transparent: true, depthWrite: false, opacity: 0.9 });
-      const bestMesh = new T.Mesh(sphere(R.clouds + 0.002), bestMat);
-      bestMesh.visible = false;
-      scene.add(bestMesh);
-      const setBest = (c: HTMLCanvasElement | null) => {
-        bestMat.map?.dispose();
-        bestMat.map = c ? new T.CanvasTexture(c) : null;
-        if (bestMat.map) bestMat.map.colorSpace = T.SRGBColorSpace;
-        bestMat.needsUpdate = true;
-        bestMesh.visible = !!c;
-      };
       const setShade = (n: boolean, l: boolean) => { (earthMat.uniforms.shade.value as THREE.Vector2).set(n ? 1 : 0, l ? 1 : 0); };
 
       // Saved locations: small green dots.
@@ -580,7 +566,6 @@ export function Globe({ clouds, night, lights, best, saved, places, sightings = 
         setPlace,
         setPick,
         setShade,
-        setBest,
         setSaved,
         setPlaces,
         setFrame,
@@ -598,7 +583,6 @@ export function Globe({ clouds, night, lights, best, saved, places, sightings = 
       if (latest.current.frame) setFrame(latest.current.frame);
       setPlaces(latest.current.places);
       setShade(latest.current.night, latest.current.lights);
-      setBest(latest.current.best);
       setSaved(latest.current.saved);
       setPlace(place);
       setPick(latest.current.pick);
@@ -625,7 +609,6 @@ export function Globe({ clouds, night, lights, best, saved, places, sightings = 
   useEffect(() => { api.current?.setPlace(place); }, [place]);
   useEffect(() => { api.current?.setPick(pick); }, [pick]);
   useEffect(() => { api.current?.setShade(night, lights); }, [night, lights]);
-  useEffect(() => { api.current?.setBest(best); }, [best]);
   useEffect(() => { api.current?.setSaved(saved); }, [saved]);
   useEffect(() => { api.current?.setPlaces(places); }, [places]);
   useEffect(() => { api.current?.setFrame(frame); }, [frame]);

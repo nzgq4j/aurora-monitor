@@ -22,7 +22,7 @@ Ziehen Sie den Bereich nach oben oder tippen Sie auf **Mehr anzeigen** und dann 
 - **Polarlicht:** die Chance auf Polarlicht über dem jeweiligen Ort.
 - **Wolken:** Infrarot-Satellitenbilder der Bewölkung, stündlich aktualisiert.
 - **Nacht:** wo es dunkel ist, wo Dämmerung herrscht und wo Tag ist. Polarlicht ist nur im Dunkeln zu sehen.
-- **Beste Orte:** wo Polarlicht wahrscheinlich und es gerade dunkel und klar ist, mit den Namen der Orte mit der besten Chance.
+- **Beste Orte:** Orte, an denen Polarlicht wahrscheinlich und es gerade dunkel und klar ist. Tippen Sie auf einen für Details.
 - **Sichtungen:** Meldungen von Mitgliedern aus den letzten 3 Stunden.
 - **Meine Orte:** Ihre gespeicherten Orte.
 - **Stadtlichter:** In hellen Gebieten geht schwaches Polarlicht unter.

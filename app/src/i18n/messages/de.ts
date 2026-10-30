@@ -846,7 +846,6 @@ export const de: Messages = {
   'map.legend.twilight': 'Dämmerung',
   'map.legend.dark': 'Dunkel',
   'map.legend.nightNote': 'Polarlicht ist nur im Dunkeln zu sehen; in der Dämmerung bleiben nur helle Polarlichter sichtbar.',
-  'map.legend.best': 'Polarlicht wahrscheinlich, dunkel und klar',
   'map.legend.bestNoCloud': 'Polarlicht wahrscheinlich und dunkel (keine Wolkendaten)',
   'map.legend.places': 'Orte: die besten Chancen jetzt. Tippen Sie für Details.',
   'map.legend.noPlaces': 'Derzeit erreicht kein Ort eine gute Chance.',

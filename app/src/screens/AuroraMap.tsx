@@ -19,7 +19,7 @@ import { useOnline } from '../lib/useOnline';
 import { SITE } from '../lib/site';
 import { AURORA_RAMP, AURORA_TICKS, auroraColor } from '../lib/auroraColor';
 import { sampleOval, smoothOval } from '../lib/ovalSmooth';
-import { BEST_RGB, LIGHTS_URL, afterPaint, bestAlpha, bestScore, loadCloudGrid, nightShade, paintEquirect, paintMercator, readLayers, sunAltitudeAt, writeLayers, type CloudGrid, type LayerId, type Layers, DEFAULT_LAYERS } from '../lib/mapLayers';
+import { LIGHTS_URL, afterPaint, bestScore, loadCloudGrid, nightShade, paintMercator, readLayers, sunAltitudeAt, writeLayers, type CloudGrid, type LayerId, type Layers, DEFAULT_LAYERS } from '../lib/mapLayers';
 import type { OvalGrid } from '../app/api/oval/route';
 import { useI18n } from '../i18n/I18n';
 import type { MessageKey } from '../i18n/core';
@@ -71,7 +71,7 @@ const NO_PLACES: Place[] = [];
 export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[] }) {
   const box = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Leaflet.Map | null>(null);
-  const layers = useRef<{ prob?: Leaflet.Layer; marker?: Leaflet.Layer; pin?: Leaflet.Layer; clouds?: Leaflet.GridLayer; lights?: Leaflet.TileLayer; night?: Leaflet.Layer; best?: Leaflet.Layer; places?: Leaflet.Layer; saved?: Leaflet.Layer; sightings?: Leaflet.Layer }>({});
+  const layers = useRef<{ prob?: Leaflet.Layer; marker?: Leaflet.Layer; pin?: Leaflet.Layer; clouds?: Leaflet.GridLayer; lights?: Leaflet.TileLayer; night?: Leaflet.Layer; places?: Leaflet.Layer; saved?: Leaflet.Layer; sightings?: Leaflet.Layer }>({});
   // Smoothed OVATION field, kept for the best-spots layer.
   const oval = useRef<Float32Array | null>(null);
   const LRef = useRef<typeof Leaflet | null>(null);
@@ -244,7 +244,6 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
       lightsPane.style.zIndex = '250';
       lightsPane.style.mixBlendMode = 'screen';
       map.createPane('night').style.zIndex = '300';
-      map.createPane('best').style.zIndex = '420';
       // Clouds sit above the land and below the aurora, so the aurora colours stay readable.
       map.createPane('clouds').style.zIndex = '350';
       map.createPane('aurora').style.zIndex = '400';
@@ -341,36 +340,19 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
     });
   }, [on.night, ready, tick, view]);
 
-  // Best spots: aurora × darkness × clear sky, painted for the 2D map and (as a texture) for the globe.
+  // Best spots: aurora × darkness × clear sky, scored to pick the named places shown (no shaded zone).
   const [cloudGrid, setCloudGrid] = useState<CloudGrid | null | undefined>(undefined);
   useEffect(() => { if (on.best && cloudGrid === undefined) loadCloudGrid().then(setCloudGrid); }, [on.best, cloudGrid]);
-  const [bestGlobe, setBestGlobe] = useState<HTMLCanvasElement | null>(null);
   // Best places (named towns and cities, #54): the gazetteer, the places that qualify now, and the map zoom for spacing.
   const [places, setPlaces] = useState<PlaceRow[] | null>(null);
   useEffect(() => { if (on.best && !places) loadPlaces().then(setPlaces); }, [on.best, places]);
   const [cands, setCands] = useState<BestPlace[]>([]);
   const [zoom, setZoom] = useState(3);
   useEffect(() => {
-    const map = mapRef.current, L = LRef.current;
-    layers.current.best?.remove();
-    layers.current.best = undefined;
-    if (!on.best || !ready || !oval.current || cloudGrid === undefined) { setBestGlobe(null); setCands([]); return; }
+    if (!on.best || !ready || !oval.current || cloudGrid === undefined) { setCands([]); return; }
     const field = oval.current;
-    return afterPaint(() => {
-      const score = bestScore(field, cloudGrid, Date.now());
-      setCands(places ? bestCandidates(places, score) : []);
-      const paint = (la: number, lo: number): [number, number, number, number] | null => {
-        if (Math.abs(la) < 40) return null;
-        const a = bestAlpha(score(la, lo));
-        return a ? [...BEST_RGB, a] : null;
-      };
-      if (view === '3d') { setBestGlobe(paintEquirect(720, 360, paint)); return; }
-      setBestGlobe(null);
-      if (!map || !L) return;
-      const url = paintMercator(720, LAT_MAX, paint);
-      layers.current.best = L.layerGroup(COPIES.map(dx => L.imageOverlay(url, [[-LAT_MAX, -180 + dx], [LAT_MAX, 180 + dx]], { pane: 'best', interactive: false }))).addTo(map);
-    });
-  }, [on.best, ready, cloudGrid, tick, view, places]);
+    return afterPaint(() => setCands(places ? bestCandidates(places, bestScore(field, cloudGrid, Date.now())) : []));
+  }, [on.best, ready, cloudGrid, tick, places]);
 
   // Best places on the 2D map: name labels, at most 12 on phones and 24 on larger screens, spaced for the zoom.
   const phone = typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches;
@@ -568,10 +550,10 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
         <div>
           <span className="label">{t('map.layer.best')}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-            <span style={{ width: 28, height: 10, borderRadius: 5, background: `rgba(${BEST_RGB.join(',')},.7)`, flex: 'none' }} />
-            <span style={{ fontSize: 11, color: C.muted }}>{cloudGrid === null ? t('map.legend.bestNoCloud') : t('map.legend.best')}</span>
+            <span className="map-best-key" aria-hidden="true" />
+            <span style={{ fontSize: 11, color: C.muted }}>{cands.length ? t('map.legend.places') : t('map.legend.noPlaces')}</span>
           </div>
-          <span style={{ display: 'block', fontSize: 11, color: C.muted, marginTop: 4 }}>{cands.length ? t('map.legend.places') : t('map.legend.noPlaces')}</span>
+          {cloudGrid === null && <span style={{ display: 'block', fontSize: 11, color: C.muted, marginTop: 4 }}>{t('map.legend.bestNoCloud')}</span>}
         </div>
       )}
       {on.sightings && (
@@ -607,7 +589,7 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
         {/* Phones have no header, so the map (and globe) carries the logo. */}
         <img className="map-logo" src="/icons/logo.svg" alt={SITE.name} width={56} height={43} />
         <div ref={box} className="aurora-map" role="application" aria-label={t('map.aria')} style={view === '3d' ? { display: 'none' } : undefined} />
-        {globeBuilt && <Globe active={view === '3d'} clouds={on.clouds} night={on.night} lights={on.lights} best={bestGlobe} saved={on.saved ? others : NO_PLACES} places={globePlaces} sightings={globeSightings} aurora={on.aurora} place={shownPlace} home={locations.find(l => l.isHome) ?? null}
+        {globeBuilt && <Globe active={view === '3d'} clouds={on.clouds} night={on.night} lights={on.lights} saved={on.saved ? others : NO_PLACES} places={globePlaces} sightings={globeSightings} aurora={on.aurora} place={shownPlace} home={locations.find(l => l.isHome) ?? null}
           frame={frames[fi] ? frameBytes : null} pick={pick} onPick={(la, lo, name) => (name ? setPick({ name, lat: la, lon: lo }) : pickAt.current(la, lo))} onStatus={setGlobeStatus} onForecast={setForecast} onZoomPast={zoomPast} />}
         {view === '2d' && (notice || status) && <div className="map-status" role="status">{t((notice || status) as MessageKey)}</div>}
         {view === '3d' && globeStatus && <div className="map-status" role="status">{t(globeStatus)}</div>}
