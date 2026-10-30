@@ -595,7 +595,7 @@ export const en = {
   'sunLapse.frames.other': '{n} frames',
   'sunLapse.loading': 'Loading {n} of {total}',
   'sunLapse.all': 'Showing all {saved} saved frames, about one every {hours} h.',
-  'sunLapse.sampled': 'Showing {shown} of the {saved} saved frames, about one every {hours} h, to keep the download small.',
+  'sunLapse.sampled': 'Condensed to {shown} frames, about one every {hours} h, to optimize the download.',
   'home.cta.h2a': 'Never miss',
   'home.cta.h2b': 'a night',
   'home.cta.body': 'Instant alerts when the oval reaches your sky, with clouds and darkness taken into account.',
