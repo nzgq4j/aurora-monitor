@@ -595,7 +595,6 @@ export const de: Messages = {
   'sunLapse.frames.other': '{n} Bilder',
   'sunLapse.loading': 'Lade {n} von {total}',
   'sunLapse.sampled': 'Es werden {shown} der {saved} gespeicherten Bilder gezeigt, etwa eines alle {hours} Std., damit der Download klein bleibt.',
-  'sunLapse.building': 'Gespeichert seit {date}. Jede Stunde kommt ein Bild hinzu; 27 Tage zeigen eine volle Sonnenrotation.',
   'home.cta.h2a': 'Keine Nacht',
   'home.cta.h2b': 'verpassen',
   'home.cta.body': 'Sofortige Alarme, wenn das Oval Ihren Himmel erreicht – unter Berücksichtigung von Bewölkung und Dunkelheit.',

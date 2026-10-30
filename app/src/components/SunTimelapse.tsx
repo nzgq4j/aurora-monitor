@@ -80,8 +80,6 @@ export function SunTimelapse() {
   const when = (x: number) => date(x, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   const f = frames?.[index];
   const span = frames && frames.length > 1 ? frames[frames.length - 1].t - frames[0].t : 0;
-  // Still filling the span (frames are saved hourly), allowing a couple of missed hours.
-  const building = !!frames?.length && span < (r.hours - 2) * 36e5;
   // Hours between the frames shown, when they are a sample of the saved ones.
   const every = frames && saved > frames.length && frames.length > 1 ? span / (frames.length - 1) / 36e5 : 0;
   const label = useMemo(() => SDO_IMAGES.find(i => i.id === channel)!.label, [channel]);
@@ -163,7 +161,6 @@ export function SunTimelapse() {
         </div>
       )}
       {every > 0 && <p className="storm-note">{t('sunLapse.sampled', { shown: frames!.length, saved, hours: num(every, every < 10 ? 1 : 0) })}</p>}
-      {building && <p className="storm-note">{t('sunLapse.building', { date: when(frames![0].t) })}</p>}
     </section>
   );
 }
