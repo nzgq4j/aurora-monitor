@@ -595,7 +595,6 @@ export const sv: Messages = {
   'sunLapse.frames.other': "{n} bildrutor",
   'sunLapse.loading': "Laddar {n} av {total}",
   'sunLapse.sampled': "Visar {shown} av de {saved} sparade bildrutorna, ungefär en var {hours}:e timme, så att nedladdningen hålls liten.",
-  'sunLapse.building': "Sparar sedan {date}. Bildrutor läggs till varje timme, och 27 dagar av dem visar ett helt varv av solen.",
   'home.cta.h2a': "Missa aldrig",
   'home.cta.h2b': "en natt",
   'home.cta.body': "Omedelbara aviseringar när ovalen når din himmel, med hänsyn till moln och mörker.",

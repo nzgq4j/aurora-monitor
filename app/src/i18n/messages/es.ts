@@ -595,7 +595,6 @@ export const es: Messages = {
   'sunLapse.frames.other': '{n} imágenes',
   'sunLapse.loading': 'Cargando {n} de {total}',
   'sunLapse.sampled': 'Se muestran {shown} de las {saved} imágenes guardadas, una cada {hours} h aprox., para que la descarga sea ligera.',
-  'sunLapse.building': 'Guardando desde el {date}. Se añade una imagen cada hora; 27 días muestran una rotación completa del Sol.',
   'home.cta.h2a': 'No te pierdas',
   'home.cta.h2b': 'ninguna noche',
   'home.cta.body': 'Alertas instantáneas cuando el óvalo llega a tu cielo, teniendo en cuenta las nubes y la oscuridad.',

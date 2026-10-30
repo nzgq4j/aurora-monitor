@@ -595,7 +595,6 @@ export const nb: Messages = {
   'sunLapse.frames.other': "{n} bilder",
   'sunLapse.loading': "Laster {n} av {total}",
   'sunLapse.sampled': "Viser {shown} av de {saved} lagrede bildene, omtrent ett hver {hours}. time, så nedlastingen holdes liten.",
-  'sunLapse.building': "Lagrer siden {date}. Nye bilder legges til hver time, og 27 dager med bilder viser én hel rotasjon av sola.",
   'home.cta.h2a': "Gå aldri glipp",
   'home.cta.h2b': "av en natt",
   'home.cta.body': "Varsler med en gang ovalen når himmelen din, med skyer og mørke tatt med i beregningen.",

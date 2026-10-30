@@ -595,7 +595,6 @@ export const fr: Messages = {
   'sunLapse.frames.other': '{n} images',
   'sunLapse.loading': 'Chargement {n} sur {total}',
   'sunLapse.sampled': '{shown} images sur les {saved} enregistrées, environ une toutes les {hours} h, pour limiter le téléchargement.',
-  'sunLapse.building': 'Enregistrement depuis le {date}. Une image est ajoutée chaque heure ; 27 jours montrent une rotation complète du Soleil.',
   'home.cta.h2a': 'Ne manquez',
   'home.cta.h2b': 'aucune nuit',
   'home.cta.body': 'Des alertes instantanées quand l’ovale atteint votre ciel, en tenant compte des nuages et de l’obscurité.',
