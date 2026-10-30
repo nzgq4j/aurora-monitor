@@ -436,7 +436,7 @@ export const en = {
   'home.live': 'LIVE · WORLDWIDE · DATA {time}',
   'home.liveUnavailable': 'LIVE DATA UNAVAILABLE',
   'home.scale': 'Kp scale, current level {level}',
-  'home.oval': 'AURORAL OVAL · OVATION',
+  'home.oval': 'AURORAL OVAL',
   'home.ovalForecast': 'FORECAST {time}',
   'home.share': "Share the aurora now",
   'home.shareText': "Aurora now: {l1}, {l2} (Kp {kp}).",

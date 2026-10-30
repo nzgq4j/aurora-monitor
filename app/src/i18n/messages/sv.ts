@@ -436,7 +436,7 @@ export const sv: Messages = {
   'home.live': "LIVE · HELA VÄRLDEN · DATA {time}",
   'home.liveUnavailable': "REALTIDSDATA INTE TILLGÄNGLIG",
   'home.scale': "Kp-skala, aktuell nivå {level}",
-  'home.oval': "NORRSKENSOVAL · OVATION",
+  'home.oval': "NORRSKENSOVAL",
   'home.ovalForecast': "PROGNOS {time}",
   'home.share': "Dela norrskenet just nu",
   'home.shareText': "Norrsken nu: {l1}, {l2} (Kp {kp}).",

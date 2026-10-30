@@ -436,7 +436,7 @@ export const nb: Messages = {
   'home.live': "SANNTID · HELE VERDEN · DATA {time}",
   'home.liveUnavailable': "SANNTIDSDATA UTILGJENGELIG",
   'home.scale': "Kp-skala, nåværende nivå {level}",
-  'home.oval': "NORDLYSOVALEN · OVATION",
+  'home.oval': "NORDLYSOVALEN",
   'home.ovalForecast': "VARSEL {time}",
   'home.share': "Del nordlyset nå",
   'home.shareText': "Nordlys nå: {l1}, {l2} (Kp {kp}).",

@@ -448,7 +448,7 @@ export const ru: Messages = {
   'home.live': "ОНЛАЙН · ВЕСЬ МИР · ДАННЫЕ {time}",
   'home.liveUnavailable': "ДАННЫЕ ОНЛАЙН НЕДОСТУПНЫ",
   'home.scale': "Шкала Kp, текущий уровень {level}",
-  'home.oval': "АВРОРАЛЬНЫЙ ОВАЛ · OVATION",
+  'home.oval': "АВРОРАЛЬНЫЙ ОВАЛ",
   'home.ovalForecast': "ПРОГНОЗ {time}",
   'home.share': "Поделиться сиянием",
   'home.shareText': "Полярное сияние сейчас: {l1}, {l2} (Kp {kp}).",

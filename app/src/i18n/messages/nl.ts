@@ -436,7 +436,7 @@ export const nl: Messages = {
   'home.live': 'LIVE · WERELDWIJD · DATA {time}',
   'home.liveUnavailable': 'LIVE DATA NIET BESCHIKBAAR',
   'home.scale': 'Kp-schaal, huidig niveau {level}',
-  'home.oval': 'POOLLICHTOVAAL · OVATION',
+  'home.oval': 'POOLLICHTOVAAL',
   'home.ovalForecast': 'VERWACHTING {time}',
   'home.share': "Noorderlicht nu delen",
   'home.shareText': "Noorderlicht nu: {l1}, {l2} (Kp {kp}).",
