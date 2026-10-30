@@ -22,7 +22,7 @@ Faites glisser le panneau vers le haut, ou touchez **Afficher plus**, puis touch
 - **Aurore :** la chance d’aurore au-dessus de vous.
 - **Nuages :** des images satellite infrarouges des nuages, mises à jour toutes les heures.
 - **Nuit :** les zones où il fait nuit, où c’est le crépuscule ou où il fait jour. L’aurore n’est visible que là où il fait nuit.
-- **Meilleurs coins :** les zones où l’aurore est probable et où il fait nuit et dégagé en ce moment, avec le nom des villes qui ont les meilleures chances.
+- **Meilleurs coins :** les villes où l’aurore est probable et où il fait nuit et dégagé en ce moment. Touchez-en une pour voir les détails.
 - **Observations :** les signalements des membres au cours des 3 dernières heures.
 - **Mes lieux :** vos lieux enregistrés.
 - **Lumières :** les zones très éclairées masquent les aurores faibles.

@@ -846,7 +846,6 @@ export const nb: Messages = {
   'map.legend.twilight': "Skumring",
   'map.legend.dark': "Mørkt",
   'map.legend.nightNote': "Nordlys synes bare der det er mørkt; i skumringen er det bare sterkt nordlys som synes.",
-  'map.legend.best': "Nordlys sannsynlig, mørkt og klart nå",
   'map.legend.bestNoCloud': "Nordlys sannsynlig og mørkt nå (skydata utilgjengelige)",
   'map.legend.places': "Navngitte steder: best sjanse nå. Trykk på et for detaljer.",
   'map.legend.noPlaces': "Ingen navngitte steder har god sjanse akkurat nå.",

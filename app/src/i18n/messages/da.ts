@@ -846,7 +846,6 @@ export const da: Messages = {
   'map.legend.twilight': "Tusmørke",
   'map.legend.dark': "Mørkt",
   'map.legend.nightNote': "Nordlys ses kun, hvor det er mørkt; tusmørke overstråler alt undtagen kraftigt nordlys.",
-  'map.legend.best': "Nordlys sandsynligt, mørkt og klart nu",
   'map.legend.bestNoCloud': "Nordlys sandsynligt og mørkt nu (skydata utilgængelige)",
   'map.legend.places': "Navngivne steder: den bedste chance nu. Tryk på et for detaljer.",
   'map.legend.noPlaces': "Ingen navngivne steder har en god chance lige nu.",

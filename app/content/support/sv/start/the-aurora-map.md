@@ -22,7 +22,7 @@ Dra upp panelen eller tryck på **Visa mer**, och tryck sedan på **Kartlager** 
 - **Norrsken:** chansen till norrsken rakt ovanför.
 - **Moln:** infraröda satellitbilder av moln, uppdaterade varje timme.
 - **Natt:** var det är mörkt, skymning eller dag. Norrsken syns bara där det är mörkt.
-- **Bästa platserna:** där norrsken är troligt och det är mörkt och klart nu, med namngivna orter som har bäst chans.
+- **Bästa platserna:** namngivna orter där norrsken är troligt och det är mörkt och klart nu. Tryck på en ort för detaljer.
 - **Observationer:** rapporter från medlemmar de senaste 3 timmarna.
 - **Sparade platser:** dina sparade platser.
 - **Stadsljus:** ljusa områden bleker svagt norrsken.

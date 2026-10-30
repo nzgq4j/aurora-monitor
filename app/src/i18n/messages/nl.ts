@@ -846,7 +846,6 @@ export const nl: Messages = {
   'map.legend.twilight': 'Schemering',
   'map.legend.dark': 'Donker',
   'map.legend.nightNote': 'Noorderlicht is alleen in het donker te zien; in de schemering blijven alleen felle displays zichtbaar.',
-  'map.legend.best': 'Poollicht waarschijnlijk, donker en helder',
   'map.legend.bestNoCloud': 'Poollicht waarschijnlijk en donker (geen wolkendata)',
   'map.legend.places': 'Plaatsen: nu de beste kans. Tik op een plaats voor details.',
   'map.legend.noPlaces': 'Geen enkele plaats heeft nu een goede kans.',

@@ -846,7 +846,6 @@ export const en = {
   'map.legend.twilight': 'Twilight',
   'map.legend.dark': 'Dark',
   'map.legend.nightNote': 'Aurora shows only where it’s dark; twilight washes out all but bright displays.',
-  'map.legend.best': 'Aurora likely, dark and clear now',
   'map.legend.bestNoCloud': 'Aurora likely and dark now (cloud unavailable)',
   'map.legend.places': 'Named places: the best chance now. Tap one for details.',
   'map.legend.noPlaces': 'No named places reach a good chance right now.',

@@ -274,6 +274,7 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 .map-best { position: relative; }
 .map-best b { position: absolute; left: -4px; top: -4px; width: 8px; height: 8px; border-radius: 50%; background: #7fd4ff; box-shadow: 0 0 6px rgba(127, 212, 255, .8); cursor: pointer; }
 .map-best span { position: absolute; left: 9px; top: -9px; white-space: nowrap; color: #bfe8ff; font: 700 12px var(--f-body); text-shadow: 0 0 3px #000, 0 0 3px #000, 0 0 3px #000; cursor: pointer; }
+.map-best-key { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #7fd4ff; box-shadow: 0 0 6px rgba(127, 212, 255, .8); }
 .globe-place { position: absolute; left: 0; top: 0; z-index: 5; padding: 0; white-space: nowrap; color: #bfe8ff; font: 700 12px var(--f-body); text-shadow: 0 0 3px #000, 0 0 3px #000, 0 0 3px #000; visibility: hidden; will-change: transform; }
 .map-sight b { position: absolute; left: -5px; top: -5px; width: 10px; height: 10px; border-radius: 50%; background: #ffd166; box-shadow: 0 0 8px rgba(255, 209, 102, .8); }
 .map-sight-key { flex: none; width: 10px; height: 10px; border-radius: 50%; background: #ffd166; box-shadow: 0 0 6px rgba(255, 209, 102, .8); }

@@ -846,7 +846,6 @@ export const es: Messages = {
   'map.legend.twilight': 'Crepúsculo',
   'map.legend.dark': 'Oscuro',
   'map.legend.nightNote': 'La aurora solo se ve donde es de noche; el crepúsculo apaga todo salvo las auroras intensas.',
-  'map.legend.best': 'Aurora probable, oscuro y despejado ahora',
   'map.legend.bestNoCloud': 'Aurora probable y oscuro ahora (sin datos de nubes)',
   'map.legend.places': 'Lugares: la mejor opción ahora. Toca uno para ver detalles.',
   'map.legend.noPlaces': 'Ningún lugar alcanza ahora una buena probabilidad.',

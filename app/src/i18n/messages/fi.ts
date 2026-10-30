@@ -846,7 +846,6 @@ export const fi: Messages = {
   'map.legend.twilight': "Hämärä",
   'map.legend.dark': "Pimeä",
   'map.legend.nightNote': "Revontulet näkyvät vain pimeässä; hämärä peittää kaikki paitsi kirkkaat näytökset.",
-  'map.legend.best': "Revontulet todennäköisiä, pimeää ja selkeää nyt",
   'map.legend.bestNoCloud': "Revontulet todennäköisiä ja pimeää nyt (pilvidata ei saatavilla)",
   'map.legend.places': "Nimetyt paikat: paras mahdollisuus nyt. Napauta paikkaa nähdäksesi tiedot.",
   'map.legend.noPlaces': "Millään nimetyllä paikalla ei ole juuri nyt hyvää mahdollisuutta.",

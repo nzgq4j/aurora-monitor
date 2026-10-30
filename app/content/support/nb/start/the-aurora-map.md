@@ -22,7 +22,7 @@ Dra panelet opp, eller trykk på **Vis mer**, og trykk deretter på **Kartlag** 
 - **Nordlys:** sjansen for nordlys rett over hodet.
 - **Skyer:** infrarøde satellittbilder av skyer, oppdatert hver time.
 - **Natt:** hvor det er mørkt, skumring eller dag. Nordlys vises bare der det er mørkt.
-- **Beste steder:** hvor nordlys er sannsynlig og det er mørkt og klart nå, med navngitte steder som har best sjanse.
+- **Beste steder:** navngitte steder der nordlys er sannsynlig og det er mørkt og klart nå. Trykk på et sted for detaljer.
 - **Observasjoner:** meldinger fra medlemmer de siste 3 timene.
 - **Lagrede steder:** stedene du har lagret.
 - **Bylys:** lyse områder visker ut svakt nordlys.

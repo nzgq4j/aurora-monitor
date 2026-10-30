@@ -22,7 +22,7 @@ Sleep het paneel omhoog of tik op **Meer tonen**, en tik daarna op **Kaartlagen*
 - **Poollicht:** de kans op poollicht recht boven je.
 - **Wolken:** infraroodsatellietbeelden van de bewolking, elk uur bijgewerkt.
 - **Nacht:** waar het donker, schemerig of dag is. Poollicht is alleen te zien waar het donker is.
-- **Beste plekken:** waar poollicht waarschijnlijk is en het nu donker en helder is, met de plaatsen die de beste kans hebben.
+- **Beste plekken:** plaatsen waar poollicht waarschijnlijk is en het nu donker en helder is. Tik op een plaats voor details.
 - **Waarnemingen:** meldingen van leden in de afgelopen 3 uur.
 - **Mijn plekken:** je opgeslagen locaties.
 - **Stadslicht:** in heldere gebieden valt zwak poollicht weg.

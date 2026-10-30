@@ -846,7 +846,6 @@ export const sv: Messages = {
   'map.legend.twilight': "Skymning",
   'map.legend.dark': "Mörkt",
   'map.legend.nightNote': "Norrsken syns bara där det är mörkt; skymningen bleker allt utom starka norrsken.",
-  'map.legend.best': "Troligt norrsken, mörkt och klart nu",
   'map.legend.bestNoCloud': "Troligt norrsken och mörkt nu (molndata saknas)",
   'map.legend.places': "Namngivna platser: bästa chansen nu. Tryck på en för detaljer.",
   'map.legend.noPlaces': "Inga namngivna platser har en bra chans just nu.",
