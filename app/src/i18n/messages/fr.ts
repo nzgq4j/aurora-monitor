@@ -595,7 +595,7 @@ export const fr: Messages = {
   'sunLapse.frames.other': '{n} images',
   'sunLapse.loading': 'Chargement {n} sur {total}',
   'sunLapse.all': 'Les {saved} images enregistrées, environ une toutes les {hours} h.',
-  'sunLapse.sampled': '{shown} images sur les {saved} enregistrées, environ une toutes les {hours} h, pour limiter le téléchargement.',
+  'sunLapse.sampled': 'Condensé à {shown} images, environ une toutes les {hours} h, pour optimiser le téléchargement.',
   'home.cta.h2a': 'Ne manquez',
   'home.cta.h2b': 'aucune nuit',
   'home.cta.body': 'Des alertes instantanées quand l’ovale atteint votre ciel, en tenant compte des nuages et de l’obscurité.',

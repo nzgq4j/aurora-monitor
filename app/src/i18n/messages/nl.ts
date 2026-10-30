@@ -595,7 +595,7 @@ export const nl: Messages = {
   'sunLapse.frames.other': '{n} beelden',
   'sunLapse.loading': '{n} van {total} laden',
   'sunLapse.all': 'Alle {saved} opgeslagen beelden, ongeveer één per {hours} uur.',
-  'sunLapse.sampled': '{shown} van de {saved} opgeslagen beelden, ongeveer één per {hours} uur, zodat de download klein blijft.',
+  'sunLapse.sampled': 'Ingekort tot {shown} beelden, ongeveer één per {hours} uur, om de download te optimaliseren.',
   'home.cta.h2a': 'Mis geen',
   'home.cta.h2b': 'enkele nacht',
   'home.cta.body': 'Directe meldingen zodra de ovaal jouw hemel bereikt, rekening houdend met bewolking en duisternis.',
