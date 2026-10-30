@@ -436,7 +436,7 @@ export const fr: Messages = {
   'home.live': 'DIRECT · MONDE · DONNÉES {time}',
   'home.liveUnavailable': 'DONNÉES EN DIRECT INDISPONIBLES',
   'home.scale': 'Échelle Kp, niveau actuel {level}',
-  'home.oval': 'OVALE AURORAL · OVATION',
+  'home.oval': 'OVALE AURORAL',
   'home.ovalForecast': 'PRÉVISION {time}',
   'home.share': "Partager l’aurore maintenant",
   'home.shareText': "Aurore maintenant : {l1}, {l2} (Kp {kp}).",

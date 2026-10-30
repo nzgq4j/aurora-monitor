@@ -436,7 +436,7 @@ export const de: Messages = {
   'home.live': 'LIVE · WELTWEIT · DATEN {time}',
   'home.liveUnavailable': 'LIVE-DATEN NICHT VERFÜGBAR',
   'home.scale': 'Kp-Skala, aktuelle Stufe {level}',
-  'home.oval': 'POLARLICHTOVAL · OVATION',
+  'home.oval': 'POLARLICHTOVAL',
   'home.ovalForecast': 'VORHERSAGE {time}',
   'home.share': "Polarlicht jetzt teilen",
   'home.shareText': "Polarlicht jetzt: {l1}, {l2} (Kp {kp}).",

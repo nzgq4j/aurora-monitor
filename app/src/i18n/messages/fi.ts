@@ -436,7 +436,7 @@ export const fi: Messages = {
   'home.live': "LIVE · MAAILMANLAAJUINEN · DATA {time}",
   'home.liveUnavailable': "LIVE-DATA EI SAATAVILLA",
   'home.scale': "Kp-asteikko, nykyinen taso {level}",
-  'home.oval': "REVONTULIVYÖHYKE · OVATION",
+  'home.oval': "REVONTULIVYÖHYKE",
   'home.ovalForecast': "ENNUSTE {time}",
   'home.share': "Jaa revontulitilanne nyt",
   'home.shareText': "Revontulet nyt: {l1}, {l2} (Kp {kp}).",

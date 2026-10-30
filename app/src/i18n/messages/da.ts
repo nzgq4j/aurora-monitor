@@ -436,7 +436,7 @@ export const da: Messages = {
   'home.live': "LIVE · HELE VERDEN · DATA {time}",
   'home.liveUnavailable': "LIVEDATA IKKE TILGÆNGELIGE",
   'home.scale': "Kp-skala, aktuelt niveau {level}",
-  'home.oval': "NORDLYSOVAL · OVATION",
+  'home.oval': "NORDLYSOVAL",
   'home.ovalForecast': "PROGNOSE {time}",
   'home.share': "Del nordlyset nu",
   'home.shareText': "Nordlys nu: {l1}, {l2} (Kp {kp}).",
