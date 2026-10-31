@@ -79,6 +79,14 @@ export const photoFile = (p: GalleryPhoto) => new File([p.photo], p.name, { type
 /** iPhone and iPad, where the share sheet's Save Image is the way into Photos. */
 export const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
+/** Share one image through the Android app's share sheet; false outside the app or if it fails. */
+export async function shareInApp(file: File): Promise<boolean> {
+  const native = nativePhotos();
+  if (!native) return false;
+  try { await native.share({ photos: [{ name: file.name, data: await base64(file) }] }); return true; }
+  catch { return false; }
+}
+
 export type ExportResult = 'done' | 'cancelled' | 'downloaded' | 'tap' | 'album' | 'denied' | 'failed';
 
 /** The Android app's photo plugin (mobile/android … PhotoLibraryPlugin.java); null on the website. */
