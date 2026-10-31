@@ -65,9 +65,9 @@ export const solarInfo = (t: T): InfoContent => ({
 export const sunInfo = (t: T): InfoContent => ({
   heading: t('info.sun.h'), lead: t('info.sun.lead'),
   metrics: [
-    { name: t('info.sun.m.regions'), text: t('info.sun.regions') },
+    { name: t('info.sun.m.regions'), text: t('info.sun.regions'), image: '/api/sunspots/image' },
     // Each live view, with what it shows.
-    ...SDO_IMAGES.map(i => ({ name: i.label, text: t(`sdo.${i.id}.info`) })),
+    ...SDO_IMAGES.map(i => ({ name: i.label, text: t(`sdo.${i.id}.info`), image: i.url })),
     { name: t('sunLapse.h'), text: t('info.sun.lapse') },
   ],
 });
