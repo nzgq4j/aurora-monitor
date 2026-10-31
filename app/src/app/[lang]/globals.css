@@ -741,7 +741,9 @@ button.you-sheet-backdrop { position: absolute; inset: 0; background: rgba(0, 0,
 .you-sheet-text { font-size: 15px; line-height: 1.45; color: var(--soft); }
 button.you-danger { color: var(--red); border-color: var(--red); }
 button.you-danger-fill { background: var(--red); color: #000; }
-.you-sheet { transition: transform .18s ease-out; touch-action: pan-y; }
+.you-sheet { transition: transform .18s ease-out; touch-action: pan-y; overscroll-behavior: contain; }
+/* Nothing behind a sheet scrolls: the backdrop takes no panning (the page itself is pinned by BottomSheet). */
+.you-sheet-wrap, button.you-sheet-backdrop { touch-action: none; overscroll-behavior: contain; }
 .you-sheet.dragging { transition: none; }
 button.you-sheet-backdrop { transition: opacity .18s ease-out; }
 @keyframes you-up { from { transform: translateY(100%); } }
