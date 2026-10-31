@@ -190,7 +190,7 @@ export function Home({ data, season }: { data: NowData; season?: AccountData }) 
   };
 
   return (
-    <main data-screen-label="Now" className="wrap" style={{ padding: '40px var(--gutter) 48px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <main data-screen-label="Now" className="wrap" style={{ padding: 'clamp(12px, 3vw, 40px) var(--gutter) 48px', display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* Now: the global picture (Kp, headline, oval), as a card above the verdict for your location. */}
       <section className="now-card" aria-label={t('nav.now')} ref={nowCard}>
         <div className="hero-copy">
