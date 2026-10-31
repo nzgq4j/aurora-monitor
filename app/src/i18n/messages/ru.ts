@@ -445,7 +445,7 @@ export const ru: Messages = {
   'home.hemi.low': "Низкая",
   'home.density.dense': "Высокая",
   'home.density.typical': "Обычная",
-  'home.live': "ОНЛАЙН · ВЕСЬ МИР · ДАННЫЕ {time}",
+  'home.live': 'ОНЛАЙН · {time}',
   'home.liveUnavailable': "ДАННЫЕ ОНЛАЙН НЕДОСТУПНЫ",
   'home.scale': "Шкала Kp, текущий уровень {level}",
   'home.oval': "АВРОРАЛЬНЫЙ ОВАЛ",

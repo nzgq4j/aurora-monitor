@@ -413,10 +413,11 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 .tonight-word { font-size: clamp(30px, 9vw, 40px); line-height: .95; margin: 0; }
 .tonight-score { font-size: 30px; }
 .tonight-scene { flex: none; display: block; width: 120px; height: 80px; border-radius: 12px; }
-.tonight-place { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line-2); background: #0b0d0c; color: #fff; font: 600 15px var(--f-body); }
+.tonight-place { display: inline-flex; align-items: center; gap: 6px; min-width: 0; flex: 0 1 auto; min-height: 40px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line-2); background: #0b0d0c; color: #fff; font: 600 15px var(--f-body); }
 .tonight-share { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 999px; border: 1px solid var(--line-2); background: #0b0d0c; color: #fff; }
 .tonight-share:active { border-color: var(--green); color: var(--green); }
-.tonight-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.tonight-badges { display: flex; flex-wrap: nowrap; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.tonight-badges::-webkit-scrollbar { display: none; }
 /* Sunspot regions (components/SunspotRegions): labelled disc beside the region table. */
 .sun-regions { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 24px; align-items: start; }
 .sun-disc { position: relative; margin: 0; display: flex; flex-direction: column; gap: 8px; }
@@ -461,7 +462,7 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 .sighting-levels { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
 .sighting-levels .btn { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line-2); font-size: 13px; font-weight: 700; color: var(--soft); }
 .sighting-levels .btn[aria-pressed="true"] { border-color: var(--green); color: var(--green); }
-.tonight-badges span { padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line-2); background: #0e110f; font-size: 13px; font-weight: 600; color: var(--soft); white-space: nowrap; }
+.tonight-badges span { flex: none; display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line-2); background: #0e110f; font-size: 13px; font-weight: 600; color: var(--soft); white-space: nowrap; }
 /* Now page detail cards (components/DetailCard): title and one-line summary; folded on phones until opened. */
 .detail-card { display: flex; flex-direction: column; gap: 14px; padding-top: 24px; }
 .detail-title { margin: 0; font: inherit; }
@@ -1096,3 +1097,14 @@ html.intro-open { overflow: hidden; }
 .space-tile-value { font: 800 30px/1.1 var(--f-display); white-space: nowrap; }
 .space-tile-value small { font-size: 15px; font-weight: 700; margin-left: 4px; }
 .space-tile-pill { padding: 4px 12px; border-radius: 999px; border: 1px solid; font-size: 13px; font-weight: 700; background: rgba(255, 255, 255, .04); }
+
+/* One line, cut short with an ellipsis rather than wrapping (card headers, #245). */
+.one-line { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tonight-updated { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; white-space: nowrap; }
+.tonight-place svg { flex: none; }
+@media (max-width: 374px) {
+  /* Small phones: the place name matters more than when Tonight was updated; chips a little tighter. */
+  .tonight .tonight-updated { display: none; }
+  .tonight-badges { gap: 5px; }
+  .tonight-badges span { padding: 4px 8px; font-size: 12.5px; gap: 4px; }
+}

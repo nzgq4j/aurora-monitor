@@ -433,7 +433,7 @@ export const en = {
   'home.hemi.low': 'Low',
   'home.density.dense': 'Dense',
   'home.density.typical': 'Typical',
-  'home.live': 'LIVE · WORLDWIDE · DATA {time}',
+  'home.live': 'LIVE · {time}',
   'home.liveUnavailable': 'LIVE DATA UNAVAILABLE',
   'home.scale': 'Kp scale, current level {level}',
   'home.oval': 'AURORAL OVAL',

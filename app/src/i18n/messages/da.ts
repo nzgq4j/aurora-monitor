@@ -433,7 +433,7 @@ export const da: Messages = {
   'home.hemi.low': "Lav",
   'home.density.dense': "Tæt",
   'home.density.typical': "Typisk",
-  'home.live': "LIVE · HELE VERDEN · DATA {time}",
+  'home.live': 'LIVE · {time}',
   'home.liveUnavailable': "LIVEDATA IKKE TILGÆNGELIGE",
   'home.scale': "Kp-skala, aktuelt niveau {level}",
   'home.oval': "NORDLYSOVAL",

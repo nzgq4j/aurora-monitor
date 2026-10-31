@@ -195,9 +195,9 @@ export function Home({ data, season }: { data: NowData; season?: AccountData }) 
       <section className="now-card" aria-label={t('nav.now')} ref={nowCard}>
         <div className="hero-copy">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-            <div className="kicker" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: updated ? 'var(--green)' : C.muted }} />
-              {kicker}
+            <div className="kicker one-line" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ flex: 'none', width: 8, height: 8, borderRadius: '50%', background: updated ? 'var(--green)' : C.muted }} />
+              <span className="one-line">{kicker}</span>
             </div>
             <button type="button" className="btn tonight-share" onClick={shareNow} aria-label={t('home.share')} title={t('home.share')}>
               <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -218,10 +218,16 @@ export function Home({ data, season }: { data: NowData; season?: AccountData }) 
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 520, width: '100%', justifySelf: 'center' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-            <span style={{ fontFamily: 'var(--f-display)', fontWeight: 800, fontSize: 14, color: 'var(--green)', letterSpacing: '.04em' }}>{t('home.oval')}</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-              <span className="label">{data.oval?.forecast ? t('home.ovalForecast', { time: clock(data.oval.forecast) }) : '—'}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+            <span className="one-line" style={{ fontFamily: 'var(--f-display)', fontWeight: 800, fontSize: 14, color: 'var(--green)', letterSpacing: '.04em' }}>{t('home.oval')}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flex: 'none' }}>
+              {/* A clock and the forecast time (the full wording is its label), so the header stays on one line. */}
+              {data.oval?.forecast ? (
+                <span className="label tonight-updated" title={t('home.ovalForecast', { time: clock(data.oval.forecast) })} aria-label={t('home.ovalForecast', { time: clock(data.oval.forecast) })}>
+                  <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M12 7v5l3 2" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+                  <span aria-hidden="true">{clock(data.oval.forecast)}</span>
+                </span>
+              ) : <span className="label">—</span>}
               <InfoButton title={t('info.oval.title')} content={ovalInfo(t)} />
             </span>
           </div>

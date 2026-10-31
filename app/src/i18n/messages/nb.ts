@@ -433,7 +433,7 @@ export const nb: Messages = {
   'home.hemi.low': "Lav",
   'home.density.dense': "Tett",
   'home.density.typical': "Normal",
-  'home.live': "SANNTID · HELE VERDEN · DATA {time}",
+  'home.live': 'SANNTID · {time}',
   'home.liveUnavailable': "SANNTIDSDATA UTILGJENGELIG",
   'home.scale': "Kp-skala, nåværende nivå {level}",
   'home.oval': "NORDLYSOVALEN",
