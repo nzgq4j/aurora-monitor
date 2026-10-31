@@ -9,7 +9,7 @@ Polar Lights belohnt den Blick zum Himmel. Öffnen Sie auf dem Handy **Profil** 
 
 ## Punkte und Ränge
 
-Sie erhalten Punkte für [bestätigte Sichtungen](/support/start/i-saw-it), für die Bestätigung der Meldung eines anderen Mitglieds sowie für Fotos und die „Hilfreich“-Stimmen, die sie bekommen. Mit Punkten steigen Sie im Rang auf:
+Sie erhalten Punkte für [bestätigte Sichtungen](/support/start/i-saw-it), für die Bestätigung der Meldung eines anderen Mitglieds sowie für Fotos und die „Schön“-Stimmen, die sie bekommen. Mit Punkten steigen Sie im Rang auf:
 
 | Rang | Punkte |
 | --- | --- |

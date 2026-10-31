@@ -1,6 +1,6 @@
 ---
 title: Ein Foto in der Galerie teilen
-summary: Teilen Sie Ihre Polarlichtfotos mit anderen Mitgliedern und stimmen Sie für die Fotos ab, die Sie hilfreich finden.
+summary: Teilen Sie Ihre Polarlichtfotos mit anderen Mitgliedern und stimmen Sie für die Fotos ab, die Sie schön finden.
 order: 90
 ---
 In der **Galerie** finden Sie Polarlichtfotos von Mitgliedern. Ansehen kann sie jeder; zum Teilen oder Abstimmen brauchen Sie ein Konto.
@@ -9,7 +9,7 @@ In der **Galerie** finden Sie Polarlichtfotos von Mitgliedern. Ansehen kann sie 
 
 Mit den Schaltflächen oben wählen Sie, welche Fotos Sie sehen: **Heute Nacht**, **Dieser Sturm**, **In meiner Nähe** (im Umkreis von 500 km um Ihren Heimatort), **Beliebt**, **Neueste** und, sobald Sie angemeldet sind, **Meine Galerie**. Tippen Sie auf ein Foto, um zu sehen, wo und wann es aufgenommen wurde, den Kp-Wert zu diesem Zeitpunkt und die Kameraeinstellungen.
 
-Tippen Sie bei Fotos, die zeigen, wie das Polarlicht aussah, auf **Hilfreich**. Diese Stimmen bringen dem Fotografen oder der Fotografin Punkte.
+Tippen Sie bei Fotos, die Ihnen gefallen, auf **Schön**. Diese Stimmen bringen dem Fotografen oder der Fotografin Punkte.
 
 ## Ein Foto teilen
 

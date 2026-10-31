@@ -1,6 +1,6 @@
 ---
 title: Publica una foto en la galería
-summary: Comparte tus fotos de auroras con otros miembros y vota las que te parezcan útiles.
+summary: Comparte tus fotos de auroras con otros miembros y vota las que te parezcan preciosas.
 order: 90
 ---
 La **Galería** reúne las fotos de auroras de los miembros. Cualquiera puede verlas; para publicar o votar necesitas una cuenta.
@@ -9,7 +9,7 @@ La **Galería** reúne las fotos de auroras de los miembros. Cualquiera puede ve
 
 Los botones de arriba eligen qué fotos ves: **Esta noche**, **Esta tormenta**, **Cerca de mí** (a menos de 500 km de tu ubicación principal), **Mejores**, **Recientes** y, cuando has iniciado sesión, **Mi galería**. Toca una foto para ver dónde y cuándo se hizo, el Kp en ese momento y los ajustes de la cámara.
 
-Toca **Útil** en las fotos que muestran cómo era la aurora. Los votos de «Útil» dan puntos al autor de la foto.
+Toca **Precioso** en las fotos que te gusten. Los votos de «Precioso» dan puntos al autor de la foto.
 
 ## Publica una foto
 

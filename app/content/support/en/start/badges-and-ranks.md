@@ -9,7 +9,7 @@ Polar Lights rewards watching the sky. Open **You** → **Badges** on a phone.
 
 ## Points and ranks
 
-You earn points for [confirmed sightings](/support/start/i-saw-it), for backing up another member's report, and for photos and the helpful votes they get. Points move you up the ranks:
+You earn points for [confirmed sightings](/support/start/i-saw-it), for backing up another member's report, and for photos and the beautiful votes they get. Points move you up the ranks:
 
 | Rank | Points |
 | --- | --- |

@@ -9,7 +9,7 @@ Polar Lights premia que mires al cielo. En el móvil, abre **Perfil** → **Insi
 
 ## Puntos y rangos
 
-Ganas puntos con los [avistamientos confirmados](/support/start/i-saw-it), por respaldar el aviso de otro miembro, y con tus fotos y los votos de «Útil» que reciben. Los puntos te hacen subir de rango:
+Ganas puntos con los [avistamientos confirmados](/support/start/i-saw-it), por respaldar el aviso de otro miembro, y con tus fotos y los votos de «Precioso» que reciben. Los puntos te hacen subir de rango:
 
 | Rango | Puntos |
 | --- | --- |

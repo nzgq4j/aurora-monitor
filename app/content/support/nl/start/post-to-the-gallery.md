@@ -1,6 +1,6 @@
 ---
 title: Een foto in de galerij plaatsen
-summary: Deel je poollichtfoto's met andere leden, en stem op de foto's die je nuttig vindt.
+summary: Deel je poollichtfoto's met andere leden, en stem op de foto's die je prachtig vindt.
 order: 90
 ---
 In de **Galerij** staan poollichtfoto's van leden. Iedereen kan kijken; om te plaatsen of te stemmen heb je een account nodig.
@@ -9,7 +9,7 @@ In de **Galerij** staan poollichtfoto's van leden. Iedereen kan kijken; om te pl
 
 Met de knoppen bovenaan kies je welke foto's je ziet: **Vannacht**, **Deze storm**, **Bij mij** (binnen 500 km van je thuislocatie), **Populair**, **Recent** en, als je bent ingelogd, **Mijn galerij**. Tik op een foto om te zien waar en wanneer hij is gemaakt, wat de Kp op dat moment was en met welke camera-instellingen.
 
-Tik op **Nuttig** bij foto's die laten zien hoe het poollicht eruitzag. Stemmen voor Nuttig leveren de fotograaf punten op.
+Tik op **Prachtig** bij foto's die je mooi vindt. Stemmen voor Prachtig leveren de fotograaf punten op.
 
 ## Een foto plaatsen
 

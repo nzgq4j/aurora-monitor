@@ -1,6 +1,6 @@
 ---
 title: Publier une photo dans la galerie
-summary: Partagez vos photos d’aurores avec les autres membres, et votez pour celles que vous trouvez utiles.
+summary: Partagez vos photos d’aurores avec les autres membres, et votez pour celles que vous trouvez magnifiques.
 order: 90
 ---
 La **Galerie** rassemble les photos d’aurores des membres. Tout le monde peut la consulter ; il faut un compte pour publier ou voter.
@@ -9,7 +9,7 @@ La **Galerie** rassemble les photos d’aurores des membres. Tout le monde peut 
 
 Les boutons en haut déterminent les photos affichées : **Ce soir**, **Cette tempête**, **Près de moi** (à moins de 500 km de votre Domicile), **Les meilleures**, **Récentes** et, une fois connecté, **Ma galerie**. Touchez une photo pour voir où et quand elle a été prise, le Kp à ce moment-là et les réglages de l’appareil photo.
 
-Touchez **Utile** sur les photos qui montrent à quoi ressemblait l’aurore. Les votes « Utile » rapportent des points au photographe.
+Touchez **Magnifique** sur les photos qui vous plaisent. Les votes « Magnifique » rapportent des points au photographe.
 
 ## Publier une photo
 

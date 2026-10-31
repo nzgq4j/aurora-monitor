@@ -9,7 +9,7 @@ Polar Lights belønner dig for at holde øje med himlen. Åbn **Dig** → **Mær
 
 ## Point og rang
 
-Du optjener point for [bekræftede observationer](/support/start/i-saw-it), for at bakke et andet medlems melding op og for billeder og de nyttig-stemmer, de får. Point flytter dig op i rang:
+Du optjener point for [bekræftede observationer](/support/start/i-saw-it), for at bakke et andet medlems melding op og for billeder og de smuk-stemmer, de får. Point flytter dig op i rang:
 
 | Rang | Point |
 | --- | --- |

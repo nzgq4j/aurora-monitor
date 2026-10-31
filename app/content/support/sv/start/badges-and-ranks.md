@@ -9,7 +9,7 @@ Polar Lights belönar dig för att du håller koll på himlen. Öppna **Du** →
 
 ## Poäng och rang
 
-Du får poäng för [bekräftade observationer](/support/start/i-saw-it), för att styrka en annan medlems rapport och för foton och de hjälpsam-röster de får. Poängen tar dig uppåt i rang:
+Du får poäng för [bekräftade observationer](/support/start/i-saw-it), för att styrka en annan medlems rapport och för foton och de vacker-röster de får. Poängen tar dig uppåt i rang:
 
 | Rang | Poäng |
 | --- | --- |

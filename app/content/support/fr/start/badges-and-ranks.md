@@ -9,7 +9,7 @@ Polar Lights récompense ceux qui observent le ciel. Sur un téléphone, ouvrez 
 
 ## Points et rangs
 
-Vous gagnez des points avec vos [observations confirmées](/support/start/i-saw-it), en confirmant le signalement d’un autre membre, et avec vos photos et les votes « Utile » qu’elles reçoivent. Les points vous font monter en rang :
+Vous gagnez des points avec vos [observations confirmées](/support/start/i-saw-it), en confirmant le signalement d’un autre membre, et avec vos photos et les votes « Magnifique » qu’elles reçoivent. Les points vous font monter en rang :
 
 | Rang | Points |
 | --- | --- |

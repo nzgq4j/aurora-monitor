@@ -9,7 +9,7 @@ Polar Lights beloont het kijken naar de lucht. Open op een telefoon **Profiel** 
 
 ## Punten en rangen
 
-Je verdient punten met [bevestigde waarnemingen](/support/start/i-saw-it), door de melding van een ander lid te bevestigen, en met foto's en de stemmen voor **Nuttig** die ze krijgen. Met punten klim je door de rangen:
+Je verdient punten met [bevestigde waarnemingen](/support/start/i-saw-it), door de melding van een ander lid te bevestigen, en met foto's en de stemmen voor **Prachtig** die ze krijgen. Met punten klim je door de rangen:
 
 | Rang | Punten |
 | --- | --- |
