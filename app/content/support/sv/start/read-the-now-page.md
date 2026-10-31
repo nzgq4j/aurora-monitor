@@ -36,7 +36,7 @@ Tiderna på kortet är lokala för platsen.
 - **Mörkt:** om solen är tillräckligt långt under horisonten, och till när.
 - **Kräver:** det Kp som din plats brukar behöva innan norrsken syns där.
 
-Varje kort har **Vad det här visar** med en utförligare förklaring.
+Tryck på **i** i hörnet av ett kort för en kort och enkel förklaring av allt på kortet.
 
 ![Din himmel: norrsken, moln, mörker och det Kp som din plats behöver](screen:your-sky)
 

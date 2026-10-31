@@ -36,7 +36,7 @@ Tidene på kortet er lokale for stedet.
 - **Mørkt:** om sola er langt nok under horisonten, og til når.
 - **Trenger:** Kp-en stedet ditt vanligvis trenger før nordlys kan ses der.
 
-Hvert kort har **Hva dette viser** med en grundigere forklaring.
+Trykk på **i** i hjørnet av et kort for en kort og enkel forklaring av alt på kortet.
 
 ![Din himmel: nordlys, skyer, mørke og Kp-en stedet ditt trenger](screen:your-sky)
 

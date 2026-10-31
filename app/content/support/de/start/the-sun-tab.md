@@ -15,7 +15,7 @@ Der Sonnenwind im Moment, gemessen etwa 1,5 Millionen km von der Erde entfernt i
 - **Tempo** und **Dichte:** Schnellerer, dichterer Sonnenwind drückt stärker auf das Erdmagnetfeld.
 - **Hemi-Leistung:** wie viel Energie das Polarlicht in die Atmosphäre abgibt.
 
-Zu jedem Wert gibt es **Was das zeigt** mit einer ausführlicheren Erklärung.
+Tippen Sie auf das **i** in der Ecke einer Karte, um eine kurze, einfache Erklärung zu allem darauf zu sehen.
 
 ## Aktivität der Sonne
 

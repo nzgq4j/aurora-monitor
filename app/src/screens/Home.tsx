@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { C, ENTITLEMENTS, kpBarColor } from '../data';
 import { KpBarChart, POLAR_MIN_LAT, PolarOval, type KpBar } from '../components/Charts';
 import { Locked } from '../components/Locked';
-import { Explain } from '../components/Explain';
+import { InfoButton } from '../components/InfoSheet';
+import { outlookInfo, ovalInfo, stormInfo } from '../lib/cardInfo';
 import { DetailCard } from '../components/DetailCard';
 import { StormOutlook, stormSummary, useDay, useStorm } from '../components/StormOutlook';
 import { outlookLine, summaryText } from '../lib/detailSummaries';
@@ -23,7 +24,7 @@ import { nowCardBlob } from '../lib/shareCard';
 import { SITE } from '../lib/site';
 import { useStore } from '../store';
 import { useI18n, type I18n } from '../i18n/I18n';
-import { headLead } from '../i18n/core';
+import { headLead, headText } from '../i18n/core';
 
 const hhmm = (t: number) => new Date(t).toISOString().slice(11, 16);
 
@@ -89,6 +90,7 @@ function Outlook({ data }: { data: NowData }) {
   const line = outlookLine(data.series, data.fetchedAt);
   return (
     <DetailCard id="outlook" title={<>{headLead(t('outlook.h2a'))}<span className="hl">{t('outlook.h2b')}</span></>}
+      aside={<InfoButton title={headText(t('outlook.h2a'), t('outlook.h2b'))} content={outlookInfo(t)} />}
       summary={summaryText(i18n, line, line.at !== undefined ? date(line.at, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }) : undefined)}>
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <div role="group" aria-label={t('outlook.detail')} style={{ display: 'flex', padding: 4, border: '1px solid var(--line-2)', borderRadius: 999, background: '#111', flex: '1 1 300px', maxWidth: 420 }}>
@@ -108,7 +110,6 @@ function Outlook({ data }: { data: NowData }) {
           title={view === 'hour' ? t('feat.kp3h') : t('feat.outlook27')}
           body={view === 'hour' ? t('outlook.locked.hour') : t('outlook.locked.month')} />
       )}
-      <Explain>{t(`outlook.info.${view}`)}</Explain>
     </DetailCard>
   );
 }
@@ -122,7 +123,8 @@ function StormSection({ data }: { data: NowData }) {
   const top = ahead.length ? ahead.reduce((a, b) => (b.kp > a.kp ? b : a)) : null;
   const peak = top && { kp: top.kp, at: top.t };
   return (
-    <DetailCard id="storm" title={<>{headLead(t('storm.h2a'))}<span className="hl">{t('storm.h2b')}</span></>} summary={stormSummary(storm, t, day)}>
+    <DetailCard id="storm" title={<>{headLead(t('storm.h2a'))}<span className="hl">{t('storm.h2b')}</span></>}
+      aside={<InfoButton title={headText(t('storm.h2a'), t('storm.h2b'))} content={stormInfo(t)} />} summary={stormSummary(storm, t, day)}>
       <StormOutlook peak={peak} />
     </DetailCard>
   );
@@ -218,14 +220,16 @@ export function Home({ data, season }: { data: NowData; season?: AccountData }) 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 520, width: '100%', justifySelf: 'center' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
             <span style={{ fontFamily: 'var(--f-display)', fontWeight: 800, fontSize: 14, color: 'var(--green)', letterSpacing: '.04em' }}>{t('home.oval')}</span>
-            <span className="label">{data.oval?.forecast ? t('home.ovalForecast', { time: clock(data.oval.forecast) }) : '—'}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              <span className="label">{data.oval?.forecast ? t('home.ovalForecast', { time: clock(data.oval.forecast) }) : '—'}</span>
+              <InfoButton title={t('info.oval.title')} content={ovalInfo(t)} />
+            </span>
           </div>
           <PolarOval points={data.oval?.points ?? []} edge={data.oval?.edge ?? []} marker={shownPlace} />
           <span style={{ fontSize: 12, color: 'var(--muted)' }}>
             <span style={{ display: 'inline-block', width: 16, borderTop: `1.5px dashed ${C.red}`, verticalAlign: 'middle', marginRight: 6 }} />
             {t('home.ovalEdge')}
           </span>
-          <Explain>{t('home.oval.info')}</Explain>
           <button type="button" className="btn" onClick={() => go('map')} style={{ alignSelf: 'flex-start', fontSize: 14, fontWeight: 700, color: 'var(--green)' }}>{t('home.openMap')}</button>
           {shownPlace && shownPlace.lat < POLAR_MIN_LAT && (
             <span style={{ fontSize: 12, color: 'var(--muted)' }}>

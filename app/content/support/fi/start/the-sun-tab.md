@@ -15,7 +15,7 @@ Aurinkotuuli juuri nyt, mitattuna noin 1,5 miljoonan km:n päässä Aurinkoa koh
 - **Nopeus** ja **Tiheys:** nopeampi ja tiheämpi tuuli painaa Maan magneettikenttää voimakkaammin.
 - **Pallonp. teho:** kuinka paljon energiaa revontulet tuovat ilmakehään.
 
-Jokaisessa on **Mitä tämä näyttää**, josta saat tarkemman selityksen.
+Napauta kortin kulmassa olevaa **i**:tä, niin saat lyhyen ja selkeän selityksen kaikesta, mitä kortissa on.
 
 ## Auringon aktiivisuus
 

@@ -15,7 +15,7 @@ Solvinden just nu, mätt ungefär 1,5 miljoner km från jorden i riktning mot so
 - **Hastighet** och **Densitet:** snabbare och tätare solvind trycker hårdare på jordens magnetfält.
 - **Hemi-effekt:** hur mycket energi norrskenet tillför atmosfären.
 
-Varje värde har **Vad det här visar** med en utförligare förklaring.
+Tryck på **i** i hörnet av ett kort för en kort och enkel förklaring av allt på kortet.
 
 ## Solaktivitet
 

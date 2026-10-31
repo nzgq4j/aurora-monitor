@@ -15,7 +15,7 @@ De zonnewind op dit moment, gemeten op ongeveer 1,5 miljoen km in de richting va
 - **Snelheid** en **Dichtheid:** snellere, dichtere wind drukt harder op het magnetisch veld van de aarde.
 - **Hemi-kracht:** hoeveel energie het poollicht in de atmosfeer brengt.
 
-Elk ervan heeft **Wat dit laat zien** met een uitgebreidere uitleg.
+Tik op de **i** in de hoek van een kaart voor een korte, eenvoudige uitleg van alles erop.
 
 ## Activiteit van de zon
 

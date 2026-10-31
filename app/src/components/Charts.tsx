@@ -90,7 +90,7 @@ export function PolarOval({ points, edge, marker }: PolarProps) {
 }
 
 /** Width of an element in CSS pixels, so charts draw text at its true size on every screen. */
-function useWidth<T extends HTMLElement>(): [React.RefObject<T | null>, number] {
+export function useWidth<T extends HTMLElement>(): [React.RefObject<T | null>, number] {
   const ref = useRef<T>(null);
   const [w, setW] = useState(0);
   useEffect(() => {
@@ -189,93 +189,11 @@ export function KpBarChart({ bars, unit, now, minBar = 0, label }: { bars: KpBar
 }
 
 /** Round axis steps (1, 2, 2.5, 5 × 10ⁿ) for about `count` ticks. */
-function ticks(lo: number, hi: number, count = 4): number[] {
+export function ticks(lo: number, hi: number, count = 4): number[] {
   const raw = (hi - lo) / count || 1;
   const p = 10 ** Math.floor(Math.log10(raw));
   const step = [1, 2, 2.5, 5, 10].map(m => m * p).find(s => s >= raw) ?? 10 * p;
   const out: number[] = [];
   for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(+v.toFixed(6));
   return out;
-}
-
-interface LineProps {
-  title: string;
-  unit: string;
-  points: { t: number; v: number | null }[];
-  color: string;
-  decimals?: number;
-  /** Values after this time are forecasts and drawn dashed. */
-  forecastAfter?: number;
-  /** Always include zero on the axis and draw it brighter (for Bz). */
-  zero?: boolean;
-  note?: string;
-  /** What the chart shows and how to read it, folded away until asked for. */
-  info?: string;
-}
-
-/** Time series panel with the latest value, UT time axis and gaps where data is missing. */
-export function LineChart({ title, unit, points, color, decimals = 0, forecastAfter, zero, note, info }: LineProps) {
-  const [ref, W] = useWidth<HTMLDivElement>();
-  const { t, num } = useI18n();
-  const H = 190, X0 = 44, X1 = W - 10, TOP = 10, BOT = 160;
-  const pts = points.filter((p): p is { t: number; v: number } => p.v !== null);
-  const last = [...pts].reverse().find(p => forecastAfter === undefined || p.t <= forecastAfter) ?? pts[pts.length - 1];
-  let lo = Math.min(...pts.map(p => p.v)), hi = Math.max(...pts.map(p => p.v));
-  if (zero) { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
-  const padY = (hi - lo) * 0.1 || 1;
-  lo -= padY; hi += padY;
-  const ys = ticks(lo, hi);
-  lo = Math.min(lo, ys[0]); hi = Math.max(hi, ys[ys.length - 1]);
-  const t0 = pts[0]?.t ?? 0, t1 = pts[pts.length - 1]?.t ?? 1;
-  const x = (t: number) => X0 + ((t - t0) / (t1 - t0 || 1)) * (X1 - X0);
-  const y = (v: number) => BOT - ((v - lo) / (hi - lo || 1)) * (BOT - TOP);
-  // Break the line across gaps longer than 20 minutes; split solid (measured) from dashed (forecast).
-  const paths: { d: string; dashed: boolean }[] = [];
-  let cur: { d: string; dashed: boolean } | null = null;
-  pts.forEach((p, i) => {
-    const dashed = forecastAfter !== undefined && p.t > forecastAfter;
-    const gap = i > 0 && p.t - pts[i - 1].t > 12e5;
-    if (!cur || gap || cur.dashed !== dashed) {
-      const start = cur && !gap ? `M${f(x(pts[i - 1].t))} ${f(y(pts[i - 1].v))} L` : 'M';
-      cur = { d: `${start}${f(x(p.t))} ${f(y(p.v))}`, dashed };
-      paths.push(cur);
-    } else cur.d += ` L${f(x(p.t))} ${f(y(p.v))}`;
-  });
-  const hours: number[] = [];
-  const span = t1 - t0, every = (span > 12 * 36e5 ? (W < 480 ? 6 : 3) : 1) * 36e5;
-  for (let t = Math.ceil(t0 / every) * every; t <= t1; t += every) hours.push(t);
-
-  return (
-    <figure style={{ margin: 0, display: 'flex', flexDirection: 'column', gap: 6, padding: '14px 14px 8px', border: '1px solid var(--line-2)', borderRadius: 14, background: '#070807' }}>
-      <figcaption style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-        <span style={{ fontWeight: 700, fontSize: 15 }}>{title}</span>
-        <span className="mono" style={{ fontSize: 13, color }}>{last ? `${num(last.v, decimals)} ${unit}` : '—'}</span>
-      </figcaption>
-      <div ref={ref} style={{ minHeight: H }}>
-        {W > 0 && pts.length > 1 && (
-          <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }} role="img"
-            aria-label={`${title}, ${t('chart.lastHours', { n: Math.round(span / 36e5) })}${last ? `, ${t('chart.latest', { value: `${num(last.v, decimals)} ${unit}` })}` : ''}`}>
-            {ys.map(v => (
-              <g key={v}>
-                <line x1={X0} x2={X1} y1={f(y(v))} y2={f(y(v))} style={{ stroke: '#fff', strokeOpacity: zero && v === 0 ? .35 : .07 }} />
-                <text x={X0 - 6} y={f(y(v)) + 4} style={{ ...monoText(10), textAnchor: 'end' }}>{num(v, String(v).split('.')[1]?.length ?? 0)}</text>
-              </g>
-            ))}
-            {hours.map(h => (
-              <text key={h} x={f(x(h))} y={BOT + 20} style={{ ...monoText(10), textAnchor: 'middle' }}>{new Date(h).toISOString().slice(11, 16)}</text>
-            ))}
-            {paths.map((p, i) => <path key={i} d={p.d} style={{ fill: 'none', stroke: color, strokeWidth: 1.6, strokeDasharray: p.dashed ? '4 4' : undefined, strokeLinejoin: 'round' }} />)}
-          </svg>
-        )}
-        {W > 0 && pts.length <= 1 && <div style={{ height: H, display: 'grid', placeItems: 'center', color: C.muted, fontWeight: 600 }}>{t('chart.noRecent')}</div>}
-      </div>
-      {note && <span style={{ fontSize: 12, color: C.muted }}>{note}</span>}
-      {info && (
-        <details className="toggle-info">
-          <summary>{t('chart.explain')}</summary>
-          <p>{info}</p>
-        </details>
-      )}
-    </figure>
-  );
 }

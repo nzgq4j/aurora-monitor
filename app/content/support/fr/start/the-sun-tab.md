@@ -15,7 +15,7 @@ Le vent solaire en ce moment, mesuré à environ 1,5 million de km de la Terre e
 - **Vitesse** et **Densité :** un vent plus rapide et plus dense exerce une pression plus forte sur le champ magnétique terrestre.
 - **Puiss. hémi :** la quantité d’énergie que l’aurore transmet à l’atmosphère.
 
-Chacune propose **Ce que cela montre** pour une explication plus complète.
+Touchez le **i** dans le coin d’une carte pour une explication courte et simple de tout ce qu’elle affiche.
 
 ## Activité solaire
 

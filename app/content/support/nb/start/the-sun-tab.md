@@ -15,7 +15,7 @@ Solvinden akkurat nå, målt omtrent 1,5 millioner km fra jorda i retning sola, 
 - **Fart** og **Tetthet:** raskere og tettere solvind presser hardere på jordas magnetfelt.
 - **Hemi-effekt:** hvor mye energi nordlyset tilfører atmosfæren.
 
-Hver av dem har **Hva dette viser** med en grundigere forklaring.
+Trykk på **i** i hjørnet av et kort for en kort og enkel forklaring av alt på kortet.
 
 ## Solaktivitet
 

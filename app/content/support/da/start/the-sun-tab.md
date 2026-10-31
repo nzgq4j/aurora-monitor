@@ -15,7 +15,7 @@ Solvinden lige nu, målt ca. 1,5 millioner km ude i retning af Solen, så ændri
 - **Hastighed** og **Tæthed:** hurtigere og tættere solvind presser hårdere på Jordens magnetfelt.
 - **Hemi-effekt:** hvor meget energi nordlyset afsætter i atmosfæren.
 
-Hver af dem har **Hvad det viser** med en mere udførlig forklaring.
+Tryk på **i** i et korts hjørne for en kort og enkel forklaring af alt på kortet.
 
 ## Solaktivitet
 

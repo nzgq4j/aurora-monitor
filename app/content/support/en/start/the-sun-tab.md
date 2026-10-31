@@ -15,7 +15,7 @@ The solar wind right now, measured about 1.5 million km towards the Sun, so chan
 - **Speed** and **Density:** faster, denser wind pushes harder on Earth's magnetic field.
 - **Hemi power:** how much energy the aurora is putting into the atmosphere.
 
-Each one has **What this shows** for a fuller explanation.
+Tap the **i** in a card's corner for a short, simple explanation of everything on it.
 
 ## Solar activity
 
