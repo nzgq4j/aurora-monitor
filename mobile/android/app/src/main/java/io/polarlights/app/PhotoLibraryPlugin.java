@@ -31,7 +31,8 @@ import org.json.JSONObject;
 /**
  * Sky view photos from the web gallery (#99): saved into the phone's photo library in a "Polar Lights"
  * album (Pictures/Polar Lights), or handed to Android's share sheet. Called from the site as
- * Capacitor.Plugins.PhotoLibrary.save / .share with { photos: [{ name, data }] }, data being base64 JPEG.
+ * Capacitor.Plugins.PhotoLibrary.save / .share with { photos: [{ name, data }] }, data being base64 JPEG;
+ * share also takes an optional text, the post to go with the photos.
  */
 @CapacitorPlugin(
     name = "PhotoLibrary",
@@ -155,6 +156,9 @@ public class PhotoLibraryPlugin extends Plugin {
             }
             Intent send = new Intent(uris.size() == 1 ? Intent.ACTION_SEND : Intent.ACTION_SEND_MULTIPLE);
             send.setType("image/jpeg");
+            // The post to go with it (a caption and link), for the apps that take text with an image.
+            String text = call.getString("text");
+            if (text != null && !text.isEmpty()) send.putExtra(Intent.EXTRA_TEXT, text);
             if (uris.size() == 1) send.putExtra(Intent.EXTRA_STREAM, uris.get(0));
             else send.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
             send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);

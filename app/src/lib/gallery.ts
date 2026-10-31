@@ -79,18 +79,21 @@ export const photoFile = (p: GalleryPhoto) => new File([p.photo], p.name, { type
 /** iPhone and iPad, where the share sheet's Save Image is the way into Photos. */
 export const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-/** Share one image through the Android app's share sheet; false outside the app or if it fails. */
-export async function shareInApp(file: File): Promise<boolean> {
+/**
+ * Share one image through the Android app's share sheet, with `text` as the post where the app takes it
+ * (app builds from this change on; older builds share the image alone). False outside the app or if it fails.
+ */
+export async function shareInApp(file: File, text?: string): Promise<boolean> {
   const native = nativePhotos();
   if (!native) return false;
-  try { await native.share({ photos: [{ name: file.name, data: await base64(file) }] }); return true; }
+  try { await native.share({ photos: [{ name: file.name, data: await base64(file) }], ...(text ? { text } : {}) }); return true; }
   catch { return false; }
 }
 
 export type ExportResult = 'done' | 'cancelled' | 'downloaded' | 'tap' | 'album' | 'denied' | 'failed';
 
 /** The Android app's photo plugin (mobile/android … PhotoLibraryPlugin.java); null on the website. */
-type NativePhotos = Record<'save' | 'share', (o: { photos: { name: string; data: string }[] }) => Promise<unknown>>;
+type NativePhotos = Record<'save' | 'share', (o: { photos: { name: string; data: string }[]; text?: string }) => Promise<unknown>>;
 const nativePhotos = () => nativePlugin<NativePhotos>('PhotoLibrary');
 
 /** Running inside the Android app, which saves photos to its own album. */

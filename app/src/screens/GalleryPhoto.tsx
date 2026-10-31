@@ -9,6 +9,8 @@ import { useI18n } from '../i18n/I18n';
 import { rank } from '../lib/badges';
 import { blockOwner, feed, fileUrl, myMember, onePhoto, removePhoto, reportPhoto, toggleHelpful, type Photo, type ReportReason } from '../lib/community';
 import { inApp, shareInApp } from '../lib/gallery';
+import { photoCardBlob } from '../lib/shareCard';
+import { SITE } from '../lib/site';
 import { BottomSheet } from '../components/BottomSheet';
 import { Svg, kpColor, kpThirds } from './Gallery';
 import type { MessageKey } from '../i18n/core';
@@ -37,7 +39,7 @@ export function GalleryPhoto() {
   const router = useRouter();
   const { go } = useStore();
   const { user } = useAuth();
-  const { t, num, date } = useI18n();
+  const { t, num, date, locale } = useI18n();
   const camera = useCamera();
   const [id, setId] = useState<string | null>(null);
   const [p, setP] = useState<Photo | null | undefined>(undefined);
@@ -57,19 +59,30 @@ export function GalleryPhoto() {
     });
   }, [id, user]);
   useEffect(() => { if (user) void myMember().then(m => setAdmin(!!m?.isAdmin)); }, [user]);
-  // The photo as a file, fetched ahead of time: Safari only opens the share sheet straight from a tap,
-  // so nothing slow can happen between the tap and navigator.share.
+  // The share image, made ahead of time: Safari only opens the share sheet straight from a tap, so nothing
+  // slow can happen between the tap and navigator.share. A Polar Lights card of the photo (#241), or the
+  // photo itself if the card can't be drawn.
   const shareFile = useRef<File | null>(null);
   const path = p?.path;
   useEffect(() => {
     shareFile.current = null;
-    if (!path) return;
+    if (!p) return;
     let live = true;
-    fetch(fileUrl(path)).then(r => (r.ok ? r.blob() : null)).then(b => {
-      if (live && b) shareFile.current = new File([b], `polar-lights-${path.split('/').pop()}`, { type: b.type || 'image/jpeg' });
+    const name = `polar-lights-${p.path.split('/').pop()?.replace(/\.\w+$/, '')}.jpg`;
+    fetch(fileUrl(p.path)).then(r => (r.ok ? r.blob() : null)).then(async b => {
+      if (!live || !b) return;
+      shareFile.current = new File([b], name, { type: b.type || 'image/jpeg' });
+      const g = p.kp != null ? G(p.kp) : 0;
+      const card = await photoCardBlob(b, {
+        handle: p.handle, rank: t(`rank.${rank(p.points).id}` as MessageKey),
+        when: date(p.taken_at, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        place: p.place, kp: p.kp != null ? `Kp ${kpThirds(p.kp)}${g ? ` · G${g}` : ''}` : null,
+        kpColor: p.kp == null ? '#C9D0CB' : p.kp >= 6.66 ? '#F06A6A' : p.kp >= 4.66 ? '#E6B800' : '#C9D0CB', site: SITE.domain,
+      });
+      if (live && card) shareFile.current = new File([card], name, { type: 'image/jpeg' });
     }).catch(() => { /* share falls back to the link */ });
     return () => { live = false; };
-  }, [path]);
+  }, [path, locale]); // eslint-disable-line react-hooks/exhaustive-deps -- the card is the same photo; t/date follow locale
 
   if (p === undefined) return <main className="wrap gal"><p className="gal-empty">{t('gal.loading')}</p></main>;
   if (p === null) {
@@ -89,15 +102,23 @@ export function GalleryPhoto() {
     setBusy(false);
     if (r) setP({ ...p, helpful: r.helpful, voted: r.voted });
   };
-  // Shares the image itself (with the link as text where the share sheet takes both); just the link if the
-  // image couldn't be fetched or the browser can't share files.
+  // Shares the card with a ready-written post and the link (where the share sheet takes text with a file);
+  // just the link if the image couldn't be fetched or the browser can't share files.
   const share = async () => {
     const url = `${window.location.origin}/gallery/photo?id=${p.id}`;
+    const day = date(p.taken_at, { day: 'numeric', month: 'short' });
+    const g = p.kp != null ? G(p.kp) : 0;
+    const post = [
+      p.place ? t('gal.post.place', { place: p.place, date: day }) : t('gal.post.noPlace', { date: day }),
+      p.kp != null ? (g ? t('gal.post.kpStorm', { kp: kpThirds(p.kp), g }) : t('gal.post.kp', { kp: kpThirds(p.kp) })) : '',
+      t('gal.post.via'),
+    ].filter(Boolean).join(' · ');
+    const text = `${post}\n${url}`;
     const file = shareFile.current;
     try {
       // No await before navigator.share outside the app, so Safari still counts it as the tap.
-      if (file && inApp() && await shareInApp(file)) return;
-      if (file && navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title: t('gal.shareTitle'), text: url });
+      if (file && inApp() && await shareInApp(file, text)) return;
+      if (file && navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title: t('gal.shareTitle'), text });
       else if (navigator.share) await navigator.share({ title: t('gal.shareTitle'), url });
       else { await navigator.clipboard.writeText(url); setNote(t('gal.copied')); }
     } catch { /* cancelled */ }
