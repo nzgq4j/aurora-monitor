@@ -460,6 +460,8 @@ export const nl: Messages = {
   'spots.help.title': 'Wat betekenen de klassen?',
   'spots.help.mag': 'α: één magnetische polariteit; β: beide polariteiten, duidelijk gescheiden; γ: onregelmatig gemengd; δ: tegengestelde polariteiten binnen één penumbra. Hoe complexer de groep (γ, en vooral δ), hoe waarschijnlijker grote uitbarstingen.',
   'spots.help.mcintosh': 'Drie letters: grootte en type van de groep (A–H, van één kleine vlek tot grote complexe groepen), de penumbra van de grootste vlek (x geen tot k groot en asymmetrisch) en hoe compact de groep is (x enkel, o open, i gemiddeld, c compact).',
+  'info.spots.lead': 'Elke genummerde groep zonnevlekken, ingedeeld naar hoe het magnetisch veld is geordend. Hoe complexer de groep, hoe waarschijnlijker een grote uitbarsting.',
+  'info.spots.flare': 'De kans volgens NOAA op een uitbarsting van klasse M of X uit het gebied in de komende 24 uur.',
   'spots.risk.low': 'Eenvoudig (α, β)',
   'spots.risk.elevated': 'Complex (γ)',
   'spots.risk.high': 'Delta (δ): grootste kans op uitbarstingen',

@@ -460,6 +460,8 @@ export const nb: Messages = {
   'spots.help.title': "Hva betyr klassene?",
   'spots.help.mag': "α har én magnetisk polaritet; β har begge polariteter, tydelig adskilt; γ blander dem uregelmessig; δ har motsatte polariteter tett sammen i én penumbra. Jo mer kompleks gruppen er (γ, og særlig δ), desto større sjanse for store utbrudd.",
   'spots.help.mcintosh': "Tre bokstaver: gruppens størrelse og type (A–H, fra én liten flekk til store, komplekse grupper), penumbraen til den største flekken (x ingen til k stor og asymmetrisk) og hvor kompakt gruppen er (x enkel, o åpen, i middels, c kompakt).",
+  'info.spots.lead': 'Hver nummererte gruppe solflekker, klassifisert etter hvordan magnetfeltet er ordnet. Jo mer kompleks gruppen er, desto mer sannsynlig er et stort utbrudd.',
+  'info.spots.flare': 'NOAAs sjanse for et utbrudd i klasse M eller X fra området de neste 24 timene.',
   'spots.risk.low': "Enkel (α, β)",
   'spots.risk.elevated': "Kompleks (γ)",
   'spots.risk.high': "Delta (δ): høyest risiko for utbrudd",

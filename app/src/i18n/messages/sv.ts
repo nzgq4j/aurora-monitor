@@ -460,6 +460,8 @@ export const sv: Messages = {
   'spots.help.title': "Vad betyder klasserna?",
   'spots.help.mag': "α har en enda magnetisk polaritet; β har båda polariteterna, tydligt åtskilda; γ blandar dem oregelbundet; δ har motsatta polariteter inom samma penumbra. Ju mer komplex gruppen är (γ, och framför allt δ), desto troligare är kraftiga flares.",
   'spots.help.mcintosh': "Tre bokstäver: gruppens storlek och typ (A–H, från en enda liten fläck till stora komplexa grupper), största fläckens penumbra (x ingen till k stor och asymmetrisk) och hur kompakt gruppen är (x ensam, o öppen, i mellanliggande, c kompakt).",
+  'info.spots.lead': 'Varje numrerad grupp solfläckar, klassad efter hur dess magnetfält är ordnat. Ju mer komplex gruppen är, desto troligare är en stor flare.',
+  'info.spots.flare': 'NOAA:s chans för en flare av klass M eller X från området de närmaste 24 timmarna.',
   'spots.risk.low': "Enkel (α, β)",
   'spots.risk.elevated': "Komplex (γ)",
   'spots.risk.high': "Delta (δ): högst flarerisk",

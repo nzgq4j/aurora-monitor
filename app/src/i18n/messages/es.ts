@@ -460,6 +460,8 @@ export const es: Messages = {
   'spots.help.title': '¿Qué significan las clases?',
   'spots.help.mag': 'α es una sola polaridad magnética; β tiene ambas polaridades bien separadas; γ las mezcla de forma irregular; δ junta polaridades opuestas dentro de una misma penumbra. Cuanto más compleja (γ y, sobre todo, δ), más probables las grandes fulguraciones.',
   'spots.help.mcintosh': 'Tres letras: tamaño y tipo del grupo (A–H, de una mancha pequeña a grupos grandes y complejos), la penumbra de la mancha mayor (x ninguna a k grande y asimétrica) y lo compacto del grupo (x única, o abierta, i intermedia, c compacta).',
+  'info.spots.lead': 'Cada grupo numerado de manchas solares, clasificado según cómo se ordena su campo magnético. Cuanto más complejo es el grupo, más probable es una gran fulguración.',
+  'info.spots.flare': 'La probabilidad, según la NOAA, de una fulguración de clase M o X en la región en las próximas 24 horas.',
   'spots.risk.low': 'Simple (α, β)',
   'spots.risk.elevated': 'Compleja (γ)',
   'spots.risk.high': 'Delta (δ): mayor riesgo de fulguraciones',

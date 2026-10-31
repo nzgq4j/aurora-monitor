@@ -421,7 +421,7 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 .sun-regions { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 24px; align-items: start; }
 .sun-disc { position: relative; margin: 0; display: flex; flex-direction: column; gap: 8px; }
 .sun-disc img { width: 100%; height: auto; aspect-ratio: 1; border-radius: 12px; background: #050605; border: 1px solid var(--line); display: block; }
-.sun-disc svg { position: absolute; left: 0; top: 0; width: 100%; aspect-ratio: 1; font-family: var(--f-body); pointer-events: none; }
+.sun-disc > svg { position: absolute; left: 0; top: 0; width: 100%; aspect-ratio: 1; font-family: var(--f-body); pointer-events: none; }
 .sun-disc figcaption, .sun-regions-note { font-size: 12px; color: var(--muted); margin: 0; }
 .sun-table-wrap { display: flex; flex-direction: column; gap: 12px; min-width: 0; overflow-x: auto; }
 .sun-table { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -431,11 +431,7 @@ button.pill-ghost { border: 1px solid var(--line-2); }
 .sun-table tbody th small { margin-left: 6px; font-weight: 500; font-size: 12px; color: var(--muted); }
 .sun-spotless th, .sun-spotless td { color: var(--muted); }
 .sun-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 8px; vertical-align: 1px; }
-.sun-help summary { cursor: pointer; font-size: 14px; font-weight: 700; color: var(--soft); }
-.sun-help p { margin: 8px 0 0; font-size: 13px; line-height: 1.45; color: var(--soft); }
-.sun-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; }
-.sun-legend span { display: inline-flex; align-items: center; gap: 6px; }
-.sun-legend i { width: 9px; height: 9px; border-radius: 50%; }
+.sun-disc figcaption.sun-regions-cap { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 @media (max-width: 760px) { .sun-regions { grid-template-columns: minmax(0, 1fr); } }
 /* Latest Sun images: one column on phones, two from laptop width; click to open the lightbox on desktop. */
 .sun-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 16px; }
@@ -1051,6 +1047,8 @@ html.intro-open { overflow: hidden; }
 .season-card-aside { display: inline-flex; align-items: center; gap: 8px; }
 .info-btn { flex: none; display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line-2); background: #0d0f0e; color: var(--soft); }
 .info-btn:hover { color: #fff; border-color: var(--muted); }
+/* A full 44 px circle where buttons get a 44 px minimum for touch, rather than a stretched oval. */
+@media (pointer: coarse) { button.btn.info-btn { width: 44px; height: 44px; } }
 .info-btn:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
 .info-sheet { display: flex; flex-direction: column; }
 .info-intro { display: flex; flex-direction: column; gap: 10px; padding: 4px 0 22px; border-bottom: 1px solid var(--line-2); }

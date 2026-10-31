@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { layoutLabels, magGreek, magRisk, project, solarB0, type PlacedLabel, type Region } from '../lib/sunspots';
 import { useI18n } from '../i18n/I18n';
+import { InfoButton } from './InfoSheet';
 
 interface Data { observed: string; regions: Region[] }
 
@@ -107,7 +108,18 @@ export function SunspotRegions() {
             })}
           </svg>
         )}
-        <figcaption>{data ? t('spots.observed', { date: date(Date.parse(`${data.observed}T00:00:00Z`), { day: 'numeric', month: 'short', timeZone: 'UTC' }) }) : t('sky.checking')}</figcaption>
+        <figcaption className="sun-regions-cap">{data ? t('spots.observed', { date: date(Date.parse(`${data.observed}T00:00:00Z`), { day: 'numeric', month: 'short', timeZone: 'UTC' }) }) : t('sky.checking')}<InfoButton title={t('info.sun.m.regions')} content={{
+          heading: t('spots.help.title'), lead: t('info.spots.lead'),
+          metrics: [
+            { name: t('spots.col.mag'), text: t('spots.help.mag'), scale: [
+              { color: RISK_COLOR.low, value: 'α, β', label: t('spots.risk.low') },
+              { color: RISK_COLOR.elevated, value: 'γ', label: t('spots.risk.elevated') },
+              { color: RISK_COLOR.high, value: 'δ', label: t('spots.risk.high') },
+            ] },
+            { name: t('spots.col.mcintosh'), text: t('spots.help.mcintosh') },
+            { name: t('spots.col.flare'), text: t('info.spots.flare') },
+          ],
+        }} /></figcaption>
       </figure>
 
       <div className="sun-table-wrap">
@@ -132,16 +144,6 @@ export function SunspotRegions() {
             </tbody>
           </table>
         )}
-        <details className="sun-help">
-          <summary>{t('spots.help.title')}</summary>
-          <p><b>{t('spots.col.mag')}.</b> {t('spots.help.mag')}</p>
-          <p><b>{t('spots.col.mcintosh')}.</b> {t('spots.help.mcintosh')}</p>
-          <p className="sun-legend">
-            <span><i style={{ background: RISK_COLOR.low }} />{t('spots.risk.low')}</span>
-            <span><i style={{ background: RISK_COLOR.elevated }} />{t('spots.risk.elevated')}</span>
-            <span><i style={{ background: RISK_COLOR.high }} />{t('spots.risk.high')}</span>
-          </p>
-        </details>
       </div>
     </div>
   );
