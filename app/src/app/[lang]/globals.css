@@ -1063,7 +1063,8 @@ html.intro-open { overflow: hidden; }
 .info-metrics { display: flex; flex-direction: column; gap: 12px; }
 .info-metric { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 14px; background: #151816; border: 1px solid var(--line-2); }
 .info-metric-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.info-metric-head b { font-size: 17px; color: #fff; }
+.info-metric-head b { font-size: 17px; color: #fff; flex: 1; min-width: 0; }
+.info-thumb { flex: none; width: 64px; height: 64px; border-radius: 10px; object-fit: cover; background: #050605; border: 1px solid var(--line-2); }
 .info-badge { flex: none; padding: 4px 10px; border-radius: 999px; background: var(--green); color: #000; font-size: 12px; font-weight: 800; }
 .info-metric p { margin: 0; font-size: 15px; line-height: 1.5; color: var(--soft); }
 .info-scale { margin: 0; display: flex; flex-direction: column; gap: 8px; }

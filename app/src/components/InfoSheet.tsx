@@ -6,8 +6,8 @@ import { useI18n } from '../i18n/I18n';
 
 /** A row of a metric's scale: a coloured dot, a value or range ("600+ km/s") and what it means. */
 export interface InfoScale { color: string; value: string; label: string }
-/** One measure explained in a card's info sheet. */
-export interface InfoMetric { name: string; text?: string; badge?: string; scale?: InfoScale[] }
+/** One measure explained in a card's info sheet; `image` is a small sample of it (e.g. that view of the Sun). */
+export interface InfoMetric { name: string; text?: string; badge?: string; scale?: InfoScale[]; image?: string }
 /** What a card's info sheet says: a question-style heading, a one-line lead, why it matters, and its measures. */
 export interface InfoContent { heading: string; lead: string; why?: string[]; metrics?: InfoMetric[]; note?: string }
 
@@ -64,7 +64,11 @@ function InfoBody({ content: c }: { content: InfoContent }) {
           <div className="info-metrics">
             {c.metrics.map(m => (
               <div key={m.name} className="info-metric">
-                <div className="info-metric-head"><b>{m.name}</b>{m.badge && <span className="info-badge">{m.badge}</span>}</div>
+                <div className="info-metric-head">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- the same live image the page shows, from its publisher */}
+                  {m.image && <img className="info-thumb" src={m.image} alt="" width={64} height={64} loading="lazy" onError={e => { e.currentTarget.style.visibility = 'hidden'; }} />}
+                  <b>{m.name}</b>{m.badge && <span className="info-badge">{m.badge}</span>}
+                </div>
                 {m.text && <p>{m.text}</p>}
                 {!!m.scale?.length && (
                   <dl className="info-scale">
