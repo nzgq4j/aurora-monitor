@@ -138,7 +138,7 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
     }
   };
 
-  const card: CSSProperties = { border: '1px solid var(--line-2)', borderRadius: 18, padding: 18, background: 'radial-gradient(120% 120% at 100% 0%, #0f1a12, #050605 60%)' };
+  const card: CSSProperties = { borderRadius: 'var(--card-r)', padding: 20, background: 'var(--card)' };
 
   if (!shownPlace) {
     return (

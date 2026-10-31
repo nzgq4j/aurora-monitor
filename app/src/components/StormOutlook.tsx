@@ -5,6 +5,7 @@ import { C } from '../data';
 import type { StormData } from '../app/api/storm/route';
 import { kpNeeded } from '../lib/astro';
 import { classFlux, reachMagLat, solarLevel, stormHeadline, type StormLevel } from '../lib/storm';
+import { StatIcon } from './StatIcon';
 import { useLocations } from '../lib/locations';
 import { useI18n } from '../i18n/I18n';
 
@@ -64,10 +65,10 @@ export function StormOutlook({ peak }: { peak: { kp: number; at: number } | null
   const fp = data.flareProb[0];
 
   const stats = [
-    { label: t('storm.stat.solar'), value: t(`storm.solar.${level}`), note: data.flares?.max ? t('storm.stat.largest', { cls: data.flares.max.cls }) : t('storm.stat.noFlares'), c: level === 'high' ? C.red : level === 'moderate' ? C.orange : C.muted },
-    { label: t('storm.stat.xray'), value: data.xray?.cls ?? '—', note: data.flares ? t('storm.stat.flares', { c: data.flares.c, m: data.flares.m, x: data.flares.x }) : '', c: C.muted },
-    { label: t('storm.stat.protons'), value: data.protons ? `S${data.protons.s}` : '—', note: data.protons ? t('storm.stat.pfu', { pfu: num(data.protons.pfu, data.protons.pfu < 10 ? 2 : 0) }) : '', c: data.protons && data.protons.s ? C.orange : C.muted },
-    { label: t('storm.stat.ssn'), value: data.ssn ? String(data.ssn.value) : '—', note: data.ssn ? day(data.ssn.day) : '', c: C.muted },
+    { icon: 'sun' as const, label: t('storm.stat.solar'), value: t(`storm.solar.${level}`), note: data.flares?.max ? t('storm.stat.largest', { cls: data.flares.max.cls }) : t('storm.stat.noFlares'), c: level === 'high' ? C.red : level === 'moderate' ? C.orange : C.muted },
+    { icon: 'flare' as const, label: t('storm.stat.xray'), value: data.xray?.cls ?? '—', note: data.flares ? t('storm.stat.flares', { c: data.flares.c, m: data.flares.m, x: data.flares.x }) : '', c: C.muted },
+    { icon: 'radiation' as const, label: t('storm.stat.protons'), value: data.protons ? `S${data.protons.s}` : '—', note: data.protons ? t('storm.stat.pfu', { pfu: num(data.protons.pfu, data.protons.pfu < 10 ? 2 : 0) }) : '', c: data.protons && data.protons.s ? C.orange : C.muted },
+    { icon: 'spots' as const, label: t('storm.stat.ssn'), value: data.ssn ? String(data.ssn.value) : '—', note: data.ssn ? day(data.ssn.day) : '', c: C.muted },
   ];
 
   return (
@@ -121,6 +122,7 @@ export function StormOutlook({ peak }: { peak: { kp: number; at: number } | null
       <div className="now-stats">
         {stats.map(s => (
           <div key={s.label} className="now-stat">
+            <StatIcon name={s.icon} />
             <span className="label">{s.label}</span>
             <span className="stat-value" style={{ fontSize: 28 }}>{s.value}</span>
             <span style={{ fontSize: 13, fontWeight: 600, color: s.c }}>{s.note}</span>
