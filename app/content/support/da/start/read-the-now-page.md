@@ -36,7 +36,7 @@ Tidspunkterne på kortet er i stedets lokale tid.
 - **Mørke:** om Solen er langt nok under horisonten, og indtil hvornår.
 - **Kræver:** den Kp, dit sted normalt kræver, før der ses nordlys der.
 
-Hvert kort har **Hvad det viser** med en mere udførlig forklaring.
+Tryk på **i** i et korts hjørne for en kort og enkel forklaring af alt på kortet.
 
 ![Din himmel: nordlys, skyer, mørke og den Kp, dit sted kræver](screen:your-sky)
 

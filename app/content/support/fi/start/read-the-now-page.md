@@ -36,7 +36,7 @@ Kortin ajat ovat paikan paikallista aikaa.
 - **Pimeä:** onko Aurinko riittävän syvällä horisontin alla, ja mihin asti.
 - **Tarvitsee:** Kp, jota paikkasi yleensä tarvitsee, ennen kuin siellä nähdään revontulia.
 
-Jokaisessa kortissa on **Mitä tämä näyttää**, josta saat tarkemman selityksen.
+Napauta kortin kulmassa olevaa **i**:tä, niin saat lyhyen ja selkeän selityksen kaikesta, mitä kortissa on.
 
 ![Oma taivas: revontulet, pilvet, pimeys ja paikkasi tarvitsema Kp](screen:your-sky)
 

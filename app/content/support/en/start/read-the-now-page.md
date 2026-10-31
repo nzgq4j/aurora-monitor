@@ -36,7 +36,7 @@ Times on the card are local to the place.
 - **Dark:** whether the Sun is far enough below the horizon, and until when.
 - **Needs:** the Kp your place usually needs before aurora is seen there.
 
-Each card has **What this shows** for a fuller explanation.
+Tap the **i** in a card's corner for a short, simple explanation of everything on it.
 
 ![Your sky: aurora, cloud, darkness and the Kp your place needs](screen:your-sky)
 

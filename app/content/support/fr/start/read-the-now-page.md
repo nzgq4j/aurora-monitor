@@ -36,7 +36,7 @@ Les heures affichées sur la carte sont les heures locales du lieu.
 - **Nuit :** si le Soleil est assez bas sous l’horizon, et jusqu’à quand.
 - **Requis :** le Kp dont votre lieu a généralement besoin pour qu’on y voie l’aurore.
 
-Chaque carte propose **Ce que cela montre** pour une explication plus complète.
+Touchez le **i** dans le coin d’une carte pour une explication courte et simple de tout ce qu’elle affiche.
 
 ![Votre ciel : l’aurore, les nuages, l’obscurité et le Kp requis pour votre lieu](screen:your-sky)
 

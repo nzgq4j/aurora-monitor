@@ -36,7 +36,7 @@ Die Zeiten auf der Karte sind Ortszeit des jeweiligen Ortes.
 - **Dunkel:** ob die Sonne weit genug unter dem Horizont steht, und bis wann.
 - **Nötig:** der Kp-Wert, den Ihr Ort normalerweise braucht, bevor dort Polarlicht zu sehen ist.
 
-Jede Karte hat **Was das zeigt** mit einer ausführlicheren Erklärung.
+Tippen Sie auf das **i** in der Ecke einer Karte, um eine kurze, einfache Erklärung zu allem darauf zu sehen.
 
 ![Ihr Himmel: Polarlicht, Wolken, Dunkelheit und der Kp-Wert, den Ihr Ort braucht](screen:your-sky)
 

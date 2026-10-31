@@ -36,7 +36,7 @@ Las horas de la tarjeta son las locales del lugar.
 - **Noche:** si el Sol está lo bastante por debajo del horizonte, y hasta cuándo.
 - **Requiere:** el Kp que tu lugar suele necesitar para que se vea la aurora.
 
-Cada tarjeta tiene **Qué muestra**, con una explicación más completa.
+Toca la **i** de la esquina de una tarjeta para ver una explicación breve y sencilla de todo lo que muestra.
 
 ![Tu cielo: la aurora, las nubes, la oscuridad y el Kp que necesita tu lugar](screen:your-sky)
 

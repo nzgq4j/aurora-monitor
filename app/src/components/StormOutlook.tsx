@@ -7,7 +7,6 @@ import { kpNeeded } from '../lib/astro';
 import { classFlux, reachMagLat, solarLevel, stormHeadline, type StormLevel } from '../lib/storm';
 import { useLocations } from '../lib/locations';
 import { useI18n } from '../i18n/I18n';
-import { Explain } from './Explain';
 
 let cached: Promise<StormData | null> | null = null;
 const load = () => (cached ??= fetch('/api/storm').then(r => (r.ok ? r.json() : null)).catch(() => null));
@@ -65,10 +64,10 @@ export function StormOutlook({ peak }: { peak: { kp: number; at: number } | null
   const fp = data.flareProb[0];
 
   const stats = [
-    { label: t('storm.stat.solar'), value: t(`storm.solar.${level}`), info: `${t('storm.help.solar')} ${t('storm.info.solarCme')}`, note: data.flares?.max ? t('storm.stat.largest', { cls: data.flares.max.cls }) : t('storm.stat.noFlares'), c: level === 'high' ? C.red : level === 'moderate' ? C.orange : C.muted },
-    { label: t('storm.stat.xray'), value: data.xray?.cls ?? '—', info: t('storm.info.xray'), note: data.flares ? t('storm.stat.flares', { c: data.flares.c, m: data.flares.m, x: data.flares.x }) : '', c: C.muted },
-    { label: t('storm.stat.protons'), value: data.protons ? `S${data.protons.s}` : '—', info: t('storm.help.s'), note: data.protons ? t('storm.stat.pfu', { pfu: num(data.protons.pfu, data.protons.pfu < 10 ? 2 : 0) }) : '', c: data.protons && data.protons.s ? C.orange : C.muted },
-    { label: t('storm.stat.ssn'), value: data.ssn ? String(data.ssn.value) : '—', info: t('storm.info.ssn'), note: data.ssn ? day(data.ssn.day) : '', c: C.muted },
+    { label: t('storm.stat.solar'), value: t(`storm.solar.${level}`), note: data.flares?.max ? t('storm.stat.largest', { cls: data.flares.max.cls }) : t('storm.stat.noFlares'), c: level === 'high' ? C.red : level === 'moderate' ? C.orange : C.muted },
+    { label: t('storm.stat.xray'), value: data.xray?.cls ?? '—', note: data.flares ? t('storm.stat.flares', { c: data.flares.c, m: data.flares.m, x: data.flares.x }) : '', c: C.muted },
+    { label: t('storm.stat.protons'), value: data.protons ? `S${data.protons.s}` : '—', note: data.protons ? t('storm.stat.pfu', { pfu: num(data.protons.pfu, data.protons.pfu < 10 ? 2 : 0) }) : '', c: data.protons && data.protons.s ? C.orange : C.muted },
+    { label: t('storm.stat.ssn'), value: data.ssn ? String(data.ssn.value) : '—', note: data.ssn ? day(data.ssn.day) : '', c: C.muted },
   ];
 
   return (
@@ -102,7 +101,6 @@ export function StormOutlook({ peak }: { peak: { kp: number; at: number } | null
               ))}
             </tbody>
           </table>
-          <Explain>{t('storm.help.levels', { pct: 25 })}</Explain>
         </div>
       )}
 
@@ -118,7 +116,6 @@ export function StormOutlook({ peak }: { peak: { kp: number; at: number } | null
             </span>
           ))}
         <span className="storm-note">{t('storm.cme.note')}</span>
-        <Explain>{t('storm.info.cme')}</Explain>
       </div>
 
       <div className="now-stats">
@@ -127,7 +124,6 @@ export function StormOutlook({ peak }: { peak: { kp: number; at: number } | null
             <span className="label">{s.label}</span>
             <span className="stat-value" style={{ fontSize: 28 }}>{s.value}</span>
             <span style={{ fontSize: 13, fontWeight: 600, color: s.c }}>{s.note}</span>
-            <Explain>{s.info}</Explain>
           </div>
         ))}
       </div>

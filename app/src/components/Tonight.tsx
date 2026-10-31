@@ -12,7 +12,8 @@ import { usePointVerdict } from '../lib/usePointVerdict';
 import { INTL_TAG } from '../i18n/config';
 import { useI18n } from '../i18n/I18n';
 import { PlacePicker } from './PlacePicker';
-import { Explain } from './Explain';
+import { InfoButton } from './InfoSheet';
+import { tonightInfo } from '../lib/cardInfo';
 import { USEFUL_EVENT } from './InstallPrompt';
 import { Sighting } from './Sighting';
 
@@ -163,6 +164,7 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
               <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </button>
           )}
+          <InfoButton title={t('tonight.h')} content={tonightInfo(t)} />
         </span>
       </div>
 
@@ -223,7 +225,6 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
               </span>
             )}
             <span style={{ fontSize: 11, color: 'var(--dim)' }}>{t('tonight.note')}</span>
-            <Explain>{t('tonight.info')}</Explain>
             {shareMsg && <span role="status" style={{ fontSize: 13, color: 'var(--green)' }}>{shareMsg}</span>}
           </div>
         </div>

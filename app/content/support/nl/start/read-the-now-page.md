@@ -36,7 +36,7 @@ De tijden op de kaart zijn de lokale tijden van de plek.
 - **Donker:** of de zon ver genoeg onder de horizon staat, en tot wanneer.
 - **Nodig:** de Kp die je plek meestal nodig heeft voordat er poollicht te zien is.
 
-Elke kaart heeft **Wat dit laat zien** met een uitgebreidere uitleg.
+Tik op de **i** in de hoek van een kaart voor een korte, eenvoudige uitleg van alles erop.
 
 ![Jouw hemel: poollicht, bewolking, duisternis en de Kp die je plek nodig heeft](screen:your-sky)
 

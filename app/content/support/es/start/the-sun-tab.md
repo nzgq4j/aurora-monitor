@@ -15,7 +15,7 @@ El viento solar en este momento, medido a unos 1,5 millones de km en dirección 
 - **Velocidad** y **Densidad:** un viento más rápido y más denso empuja con más fuerza el campo magnético terrestre.
 - **Pot. hemis.:** cuánta energía está aportando la aurora a la atmósfera.
 
-Cada uno tiene **Qué muestra**, con una explicación más completa.
+Toca la **i** de la esquina de una tarjeta para ver una explicación breve y sencilla de todo lo que muestra.
 
 ## Actividad solar
 

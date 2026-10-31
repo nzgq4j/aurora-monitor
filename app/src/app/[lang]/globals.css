@@ -1041,3 +1041,57 @@ html.intro-open { overflow: hidden; }
 .place-found .sun-lapse-option b { font-size: 20px; }
 .place-msg { font-size: 14px; color: var(--amber, #F5B83D); }
 .place-back { align-self: flex-start; min-height: 40px; font-size: 15px; font-weight: 600; color: var(--muted); }
+
+/* Card info: the "i" in a card's corner and the sheet it opens (components/InfoSheet). */
+.detail-head { display: flex; align-items: flex-start; gap: 12px; }
+.detail-head .detail-title { flex: 1; min-width: 0; }
+.detail-aside { flex: none; padding-top: 2px; }
+.season-card-aside { display: inline-flex; align-items: center; gap: 8px; }
+.info-btn { flex: none; display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line-2); background: #0d0f0e; color: var(--soft); }
+.info-btn:hover { color: #fff; border-color: var(--muted); }
+.info-btn:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+.info-sheet { display: flex; flex-direction: column; }
+.info-intro { display: flex; flex-direction: column; gap: 10px; padding: 4px 0 22px; border-bottom: 1px solid var(--line-2); }
+.info-intro h3 { margin: 0; font: 800 26px/1.15 var(--f-display); color: #fff; }
+.info-intro p { margin: 0; font-size: 18px; line-height: 1.45; color: var(--muted); }
+.info-section { display: flex; flex-direction: column; gap: 14px; padding: 22px 0; border-bottom: 1px solid var(--line-2); }
+.info-section:last-child { border-bottom: 0; }
+.info-section h4 { margin: 0; font: 700 18px var(--f-body); color: #fff; }
+.info-why { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.info-why li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 12px; font-size: 16px; line-height: 1.45; color: var(--soft); }
+.info-why svg { color: var(--green); margin-top: 2px; }
+.info-metrics { display: flex; flex-direction: column; gap: 12px; }
+.info-metric { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 14px; background: #151816; border: 1px solid var(--line-2); }
+.info-metric-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.info-metric-head b { font-size: 17px; color: #fff; }
+.info-badge { flex: none; padding: 4px 10px; border-radius: 999px; background: var(--green); color: #000; font-size: 12px; font-weight: 800; }
+.info-metric p { margin: 0; font-size: 15px; line-height: 1.5; color: var(--soft); }
+.info-scale { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.info-scale > div { display: grid; grid-template-columns: minmax(118px, auto) minmax(0, 1fr); gap: 12px; align-items: center; }
+.info-scale dt { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #fff; white-space: nowrap; }
+.info-scale dt i { flex: none; width: 10px; height: 10px; border-radius: 50%; }
+.info-scale dd { margin: 0; font-size: 14px; color: var(--muted); }
+.info-note { margin: 16px 0 0; font-size: 13px; color: var(--dim); }
+
+/* Space-weather charts (components/SpaceChart) and the Space weather tiles on the Sun tab. */
+.space-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(440px, 100%), 1fr)); gap: 30px 20px; }
+.space-chart { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.space-chart-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.space-chart-head h3 { margin: 0; font: 700 20px var(--f-body); color: #fff; }
+.space-chart-head .mono { font-size: 14px; white-space: nowrap; }
+.space-chart-card { border-radius: 16px; background: #121413; border: 1px solid var(--line); padding: 8px 4px 4px; overflow: hidden; }
+.space-chart-tick { fill: var(--muted); font: 12px var(--f-body); }
+.space-chart-label { font: 600 12px var(--f-body); }
+.space-chart-now { fill: #5ea2ff; font: 700 12px var(--f-body); }
+.space-chart-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; color: var(--soft); }
+.space-chart-legend li { display: inline-flex; align-items: center; gap: 8px; }
+.space-chart-legend i { flex: none; width: 11px; height: 11px; border-radius: 50%; }
+.space-chart-legend i.dash { width: 21px; height: 3px; border-radius: 0; }
+.space-chart-caption { margin: 0; font-size: 14px; font-style: italic; color: var(--muted); }
+.space-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 760px) { .space-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.space-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 16px; border-radius: 16px; background: #121413; border: 1px solid var(--line); min-width: 0; }
+.space-tile-label { font-size: 15px; color: var(--muted); }
+.space-tile-value { font: 800 30px/1.1 var(--f-display); white-space: nowrap; }
+.space-tile-value small { font-size: 15px; font-weight: 700; margin-left: 4px; }
+.space-tile-pill { padding: 4px 12px; border-radius: 999px; border: 1px solid; font-size: 13px; font-weight: 700; background: rgba(255, 255, 255, .04); }

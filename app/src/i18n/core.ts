@@ -54,4 +54,7 @@ export function makeI18n(locale: Locale, messages: Messages): I18n {
  * one compound word end it with a hyphen ("Rom-" + "vær"): the hyphen becomes a soft hyphen, shown only if the
  * heading wraps there, and no space is added, so it reads "Romvær". Anything else gets the usual space.
  */
+/** A two-part heading as plain text (for labels), joined the same way as headLead. */
+export const headText = (a: string, b: string) => (a.endsWith('-') ? `${a.slice(0, -1)}${b}` : `${a} ${b}`);
+
 export const headLead = (s: string) => (s.endsWith('-') ? `${s.slice(0, -1)}­` : `${s} `);

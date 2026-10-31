@@ -6,8 +6,9 @@ import { kpNeeded, moon } from '../lib/astro';
 import type { AccountData } from '../lib/history';
 import { useLocations } from '../lib/locations';
 import { useI18n } from '../i18n/I18n';
-import { headLead } from '../i18n/core';
-import { Explain } from './Explain';
+import { headLead, headText } from '../i18n/core';
+import { InfoButton } from './InfoSheet';
+import { bestInfo, weeksInfo } from '../lib/cardInfo';
 
 const DAY = 864e5;
 
@@ -42,7 +43,7 @@ export function SeasonCards({ data }: { data: AccountData }) {
       <section className="season-card season-card-list" aria-labelledby="best-card-h">
         <div className="season-card-head">
           <h2 id="best-card-h">{headLead(t('dash.best.h2a'))}{t('dash.best.h2b')}</h2>
-          <span className="mono">{t('now.best.source')}</span>
+          <span className="season-card-aside"><span className="mono">{t('now.best.source')}</span><InfoButton title={headText(t('dash.best.h2a'), t('dash.best.h2b'))} content={bestInfo(t)} /></span>
         </div>
         {best.length ? best.map(u => {
           const lit = Math.round(moon(u.t + DAY, 0, 0).illumination * 100);
@@ -60,13 +61,12 @@ export function SeasonCards({ data }: { data: AccountData }) {
             </div>
           );
         }) : <span className="season-note" style={{ padding: '0 16px 16px' }}>{t('dash.best.unavailable')}</span>}
-        <div style={{ padding: '4px 16px 16px' }}><Explain>{t('season.info.best')}</Explain></div>
       </section>
 
       <section className="season-card" aria-labelledby="season-card-h">
         <div className="season-card-head">
           <h2 id="season-card-h">{headLead(t('dash.season.h2a'))}{t('dash.season.h2b')}</h2>
-          <span className="mono">{t('now.season.weeks')}</span>
+          <span className="season-card-aside"><span className="mono">{t('now.season.weeks')}</span><InfoButton title={headText(t('dash.season.h2a'), t('dash.season.h2b'))} content={weeksInfo(t)} /></span>
         </div>
         {days.length > 0 ? (
           <>
@@ -90,7 +90,6 @@ export function SeasonCards({ data }: { data: AccountData }) {
         ) : (
           <span className="season-note">{t('dash.historyUnavailable')}</span>
         )}
-        <Explain>{t('season.info.weeks')}</Explain>
       </section>
     </div>
   );

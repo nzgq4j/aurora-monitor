@@ -46,10 +46,6 @@ export function SunImages() {
               <figcaption>
                 <span style={{ fontWeight: 700 }}>{img.label}</span><span style={{ color: 'var(--muted)' }}>{t(`sdo.${img.id}`)}</span>
               </figcaption>
-              <details className="toggle-info">
-                <summary>{t('chart.explain')}</summary>
-                <p>{t(`sdo.${img.id}.info`)}</p>
-              </details>
             </figure>
           );
         })}
