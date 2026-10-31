@@ -290,3 +290,83 @@ export async function badgeCardBlob(d: BadgeCardData, badge: SVGSVGElement | nul
   g.textAlign = 'left';
   return new Promise(res => c.toBlob(b => res(b), 'image/png'));
 }
+
+export interface PhotoCardData {
+  /** The photographer's handle and rank, e.g. "aurora_tromso" and "Watcher". */
+  handle: string;
+  rank: string;
+  /** When it was taken, already formatted, e.g. "9 Oct 2026, 22:24". */
+  when: string;
+  /** The place at the precision the photographer chose, or null when hidden. */
+  place: string | null;
+  /** "Kp 5.33 · G1", or null when unknown; coloured by `kpColor`. */
+  kp: string | null;
+  kpColor: string;
+  site: string;
+}
+
+/**
+ * A gallery photo as a Polar Lights card for sharing (JPEG, 1080 px wide): who took it, when, where and the
+ * Kp at the time, with the logo and the site. A portrait photo fills a 4:5 card (the shape most apps show
+ * whole) with the details over a shade at its foot; a landscape one sits above a panel on a square card,
+ * so neither loses much of the sky to cropping.
+ */
+export async function photoCardBlob(photo: Blob, d: PhotoCardData): Promise<Blob | null> {
+  let bmp: ImageBitmap;
+  try { bmp = await createImageBitmap(photo); } catch { return null; }
+  const portrait = bmp.height >= bmp.width;
+  const W = 1080, H = portrait ? 1350 : 1080, P = portrait ? H : 810; // P: the photo area's height
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  if (!g) { bmp.close(); return null; }
+  try { await document.fonts.ready; } catch { /* system fonts */ }
+  const body = "'Barlow', 'Golos Text', 'Helvetica Neue', Arial, sans-serif";
+  g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+
+  // The photo, cropped (centred) to fill its area.
+  const k = Math.max(W / bmp.width, P / bmp.height);
+  const sw = W / k, sh = P / k;
+  g.drawImage(bmp, (bmp.width - sw) / 2, (bmp.height - sh) / 2, sw, sh, 0, 0, W, P);
+  bmp.close();
+  // A soft shade at the top for the logo, and one at the photo's foot: under the details on a portrait card,
+  // into the panel on a landscape one.
+  const top = g.createLinearGradient(0, 0, 0, 240);
+  top.addColorStop(0, 'rgba(0,0,0,.65)'); top.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = top; g.fillRect(0, 0, W, 240);
+  const shade = portrait ? 420 : 160;
+  const foot = g.createLinearGradient(0, P - shade, 0, P);
+  foot.addColorStop(0, 'rgba(0,0,0,0)'); foot.addColorStop(1, portrait ? 'rgba(0,0,0,.9)' : '#000');
+  g.fillStyle = foot; g.fillRect(0, P - shade, W, shade);
+  g.save(); g.translate(-24, -24); drawBrand(g); g.restore();
+
+  // The details along the foot: handle and rank, when and where, Kp on the right, the site below.
+  const fit = (text: string, font: string, max: number) => {
+    g.font = font;
+    if (g.measureText(text).width <= max) return text;
+    let s = text;
+    while (s.length > 1 && g.measureText(`${s}…`).width > max) s = s.slice(0, -1);
+    return `${s}…`;
+  };
+  const kpFont = `800 40px 'Archivo', 'Montserrat', sans-serif`;
+  g.font = kpFont;
+  const kpW = d.kp ? g.measureText(d.kp).width + 48 : 0;
+  const textMax = W - 160 - (kpW ? kpW + 24 : 0);
+  g.textBaseline = 'alphabetic';
+  const handle = fit(d.handle, `700 46px ${body}`, textMax);
+  g.fillStyle = '#fff'; g.fillText(handle, 80, H - 206);
+  const hw = g.measureText(handle).width;
+  g.fillStyle = '#6CFF2B'; g.fillText(fit(d.rank, `600 34px ${body}`, Math.max(0, textMax - hw - 20)), 80 + hw + 20, H - 206);
+  g.fillStyle = '#C9D0CB';
+  g.fillText(fit([d.when, d.place].filter(Boolean).join(' · '), `500 34px ${body}`, textMax), 80, H - 150);
+  if (d.kp) {
+    g.font = kpFont;
+    const x = W - 80 - kpW, y = H - 236;
+    g.fillStyle = 'rgba(0,0,0,.45)'; roundRect(g, x, y, kpW, 70, 35); g.fill();
+    g.strokeStyle = d.kpColor; g.lineWidth = 3; roundRect(g, x, y, kpW, 70, 35); g.stroke();
+    g.fillStyle = d.kpColor; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(d.kp, x + kpW / 2, y + 37);
+    g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+  }
+  g.fillStyle = '#6CFF2B'; g.font = `700 32px ${body}`; g.textAlign = 'right'; g.fillText(d.site, W - 80, H - 60); g.textAlign = 'left';
+  return new Promise(res => c.toBlob(b => res(b), 'image/jpeg', 0.9));
+}
