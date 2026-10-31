@@ -77,8 +77,9 @@ export function Sun({ data }: { data: NowData }) {
   ];
 
   return (
-    <main data-screen-label="Sun" className="wrap" style={{ padding: '40px var(--gutter) 48px', display: 'flex', flexDirection: 'column', gap: 32 }}>
-      <h1 className="you-title">{t('nav.sun')}</h1>
+    <main data-screen-label="Sun" className="wrap" style={{ padding: 'clamp(12px, 3vw, 40px) var(--gutter) 48px', display: 'flex', flexDirection: 'column', gap: 32 }}>
+      {/* The tab bar already says Sun; the heading stays for screen readers. */}
+      <h1 className="sr-only">{t('nav.sun')}</h1>
 
       <DetailCard id="space" title={<>{headLead(t('detail.space.h2a'))}<span className="hl">{t('detail.space.h2b')}</span></>} summary={summaryText(i18n, spaceLine(w))}
         aside={<InfoButton title={headText(t('detail.space.h2a'), t('detail.space.h2b'))} content={spaceInfo(t)} />}>
