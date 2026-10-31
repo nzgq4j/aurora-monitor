@@ -433,7 +433,7 @@ export const sv: Messages = {
   'home.hemi.low': "Låg",
   'home.density.dense': "Tät",
   'home.density.typical': "Normal",
-  'home.live': "LIVE · HELA VÄRLDEN · DATA {time}",
+  'home.live': 'LIVE · {time}',
   'home.liveUnavailable': "REALTIDSDATA INTE TILLGÄNGLIG",
   'home.scale': "Kp-skala, aktuell nivå {level}",
   'home.oval': "NORRSKENSOVAL",

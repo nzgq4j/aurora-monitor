@@ -433,7 +433,7 @@ export const fi: Messages = {
   'home.hemi.low': "Matala",
   'home.density.dense': "Tiheä",
   'home.density.typical': "Tavallinen",
-  'home.live': "LIVE · MAAILMANLAAJUINEN · DATA {time}",
+  'home.live': 'LIVE · {time}',
   'home.liveUnavailable': "LIVE-DATA EI SAATAVILLA",
   'home.scale': "Kp-asteikko, nykyinen taso {level}",
   'home.oval': "REVONTULIVYÖHYKE",

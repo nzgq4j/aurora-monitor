@@ -433,7 +433,7 @@ export const es: Messages = {
   'home.hemi.low': 'Baja',
   'home.density.dense': 'Densa',
   'home.density.typical': 'Normal',
-  'home.live': 'EN DIRECTO · MUNDIAL · DATOS {time}',
+  'home.live': 'EN DIRECTO · {time}',
   'home.liveUnavailable': 'DATOS EN DIRECTO NO DISPONIBLES',
   'home.scale': 'Escala Kp, nivel actual {level}',
   'home.oval': 'ÓVALO AURORAL',

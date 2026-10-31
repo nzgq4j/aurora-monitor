@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { C } from '../data';
 import type { KpPoint } from '../lib/feeds';
@@ -21,6 +21,21 @@ export const LEVEL_COLOR: Record<Level, string> = { goNow: C.green, goLater: C.g
 /** Chance-score bars: grey below 20, amber from 20, red from 50 (the same direction as the Kp charts' storm scale). */
 export const scoreColor = (s: number) => (s >= 50 ? C.red : s >= 20 ? C.amber : '#3a403c');
 
+
+const CLOUD = 'M7 18h10a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.1 11 3.5 3.5 0 0 0 7 18Z';
+const STARS = 'M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3Zm6 10 .8 2.2L21 16l-2.2.8L18 19l-.8-2.2L15 16l2.2-.8L18 13Z';
+const DUSK = 'M3 18h18M6 18a6 6 0 0 1 12 0M12 6v3M5.6 9.6l2 2M18.4 9.6l-2 2';
+const MOON = 'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z';
+
+/** A Tonight chip: an icon and a short value, with the full wording for screen readers and on hover. */
+function Chip({ icon, label, children }: { icon: string; label: string; children: ReactNode }) {
+  return (
+    <span title={label} aria-label={label} role="img">
+      <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d={icon} fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      {children}
+    </span>
+  );
+}
 
 /** A small night-sky scene: aurora glow at the height it should reach, clouds as thick as forecast. */
 function SkyScene({ look, strength, cloud, light }: { look: 'low' | 'high' | 'overhead'; strength: number; cloud: number; light: boolean }) {
@@ -154,11 +169,17 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
         <button type="button" className="btn tonight-place" aria-haspopup="dialog" onClick={() => setPicking(true)} aria-label={t('tonight.changePlace', { place: shownPlace.name })}>
           <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Zm0-8.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" fill="none" stroke="currentColor" strokeWidth="2" /></svg>
-          <span>{shownPlace.name.split(',')[0]}</span>
+          <span className="one-line">{shownPlace.name.split(',')[0]}</span>
           <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </button>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {now !== null && !offline && <span className="label" style={{ fontSize: 11 }}>{t('tonight.updated', { time: time(now) })}</span>}
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 'none' }}>
+          {/* Just a clock and the time, so the row stays on one line; the full wording is its label. */}
+          {now !== null && !offline && (
+            <span className="label tonight-updated" title={t('tonight.updated', { time: time(now) })} aria-label={t('tonight.updated', { time: time(now) })}>
+              <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M12 7v5l3 2" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+              <span aria-hidden="true">{time(now)}</span>
+            </span>
+          )}
           {result && (
             <button type="button" className="btn tonight-share" onClick={share} aria-label={t('tonight.share')}>
               <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -199,11 +220,15 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
             </span>
             {limitText && <span style={{ color: 'var(--muted)', fontSize: 14 }}>{limitText}</span>}
           </div>
+          {/* One row of compact chips: an icon and the value, the full wording as each chip's label. */}
           <div className="tonight-badges">
             {kp !== null && <span>{t('tonight.badge.kp', { kp: num(kp, 1) })}</span>}
-            {h0.cloud !== null && <span>{t('tonight.badge.cloud', { pct: h0.cloud })}</span>}
-            <span>{cond?.sun.dark ? t('tonight.badge.dark') : lightUntil ? t('tonight.badge.light', { time: time(lightUntil) }) : t('tonight.badge.lightNone')}</span>
-            <span>{result.m.up ? t('tonight.badge.moonUp', { pct: Math.round(result.m.illumination * 100) }) : t('tonight.badge.moonDown')}</span>
+            {h0.cloud !== null && <Chip icon={CLOUD} label={t('tonight.badge.cloud', { pct: h0.cloud })}>{h0.cloud}%</Chip>}
+            {cond?.sun.dark ? <Chip icon={STARS} label={t('tonight.badge.dark')}>{t('tonight.badge.dark')}</Chip>
+              : lightUntil ? <Chip icon={DUSK} label={t('tonight.badge.light', { time: time(lightUntil) })}>{time(lightUntil)}</Chip>
+              : <Chip icon={DUSK} label={t('tonight.badge.lightNone')}>{t('tonight.badge.lightNone')}</Chip>}
+            {result.m.up ? <Chip icon={MOON} label={t('tonight.badge.moonUp', { pct: Math.round(result.m.illumination * 100) })}>{Math.round(result.m.illumination * 100)}%</Chip>
+              : <Chip icon={MOON} label={t('tonight.badge.moonDown')}>{t('tonight.badge.moonDown')}</Chip>}
           </div>
           <Sighting key={`${shownPlace.lat},${shownPlace.lon}`} lat={shownPlace.lat} lon={shownPlace.lon} score={h0.score} dark={!!cond?.sun.dark} />
           </div>

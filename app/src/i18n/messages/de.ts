@@ -433,7 +433,7 @@ export const de: Messages = {
   'home.hemi.low': 'Niedrig',
   'home.density.dense': 'Dicht',
   'home.density.typical': 'Typisch',
-  'home.live': 'LIVE · WELTWEIT · DATEN {time}',
+  'home.live': 'LIVE · {time}',
   'home.liveUnavailable': 'LIVE-DATEN NICHT VERFÜGBAR',
   'home.scale': 'Kp-Skala, aktuelle Stufe {level}',
   'home.oval': 'POLARLICHTOVAL',
