@@ -5,10 +5,10 @@
   --amber: #E6B800;
   --red: #F06A6A;
   --purple: #B07CFF;
-  --bg: #000;
+  --bg: #1c1c1e;
   --panel: #050605;
-  /* Cards: grey surfaces on the black page, and a lighter grey for controls and tiles on a card. */
-  --card: #1c1c1e;
+  /* Cards: black on the grey page, with a lighter grey for controls on a card. */
+  --card: #000;
   --card-2: #2c2c2e;
   --card-r: 22px;
   --card-sep: rgba(255, 255, 255, .08);
