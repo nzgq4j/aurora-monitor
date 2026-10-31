@@ -9,7 +9,7 @@ Polar Lights palkitsee taivaan seuraamisesta. Avaa puhelimessa **Sinä** → **M
 
 ## Pisteet ja arvot
 
-Saat pisteitä [vahvistetuista havainnoista](/support/start/i-saw-it), toisen jäsenen ilmoituksen vahvistamisesta sekä kuvista ja niiden saamista hyödyllinen-äänistä. Pisteillä nouset arvoissa:
+Saat pisteitä [vahvistetuista havainnoista](/support/start/i-saw-it), toisen jäsenen ilmoituksen vahvistamisesta sekä kuvista ja niiden saamista kaunis-äänistä. Pisteillä nouset arvoissa:
 
 | Arvo | Pisteet |
 | --- | --- |

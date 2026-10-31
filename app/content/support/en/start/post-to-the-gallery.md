@@ -1,6 +1,6 @@
 ---
 title: Post a photo to the gallery
-summary: Share your aurora photos with other members, and vote for the ones you find helpful.
+summary: Share your aurora photos with other members, and vote for the ones you find beautiful.
 order: 90
 ---
 The **Gallery** has members' aurora photos. Anyone can look; you need an account to post or vote.
@@ -9,7 +9,7 @@ The **Gallery** has members' aurora photos. Anyone can look; you need an account
 
 The buttons at the top choose which photos you see: **Tonight**, **This storm**, **Near me** (within 500 km of your Home), **Top**, **Recent** and, once you're signed in, **My gallery**. Tap a photo to see where and when it was taken, the Kp at the time and the camera settings.
 
-Tap **Helpful** on photos that show what the aurora looked like. Helpful votes earn the photographer points.
+Tap **Beautiful** on photos you like. Beautiful votes earn the photographer points.
 
 ## Post a photo
 

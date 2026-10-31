@@ -1,6 +1,6 @@
 ---
 title: Julkaise kuva galleriaan
-summary: Jaa revontulikuviasi muiden jäsenten kanssa ja äänestä hyödyllisiksi kokemiasi kuvia.
+summary: Jaa revontulikuviasi muiden jäsenten kanssa ja äänestä kauniiksi kokemiasi kuvia.
 order: 90
 ---
 **Galleria**-sivulla on jäsenten revontulikuvia. Kuka tahansa voi katsella niitä; julkaisemiseen ja äänestämiseen tarvitset tilin.
@@ -9,7 +9,7 @@ order: 90
 
 Yläreunan painikkeilla valitset, mitä kuvia näet: **Tänä yönä**, **Tämä myrsky**, **Lähelläni** (enintään 500 km:n päässä kodistasi), **Suosituimmat**, **Uusimmat** ja kirjauduttuasi **Oma galleria**. Napauttamalla kuvaa näet, missä ja milloin se on otettu, Kp-arvon kuvaushetkellä ja kameran asetukset.
 
-Napauta **Hyödyllinen** kuvissa, jotka näyttävät, miltä revontulet näyttivät. Hyödyllinen-äänistä kuvaaja saa pisteitä.
+Napauta **Kaunis** kuvissa, joista pidät. Kaunis-äänistä kuvaaja saa pisteitä.
 
 ## Julkaise kuva
 

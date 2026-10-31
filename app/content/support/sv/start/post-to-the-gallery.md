@@ -1,6 +1,6 @@
 ---
 title: Publicera ett foto i galleriet
-summary: Dela dina norrskensfoton med andra medlemmar och rösta på de som du tycker är hjälpsamma.
+summary: Dela dina norrskensfoton med andra medlemmar och rösta på de som du tycker är vackra.
 order: 90
 ---
 I **Galleri** finns medlemmarnas norrskensfoton. Alla kan titta; du behöver ett konto för att publicera eller rösta.
@@ -9,7 +9,7 @@ I **Galleri** finns medlemmarnas norrskensfoton. Alla kan titta; du behöver ett
 
 Knapparna högst upp väljer vilka foton du ser: **I kväll**, **Den här stormen**, **Nära mig** (inom 500 km från ditt Hem), **Topp**, **Senaste** och, när du är inloggad, **Mitt galleri**. Tryck på ett foto för att se var och när det togs, Kp vid tillfället och kamerainställningarna.
 
-Tryck på **Hjälpsam** på foton som visar hur norrskenet såg ut. Hjälpsam-röster ger fotografen poäng.
+Tryck på **Vacker** på foton som du gillar. Vacker-röster ger fotografen poäng.
 
 ## Publicera ett foto
 

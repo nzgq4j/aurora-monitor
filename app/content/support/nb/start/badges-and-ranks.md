@@ -9,7 +9,7 @@ Polar Lights belønner deg for å følge med på himmelen. Åpne **Deg** → **M
 
 ## Poeng og rang
 
-Du får poeng for [bekreftede observasjoner](/support/start/i-saw-it), for å bekrefte et annet medlems melding, og for bilder og nyttig-stemmene de får. Poengene tar deg opp gjennom rangene:
+Du får poeng for [bekreftede observasjoner](/support/start/i-saw-it), for å bekrefte et annet medlems melding, og for bilder og vakker-stemmene de får. Poengene tar deg opp gjennom rangene:
 
 | Rang | Poeng |
 | --- | --- |

@@ -1,6 +1,6 @@
 ---
 title: Del et billede i galleriet
-summary: Del dine nordlysbilleder med andre medlemmer, og stem på dem, du synes er nyttige.
+summary: Del dine nordlysbilleder med andre medlemmer, og stem på dem, du synes er smukke.
 order: 90
 ---
 I **Galleri** finder du medlemmernes nordlysbilleder. Alle kan kigge med; du skal have en konto for at dele billeder eller stemme.
@@ -9,7 +9,7 @@ I **Galleri** finder du medlemmernes nordlysbilleder. Alle kan kigge med; du ska
 
 Knapperne øverst bestemmer, hvilke billeder du ser: **I nat**, **Denne storm**, **Nær mig** (inden for 500 km fra dit Hjem), **Top**, **Nyeste** og, når du er logget ind, **Mit galleri**. Tryk på et billede for at se, hvor og hvornår det er taget, Kp på tidspunktet og kameraindstillingerne.
 
-Tryk på **Nyttig** ved billeder, der viser, hvordan nordlyset så ud. Nyttig-stemmer giver fotografen point.
+Tryk på **Smuk** ved billeder, du kan lide. Smuk-stemmer giver fotografen point.
 
 ## Del et billede
 

@@ -1,6 +1,6 @@
 ---
 title: Legg ut et bilde i galleriet
-summary: Del nordlysbildene dine med andre medlemmer, og stem på bildene du synes er nyttige.
+summary: Del nordlysbildene dine med andre medlemmer, og stem på bildene du synes er vakre.
 order: 90
 ---
 I **Galleri** finner du medlemmenes nordlysbilder. Alle kan se på dem; du trenger en konto for å legge ut bilder eller stemme.
@@ -9,7 +9,7 @@ I **Galleri** finner du medlemmenes nordlysbilder. Alle kan se på dem; du treng
 
 Knappene øverst bestemmer hvilke bilder du ser: **I natt**, **Denne stormen**, **Nær meg** (innenfor 500 km fra Hjem), **Topp**, **Nyeste** og, når du er logget inn, **Mitt galleri**. Trykk på et bilde for å se hvor og når det ble tatt, Kp på tidspunktet og kamerainnstillingene.
 
-Trykk på **Nyttig** på bilder som viser hvordan nordlyset så ut. Nyttig-stemmer gir fotografen poeng.
+Trykk på **Vakker** på bilder du liker. Vakker-stemmer gir fotografen poeng.
 
 ## Legg ut et bilde
 
