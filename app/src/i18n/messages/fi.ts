@@ -460,6 +460,8 @@ export const fi: Messages = {
   'spots.help.title': "Mitä luokat tarkoittavat?",
   'spots.help.mag': "α on yksi magneettinen polariteetti; β:ssä on molemmat polariteetit selvästi erillään; γ sekoittaa ne epäsäännöllisesti; δ sisältää vastakkaiset polariteetit saman penumbran sisällä. Mitä monimutkaisempi ryhmä (γ ja ennen kaikkea δ), sitä todennäköisempiä suuret purkaukset ovat.",
   'spots.help.mcintosh': "Kolme kirjainta: ryhmän koko ja tyyppi (A–H, yksittäisestä pienestä pilkusta suuriin monimutkaisiin ryhmiin), suurimman pilkun penumbra (x ei mitään – k suuri ja epäsymmetrinen) ja ryhmän tiiviys (x yksittäinen, o avoin, i välimuoto, c tiivis).",
+  'info.spots.lead': 'Jokainen numeroitu auringonpilkkuryhmä luokiteltuna sen mukaan, miten sen magneettikenttä on järjestynyt. Mitä monimutkaisempi ryhmä, sitä todennäköisempi suuri purkaus.',
+  'info.spots.flare': 'NOAA:n arvio M- tai X-luokan purkauksen todennäköisyydestä alueelta seuraavan 24 tunnin aikana.',
   'spots.risk.low': "Yksinkertainen (α, β)",
   'spots.risk.elevated': "Monimutkainen (γ)",
   'spots.risk.high': "Delta (δ): suurin purkausriski",

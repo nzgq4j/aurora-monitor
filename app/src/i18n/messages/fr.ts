@@ -460,6 +460,8 @@ export const fr: Messages = {
   'spots.help.title': 'Que signifient les classes ?',
   'spots.help.mag': 'α : une seule polarité magnétique ; β : les deux polarités, bien séparées ; γ : polarités mêlées irrégulièrement ; δ : polarités opposées dans une même pénombre. Plus le groupe est complexe (γ, et surtout δ), plus les grandes éruptions sont probables.',
   'spots.help.mcintosh': 'Trois lettres : la taille et le type du groupe (A–H, d’une petite tache à de grands groupes complexes), la pénombre de la plus grande tache (x aucune à k grande et asymétrique) et la compacité du groupe (x isolée, o ouvert, i intermédiaire, c compact).',
+  'info.spots.lead': 'Chaque groupe de taches numéroté, classé selon la disposition de son champ magnétique. Plus le groupe est complexe, plus une grosse éruption est probable.',
+  'info.spots.flare': 'La probabilité, selon la NOAA, d’une éruption de classe M ou X dans la région au cours des 24 prochaines heures.',
   'spots.risk.low': 'Simple (α, β)',
   'spots.risk.elevated': 'Complexe (γ)',
   'spots.risk.high': 'Delta (δ) : risque d’éruption le plus élevé',

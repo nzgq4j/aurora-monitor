@@ -460,6 +460,8 @@ export const de: Messages = {
   'spots.help.title': 'Was bedeuten die Klassen?',
   'spots.help.mag': 'α: eine magnetische Polarität; β: beide Polaritäten, klar getrennt; γ: unregelmäßig gemischt; δ: entgegengesetzte Polaritäten in einer gemeinsamen Penumbra. Je komplexer die Gruppe (γ, vor allem δ), desto wahrscheinlicher große Flares.',
   'spots.help.mcintosh': 'Drei Buchstaben: Größe und Typ der Gruppe (A–H, vom kleinen Einzelfleck bis zu großen, komplexen Gruppen), die Penumbra des größten Flecks (x keine bis k groß und asymmetrisch) und wie kompakt die Gruppe ist (x einzeln, o offen, i mittel, c kompakt).',
+  'info.spots.lead': 'Jede nummerierte Sonnenfleckengruppe, eingeteilt danach, wie ihr Magnetfeld angeordnet ist. Je komplexer die Gruppe, desto wahrscheinlicher ein großer Flare.',
+  'info.spots.flare': 'Die Wahrscheinlichkeit laut NOAA für einen Flare der Klasse M oder X aus der Region in den nächsten 24 Stunden.',
   'spots.risk.low': 'Einfach (α, β)',
   'spots.risk.elevated': 'Komplex (γ)',
   'spots.risk.high': 'Delta (δ): höchstes Flare-Risiko',

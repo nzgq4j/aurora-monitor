@@ -460,6 +460,8 @@ export const en = {
   'spots.help.title': 'What do the classes mean?',
   'spots.help.mag': 'α is a single magnetic polarity; β has both polarities, clearly separated; γ mixes them irregularly; δ packs opposite polarities inside one penumbra. The more complex the group (γ, and above all δ), the likelier large flares.',
   'spots.help.mcintosh': 'Three letters: the group’s size and type (A–H, from a single small spot to large complex groups), the largest spot’s penumbra (x none to k large and asymmetric), and how compact the group is (x single, o open, i intermediate, c compact).',
+  'info.spots.lead': 'Each numbered group of sunspots, classed by how its magnetic field is arranged. The more complex the group, the likelier a large flare.',
+  'info.spots.flare': "NOAA's chance of an M-class or X-class flare from the region in the next 24 hours.",
   'spots.risk.low': 'Simple (α, β)',
   'spots.risk.elevated': 'Complex (γ)',
   'spots.risk.high': 'Delta (δ): highest flare risk',
