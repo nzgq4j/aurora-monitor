@@ -82,7 +82,7 @@ function Outlook({ data }: { data: NowData }) {
   };
   const tab = (v: OutlookView, label: string) => (
     <button type="button" className="btn" aria-pressed={view === v} onClick={() => setPicked(v)}
-      style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '9px 10px', borderRadius: 999, fontWeight: 700, fontSize: 14, background: view === v ? '#3a3f3c' : 'transparent', color: view === v ? '#fff' : C.soft, whiteSpace: 'nowrap' }}>
+      style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '9px 10px', borderRadius: 999, fontWeight: 700, fontSize: 14, background: view === v ? 'var(--card-2)' : 'transparent', color: view === v ? '#fff' : C.soft, whiteSpace: 'nowrap' }}>
       {!can[v] && <svg viewBox="0 0 24 24" width="12" height="12" aria-label={t('common.locked')}><path d="M7 11V8a5 5 0 0 1 10 0v3M5.5 11h13v9.5h-13z" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinejoin="round" /></svg>}
       {label}
     </button>
@@ -93,7 +93,7 @@ function Outlook({ data }: { data: NowData }) {
       aside={<InfoButton title={headText(t('outlook.h2a'), t('outlook.h2b'))} content={outlookInfo(t)} />}
       summary={summaryText(i18n, line, line.at !== undefined ? date(line.at, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }) : undefined)}>
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <div role="group" aria-label={t('outlook.detail')} style={{ display: 'flex', padding: 4, border: '1px solid var(--line-2)', borderRadius: 999, background: '#111', flex: '1 1 300px', maxWidth: 420 }}>
+        <div role="group" aria-label={t('outlook.detail')} style={{ display: 'flex', padding: 4, borderRadius: 999, background: 'var(--card)', flex: '1 1 300px', maxWidth: 420 }}>
           {tab('hour', t('outlook.tab.hour'))}{tab('day', t('outlook.tab.day'))}{tab('month', t('outlook.tab.month'))}
         </div>
       </div>
@@ -105,7 +105,7 @@ function Outlook({ data }: { data: NowData }) {
           ))}
         </span>
       </div>
-      {can[view] ? chart[view] : (
+      {can[view] ? <div className="card-panel">{chart[view]}</div> : (
         <Locked tier={view === 'hour' ? ENTITLEMENTS.kp3h : ENTITLEMENTS.outlook27} preview={chart.day}
           title={view === 'hour' ? t('feat.kp3h') : t('feat.outlook27')}
           body={view === 'hour' ? t('outlook.locked.hour') : t('outlook.locked.month')} />
@@ -190,7 +190,7 @@ export function Home({ data, season }: { data: NowData; season?: AccountData }) 
   };
 
   return (
-    <main data-screen-label="Now" className="wrap" style={{ padding: '40px var(--gutter) 48px', display: 'flex', flexDirection: 'column', gap: 36 }}>
+    <main data-screen-label="Now" className="wrap" style={{ padding: '40px var(--gutter) 48px', display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* Now: the global picture (Kp, headline, oval), as a card above the verdict for your location. */}
       <section className="now-card" aria-label={t('nav.now')} ref={nowCard}>
         <div className="hero-copy">

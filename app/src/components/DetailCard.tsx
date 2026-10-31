@@ -31,7 +31,7 @@ export function DetailCard({ id, title, summary, aside, children }: { id: string
     try { localStorage.setItem(KEY, JSON.stringify({ ...read(), [id]: next })); } catch { /* storage unavailable */ }
   };
   return (
-    <section className="detail-card rule-top" data-open={open === null ? 'auto' : String(open)}>
+    <section className="detail-card" data-open={open === null ? 'auto' : String(open)}>
       <div className="detail-head">
         <h2 className="detail-title">
           <button type="button" className="btn detail-toggle" aria-expanded={shown} aria-controls={body} onClick={toggle}>

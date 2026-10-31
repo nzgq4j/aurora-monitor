@@ -57,7 +57,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 // viewport-fit=cover lets the layout use the full screen on notched phones; safe-area insets are applied in CSS.
-export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#000000', colorScheme: 'dark', viewportFit: 'cover' };
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#1c1c1e', colorScheme: 'dark', viewportFit: 'cover' };
 
 export default async function RootLayout({ children, params }: Props & { children: ReactNode }) {
   const locale = await routeLocale(params);

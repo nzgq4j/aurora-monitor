@@ -5,6 +5,7 @@ import { C, ENTITLEMENTS } from '../data';
 import { Locked } from '../components/Locked';
 import { SolarActivity, useSolarData } from '../components/SolarActivity';
 import { InfoButton } from '../components/InfoSheet';
+import { StatIcon } from '../components/StatIcon';
 import { solarInfo, spaceInfo, sunInfo } from '../lib/cardInfo';
 import { DetailCard } from '../components/DetailCard';
 import { SunspotRegions, useSunspots } from '../components/SunspotRegions';
@@ -69,14 +70,14 @@ export function Sun({ data }: { data: NowData }) {
   const w = data.wind;
   // Each tile: the value in its status colour, with the status as a pill (the info sheet explains the scales).
   const stats = [
-    { label: t('info.m.bz'), value: fmt(w?.bz, 1), unit: 'nT', note: w?.bz == null ? t('common.noData') : w.bz <= -10 ? t('home.bz.strongSouth') : w.bz <= -3 ? t('home.bz.south') : w.bz < 3 ? t('home.bz.zero') : t('home.bz.north'), c: w?.bz == null ? C.soft : w.bz <= -3 ? C.green : w.bz >= 3 ? C.red : C.soft },
-    { label: t('info.m.speed'), value: fmt(w?.speed), unit: 'km/s', note: w?.speed == null ? t('common.noData') : w.speed >= 600 ? t('home.speed.fast') : w.speed >= 450 ? t('home.speed.elevated') : t('home.speed.slow'), c: w?.speed == null ? C.soft : w.speed >= 600 ? C.red : w.speed >= 450 ? C.orange : C.soft },
-    { label: t('info.m.hemi'), value: fmt(data.hemi?.north), unit: 'GW', note: data.hemi == null ? t('common.noData') : data.hemi.north >= 50 ? t('home.hemi.high') : data.hemi.north >= 20 ? t('home.hemi.moderate') : t('home.hemi.low'), c: data.hemi == null ? C.soft : data.hemi.north >= 50 ? C.red : data.hemi.north >= 20 ? C.orange : C.soft },
-    { label: t('info.m.density'), value: fmt(w?.density, 1), unit: 'p/cm³', note: w?.density == null ? t('common.noData') : w.density >= 15 ? t('home.density.dense') : t('home.density.typical'), c: w?.density != null && w.density >= 15 ? '#5fb8ff' : C.soft },
+    { icon: 'field' as const, label: t('info.m.bz'), value: fmt(w?.bz, 1), unit: 'nT', note: w?.bz == null ? t('common.noData') : w.bz <= -10 ? t('home.bz.strongSouth') : w.bz <= -3 ? t('home.bz.south') : w.bz < 3 ? t('home.bz.zero') : t('home.bz.north'), c: w?.bz == null ? C.soft : w.bz <= -3 ? C.green : w.bz >= 3 ? C.red : C.soft },
+    { icon: 'wind' as const, label: t('info.m.speed'), value: fmt(w?.speed), unit: 'km/s', note: w?.speed == null ? t('common.noData') : w.speed >= 600 ? t('home.speed.fast') : w.speed >= 450 ? t('home.speed.elevated') : t('home.speed.slow'), c: w?.speed == null ? C.soft : w.speed >= 600 ? C.red : w.speed >= 450 ? C.orange : C.soft },
+    { icon: 'bolt' as const, label: t('info.m.hemi'), value: fmt(data.hemi?.north), unit: 'GW', note: data.hemi == null ? t('common.noData') : data.hemi.north >= 50 ? t('home.hemi.high') : data.hemi.north >= 20 ? t('home.hemi.moderate') : t('home.hemi.low'), c: data.hemi == null ? C.soft : data.hemi.north >= 50 ? C.red : data.hemi.north >= 20 ? C.orange : C.soft },
+    { icon: 'density' as const, label: t('info.m.density'), value: fmt(w?.density, 1), unit: 'p/cm³', note: w?.density == null ? t('common.noData') : w.density >= 15 ? t('home.density.dense') : t('home.density.typical'), c: w?.density != null && w.density >= 15 ? '#5fb8ff' : C.soft },
   ];
 
   return (
-    <main data-screen-label="Sun" className="wrap" style={{ padding: '40px var(--gutter) 48px', display: 'flex', flexDirection: 'column', gap: 36 }}>
+    <main data-screen-label="Sun" className="wrap" style={{ padding: '40px var(--gutter) 48px', display: 'flex', flexDirection: 'column', gap: 32 }}>
       <h1 className="you-title">{t('nav.sun')}</h1>
 
       <DetailCard id="space" title={<>{headLead(t('detail.space.h2a'))}<span className="hl">{t('detail.space.h2b')}</span></>} summary={summaryText(i18n, spaceLine(w))}
@@ -84,6 +85,7 @@ export function Sun({ data }: { data: NowData }) {
         <div className="space-tiles">
           {stats.map(s => (
             <div key={s.label} className="space-tile">
+              <StatIcon name={s.icon} />
               <span className="space-tile-label">{s.label}</span>
               <span className="space-tile-value" style={{ color: s.c }}>{s.value}<small>{s.unit}</small></span>
               <span className="space-tile-pill" style={{ color: s.c, borderColor: s.c }}>{s.note}</span>

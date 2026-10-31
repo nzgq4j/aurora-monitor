@@ -7,6 +7,7 @@ import { useLocations } from '../lib/locations';
 import { useConditions } from '../lib/useConditions';
 import { useI18n, type I18n } from '../i18n/I18n';
 import { InfoButton } from './InfoSheet';
+import { StatIcon } from './StatIcon';
 import { skyInfo } from '../lib/cardInfo';
 import { PlacePicker } from './PlacePicker';
 import { headLead, headText } from '../i18n/core';
@@ -88,16 +89,16 @@ export function YourSky({ kp }: { kp: number | null }) {
   }
 
   const stats = [
-    { label: t('sky.stat.aurora'), value: aur === null ? '—' : `${aur}`, unit: aur === null ? '' : '%', note: t(`sky.auroraNote.${look}`), c: aur !== null && aur >= 10 ? C.green : C.soft },
-    { label: t('sky.stat.cloud'), value: cloud === null ? '—' : `${cloud}`, unit: cloud === null ? '' : '%', note: !layers ? t('common.noData') : t('sky.cloud.layers', { ...layers }), c: cloud !== null && cloud < 30 ? C.green : C.soft },
-    { label: t('sky.stat.dark'), value: dark === null ? '—' : dark ? t('sky.dark.now') : cond?.sun.changesAt ? hhmmUT(cond.sun.changesAt).slice(0, 5) : t('sky.dark.no'), unit: dark === false && cond?.sun.changesAt ? 'UT' : '', note: dark === null ? (loading ? t('sky.checking') : t('common.noData')) : dark ? (cond?.sun.changesAt ? t('sky.dark.until', { time: hhmmUT(cond.sun.changesAt) }) : t('sky.dark.allNight')) : t('sky.dark.rule'), c: dark ? C.green : C.soft },
-    { label: t('sky.stat.needs'), value: need === null ? '—' : `Kp ${need}`, unit: '', note: cond ? t('sky.magLat', { lat: num(cond.magLat, 1) }) : t('sky.approx'), c: C.soft },
+    { icon: 'aurora' as const, label: t('info.sky.m.aurora'), value: aur === null ? '—' : `${aur}`, unit: aur === null ? '' : '%', note: t(`sky.auroraNote.${look}`), c: aur !== null && aur >= 10 ? C.green : C.soft },
+    { icon: 'cloud' as const, label: t('info.sky.m.cloud'), value: cloud === null ? '—' : `${cloud}`, unit: cloud === null ? '' : '%', note: !layers ? t('common.noData') : t('sky.cloud.layers', { ...layers }), c: cloud !== null && cloud < 30 ? C.green : C.soft },
+    { icon: 'moon' as const, label: t('info.sky.m.dark'), value: dark === null ? '—' : dark ? t('sky.dark.now') : cond?.sun.changesAt ? hhmmUT(cond.sun.changesAt).slice(0, 5) : t('sky.dark.no'), unit: dark === false && cond?.sun.changesAt ? 'UT' : '', note: dark === null ? (loading ? t('sky.checking') : t('common.noData')) : dark ? (cond?.sun.changesAt ? t('sky.dark.until', { time: hhmmUT(cond.sun.changesAt) }) : t('sky.dark.allNight')) : t('sky.dark.rule'), c: dark ? C.green : C.soft },
+    { icon: 'gauge' as const, label: t('info.sky.m.needs'), value: need === null ? '—' : `Kp ${need}`, unit: '', note: cond ? t('sky.magLat', { lat: num(cond.magLat, 1) }) : t('sky.approx'), c: C.soft },
   ];
 
   const pill = { fontSize: 14, padding: '11px 18px', whiteSpace: 'nowrap' as const };
 
   return (
-    <section aria-labelledby="your-sky" className="rule-top" style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 24 }}>
+    <section aria-labelledby="your-sky" style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 4 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -128,6 +129,7 @@ export function YourSky({ kp }: { kp: number | null }) {
           <div className="now-stats">
             {stats.map(s => (
               <div key={s.label} className="now-stat">
+                <StatIcon name={s.icon} />
                 <span className="label">{s.label}</span>
                 <span className="stat-value" style={{ fontSize: 30, whiteSpace: 'nowrap' }}>
                   {s.value}{s.unit && <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--muted)', marginLeft: 4 }}>{s.unit}</span>}
@@ -136,6 +138,8 @@ export function YourSky({ kp }: { kp: number | null }) {
               </div>
             ))}
           </div>
+          {/* The satellite check, the Moon and the verdict together on one card under the tiles. */}
+          <div className="card-panel" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {sat !== null && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <span className="label">{t('sky.sat.label')}</span>
@@ -161,6 +165,7 @@ export function YourSky({ kp }: { kp: number | null }) {
           )}
           {verdict && <span style={{ fontSize: 16, fontWeight: 600, color: vc }}>{verdict}</span>}
           {cloud !== null && <span style={{ fontSize: 12, color: 'var(--dim)' }}>{t('sky.cloud.weighting')}</span>}
+          </div>
         </>
       ) : (
         <span style={{ fontSize: 16, color: 'var(--soft)' }}>{t('sky.empty')}</span>
