@@ -45,14 +45,6 @@ function rows(j: unknown): Row[] {
   return (j as Row[]).map(r => Object.fromEntries(Object.entries(r).map(([k, v]) => [k.toLowerCase(), v])));
 }
 
-async function firstRows(urls: string[]) {
-  for (const u of urls) {
-    const r = rows(await json(u));
-    if (r.length) return r;
-  }
-  return [];
-}
-
 function iso(v: unknown): string | null {
   if (typeof v !== 'string' || !v) return null;
   let s = v.trim().replace(' ', 'T');
@@ -94,28 +86,32 @@ Deno.serve(async req => {
     detail.gfz_kp = error ? error.message : gfzRows.length;
   } else detail.gfz_kp = 'no data';
 
-  // 3. Real-time solar wind (last ~2 hours at 1-minute cadence).
+  // 3. Real-time solar wind at L1 (1-minute cadence; NOAA retired the products/solar-wind files in October 2026).
+  // Both spacecraft are listed; keep the active one. The field and the plasma are stored separately, so a run
+  // that has one but not yet the other for a minute never blanks a value an earlier run stored.
   const active = (rs: Row[]) => (rs.some(r => 'active' in r) ? rs.filter(r => r.active === true || r.active === 'true' || r.active === 1) : rs);
   const [mag, plasma] = await Promise.all([
-    firstRows([`${SWPC}/products/solar-wind/mag-2-hour.json`, `${SWPC}/products/solar-wind/mag-1-day.json`, `${SWPC}/json/rtsw/rtsw_mag_1m.json`]).then(active),
-    firstRows([`${SWPC}/products/solar-wind/plasma-2-hour.json`, `${SWPC}/products/solar-wind/plasma-1-day.json`, `${SWPC}/json/rtsw/rtsw_wind_1m.json`]).then(active),
+    json(`${SWPC}/json/rtsw/rtsw_mag_1m.json`).then(j => active(rows(j))),
+    json(`${SWPC}/json/rtsw/rtsw_wind_1m.json`).then(j => active(rows(j))),
   ]);
   const cutoff = Date.now() - 3 * 36e5;
-  const wind = new Map<string, { time_tag: string; bz_gsm: number | null; bt: number | null; speed: number | null; density: number | null }>();
+  const recent = (r: Row) => { const t = iso(r.time_tag); return t && Date.parse(t) >= cutoff ? t : null; };
+  const field = new Map<string, { time_tag: string; bz_gsm: number; bt: number | null }>();
   for (const r of mag) {
-    const t = iso(r.time_tag);
-    if (t && Date.parse(t) >= cutoff) wind.set(t, { time_tag: t, bz_gsm: num(r.bz_gsm ?? r.bz), bt: num(r.bt), speed: null, density: null });
+    const t = recent(r), bz = num(r.bz_gsm ?? r.bz);
+    if (t && bz !== null) field.set(t, { time_tag: t, bz_gsm: bz, bt: num(r.bt) });
   }
+  const wind = new Map<string, { time_tag: string; speed: number; density: number | null }>();
   for (const r of plasma) {
-    const t = iso(r.time_tag);
-    if (!t || Date.parse(t) < cutoff) continue;
-    const w = wind.get(t) ?? { time_tag: t, bz_gsm: null, bt: null, speed: null, density: null };
-    w.speed = num(r.speed ?? r.proton_speed); w.density = num(r.density ?? r.proton_density);
-    wind.set(t, w);
+    const t = recent(r), speed = num(r.speed ?? r.proton_speed);
+    if (t && speed !== null) wind.set(t, { time_tag: t, speed, density: num(r.density ?? r.proton_density) });
   }
-  if (wind.size) {
-    const { error } = await sb.from('solar_wind').upsert([...wind.values()]);
-    detail.solar_wind = error ? error.message : wind.size;
+  if (field.size || wind.size) {
+    // One after the other: each upsert updates only its own columns of a minute's row.
+    const a = field.size ? await sb.from('solar_wind').upsert([...field.values()]) : { error: null };
+    const b = wind.size ? await sb.from('solar_wind').upsert([...wind.values()]) : { error: null };
+    const error = a.error ?? b.error;
+    detail.solar_wind = error ? error.message : { field: field.size, plasma: wind.size };
   } else detail.solar_wind = 'no data';
 
   // 4. OVATION: max probability, the 10% equatorward edge (northern hemisphere) and the full grid.
