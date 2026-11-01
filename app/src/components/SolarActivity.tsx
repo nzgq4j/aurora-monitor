@@ -33,7 +33,7 @@ export function useSolarData(enabled = true) {
   return { data, failed };
 }
 
-const PURPLE = '#b06bdc', BLUE = '#5fb8ff';
+const PURPLE = '#b06bdc', BLUE = '#5fb8ff', GREY = '#8a928d';
 const cap = (s: string) => s.charAt(0).toLocaleUpperCase() + s.slice(1);
 
 /** The solar wind and hemispheric power charts: magnetic field, speed, density and power, last 24 hours. */
@@ -49,21 +49,21 @@ export function SolarActivity() {
   return (
     <div className="space-charts">
       <SpaceChart title={t('solar.field')} unit="nT" decimals={1} zero now={now}
-        series={[{ points: wind('bz'), color: C.red, fillNegative: true }, { points: wind('bt'), color: PURPLE, dashed: true }]}
-        legend={[{ color: C.red, label: t('info.m.bz') }, { color: PURPLE, label: t('solar.bt'), dash: true }]}
+        series={[{ points: wind('bz'), color: C.red, fillNegative: true, stops: [{ v: -10, color: C.green }, { v: -3, color: C.darkGreen }, { v: 0, color: GREY }, { v: 3, color: C.red }] }, { points: wind('bt'), color: PURPLE, dashed: true }]}
+        legend={[{ color: C.green, label: `${t('info.m.bz')} · ${t('home.bz.south')}` }, { color: C.red, label: `${t('info.m.bz')} · ${t('home.bz.north')}` }, { color: PURPLE, label: t('solar.bt'), dash: true }]}
         caption={t('solar.bzNote')} />
       <SpaceChart title={t('solar.speed')} unit="km/s" now={now}
-        series={[{ points: wind('speed'), color: C.green, area: true, stops: [{ v: 450, color: C.orange }, { v: 600, color: C.red }] }]}
+        series={[{ points: wind('speed'), color: C.green, area: true, stops: [{ v: 380, color: C.green }, { v: 450, color: C.amber }, { v: 525, color: C.orange }, { v: 600, color: C.red }] }]}
         thresholds={[{ v: 450, color: C.orange, label: t('home.speed.elevated') }, { v: 600, color: C.red, label: t('home.speed.fast') }]}
         legend={[{ color: C.green, label: `< 450 km/s · ${t('home.speed.slow')}` }, { color: C.orange, label: `450+ km/s · ${t('home.speed.elevated')}` }, { color: C.red, label: `600+ km/s · ${t('home.speed.fast')}` }]}
         caption={t('solar.speedNote')} />
       <SpaceChart title={t('solar.density')} unit="p/cm³" decimals={1} now={now}
-        series={[{ points: wind('density'), color: BLUE }]}
+        series={[{ points: wind('density'), color: BLUE, area: true, stops: [{ v: 2, color: '#3a6f99' }, { v: 15, color: BLUE }, { v: 30, color: '#c6e8ff' }] }]}
         thresholds={[{ v: 15, color: C.muted, label: t('home.density.dense') }]}
         legend={[{ color: BLUE, label: `${t('info.m.density')} (p/cm³)` }, { color: C.muted, label: `15+ p/cm³ · ${t('home.density.dense')}`, dash: true }]}
         caption={t('solar.densityNote')} />
       <SpaceChart title={t('solar.hemi')} unit="GW" now={now}
-        series={[{ points: data.hemi.map(p => ({ t: p.t, v: p.north })), color: C.green, area: true, forecast: true }]}
+        series={[{ points: data.hemi.map(p => ({ t: p.t, v: p.north })), color: C.green, area: true, forecast: true, stops: [{ v: 10, color: C.green }, { v: 20, color: C.amber }, { v: 35, color: C.orange }, { v: 50, color: C.red }] }]}
         thresholds={[{ v: 20, color: C.orange, label: t('home.hemi.moderate') }, { v: 50, color: C.red, label: t('home.hemi.high') }]}
         legend={[{ color: C.green, label: cap(t('chart.observed')) }, { color: C.green, label: cap(t('chart.forecast')), dash: true }]}
         caption={t('solar.hemiNote')} />

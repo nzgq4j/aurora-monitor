@@ -19,7 +19,7 @@ export interface Series {
   fillNegative?: boolean;
   /** Fill under the line, fading down. */
   area?: boolean;
-  /** Colour the line by value: below the first stop it is `color`, then each stop's colour from its value up. */
+  /** Graduated colour by value: the line (and its fill) blends from stop to stop; outside them it keeps the end colour. */
   stops?: { v: number; color: string }[];
   /** Values after now are a forecast, drawn dashed. */
   forecast?: boolean;
@@ -92,9 +92,10 @@ export function SpaceChart({ title, unit, decimals = 0, series, thresholds = [],
                   {gradStops(s, lo, hi).map((g, k) => <stop key={k} offset={g.o} stopColor={g.c} />)}
                 </linearGradient>
               ))}
-              <linearGradient id={`${uid}-area`} x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0" stopColor={C.darkGreen} stopOpacity=".45" /><stop offset="1" stopColor={C.darkGreen} stopOpacity=".05" />
+              <linearGradient id={`${uid}-fade`} gradientUnits="userSpaceOnUse" x1="0" x2="0" y1={TOP} y2={BOT}>
+                <stop offset="0" stopColor="#fff" stopOpacity=".55" /><stop offset="1" stopColor="#fff" stopOpacity=".06" />
               </linearGradient>
+              <mask id={`${uid}-fadem`} maskUnits="userSpaceOnUse" x="0" y="0" width={W} height={H}><rect x="0" y="0" width={W} height={H} fill={`url(#${uid}-fade)`} /></mask>
               <clipPath id={`${uid}-neg`}><rect x={X0} y={y(0)} width={Math.max(0, X1 - X0)} height={Math.max(0, BOT - y(0))} /></clipPath>
             </defs>
             {ys.map(v => (
@@ -121,8 +122,8 @@ export function SpaceChart({ title, unit, decimals = 0, series, thresholds = [],
               const stroke = s.stops ? `url(#${uid}-g${i})` : s.color;
               return (
                 <g key={`${i}-${k}`}>
-                  {s.area && !r.dashed && <path d={`${d} ${base}`} fill={`url(#${uid}-area)`} />}
-                  {s.fillNegative && <path d={`${d} ${base}`} fill={s.color} fillOpacity=".28" clipPath={`url(#${uid}-neg)`} />}
+                  {s.area && !r.dashed && <path d={`${d} ${base}`} fill={stroke} mask={`url(#${uid}-fadem)`} />}
+                  {s.fillNegative && <path d={`${d} ${base}`} fill={stroke} fillOpacity=".3" clipPath={`url(#${uid}-neg)`} />}
                   <path d={d} fill="none" stroke={stroke} strokeWidth={s.dashed ? 2 : 2.4} strokeDasharray={r.dashed ? '5 4' : undefined} strokeLinejoin="round" strokeLinecap="round" />
                 </g>
               );
@@ -147,19 +148,25 @@ export function SpaceChart({ title, unit, decimals = 0, series, thresholds = [],
   );
 }
 
-/** The colour a value-coloured line has at `v`. */
-function colorAt(s: Series, v: number) {
-  let c = s.color;
-  for (const st of s.stops ?? []) if (v >= st.v) c = st.color;
-  return c;
+const rgb = (h: string) => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const hex = (c: number[]) => `#${c.map(n => Math.round(n).toString(16).padStart(2, '0')).join('')}`;
+
+/** The colour a graduated line has at `v`: blended between the stops either side, or the end colour outside them. */
+export function colorAt(s: Series, v: number) {
+  const st = s.stops ?? [];
+  if (!st.length) return s.color;
+  if (v <= st[0].v) return st[0].color;
+  for (let i = 1; i < st.length; i++) {
+    if (v <= st[i].v) {
+      const k = (v - st[i - 1].v) / (st[i].v - st[i - 1].v || 1), a = rgb(st[i - 1].color), b = rgb(st[i].color);
+      return hex(a.map((n, j) => n + (b[j] - n) * k));
+    }
+  }
+  return st[st.length - 1].color;
 }
 
-/** Hard colour changes at each stop, as gradient offsets from the bottom (lo) to the top (hi) of the plot. */
+/** The graduated colour sampled up the plot, as gradient offsets from the bottom (lo) to the top (hi). */
 function gradStops(s: Series, lo: number, hi: number) {
-  const o = (v: number) => Math.min(1, Math.max(0, (v - lo) / (hi - lo || 1)));
-  const out = [{ o: 0, c: s.color }];
-  let prev = s.color;
-  for (const st of s.stops ?? []) { out.push({ o: o(st.v), c: prev }, { o: o(st.v), c: st.color }); prev = st.color; }
-  out.push({ o: 1, c: prev });
-  return out;
+  const N = 32;
+  return Array.from({ length: N + 1 }, (_, k) => ({ o: k / N, c: colorAt(s, lo + ((hi - lo) * k) / N) }));
 }
