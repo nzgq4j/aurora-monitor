@@ -25,6 +25,8 @@ export interface HourScore {
   moonUp: boolean;
   /** Each factor, 0-1; the smallest is what holds the hour back. */
   f: Record<Factor, number>;
+  /** OVATION's probability nearby (%), set for the hours whose aurora factor it shaped (the first two). */
+  ovation?: number;
   /** Set when there was no Kp and no OVATION model for the hour, so its aurora chance isn't known. */
   unknown?: true;
 }
@@ -112,7 +114,8 @@ export function hourlyScores(x: Inputs): HourScore[] {
       moon: moonUp ? 1 - 0.35 * x.moonIllumination : 1,
     };
     const known = kp !== null || (i <= 1 && x.ovationNearby !== null);
-    out.push({ t, score: Math.round(100 * f.aurora * f.dark * f.cloud * f.moon), kp, cloud, sunAlt, moonUp, f, ...(known ? {} : { unknown: true as const }) });
+    out.push({ t, score: Math.round(100 * f.aurora * f.dark * f.cloud * f.moon), kp, cloud, sunAlt, moonUp, f,
+      ...(i <= 1 && x.ovationNearby !== null ? { ovation: Math.round(x.ovationNearby) } : {}), ...(known ? {} : { unknown: true as const }) });
   }
   return out;
 }

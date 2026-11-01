@@ -701,6 +701,8 @@ export const ru: Messages = {
   'tonight.look.high.south': "Смотрите высоко в южную часть неба",
   'tonight.look.overhead': "Смотрите в зенит и по сторонам",
   'tonight.limit.aurora': "Слишком низкая активность: нужен Kp {need}, прогноз Kp {kp}",
+  'tonight.limit.ovation': 'Kp {kp} здесь достаточно (нужен Kp {need}), но модель сияния в реальном времени сейчас показывает поблизости лишь {pct}%',
+  'tonight.limit.faint': 'Kp {kp} здесь достаточно (нужен Kp {need}), но в этот час впритык, поэтому сияние может быть слабым',
   'tonight.limit.dark': "Слишком светло: темно с {time}",
   'tonight.limit.darkNone': "Слишком светло: в ближайшие 12 часов темно не будет",
   'tonight.limit.cloud': "Облачно: {pct}% облаков",

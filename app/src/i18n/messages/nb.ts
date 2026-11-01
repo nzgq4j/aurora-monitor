@@ -683,6 +683,8 @@ export const nb: Messages = {
   'tonight.look.high.south': "Se høyt på sørhimmelen",
   'tonight.look.overhead': "Se rett opp og rundt deg",
   'tonight.limit.aurora': "For lav aktivitet: trenger Kp {need}, varslet Kp {kp}",
+  'tonight.limit.ovation': 'Kp {kp} er nok her (krever Kp {need}), men den direkte nordlysmodellen viser bare {pct} % i nærheten akkurat nå',
+  'tonight.limit.faint': 'Kp {kp} er nok her (krever Kp {need}), men bare så vidt på denne tiden, så nordlyset kan bli svakt',
   'tonight.limit.dark': "For lyst: mørkt fra {time}",
   'tonight.limit.darkNone': "For lyst: ingen mørke timer de neste 12 timene",
   'tonight.limit.cloud': "Skyet: {pct} % skyer",

@@ -158,10 +158,18 @@ export function Tonight({ kp, series }: { kp: number | null; series: KpPoint[] }
   const lightUntil = cond?.sun.dark === false ? cond.sun.changesAt : null;
   const limitText = v?.level === 'unavailable' ? t('tonight.unavailable')
     : !v || !v.limit || !cond ? null
-    : v.limit === 'aurora' ? t('tonight.limit.aurora', { need: cond.kpNeeded, kp: num(v.subject.kp ?? 0, 1) })
+    : v.limit === 'aurora' ? auroraLimit(v.subject, cond.kpNeeded)
     : v.limit === 'dark' ? (lightUntil ? t('tonight.limit.dark', { time: time(lightUntil) }) : t('tonight.limit.darkNone'))
     : v.limit === 'cloud' ? t('tonight.limit.cloud', { pct: v.subject.cloud ?? '—' })
     : t('tonight.limit.moon', { pct: Math.round((result?.m.illumination ?? 0) * 100) });
+  // Why the aurora holds the hour back. Only "too low" when the Kp really is short of what this place needs;
+  // when it is enough, the live OVATION model (which decides the first two hours) or a modest margin is why.
+  function auroraLimit(h: HourScore, need: number) {
+    const kp = num(h.kp ?? 0, 1);
+    if (h.kp === null || h.kp < need) return t('tonight.limit.aurora', { need, kp });
+    if (h.ovation !== undefined) return t('tonight.limit.ovation', { need, kp, pct: h.ovation });
+    return t('tonight.limit.faint', { need, kp });
+  }
   const skyWord = (h: HourScore) => t(h.sunAlt <= -12 ? 'tonight.sky.dark' : h.sunAlt < -4 ? 'tonight.sky.twilight' : 'tonight.sky.day');
 
   return (

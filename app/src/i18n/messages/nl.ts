@@ -683,6 +683,8 @@ export const nl: Messages = {
   'tonight.look.high.south': 'Kijk hoog aan de zuidelijke hemel',
   'tonight.look.overhead': 'Kijk recht omhoog en rondom',
   'tonight.limit.aurora': 'Te weinig activiteit: Kp {need} nodig, verwacht Kp {kp}',
+  'tonight.limit.ovation': 'Kp {kp} is hier genoeg (nodig: Kp {need}), maar het actuele poollichtmodel toont in de buurt nu maar {pct}%',
+  'tonight.limit.faint': 'Kp {kp} is hier genoeg (nodig: Kp {need}), maar op dit uur maar net, dus het poollicht kan zwak zijn',
   'tonight.limit.dark': 'Te licht: donker vanaf {time}',
   'tonight.limit.darkNone': 'Te licht: het wordt de komende 12 uur niet donker',
   'tonight.limit.cloud': 'Bewolkt: {pct}% bewolking',
