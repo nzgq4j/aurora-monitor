@@ -683,6 +683,8 @@ export const sv: Messages = {
   'tonight.look.high.south': "Titta högt på södra himlen",
   'tonight.look.overhead': "Titta rakt upp och runt omkring",
   'tonight.limit.aurora': "För låg aktivitet: kräver Kp {need}, prognos Kp {kp}",
+  'tonight.limit.ovation': 'Kp {kp} räcker här (kräver Kp {need}), men den aktuella norrskensmodellen visar bara {pct} % i närheten just nu',
+  'tonight.limit.faint': 'Kp {kp} räcker här (kräver Kp {need}), men bara precis vid den här tiden, så norrskenet kan bli svagt',
   'tonight.limit.dark': "För ljust: mörkt från {time}",
   'tonight.limit.darkNone': "För ljust: inga mörka timmar de närmaste 12 timmarna",
   'tonight.limit.cloud': "Molnigt: {pct} % moln",

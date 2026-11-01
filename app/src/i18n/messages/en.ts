@@ -683,6 +683,8 @@ export const en = {
   'tonight.look.high.south': 'Look high in the southern sky',
   'tonight.look.overhead': 'Look overhead and all around',
   'tonight.limit.aurora': 'Activity too low: needs Kp {need}, forecast Kp {kp}',
+  'tonight.limit.ovation': 'Kp {kp} is enough here (needs Kp {need}), but the live aurora model shows only {pct}% nearby right now',
+  'tonight.limit.faint': 'Kp {kp} is enough here (needs Kp {need}), but only just at this hour, so aurora may be faint',
   'tonight.limit.dark': 'Too light: dark from {time}',
   'tonight.limit.darkNone': 'Too light: no dark hours in the next 12 hours',
   'tonight.limit.cloud': 'Cloudy: {pct}% cloud',

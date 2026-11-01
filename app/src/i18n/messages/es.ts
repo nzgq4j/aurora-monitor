@@ -683,6 +683,8 @@ export const es: Messages = {
   'tonight.look.high.south': 'Mira alto en el cielo del sur',
   'tonight.look.overhead': 'Mira sobre ti y a tu alrededor',
   'tonight.limit.aurora': 'Actividad baja: hace falta Kp {need}, previsto Kp {kp}',
+  'tonight.limit.ovation': 'Kp {kp} basta aquí (se necesita Kp {need}), pero el modelo de auroras en vivo muestra solo un {pct}% cerca ahora mismo',
+  'tonight.limit.faint': 'Kp {kp} basta aquí (se necesita Kp {need}), pero muy justo a esta hora, así que la aurora podría ser débil',
   'tonight.limit.dark': 'Hay demasiada luz: oscuro desde las {time}',
   'tonight.limit.darkNone': 'Hay demasiada luz: no oscurece en las próximas 12 horas',
   'tonight.limit.cloud': 'Nublado: {pct}% de nubes',

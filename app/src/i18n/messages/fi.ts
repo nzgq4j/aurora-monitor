@@ -683,6 +683,8 @@ export const fi: Messages = {
   'tonight.look.high.south': "Katso korkealle eteläiselle taivaalle",
   'tonight.look.overhead': "Katso ylös ja ympärillesi",
   'tonight.limit.aurora': "Liian vähän aktiivisuutta: tarvitaan Kp {need}, ennuste Kp {kp}",
+  'tonight.limit.ovation': 'Kp {kp} riittää täällä (tarvitaan Kp {need}), mutta reaaliaikainen revontulimalli näyttää lähistöllä nyt vain {pct} %',
+  'tonight.limit.faint': 'Kp {kp} riittää täällä (tarvitaan Kp {need}), mutta tähän aikaan vain niukasti, joten revontulet voivat olla himmeitä',
   'tonight.limit.dark': "Liian valoisaa: pimeää alkaen {time}",
   'tonight.limit.darkNone': "Liian valoisaa: ei pimeitä tunteja seuraavan 12 tunnin aikana",
   'tonight.limit.cloud': "Pilvistä: {pct} % pilviä",

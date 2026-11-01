@@ -683,6 +683,8 @@ export const fr: Messages = {
   'tonight.look.high.south': 'Regardez haut dans le ciel sud',
   'tonight.look.overhead': 'Regardez au-dessus de vous et tout autour',
   'tonight.limit.aurora': 'Activité trop faible : il faut Kp {need}, prévu Kp {kp}',
+  'tonight.limit.ovation': 'Kp {kp} suffit ici (il faut Kp {need}), mais le modèle d’aurores en direct n’indique que {pct} % à proximité en ce moment',
+  'tonight.limit.faint': 'Kp {kp} suffit ici (il faut Kp {need}), mais tout juste à cette heure, donc l’aurore pourrait être faible',
   'tonight.limit.dark': 'Trop clair : nuit noire à partir de {time}',
   'tonight.limit.darkNone': 'Trop clair : pas de nuit noire dans les 12 prochaines heures',
   'tonight.limit.cloud': 'Nuageux : {pct} % de nuages',

@@ -683,6 +683,8 @@ export const de: Messages = {
   'tonight.look.high.south': 'Hoch am Südhimmel schauen',
   'tonight.look.overhead': 'Nach oben und rundum schauen',
   'tonight.limit.aurora': 'Zu wenig Aktivität: Kp {need} nötig, vorhergesagt Kp {kp}',
+  'tonight.limit.ovation': 'Kp {kp} reicht hier (benötigt Kp {need}), aber das aktuelle Polarlichtmodell zeigt in der Nähe gerade nur {pct}%',
+  'tonight.limit.faint': 'Kp {kp} reicht hier (benötigt Kp {need}), aber zu dieser Stunde nur knapp, daher könnte das Polarlicht schwach sein',
   'tonight.limit.dark': 'Zu hell: dunkel ab {time}',
   'tonight.limit.darkNone': 'Zu hell: in den nächsten 12 Stunden wird es nicht dunkel',
   'tonight.limit.cloud': 'Bewölkt: {pct} % Wolken',

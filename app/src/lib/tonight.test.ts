@@ -89,3 +89,12 @@ describe('magnetic local time', () => {
     expect(ovalShift(12)).toBe(6);
   });
 });
+
+describe('what decides the first hours', () => {
+  it('records the OVATION reading on the hours it shaped, so the reason can name it', () => {
+    const hours = hourlyScores({ lat: 66, lon: 12.6, need: 0, kpNow: 3, series: [], ovationNearby: 12.4, cloudNow: 24, cloudHourly: [], moonIllumination: 0.5, now: Date.UTC(2026, 10, 1, 23, 4) });
+    expect(hours[0].ovation).toBe(12);
+    expect(hours[1].ovation).toBe(12);
+    expect(hours[2].ovation).toBeUndefined();
+  });
+});
