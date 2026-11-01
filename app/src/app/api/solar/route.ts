@@ -3,7 +3,9 @@ import { hemiPowerSeries, solarWindSeries, type HemiPoint, type WindPoint } from
 
 export interface SolarActivity { wind: WindPoint[]; hemi: HemiPoint[] }
 
-export const revalidate = 120;
+// Run on every request and let the CDN cache the response (its Cache-Control): as a revalidated (ISR)
+// route Vercel kept serving the copy made at deploy time and never stored a fresh one, so the data froze.
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const [wind, hemi] = await Promise.all([solarWindSeries(), hemiPowerSeries()]);

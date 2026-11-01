@@ -8,7 +8,9 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   return { title: t('title.map') };
 }
 
-export const revalidate = 120;
+// Rendered on each request (the feeds themselves are cached for two minutes): as a revalidated (ISR) page
+// Vercel kept serving copies hours old.
+export const dynamic = 'force-dynamic';
 
 export default async function Page() {
   const [kp, series] = await Promise.all([kpNow(), kpSeries()]);

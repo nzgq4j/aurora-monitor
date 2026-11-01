@@ -9,7 +9,9 @@ export interface OvalGrid {
   data: string;
 }
 
-export const revalidate = 120;
+// Run on every request and let the CDN cache the response (its Cache-Control): as a revalidated (ISR)
+// route Vercel kept serving the copy made at deploy time and never stored a fresh one, so the data froze.
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
   // ?t=<forecast time, ms>: a saved frame for the time slider; past frames never change.

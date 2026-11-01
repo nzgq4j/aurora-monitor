@@ -9,7 +9,9 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
 }
 
 // Rebuilt in the background at most every 2 minutes, like the Now page it was part of.
-export const revalidate = 120;
+// Rendered on each request (the feeds themselves are cached for two minutes): as a revalidated (ISR) page
+// Vercel kept serving copies hours old.
+export const dynamic = 'force-dynamic';
 
 export default async function Page() {
   return <Sun data={await loadNow()} />;
