@@ -49,14 +49,29 @@ export const spaceInfo = (t: T): InfoContent => ({
   metrics: [bz(t), speed(t, t('info.space.speed')), hemi(t, t('info.space.hemi')), density(t, t('info.space.density'))],
 });
 
-/** Sun tab: the solar activity charts. */
+/** The charts' graduated colours (as in SolarActivity), shown as a bar above each scale. */
+const SPEED_RAMP = [C.green, C.amber, C.orange, C.red], DENSITY_RAMP = ['#3a6f99', '#5fb8ff', '#c6e8ff'];
+const BZ_RAMP = [C.green, C.darkGreen, GREY, C.red];
+
+/** Sun tab: the solar activity charts, with the scales in the charts' own colours. */
 export const solarInfo = (t: T): InfoContent => ({
   heading: t('info.solar.h'), lead: t('info.solar.lead'), why: why(t, 'solar'),
   metrics: [
-    { name: t('info.m.field'), text: t('info.solar.field') },
-    speed(t, t('info.solar.speed')),
-    density(t, t('info.solar.density')),
-    hemi(t, t('info.solar.hemi')),
+    { name: t('info.m.field'), text: t('info.solar.field'), ramp: BZ_RAMP, scale: bz(t).scale },
+    { name: t('info.m.speed'), text: t('info.solar.speed'), ramp: SPEED_RAMP, scale: [
+      { color: C.green, value: '< 450 km/s', label: t('home.speed.slow') },
+      { color: C.amber, value: '450+ km/s', label: t('home.speed.elevated') },
+      { color: C.red, value: '600+ km/s', label: t('home.speed.fast') },
+    ] },
+    { name: t('info.m.density'), text: t('info.solar.density'), ramp: DENSITY_RAMP, scale: [
+      { color: DENSITY_RAMP[0], value: '< 15 p/cm³', label: t('home.density.typical') },
+      { color: DENSITY_RAMP[1], value: '15+ p/cm³', label: t('home.density.dense') },
+    ] },
+    { name: t('info.m.hemi'), text: t('info.solar.hemi'), ramp: SPEED_RAMP, scale: [
+      { color: C.green, value: '< 20 GW', label: t('home.hemi.low') },
+      { color: C.amber, value: '20+ GW', label: t('home.hemi.moderate') },
+      { color: C.red, value: '50+ GW', label: t('home.hemi.high') },
+    ] },
   ],
   note: t('info.solar.note'),
 });

@@ -7,7 +7,7 @@ import { useI18n } from '../i18n/I18n';
 /** A row of a metric's scale: a coloured dot, a value or range ("600+ km/s") and what it means. */
 export interface InfoScale { color: string; value: string; label: string }
 /** One measure explained in a card's info sheet; `image` is a small sample of it (e.g. that view of the Sun). */
-export interface InfoMetric { name: string; text?: string; badge?: string; scale?: InfoScale[]; image?: string }
+export interface InfoMetric { name: string; text?: string; badge?: string; scale?: InfoScale[]; image?: string; ramp?: string[] }
 /** What a card's info sheet says: a question-style heading, a one-line lead, why it matters, and its measures. */
 export interface InfoContent { heading: string; lead: string; why?: string[]; metrics?: InfoMetric[]; note?: string }
 
@@ -70,6 +70,8 @@ function InfoBody({ content: c }: { content: InfoContent }) {
                   <b>{m.name}</b>{m.badge && <span className="info-badge">{m.badge}</span>}
                 </div>
                 {m.text && <p>{m.text}</p>}
+                {/* A graduated chart's colours, low to high. */}
+                {!!m.ramp?.length && <i className="info-ramp" aria-hidden="true" style={{ background: `linear-gradient(90deg, ${m.ramp.join(', ')})` }} />}
                 {!!m.scale?.length && (
                   <dl className="info-scale">
                     {m.scale.map(s => (
