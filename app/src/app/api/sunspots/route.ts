@@ -4,7 +4,9 @@ import type { Region } from '../../../lib/sunspots';
 /** NOAA SWPC active regions (updated daily); only the latest observed date is returned. */
 const URL_REGIONS = 'https://services.swpc.noaa.gov/json/solar_regions.json';
 
-export const revalidate = 3600;
+// Run on every request and let the CDN cache the response (its Cache-Control): as a revalidated (ISR)
+// route Vercel kept serving the copy made at deploy time and never stored a fresh one, so the data froze.
+export const dynamic = 'force-dynamic';
 
 type Row = Record<string, unknown>;
 const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : null);

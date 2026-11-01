@@ -3,6 +3,7 @@
 // data stays current. Any feed can fail independently; callers get `null`/[]
 // for that piece and render an "unavailable" state rather than fake values.
 
+import { unstable_cache } from 'next/cache';
 import { OVAL_SCALE, sampleOval, smoothOval } from './ovalSmooth';
 
 const SWPC = 'https://services.swpc.noaa.gov';
@@ -92,23 +93,29 @@ export async function kpNow(): Promise<{ t: number; kp: number } | null> {
 
 export interface SolarWind { t: number; bz: number | null; bt: number | null; speed: number | null; density: number | null }
 
-/** First non-empty row set from a list of candidate URLs (SWPC has moved these products before). */
-async function firstRows(urls: string[], revalidate: number): Promise<Row[]> {
-  for (const u of urls) {
-    const r = rows(await getJson(u, revalidate));
-    if (r.length) return r;
-  }
-  return [];
-}
-
 /** Real-time products mix spacecraft; when an "active" flag is present keep only the active source. */
 const activeOnly = (rs: Row[]) => (rs.some(r => 'active' in r) ? rs.filter(r => r.active === true || r.active === 'true' || r.active === 1) : rs);
+
+/**
+ * NOAA's real-time solar wind at L1 (json/rtsw), for the active spacecraft only and just the fields used here.
+ * The files hold a day of every spacecraft (ACE, SOLAR-1, IMAP; 1–2 MB, over Next's 2 MB fetch-cache limit), so
+ * they're fetched uncached and the trimmed rows (well under it) cached instead. They replace the
+ * products/solar-wind/*.json files, which NOAA retired in October 2026 (404).
+ */
+const rtsw = unstable_cache(async (kind: 'mag' | 'wind'): Promise<Row[]> => {
+  const res = await fetch(`${SWPC}/json/rtsw/rtsw_${kind}_1m.json`, { cache: 'no-store', headers: { 'User-Agent': 'polarlights.io (aurora forecasts)' }, signal: AbortSignal.timeout(10_000) });
+  if (!res.ok) throw new Error(`rtsw ${kind}: ${res.status}`); // not cached, so the next request tries again
+  return activeOnly(rows(await res.json())).map(r => (kind === 'mag'
+    ? { time_tag: r.time_tag, bz_gsm: r.bz_gsm, by_gsm: r.by_gsm, bt: r.bt }
+    : { time_tag: r.time_tag, proton_speed: r.proton_speed, proton_density: r.proton_density }));
+}, ['rtsw-v1'], { revalidate: FAST });
+const rtswRows = (kind: 'mag' | 'wind') => rtsw(kind).catch((): Row[] => []);
 
 /** Latest real-time solar wind at L1 (DSCOVR/ACE). */
 export async function solarWind(): Promise<SolarWind | null> {
   const [mag, plasma] = await Promise.all([
-    firstRows([`${SWPC}/products/solar-wind/mag-2-hour.json`, `${SWPC}/products/solar-wind/mag-1-day.json`, `${SWPC}/json/rtsw/rtsw_mag_1m.json`], FAST).then(activeOnly),
-    firstRows([`${SWPC}/products/solar-wind/plasma-2-hour.json`, `${SWPC}/products/solar-wind/plasma-1-day.json`, `${SWPC}/json/rtsw/rtsw_wind_1m.json`], FAST).then(activeOnly),
+    rtswRows('mag'),
+    rtswRows('wind'),
   ]);
   const m = latest(mag.map(r => ({ t: parseTime(r.time_tag) ?? 0, bz: num(r.bz_gsm ?? r.bz), bt: num(r.bt) })).sort((a, b) => a.t - b.t), x => x.t > 0 && x.bz !== null);
   const p = latest(plasma.map(r => ({ t: parseTime(r.time_tag) ?? 0, speed: num(r.speed ?? r.proton_speed), density: num(r.density ?? r.proton_density) })).sort((a, b) => a.t - b.t), x => x.t > 0 && x.speed !== null);
@@ -134,8 +141,8 @@ export interface WindPoint { t: number; by: number | null; bz: number | null; bt
 /** Last 24 hours of real-time solar wind at L1, averaged into 5-minute bins. */
 export async function solarWindSeries(): Promise<WindPoint[]> {
   const [mag, plasma] = await Promise.all([
-    firstRows([`${SWPC}/products/solar-wind/mag-1-day.json`, `${SWPC}/json/rtsw/rtsw_mag_1m.json`], FAST).then(activeOnly),
-    firstRows([`${SWPC}/products/solar-wind/plasma-1-day.json`, `${SWPC}/json/rtsw/rtsw_wind_1m.json`], FAST).then(activeOnly),
+    rtswRows('mag'),
+    rtswRows('wind'),
   ]);
   const BIN = 3e5;
   const bins = new Map<number, Record<'by' | 'bz' | 'bt' | 'speed' | 'density', number[]>>();

@@ -20,7 +20,9 @@ export interface StormData {
   cmes: Cme[] | null;
 }
 
-export const revalidate = 900;
+// Run on every request and let the CDN cache the response (its Cache-Control): as a revalidated (ISR)
+// route Vercel kept serving the copy made at deploy time and never stored a fresh one, so the data froze.
+export const dynamic = 'force-dynamic';
 
 const SWPC = 'https://services.swpc.noaa.gov';
 type Row = Record<string, unknown>;
