@@ -385,6 +385,9 @@ button.pill-ghost { border: 1px solid var(--line-2); }
     padding: 6px max(6px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left));
     background: #0a0c0b; border-top: 1px solid var(--line);
   }
+  /* The bar's colour continues below it, so if iOS leaves a gap under the bar (WebKit bug 297779, see
+     TabBar) it reads as part of the bar rather than showing the page through it. Off-screen otherwise. */
+  .tabbar::after { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 160px; background: #0a0c0b; pointer-events: none; }
   .tabbar-item {
     flex: 1 1 0; min-width: 0; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
     padding: 4px 2px; border-radius: 14px; color: var(--muted); font: 600 11px var(--f-body);

@@ -6,6 +6,7 @@ import { SITE } from '../lib/site';
 import { useI18n } from '../i18n/I18n';
 import type { MessageKey } from '../i18n/core';
 import Link from 'next/link';
+import { useEffect, useRef } from 'react';
 
 const NAV: [MessageKey, Screen][] = [['nav.now', 'home'], ['nav.map', 'map'], ['nav.gallery', 'gallery'], ['nav.sun', 'sun'], ['nav.dashboard', 'account']];
 
@@ -69,10 +70,46 @@ const Icon = ({ id }: { id: string }) => (
   <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d={ICONS[id]} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" /></svg>
 );
 
+/**
+ * Keeps a bottom-fixed bar on the bottom edge of the visible screen. Safari and Edge on iOS (WebKit bug 297779)
+ * can leave such a bar floating above the bottom once the toolbar collapses on scroll; this moves it down by
+ * the gap between the bar and the visible bottom. Where the bar is already in place the gap is zero and
+ * nothing changes. Skipped while zoomed in, when the visible area legitimately differs.
+ */
+function useStickToBottom() {
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const vv = window.visualViewport, el = ref.current;
+    if (!vv || !el) return;
+    let shift = 0, frame = 0;
+    const fit = () => {
+      frame = 0;
+      // Hidden on wider screens (no height): nothing to place.
+      const box = el.getBoundingClientRect();
+      const gap = !box.height || vv.scale > 1.01 ? 0 : vv.offsetTop + vv.height - (box.bottom - shift);
+      const next = gap > 0.5 ? Math.round(gap) : 0;
+      if (next !== shift) { shift = next; el.style.transform = shift ? `translateY(${shift}px)` : ''; }
+    };
+    const queue = () => { if (!frame) frame = requestAnimationFrame(fit); };
+    vv.addEventListener('resize', queue);
+    vv.addEventListener('scroll', queue);
+    window.addEventListener('scroll', queue, { passive: true });
+    queue();
+    return () => {
+      vv.removeEventListener('resize', queue);
+      vv.removeEventListener('scroll', queue);
+      window.removeEventListener('scroll', queue);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, []);
+  return ref;
+}
+
 /** App-style navigation along the bottom of phone screens, in place of the header (see globals.css). */
 export function TabBar() {
   const { screen, go } = useStore();
   const { t } = useI18n();
+  const ref = useStickToBottom();
   // You holds the account, plans, sign-in, badges, alerts, settings and help.
   const you = screen === 'account' || screen === 'plans' || screen === 'checkout' || screen === 'signin' || screen === 'badges' || screen === 'alerts' || screen === 'support';
   const tab = (id: string, label: string, on: boolean, onClick: () => void) => (
@@ -81,7 +118,7 @@ export function TabBar() {
     </button>
   );
   return (
-    <nav className="tabbar" aria-label={t('nav.main')}>
+    <nav ref={ref} className="tabbar" aria-label={t('nav.main')}>
       {tab('now', t('nav.now'), screen === 'home', () => go('home'))}
       {tab('map', t('nav.map'), screen === 'map', () => go('map'))}
       {tab('gallery', t('nav.gallery'), screen === 'gallery', () => go('gallery'))}
