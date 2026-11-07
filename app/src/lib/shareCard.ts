@@ -370,3 +370,139 @@ export async function photoCardBlob(photo: Blob, d: PhotoCardData): Promise<Blob
   g.fillStyle = '#6CFF2B'; g.font = `700 32px ${body}`; g.textAlign = 'right'; g.fillText(d.site, W - 80, H - 60); g.textAlign = 'left';
   return new Promise(res => c.toBlob(b => res(b), 'image/jpeg', 0.9));
 }
+
+/** The body of a data card: Kp bars, a table of chances, value tiles, or a picture with facts beside it. */
+export type DataBody =
+  | { kind: 'bars'; bars: { label: string; value: number; text: string; color: string; dim?: boolean }[]; max: number }
+  | { kind: 'table'; cols: string[]; rows: { label: string; color: string; values: number[] }[] }
+  | { kind: 'tiles'; tiles: { label: string; value: string; unit: string; note: string; color: string }[] }
+  | { kind: 'image'; image: ImageBitmap | null; facts: { label: string; value: string; color?: string }[] };
+
+export interface DataCardData {
+  /** Small green line above the title, e.g. the time of the data. */
+  kicker: string;
+  /** The card's title as on the page, in two parts (white, then green), shrunk to fit one line. */
+  title: string;
+  title2: string;
+  /** One sentence under the headline, wrapped to two lines at most. */
+  line: string;
+  body: DataBody;
+  /** Where the data comes from, bottom left (e.g. "NOAA SWPC"). */
+  source: string;
+  site: string;
+}
+
+/**
+ * A square card (1080 × 1080 PNG) for one of the data cards (Kp outlook, storm outlook, space weather,
+ * the Sun now): the night sky dimmed under the brand, a headline and a line, then the card's own data.
+ */
+export async function dataCardBlob(d: DataCardData): Promise<Blob | null> {
+  const S = 1080;
+  const c = document.createElement('canvas');
+  c.width = c.height = S;
+  const g = c.getContext('2d');
+  if (!g) return null;
+  try { await document.fonts.ready; } catch { /* system fonts */ }
+  const body = "'Barlow', 'Golos Text', 'Helvetica Neue', Arial, sans-serif";
+  const display = (px: number) => `800 ${px}px 'Archivo', 'Montserrat', sans-serif`;
+  const mono = (px: number, w = 500) => `${w} ${px}px 'JetBrains Mono', monospace`;
+  drawSky(g, S, 40);
+  // Dim the sky so the data reads.
+  g.fillStyle = 'rgba(0,0,0,0.62)'; g.fillRect(0, 0, S, S);
+  drawBrand(g);
+
+  g.textBaseline = 'alphabetic';
+  g.fillStyle = '#6CFF2B'; g.font = mono(32, 600); g.fillText(d.kicker.toUpperCase(), 80, 250, S - 160);
+  // A first part ending in "-" joins the second without a space (a compound word, as headText does).
+  const joined = d.title.endsWith('-');
+  const t1 = (joined ? d.title.slice(0, -1) : d.title).toUpperCase(), t2 = d.title2.toUpperCase();
+  const gap = t1 && t2 && !joined ? ' ' : '', both = `${t1}${gap}${t2}`;
+  let size = 96;
+  g.font = display(size);
+  while (g.measureText(both).width > S - 160 && size > 44) { size -= 4; g.font = display(size); }
+  g.fillStyle = '#fff'; g.fillText(t1, 80, 262 + size, S - 160);
+  if (t2) {
+    const x = 80 + g.measureText(`${t1}${gap}`).width;
+    g.fillStyle = '#6CFF2B'; g.shadowColor = '#6CFF2B'; g.shadowBlur = 24; g.fillText(t2, x, 262 + size, Math.max(10, S - 80 - x)); g.shadowBlur = 0;
+  }
+  // The line, wrapped to two lines at most.
+  g.fillStyle = '#C9D0CB'; g.font = `500 36px ${body}`;
+  const lines = wrap(g, d.line, S - 160).slice(0, 2);
+  lines.forEach((l, i) => g.fillText(l, 80, 262 + size + 58 + i * 46));
+  const top = 262 + size + 58 + lines.length * 46 + 30;
+  const bottom = S - 110;
+
+  const b = d.body;
+  if (b.kind === 'bars') {
+    const n = b.bars.length, gap = 14, w = (S - 160 - gap * (n - 1)) / n, h = bottom - top - 90;
+    b.bars.forEach((bar, i) => {
+      const x = 80 + i * (w + gap);
+      g.fillStyle = 'rgba(255,255,255,.06)'; roundRect(g, x, top + 40, w, h, 10); g.fill();
+      const bh = Math.max(10, (h * Math.min(bar.value, b.max)) / b.max);
+      g.globalAlpha = bar.dim ? 0.45 : 1;
+      g.fillStyle = bar.color; roundRect(g, x, top + 40 + h - bh, w, bh, 10); g.fill();
+      g.fillStyle = '#fff'; g.font = display(Math.min(40, w * 0.42)); g.textAlign = 'center';
+      g.fillText(bar.text, x + w / 2, top + 40 + h - bh - 14);
+      g.fillStyle = '#9AA39D'; g.font = mono(Math.min(26, w * 0.24)); g.fillText(bar.label, x + w / 2, top + 40 + h + 40, w + gap);
+      g.textAlign = 'left'; g.globalAlpha = 1;
+    });
+  } else if (b.kind === 'table') {
+    const labelW = 300, colW = (S - 160 - labelW) / b.cols.length, rowH = Math.min(118, (bottom - top - 60) / b.rows.length);
+    g.fillStyle = '#9AA39D'; g.font = mono(26); g.textAlign = 'center';
+    b.cols.forEach((col, j) => g.fillText(col, 80 + labelW + colW * j + colW / 2, top + 30, colW - 10));
+    b.rows.forEach((r, i) => {
+      const y = top + 70 + i * rowH;
+      g.textAlign = 'left';
+      g.fillStyle = r.color; g.beginPath(); g.arc(92, y + rowH / 2 - 10, 10, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#fff'; g.font = `600 34px ${body}`; g.fillText(r.label, 116, y + rowH / 2 + 2, labelW - 50);
+      r.values.forEach((v, j) => {
+        const x = 80 + labelW + colW * j + 14, bw = colW - 28;
+        g.fillStyle = 'rgba(255,255,255,.08)'; roundRect(g, x, y + rowH / 2 + 14, bw, 12, 6); g.fill();
+        g.fillStyle = r.color; roundRect(g, x, y + rowH / 2 + 14, Math.max(12, (bw * v) / 100), 12, 6); g.fill();
+        g.fillStyle = v ? '#fff' : '#9AA39D'; g.font = mono(32, 600); g.textAlign = 'center';
+        g.fillText(`${v}%`, x + bw / 2, y + rowH / 2 - 2);
+      });
+    });
+    g.textAlign = 'left';
+  } else if (b.kind === 'tiles') {
+    const gap = 24, w = (S - 160 - gap) / 2, h = (bottom - top - gap) / 2;
+    b.tiles.slice(0, 4).forEach((tile, i) => {
+      const x = 80 + (i % 2) * (w + gap), y = top + Math.floor(i / 2) * (h + gap);
+      g.fillStyle = 'rgba(0,0,0,.55)'; roundRect(g, x, y, w, h, 28); g.fill();
+      g.strokeStyle = 'rgba(255,255,255,.10)'; g.lineWidth = 2; roundRect(g, x, y, w, h, 28); g.stroke();
+      g.fillStyle = '#9AA39D'; g.font = `600 30px ${body}`; g.fillText(tile.label, x + 30, y + 54, w - 60);
+      g.fillStyle = tile.color; g.font = display(72); g.fillText(tile.value, x + 30, y + 54 + 86);
+      const vw = g.measureText(tile.value).width;
+      g.font = `600 30px ${body}`; g.fillText(tile.unit, x + 30 + vw + 12, y + 54 + 86, w - 60 - vw - 12);
+      g.fillStyle = tile.color; g.font = `600 30px ${body}`; g.fillText(tile.note, x + 30, y + h - 32, w - 60);
+    });
+  } else {
+    const side = Math.min(bottom - top, 560);
+    if (b.image) {
+      g.save(); g.beginPath(); g.arc(80 + side / 2, top + side / 2, side / 2, 0, Math.PI * 2); g.clip();
+      g.drawImage(b.image, 80, top, side, side); g.restore();
+    }
+    const fx = 80 + side + 50, fw = S - 80 - fx;
+    b.facts.forEach((f, i) => {
+      const y = top + 40 + i * ((side - 40) / Math.max(3, b.facts.length));
+      g.fillStyle = '#9AA39D'; g.font = `600 28px ${body}`; g.fillText(f.label, fx, y, fw);
+      g.fillStyle = f.color ?? '#fff'; g.font = display(54); g.fillText(f.value, fx, y + 64, fw);
+    });
+  }
+
+  g.fillStyle = '#9AA39D'; g.font = `500 26px ${body}`; g.fillText(d.source, 80, S - 48, S - 500);
+  g.fillStyle = '#6CFF2B'; g.font = `700 34px ${body}`; g.textAlign = 'right'; g.fillText(d.site, S - 80, S - 48); g.textAlign = 'left';
+  return new Promise(res => c.toBlob(bl => res(bl), 'image/png'));
+}
+
+/** Words wrapped to lines no wider than `max` in the current font. */
+function wrap(g: CanvasRenderingContext2D, text: string, max: number) {
+  const out: string[] = [];
+  let cur = '';
+  for (const w of text.split(' ')) {
+    const next = cur ? `${cur} ${w}` : w;
+    if (cur && g.measureText(next).width > max) { out.push(cur); cur = w; } else cur = next;
+  }
+  if (cur) out.push(cur);
+  return out;
+}

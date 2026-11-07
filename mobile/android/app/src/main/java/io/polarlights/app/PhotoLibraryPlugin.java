@@ -88,7 +88,8 @@ public class PhotoLibraryPlugin extends Plugin {
         while (base.startsWith(".")) base = base.substring(1);
         if (base.isEmpty()) base = "polar-lights-" + System.currentTimeMillis();
         if (base.length() > 80) base = base.substring(base.length() - 80);
-        return base.toLowerCase(java.util.Locale.ROOT).endsWith(".jpg") ? base : base + ".jpg";
+        // Pictures keep their type (a shared card is a PNG, the Sun time-lapse a GIF); anything else is a JPEG photo.
+        return base.toLowerCase(java.util.Locale.ROOT).matches(".*\\.(jpg|jpeg|png|gif)$") ? base : base + ".jpg";
     }
 
     /** `file` if it lies directly inside `dir`, else an IOException. */
@@ -155,7 +156,10 @@ public class PhotoLibraryPlugin extends Plugin {
                 uris.add(FileProvider.getUriForFile(getContext(), getContext().getPackageName() + ".fileprovider", file));
             }
             Intent send = new Intent(uris.size() == 1 ? Intent.ACTION_SEND : Intent.ACTION_SEND_MULTIPLE);
-            send.setType("image/jpeg");
+            // The type from the file name, so an animated GIF (the Sun time-lapse) stays animated and a PNG card
+            // stays a PNG; photos are JPEG.
+            String first = photos.getJSONObject(0).getString("name").toLowerCase(java.util.Locale.ROOT);
+            send.setType(first.endsWith(".gif") ? "image/gif" : first.endsWith(".png") ? "image/png" : "image/jpeg");
             // The post to go with it (a caption and link), for the apps that take text with an image.
             String text = call.getString("text");
             if (text != null && !text.isEmpty()) send.putExtra(Intent.EXTRA_TEXT, text);
