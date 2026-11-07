@@ -20,7 +20,7 @@ export interface LapseGifInfo {
  * The frames come from Supabase storage, which allows cross-origin reads, so the canvas may use them.
  */
 export async function lapseGif(frames: { t: number; url: string }[], info: LapseGifInfo, progress: (pct: number) => void): Promise<Blob> {
-  const pick = frames.length <= MAX ? frames : Array.from({ length: MAX }, (_, i) => frames[Math.round((i * (frames.length - 1)) / (MAX - 1))]);
+  const pick = pickFrames(frames, MAX);
   const c = document.createElement('canvas');
   c.width = c.height = SIZE;
   const g = c.getContext('2d', { willReadFrequently: true });
@@ -28,13 +28,7 @@ export async function lapseGif(frames: { t: number; url: string }[], info: Lapse
   try { await document.fonts.ready; } catch { /* system fonts */ }
 
   const draw = async (f: { t: number; url: string }) => {
-    const res = await fetch(f.url, { mode: 'cors' });
-    if (!res.ok) throw new Error(String(res.status));
-    const bmp = await createImageBitmap(await res.blob());
-    g.fillStyle = '#000'; g.fillRect(0, 0, SIZE, SIZE);
-    g.drawImage(bmp, 0, 0, SIZE, SIZE);
-    bmp.close();
-    overlay(g, info, f.t);
+    await paintFrame(g, SIZE, f, info);
     return g.getImageData(0, 0, SIZE, SIZE).data;
   };
 
@@ -57,6 +51,22 @@ export async function lapseGif(frames: { t: number; url: string }[], info: Lapse
   }
   gif.finish();
   return new Blob([gif.bytes() as BlobPart], { type: 'image/gif' });
+}
+
+/** At most `max` of the frames, spread evenly (the first and last always in). */
+export const pickFrames = <T,>(frames: T[], max: number) =>
+  frames.length <= max ? frames : Array.from({ length: max }, (_, i) => frames[Math.round((i * (frames.length - 1)) / (max - 1))]);
+
+/** One frame of the time-lapse with its overlay, drawn on a `size`-pixel square canvas. */
+export async function paintFrame(g: CanvasRenderingContext2D, size: number, f: { t: number; url: string }, info: LapseGifInfo) {
+  const res = await fetch(f.url, { mode: 'cors' });
+  if (!res.ok) throw new Error(String(res.status));
+  const bmp = await createImageBitmap(await res.blob());
+  g.fillStyle = '#000'; g.fillRect(0, 0, size, size);
+  g.drawImage(bmp, 0, 0, size, size);
+  bmp.close();
+  // The overlay is laid out for 480 px and scaled to the canvas.
+  g.save(); g.scale(size / SIZE, size / SIZE); overlay(g, info, f.t); g.restore();
 }
 
 /** The mark and wordmark top left, the view top right, the time bottom left and the site bottom right. */

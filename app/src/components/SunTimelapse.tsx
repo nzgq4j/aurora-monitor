@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import { SDO_IMAGES } from '../lib/sdo';
 import { useI18n } from '../i18n/I18n';
 import { lapseGif } from '../lib/lapseGif';
+import { canMakeLapseVideo, lapseVideo } from '../lib/lapseVideo';
 import { shareOut } from '../lib/share';
 import { SITE } from '../lib/site';
 
@@ -58,14 +59,18 @@ export function SunTimelapse() {
   const [sheet, setSheet] = useState<null | 'view' | 'span'>(null);
   const closeSheet = useCallback(() => setSheet(null), []);
   const r = RANGES.find(x => x.id === range)!;
-  // Share as GIF: made on request (it takes a few seconds), then shared from a second tap, since Safari only
-  // opens the share sheet straight from a tap. Progress in %, the file when it's ready, or 'failed'.
-  const [gif, setGif] = useState<null | number | File | 'failed'>(null);
-  const [gifMsg, setGifMsg] = useState('');
+  // Share as a GIF or a video (MP4: apps such as Bluesky turn a shared GIF into a still picture). Each is
+  // made on request (a few seconds), then shared from a second tap, since Safari only opens the share sheet
+  // straight from a tap. Per kind: progress in %, the file when it's ready, or 'failed'.
+  type Made = null | number | File | 'failed';
+  const [made, setMade] = useState<{ gif: Made; video: Made }>({ gif: null, video: null });
+  const [shareMsg, setShareMsg] = useState('');
+  const [canVideo, setCanVideo] = useState(false);
+  useEffect(() => { void canMakeLapseVideo().then(setCanVideo); }, []);
 
   useEffect(() => {
     let live = true;
-    setFrames(undefined); setLoaded(0); setPlaying(false); setGif(null); setGifMsg('');
+    setFrames(undefined); setLoaded(0); setPlaying(false); setMade({ gif: null, video: null }); setShareMsg('');
     loadFrames(channel, r.hours).then(res => {
       if (!live) return;
       const f = res?.frames ?? null;
@@ -170,23 +175,32 @@ export function SunTimelapse() {
       )}
       {ready && frames.length > 1 && (
         <div className="sun-lapse-share">
-          {gif instanceof File ? (
-            <button type="button" className="btn pill pill-primary sheet-pill" onClick={async () => {
-              const res = await shareOut(gif, t('sunLapse.gifPost', { span: t(`sunLapse.range.${range}`), band: label }) + ` · ${t('gal.post.via')}`, `${SITE.url}/sun`);
-              setGifMsg(res === 'copied' ? t('tonight.copied') : res === 'failed' ? t('tonight.shareFailed') : '');
-            }}>{t('sunLapse.gifReady')}</button>
-          ) : typeof gif === 'number' ? (
-            <span className="storm-note" role="status">{t('sunLapse.gifMaking', { pct: gif })}</span>
-          ) : (
-            <button type="button" className="btn pill pill-ghost sheet-pill" onClick={() => {
-              setGif(0); setGifMsg('');
-              lapseGif(frames, { band: label, when, site: SITE.domain }, pct => setGif(g => (typeof g === 'number' ? pct : g)))
-                .then(blob => setGif(new File([blob], `polar-lights-sun-${channel.toLowerCase()}-${range}.gif`, { type: 'image/gif' })))
-                .catch(() => setGif('failed'));
-            }}>{t('sunLapse.gif')}</button>
-          )}
-          {gif === 'failed' && <span className="storm-note" role="status">{t('sunLapse.gifFailed')}</span>}
-          {gifMsg && <span className="storm-note" role="status">{gifMsg}</span>}
+          {(['gif', 'video'] as const).filter(k => k === 'gif' || canVideo).map(kind => {
+            const m = made[kind], K = kind === 'gif' ? 'gif' : 'video';
+            const set = (v: Made) => setMade(x => ({ ...x, [kind]: v }));
+            if (m instanceof File) {
+              return (
+                <button key={kind} type="button" className="btn pill pill-primary sheet-pill" onClick={async () => {
+                  const res = await shareOut(m, `${t('sunLapse.gifPost', { span: t(`sunLapse.range.${range}`), band: label })} · ${t('gal.post.via')}`, `${SITE.url}/sun`);
+                  setShareMsg(res === 'copied' ? t('tonight.copied') : res === 'failed' ? t('tonight.shareFailed') : '');
+                }}>{t(`sunLapse.${K}Ready`)}</button>
+              );
+            }
+            if (typeof m === 'number') return <span key={kind} className="storm-note" role="status">{t(`sunLapse.${K}Making`, { pct: m })}</span>;
+            return (
+              <button key={kind} type="button" className="btn pill pill-ghost sheet-pill" onClick={() => {
+                set(0); setShareMsg('');
+                const name = `polar-lights-sun-${channel.toLowerCase()}-${range}`;
+                const onPct = (pct: number) => setMade(x => (typeof x[kind] === 'number' ? { ...x, [kind]: pct } : x));
+                (kind === 'gif'
+                  ? lapseGif(frames, { band: label, when, site: SITE.domain }, onPct).then(b => new File([b], `${name}.gif`, { type: 'image/gif' }))
+                  : lapseVideo(frames, { band: label, when, site: SITE.domain }, onPct).then(b => new File([b], `${name}.mp4`, { type: 'video/mp4' })))
+                  .then(set).catch(() => set('failed'));
+              }}>{t(`sunLapse.${K}`)}</button>
+            );
+          })}
+          {(made.gif === 'failed' || made.video === 'failed') && <span className="storm-note" role="status">{t(made.video === 'failed' ? 'sunLapse.videoFailed' : 'sunLapse.gifFailed')}</span>}
+          {shareMsg && <span className="storm-note" role="status">{shareMsg}</span>}
         </div>
       )}
       {every > 0 && <p className="storm-note">{t(sampled ? 'sunLapse.sampled' : 'sunLapse.all', { shown: frames!.length, saved, hours: num(every, Number.isInteger(every) || every >= 10 ? 0 : 1) })}</p>}
