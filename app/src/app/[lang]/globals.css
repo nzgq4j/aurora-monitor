@@ -1054,6 +1054,11 @@ html.intro-open { overflow: hidden; }
 .detail-head { display: flex; align-items: flex-start; gap: 12px; }
 .detail-head .detail-title { flex: 1; min-width: 0; }
 .detail-aside { flex: none; padding-top: 2px; }
+/* A card's share and info buttons side by side (components/ShareButton); the share note drops below. */
+.detail-aside:has(.share-aside) { display: flex; gap: 8px; align-items: flex-start; }
+.share-aside { position: relative; display: inline-flex; }
+.sun-lapse-share { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.share-msg { position: absolute; top: calc(100% + 6px); right: 0; z-index: 5; width: max-content; max-width: 240px; padding: 8px 12px; border-radius: 12px; background: var(--card-2); color: var(--green); font-size: 13px; }
 .season-card-aside { display: inline-flex; align-items: center; gap: 8px; }
 .info-btn { flex: none; display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; border: 0; background: var(--card-2); color: var(--soft); }
 .info-btn:hover { color: #fff; background: #3a3a3c; }

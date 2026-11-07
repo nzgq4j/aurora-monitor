@@ -7,7 +7,8 @@ import { Locked } from '../components/Locked';
 import { InfoButton } from '../components/InfoSheet';
 import { outlookInfo, ovalInfo, stormInfo } from '../lib/cardInfo';
 import { DetailCard } from '../components/DetailCard';
-import { StormOutlook, stormSummary, useDay, useStorm } from '../components/StormOutlook';
+import { LEVEL_COLOR, ROWS, StormOutlook, stormSummary, useDay, useStorm } from '../components/StormOutlook';
+import { stormHeadline } from '../lib/storm';
 import { outlookLine, summaryText } from '../lib/detailSummaries';
 import type { KpPoint } from '../lib/feeds';
 import { YourSky } from '../components/YourSky';
@@ -20,7 +21,9 @@ import type { NowData } from '../lib/now';
 import type { AccountData } from '../lib/history';
 import { SeasonCards } from '../components/SeasonCards';
 import { Onboarding } from '../components/Onboarding';
-import { nowCardBlob } from '../lib/shareCard';
+import { dataCardBlob, nowCardBlob } from '../lib/shareCard';
+import { ShareButton } from '../components/ShareButton';
+import { sharePost, shareStamp } from '../lib/share';
 import { SITE } from '../lib/site';
 import { useStore } from '../store';
 import { useI18n, type I18n } from '../i18n/I18n';
@@ -88,10 +91,20 @@ function Outlook({ data }: { data: NowData }) {
     </button>
   );
   const line = outlookLine(data.series, data.fetchedAt);
+  const sum = summaryText(i18n, line, line.at !== undefined ? date(line.at, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }) : undefined);
+  const title = headText(t('outlook.h2a'), t('outlook.h2b'));
+  // The share picture: the daily peaks (the last week at most), observed days faded as on the card.
+  const draw = () => dataCardBlob({
+    kicker: shareStamp(i18n, data.fetchedAt), title: t('outlook.h2a'), title2: t('outlook.h2b'), line: sum, source: 'NOAA SWPC', site: SITE.domain,
+    body: { kind: 'bars', max: 9, bars: daily.slice(-8).map(b => ({ label: date(b.t, { weekday: 'short', timeZone: 'UTC' }), value: b.kp, text: i18n.num(b.kp, 1), color: kpBarColor(b.kp), dim: b.past })) },
+  });
   return (
     <DetailCard id="outlook" title={<>{headLead(t('outlook.h2a'))}<span className="hl">{t('outlook.h2b')}</span></>}
-      aside={<InfoButton title={headText(t('outlook.h2a'), t('outlook.h2b'))} content={outlookInfo(t)} />}
-      summary={summaryText(i18n, line, line.at !== undefined ? date(line.at, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }) : undefined)}>
+      aside={<>
+        <ShareButton label={`${t('tonight.share')}: ${title}`} name="polar-lights-kp-outlook.png" draw={draw} text={sharePost(t, title, sum)} url={SITE.url} stamp={`${data.fetchedAt}|${i18n.locale}`} />
+        <InfoButton title={title} content={outlookInfo(t)} />
+      </>}
+      summary={sum}>
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <div role="group" aria-label={t('outlook.detail')} style={{ display: 'flex', padding: 4, borderRadius: 999, background: 'var(--card)', flex: '1 1 300px', maxWidth: 420 }}>
           {tab('hour', t('outlook.tab.hour'))}{tab('day', t('outlook.tab.day'))}{tab('month', t('outlook.tab.month'))}
@@ -116,15 +129,29 @@ function Outlook({ data }: { data: NowData }) {
 
 /** Storm outlook (#40), after the Kp outlook; the highest forecast Kp from now on feeds its aurora potential. */
 function StormSection({ data }: { data: NowData }) {
-  const { t } = useI18n();
+  const i18n = useI18n();
+  const { t } = i18n;
   const storm = useStorm();
   const day = useDay();
+  const title = headText(t('storm.h2a'), t('storm.h2b'));
+  const sum = stormSummary(storm, t, day);
+  // The share picture: the chance of each storm level over the next three days.
+  const h = storm?.days.length ? stormHeadline(storm.days) : null;
+  const draw = async () => !storm || !storm.days.length ? null : dataCardBlob({
+    kicker: shareStamp(i18n, data.fetchedAt), title: t('storm.h2a'), title2: t('storm.h2b'),
+    line: h && h.level !== 'quiet' ? `${t(`storm.level.${h.level}`)}: ${t('storm.likelyWhen', { day: day(h.day!), pct: h.prob })}` : t('storm.quietLine'),
+    source: 'NOAA SWPC · NASA DONKI', site: SITE.domain,
+    body: { kind: 'table', cols: storm.days.map(d => day(d.day)), rows: ROWS.map(r => ({ label: t(`storm.level.${r}`), color: LEVEL_COLOR[r], values: storm.days.map(d => d[r]) })) },
+  });
   const ahead = data.series.filter(p => p.kind === 'predicted' && p.t + 3 * 36e5 > data.fetchedAt);
   const top = ahead.length ? ahead.reduce((a, b) => (b.kp > a.kp ? b : a)) : null;
   const peak = top && { kp: top.kp, at: top.t };
   return (
     <DetailCard id="storm" title={<>{headLead(t('storm.h2a'))}<span className="hl">{t('storm.h2b')}</span></>}
-      aside={<InfoButton title={headText(t('storm.h2a'), t('storm.h2b'))} content={stormInfo(t)} />} summary={stormSummary(storm, t, day)}>
+      aside={<>
+        <ShareButton label={`${t('tonight.share')}: ${title}`} name="polar-lights-storm-outlook.png" draw={draw} text={sharePost(t, title, sum)} url={SITE.url} stamp={`${storm ? JSON.stringify(storm.days) : storm}|${i18n.locale}`} />
+        <InfoButton title={title} content={stormInfo(t)} />
+      </>} summary={sum}>
       <StormOutlook peak={peak} />
     </DetailCard>
   );

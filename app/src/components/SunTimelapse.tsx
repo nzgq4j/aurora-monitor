@@ -5,6 +5,9 @@ import { BottomSheet } from './BottomSheet';
 import { supabase } from '../lib/supabase';
 import { SDO_IMAGES } from '../lib/sdo';
 import { useI18n } from '../i18n/I18n';
+import { lapseGif } from '../lib/lapseGif';
+import { shareOut } from '../lib/share';
+import { SITE } from '../lib/site';
 
 type Channel = (typeof SDO_IMAGES)[number]['id'];
 interface Frame { t: number; url: string }
@@ -55,10 +58,14 @@ export function SunTimelapse() {
   const [sheet, setSheet] = useState<null | 'view' | 'span'>(null);
   const closeSheet = useCallback(() => setSheet(null), []);
   const r = RANGES.find(x => x.id === range)!;
+  // Share as GIF: made on request (it takes a few seconds), then shared from a second tap, since Safari only
+  // opens the share sheet straight from a tap. Progress in %, the file when it's ready, or 'failed'.
+  const [gif, setGif] = useState<null | number | File | 'failed'>(null);
+  const [gifMsg, setGifMsg] = useState('');
 
   useEffect(() => {
     let live = true;
-    setFrames(undefined); setLoaded(0); setPlaying(false);
+    setFrames(undefined); setLoaded(0); setPlaying(false); setGif(null); setGifMsg('');
     loadFrames(channel, r.hours).then(res => {
       if (!live) return;
       const f = res?.frames ?? null;
@@ -159,6 +166,27 @@ export function SunTimelapse() {
             <b>{ready ? tn('sunLapse.frames', frames.length) : t('sunLapse.loading', { n: loaded, total: frames.length })}</b>
             <small className="mono">{index + 1}/{frames.length}</small>
           </span>
+        </div>
+      )}
+      {ready && frames.length > 1 && (
+        <div className="sun-lapse-share">
+          {gif instanceof File ? (
+            <button type="button" className="btn pill pill-primary sheet-pill" onClick={async () => {
+              const res = await shareOut(gif, t('sunLapse.gifPost', { span: t(`sunLapse.range.${range}`), band: label }) + ` · ${t('gal.post.via')}`, `${SITE.url}/sun`);
+              setGifMsg(res === 'copied' ? t('tonight.copied') : res === 'failed' ? t('tonight.shareFailed') : '');
+            }}>{t('sunLapse.gifReady')}</button>
+          ) : typeof gif === 'number' ? (
+            <span className="storm-note" role="status">{t('sunLapse.gifMaking', { pct: gif })}</span>
+          ) : (
+            <button type="button" className="btn pill pill-ghost sheet-pill" onClick={() => {
+              setGif(0); setGifMsg('');
+              lapseGif(frames, { band: label, when, site: SITE.domain }, pct => setGif(g => (typeof g === 'number' ? pct : g)))
+                .then(blob => setGif(new File([blob], `polar-lights-sun-${channel.toLowerCase()}-${range}.gif`, { type: 'image/gif' })))
+                .catch(() => setGif('failed'));
+            }}>{t('sunLapse.gif')}</button>
+          )}
+          {gif === 'failed' && <span className="storm-note" role="status">{t('sunLapse.gifFailed')}</span>}
+          {gifMsg && <span className="storm-note" role="status">{gifMsg}</span>}
         </div>
       )}
       {every > 0 && <p className="storm-note">{t(sampled ? 'sunLapse.sampled' : 'sunLapse.all', { shown: frames!.length, saved, hours: num(every, Number.isInteger(every) || every >= 10 ? 0 : 1) })}</p>}

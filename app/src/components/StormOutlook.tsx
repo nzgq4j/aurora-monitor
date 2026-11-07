@@ -21,7 +21,7 @@ export function useStorm() {
 
 /** The same colours as the Kp bars: Kp 4 orange, storm levels red and beyond. */
 export const LEVEL_COLOR: Record<StormLevel, string> = { quiet: C.darkGreen, active: C.orange, minor: C.red, moderate: '#ff4f9a', strong: '#d65cff' };
-const ROWS = ['active', 'minor', 'moderate', 'strong'] as const;
+export const ROWS = ['active', 'minor', 'moderate', 'strong'] as const;
 
 /** A day as "Tue 20 Oct" (UT dates). */
 export const useDay = () => {

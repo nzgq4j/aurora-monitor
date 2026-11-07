@@ -18,6 +18,11 @@ import { useStore } from '../store';
 import { useI18n } from '../i18n/I18n';
 import { headLead, headText } from '../i18n/core';
 import { INTL_TAG } from '../i18n/config';
+import { ShareButton } from '../components/ShareButton';
+import { useStorm } from '../components/StormOutlook';
+import { dataCardBlob } from '../lib/shareCard';
+import { sharePost, shareStamp } from '../lib/share';
+import { SITE } from '../lib/site';
 
 function SolarSection() {
   const { planIndex } = useStore();
@@ -76,13 +81,41 @@ export function Sun({ data }: { data: NowData }) {
     { icon: 'density' as const, label: t('info.m.density'), value: fmt(w?.density, 1), unit: 'p/cm³', note: w?.density == null ? t('common.noData') : w.density >= 15 ? t('home.density.dense') : t('home.density.typical'), c: w?.density != null && w.density >= 15 ? '#5fb8ff' : C.soft },
   ];
 
+  // Share pictures and posts for Space weather and the Sun now (see components/ShareButton).
+  const storm = useStorm();
+  const spaceTitle = headText(t('detail.space.h2a'), t('detail.space.h2b'));
+  const spaceSum = summaryText(i18n, spaceLine(w));
+  const drawSpace = () => dataCardBlob({
+    kicker: shareStamp(i18n, w?.t ?? data.fetchedAt), title: t('detail.space.h2a'), title2: t('detail.space.h2b'), line: spaceSum,
+    source: 'NOAA SWPC · DSCOVR/ACE', site: SITE.domain,
+    body: { kind: 'tiles', tiles: stats.map(s => ({ label: s.label, value: s.value, unit: s.unit, note: s.note, color: s.c })) },
+  });
+  const sunTitle = headText(t('home.sun.h2a'), t('home.sun.h2b'));
+  const flare = storm?.flares?.max ? t('storm.stat.largest', { cls: storm.flares.max.cls }) : storm ? t('storm.stat.noFlares') : '';
+  const sunSum = [spots ? tn('detail.sunRegions', spots.regions.length) : '', flare].filter(Boolean).join(' · ') || t('detail.sun', { n: SDO_IMAGES.length });
+  const drawSun = async () => {
+    // The visible-light disc from our own origin (/api/sunspots/image), so the canvas may use it.
+    const image = await fetch('/api/sunspots/image').then(r => (r.ok ? r.blob() : null)).then(b => (b ? createImageBitmap(b) : null)).catch(() => null);
+    return dataCardBlob({
+      kicker: shareStamp(i18n, data.fetchedAt), title: t('home.sun.h2a'), title2: t('home.sun.h2b'), line: sunSum, source: 'NASA SDO · NOAA SWPC', site: SITE.domain,
+      body: { kind: 'image', image, facts: [
+        { label: t('info.sun.m.regions'), value: spots ? String(spots.regions.length) : '—' },
+        { label: t('storm.stat.solar'), value: storm?.flares?.max?.cls ?? '—', color: C.orange },
+        { label: t('storm.stat.ssn'), value: storm?.ssn ? String(storm.ssn.value) : '—' },
+      ] },
+    });
+  };
+
   return (
     <main data-screen-label="Sun" className="wrap" style={{ padding: 'clamp(12px, 3vw, 40px) var(--gutter) 48px', display: 'flex', flexDirection: 'column', gap: 32 }}>
       {/* The tab bar already says Sun; the heading stays for screen readers. */}
       <h1 className="sr-only">{t('nav.sun')}</h1>
 
       <DetailCard id="space" title={<>{headLead(t('detail.space.h2a'))}<span className="hl">{t('detail.space.h2b')}</span></>} summary={summaryText(i18n, spaceLine(w))}
-        aside={<InfoButton title={headText(t('detail.space.h2a'), t('detail.space.h2b'))} content={spaceInfo(t)} />}>
+        aside={<>
+          <ShareButton label={`${t('tonight.share')}: ${spaceTitle}`} name="polar-lights-space-weather.png" draw={drawSpace} text={sharePost(t, spaceTitle, spaceSum)} url={`${SITE.url}/sun`} stamp={`${w?.t}|${data.hemi?.t}|${i18n.locale}`} />
+          <InfoButton title={spaceTitle} content={spaceInfo(t)} />
+        </>}>
         <div className="space-tiles">
           {stats.map(s => (
             <div key={s.label} className="space-tile">
@@ -98,7 +131,10 @@ export function Sun({ data }: { data: NowData }) {
       <SolarSection />
 
       <DetailCard id="sun" title={<>{headLead(t('home.sun.h2a'))}<span className="hl">{t('home.sun.h2b')}</span></>}
-        aside={<InfoButton title={headText(t('home.sun.h2a'), t('home.sun.h2b'))} content={sunInfo(t)} />}
+        aside={<>
+          <ShareButton label={`${t('tonight.share')}: ${sunTitle}`} name="polar-lights-sun-now.png" draw={drawSun} text={sharePost(t, sunTitle, sunSum)} url={`${SITE.url}/sun`} stamp={`${spots?.regions.length}|${storm?.flares?.max?.cls}|${!!storm}|${i18n.locale}`} />
+          <InfoButton title={sunTitle} content={sunInfo(t)} />
+        </>}
         summary={spots?.regions.length ? `${tn('detail.sunRegions', spots.regions.length)} · ${t('detail.sun', { n: SDO_IMAGES.length })}` : t('detail.sun', { n: SDO_IMAGES.length })}>
         <span style={{ fontSize: 13, color: 'var(--muted)' }}>{t('home.sun.source')}</span>
         <SunspotRegions />
