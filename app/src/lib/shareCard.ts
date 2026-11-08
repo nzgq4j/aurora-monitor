@@ -376,7 +376,8 @@ export type DataBody =
   | { kind: 'bars'; bars: { label: string; value: number; text: string; color: string; dim?: boolean }[]; max: number }
   | { kind: 'table'; cols: string[]; rows: { label: string; color: string; values: number[] }[] }
   | { kind: 'tiles'; tiles: { label: string; value: string; unit: string; note: string; color: string }[] }
-  | { kind: 'image'; image: ImageBitmap | null; facts: { label: string; value: string; color?: string }[] };
+  | { kind: 'image'; image: ImageBitmap | null; facts: { label: string; value: string; color?: string }[] }
+  | { kind: 'chart'; image: CanvasImageSource | null; aspect: number; legend: { color: string; label: string; dash?: boolean }[] };
 
 export interface DataCardData {
   /** Small green line above the title, e.g. the time of the data. */
@@ -476,6 +477,21 @@ export async function dataCardBlob(d: DataCardData): Promise<Blob | null> {
       g.font = `600 30px ${body}`; g.fillText(tile.unit, x + 30 + vw + 12, y + 54 + 86, w - 60 - vw - 12);
       g.fillStyle = tile.color; g.font = `600 30px ${body}`; g.fillText(tile.note, x + 30, y + h - 32, w - 60);
     });
+  } else if (b.kind === 'chart') {
+    // The chart on a dark panel, as wide as the card, then its legend.
+    const w = S - 160, h = Math.min(bottom - top - 40 - 130, w / b.aspect); // room for two legend lines
+    g.fillStyle = '#000'; roundRect(g, 80, top, w, h + 40, 28); g.fill();
+    if (b.image) g.drawImage(b.image, 100, top + 20, w - 40, h);
+    let x = 80, y = top + h + 40 + 56;
+    g.font = `600 30px ${body}`;
+    for (const l of b.legend) {
+      const lw = g.measureText(l.label).width + 60;
+      if (x + lw > S - 80) { x = 80; y += 48; }
+      if (l.dash) { g.fillStyle = l.color; for (let i = 0; i < 3; i++) g.fillRect(x + i * 10, y - 12, 7, 4); }
+      else { g.fillStyle = l.color; g.beginPath(); g.arc(x + 12, y - 10, 11, 0, Math.PI * 2); g.fill(); }
+      g.fillStyle = '#C9D0CB'; g.fillText(l.label, x + 40, y);
+      x += lw + 24;
+    }
   } else {
     const side = Math.min(bottom - top, 560);
     if (b.image) {

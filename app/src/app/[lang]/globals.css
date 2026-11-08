@@ -1093,9 +1093,10 @@ html.intro-open { overflow: hidden; }
 /* Space-weather charts (components/SpaceChart) and the Space weather tiles on the Sun tab. */
 .space-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(440px, 100%), 1fr)); gap: 30px 20px; }
 .space-chart { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-.space-chart-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.space-chart-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .space-chart-head h3 { margin: 0; font: 700 20px var(--f-body); color: #fff; }
 .space-chart-head .mono { font-size: 14px; white-space: nowrap; }
+.space-chart-aside { display: inline-flex; align-items: center; gap: 10px; flex: none; }
 .space-chart-card { border-radius: 18px; background: var(--card); padding: 8px 4px 4px; overflow: hidden; }
 .space-chart-tick { fill: var(--muted); font: 12px var(--f-body); }
 .space-chart-label { font: 600 12px var(--f-body); }
