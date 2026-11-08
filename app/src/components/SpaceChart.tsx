@@ -4,6 +4,10 @@ import { useId } from 'react';
 import { C } from '../data';
 import { useI18n } from '../i18n/I18n';
 import { ticks, useWidth } from './Charts';
+import { ShareButton } from './ShareButton';
+import { dataCardBlob } from '../lib/shareCard';
+import { sharePost, shareStamp } from '../lib/share';
+import { SITE } from '../lib/site';
 
 const f = (n: number) => Math.round(n * 10) / 10;
 const NOW = '#3d8bff';
@@ -36,7 +40,8 @@ export function SpaceChart({ title, unit, decimals = 0, series, thresholds = [],
   legend: LegendItem[]; caption: string; now: number;
 }) {
   const [ref, W] = useWidth<HTMLDivElement>();
-  const { t, num } = useI18n();
+  const i18n = useI18n();
+  const { t, num } = i18n;
   const uid = useId().replace(/:/g, '');
   const H = 200, X0 = 40, X1 = W - 14, TOP = 26, BOT = 172;
   const all = series.flatMap(s => s.points).filter((p): p is { t: number; v: number } => p.v !== null);
@@ -80,7 +85,19 @@ export function SpaceChart({ title, unit, decimals = 0, series, thresholds = [],
     <section className="space-chart">
       <div className="space-chart-head">
         <h3>{title}</h3>
-        {last && <span className="mono" style={{ color: series[0].stops ? colorAt(series[0], last.v) : series[0].color }}>{num(last.v, decimals)} {unit}</span>}
+        <span className="space-chart-aside">
+          {last && <span className="mono" style={{ color: series[0].stops ? colorAt(series[0], last.v) : series[0].color }}>{num(last.v, decimals)} {unit}</span>}
+          <ShareButton label={`${t('tonight.share')}: ${title}`} name={`polar-lights-${title.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '')}.png`}
+            text={sharePost(t, title, `${last ? `${num(last.v, decimals)} ${unit}. ` : ''}${caption}`)} url={`${SITE.url}/sun`}
+            stamp={`${last?.t}|${last?.v}|${i18n.locale}`}
+            draw={async () => {
+              const svg = ref.current?.querySelector('svg');
+              return dataCardBlob({
+                kicker: last ? `${shareStamp(i18n, last.t)} · ${num(last.v, decimals)} ${unit}` : shareStamp(i18n, now), title, title2: '', line: caption, source: 'NOAA SWPC', site: SITE.domain,
+                body: { kind: 'chart', image: svg ? await chartImage(svg) : null, aspect: svg ? svg.viewBox.baseVal.width / svg.viewBox.baseVal.height : 3, legend },
+              });
+            }} />
+        </span>
       </div>
       <div className="space-chart-card" ref={ref}>
         {W > 0 && main.length > 1 ? (
@@ -146,6 +163,32 @@ export function SpaceChart({ title, unit, decimals = 0, series, thresholds = [],
       <p className="space-chart-caption">{caption}</p>
     </section>
   );
+}
+
+/**
+ * The chart's SVG as a picture for a share card: a copy with the page's styles written onto its text (an SVG
+ * drawn as an image has no access to the page's CSS or web fonts), drawn at twice its size.
+ */
+async function chartImage(svg: SVGSVGElement): Promise<CanvasImageSource | null> {
+  const copy = svg.cloneNode(true) as SVGSVGElement;
+  const src = svg.querySelectorAll('text'), dst = copy.querySelectorAll('text');
+  src.forEach((el, i) => {
+    const cs = getComputedStyle(el);
+    dst[i].setAttribute('fill', cs.fill);
+    dst[i].setAttribute('font-size', cs.fontSize);
+    dst[i].setAttribute('font-weight', cs.fontWeight);
+    dst[i].setAttribute('font-family', "'Barlow', 'Helvetica Neue', Arial, sans-serif");
+  });
+  const vb = svg.viewBox.baseVal;
+  copy.setAttribute('width', String(vb.width * 2)); copy.setAttribute('height', String(vb.height * 2));
+  copy.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(copy)], { type: 'image/svg+xml' }));
+  try {
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    return img;
+  } catch { return null; } finally { URL.revokeObjectURL(url); }
 }
 
 const rgb = (h: string) => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
