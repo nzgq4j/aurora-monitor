@@ -227,7 +227,6 @@ export const en = {
   'sky.dir.WNW': "WNW",
   'sky.dir.NW': "NW",
   'sky.dir.NNW': "NNW",
-  'feat.sms': 'SMS alerts',
   'feat.substorm': 'Bz & substorm onset alerts',
   'feat.darkSky': 'Dark-sky spot map',
   'feat.locations10': 'Up to 10 saved locations',
@@ -237,7 +236,7 @@ export const en = {
   'cmp.locations.chaser': '10',
   'cmp.channels': 'Alert channels',
   'cmp.channels.free': 'Email',
-  'cmp.channels.chaser': 'Email, push, SMS',
+  'cmp.channels.chaser': 'Email, push',
   'cmp.speed': 'Alert speed',
   'cmp.speed.free': "Within 10 min",
   'cmp.speed.chaser': "Up to 1 h ahead",
@@ -1191,8 +1190,6 @@ export const en = {
   'channel.email.sub': 'Account email',
   'channel.push': 'Push',
   'channel.push.sub': 'Phone notifications',
-  'channel.sms': 'SMS',
-  'channel.sms.sub': 'Text messages',
 
   // ---- Saved locations ----
   'loc.h1a': 'Saved',

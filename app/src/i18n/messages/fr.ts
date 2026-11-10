@@ -227,7 +227,6 @@ export const fr: Messages = {
   'sky.dir.WNW': "ONO",
   'sky.dir.NW': "NO",
   'sky.dir.NNW': "NNO",
-  'feat.sms': 'Alertes SMS',
   'feat.substorm': 'Alertes Bz et début de sous-orage',
   'feat.darkSky': 'Carte des sites à ciel noir',
   'feat.locations10': 'Jusqu’à 10 lieux enregistrés',
@@ -237,7 +236,7 @@ export const fr: Messages = {
   'cmp.locations.chaser': '10',
   'cmp.channels': 'Canaux d’alerte',
   'cmp.channels.free': 'E-mail',
-  'cmp.channels.chaser': 'E-mail, push, SMS',
+  'cmp.channels.chaser': 'E-mail, push',
   'cmp.speed': 'Rapidité des alertes',
   'cmp.speed.free': "En 10 min",
   'cmp.speed.chaser': "Jusqu’à 1 h avant",
@@ -1191,8 +1190,6 @@ export const fr: Messages = {
   'channel.email.sub': 'E-mail du compte',
   'channel.push': 'Push',
   'channel.push.sub': 'Notifications sur le téléphone',
-  'channel.sms': 'SMS',
-  'channel.sms.sub': 'SMS',
 
   // ---- Saved locations ----
   'loc.h1a': 'Ciels',

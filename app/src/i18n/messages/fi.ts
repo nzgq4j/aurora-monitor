@@ -227,7 +227,6 @@ export const fi: Messages = {
   'sky.dir.WNW': "LLU",
   'sky.dir.NW': "LU",
   'sky.dir.NNW': "PLU",
-  'feat.sms': "Tekstiviestihälytykset",
   'feat.substorm': "Bz- ja alimyrskyn alkamishälytykset",
   'feat.darkSky': "Pimeän taivaan paikkojen kartta",
   'feat.locations10': "Jopa 10 tallennettua sijaintia",
@@ -237,7 +236,7 @@ export const fi: Messages = {
   'cmp.locations.chaser': "10",
   'cmp.channels': "Hälytyskanavat",
   'cmp.channels.free': "Sähköposti",
-  'cmp.channels.chaser': "Sähköposti, push, tekstiviesti",
+  'cmp.channels.chaser': "Sähköposti, push",
   'cmp.speed': "Hälytysten nopeus",
   'cmp.speed.free': "10 min sisällä",
   'cmp.speed.chaser': "Jopa 1 h etukäteen",
@@ -1191,8 +1190,6 @@ export const fi: Messages = {
   'channel.email.sub': "Tilin sähköposti",
   'channel.push': "Push",
   'channel.push.sub': "Puhelimen ilmoitukset",
-  'channel.sms': "Tekstiviesti",
-  'channel.sms.sub': "Tekstiviestit",
 
   // ---- Saved locations ----
   'loc.h1a': "Tallennetut",

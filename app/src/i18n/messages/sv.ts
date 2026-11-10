@@ -227,7 +227,6 @@ export const sv: Messages = {
   'sky.dir.WNW': "VNV",
   'sky.dir.NW': "NV",
   'sky.dir.NNW': "NNV",
-  'feat.sms': "SMS-aviseringar",
   'feat.substorm': "Aviseringar om Bz och substormsstart",
   'feat.darkSky': "Karta över mörka platser",
   'feat.locations10': "Upp till 10 sparade platser",
@@ -237,7 +236,7 @@ export const sv: Messages = {
   'cmp.locations.chaser': "10",
   'cmp.channels': "Aviseringskanaler",
   'cmp.channels.free': "E-post",
-  'cmp.channels.chaser': "E-post, push, SMS",
+  'cmp.channels.chaser': "E-post, push",
   'cmp.speed': "Aviseringshastighet",
   'cmp.speed.free': "Inom 10 min",
   'cmp.speed.chaser': "Upp till 1 h i förväg",
@@ -1191,8 +1190,6 @@ export const sv: Messages = {
   'channel.email.sub': "Kontots e-postadress",
   'channel.push': "Push",
   'channel.push.sub': "Telefonaviseringar",
-  'channel.sms': "SMS",
-  'channel.sms.sub': "Textmeddelanden",
 
   // ---- Saved locations ----
   'loc.h1a': "Sparade",

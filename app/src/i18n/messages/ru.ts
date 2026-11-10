@@ -239,7 +239,6 @@ export const ru: Messages = {
   'sky.dir.WNW': "ЗСЗ",
   'sky.dir.NW': "СЗ",
   'sky.dir.NNW': "ССЗ",
-  'feat.sms': "SMS-оповещения",
   'feat.substorm': "Оповещения о Bz и начале суббури",
   'feat.darkSky': "Карта мест с тёмным небом",
   'feat.locations10': "До 10 сохранённых мест",
@@ -249,7 +248,7 @@ export const ru: Messages = {
   'cmp.locations.chaser': "10",
   'cmp.channels': "Каналы оповещений",
   'cmp.channels.free': "Email",
-  'cmp.channels.chaser': "Email, push, SMS",
+  'cmp.channels.chaser': "Email, push",
   'cmp.speed': "Скорость оповещений",
   'cmp.speed.free': "В течение 10 мин",
   'cmp.speed.chaser': "До 1 ч заранее",
@@ -1219,8 +1218,6 @@ export const ru: Messages = {
   'channel.email.sub': "Email аккаунта",
   'channel.push': "Push",
   'channel.push.sub': "Уведомления на телефон",
-  'channel.sms': "SMS",
-  'channel.sms.sub': "Текстовые сообщения",
 
   // ---- Saved locations ----
   'loc.h1a': "Сохранённые",

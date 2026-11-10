@@ -299,7 +299,6 @@ function Alerts({ data }: { data: AccountData }) {
   const hits = last30.filter(d => d.kpMax >= kp).length;
   const thY = f(170 - kp * 17);
   const bw = 450 / Math.max(30, last30.length);
-  const soon = (sub: string) => `${sub} · ${t('alerts.comingSoon')}`;
   return (
     <div data-screen-label="Dashboard · Alerts" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
       <h1 className="display" style={h1}>{headLead(t('alerts.h1a'))}<span className="hl">{t('alerts.h1b')}</span></h1>
@@ -367,7 +366,7 @@ function Alerts({ data }: { data: AccountData }) {
           {CHANNEL_DEFS.map(([k, need]) => {
             const locked = planIndex < need;
             if (k === 'push') return <PushRow key={k} need={need} locked={locked} />;
-            return <ToggleRow key={k} label={t(`channel.${k}`)} sub={k === 'email' ? accountEmail : soon(t(`channel.${k}.sub`))} need={need} locked={locked} on={s.channels[k]}
+            return <ToggleRow key={k} label={t(`channel.${k}`)} sub={accountEmail} need={need} locked={locked} on={s.channels[k]}
               onClick={locked ? () => go('plans') : () => set(st => ({ channels: { ...st.channels, [k]: !st.channels[k] } }))} />;
           })}
         </div>
@@ -404,7 +403,7 @@ function AlertStatus() {
   const watched = chaser ? [...locations].sort((a, b) => +b.isHome - +a.isHome) : home ? [home] : [];
   const names = watched.slice(0, 3).map(l => l.name.split(',')[0]).join(' · ');
   const places = watched.length > 3 ? `${names} ${t('alerts.status.more', { n: watched.length - 3 })}` : names;
-  const channels = CHANNEL_DEFS.filter(([k, need]) => k !== 'sms' && planIndex >= need && s.channels[k]).map(([k]) => t(`channel.${k}`));
+  const channels = CHANNEL_DEFS.filter(([k, need]) => planIndex >= need && s.channels[k]).map(([k]) => t(`channel.${k}`));
   const on = r.aurora && watched.length > 0;
   return (
     <section className={'alert-status' + (on ? ' on' : '')} aria-label={t('alerts.aurora')}>
