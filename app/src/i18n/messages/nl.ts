@@ -227,7 +227,6 @@ export const nl: Messages = {
   'sky.dir.WNW': "WNW",
   'sky.dir.NW': "NW",
   'sky.dir.NNW': "NNW",
-  'feat.sms': 'Meldingen per SMS',
   'feat.substorm': 'Meldingen voor Bz en begin van substorms',
   'feat.darkSky': 'Kaart met donkere plekken',
   'feat.locations10': 'Tot 10 opgeslagen locaties',
@@ -237,7 +236,7 @@ export const nl: Messages = {
   'cmp.locations.chaser': '10',
   'cmp.channels': 'Meldingskanalen',
   'cmp.channels.free': 'E-mail',
-  'cmp.channels.chaser': 'E-mail, push, SMS',
+  'cmp.channels.chaser': 'E-mail, push',
   'cmp.speed': 'Snelheid van meldingen',
   'cmp.speed.free': "Binnen 10 min",
   'cmp.speed.chaser': "Tot 1 uur vooraf",
@@ -1191,8 +1190,6 @@ export const nl: Messages = {
   'channel.email.sub': 'E-mailadres van account',
   'channel.push': 'Push',
   'channel.push.sub': 'Meldingen op je telefoon',
-  'channel.sms': 'SMS',
-  'channel.sms.sub': 'Sms-berichten',
 
   // ---- Saved locations ----
   'loc.h1a': 'Mijn',

@@ -227,7 +227,6 @@ export const de: Messages = {
   'sky.dir.WNW': "WNW",
   'sky.dir.NW': "NW",
   'sky.dir.NNW': "NNW",
-  'feat.sms': 'SMS-Alarme',
   'feat.substorm': 'Bz- & Teilsturm-Alarme',
   'feat.darkSky': 'Karte dunkler Beobachtungsorte',
   'feat.locations10': 'Bis zu 10 gespeicherte Orte',
@@ -237,7 +236,7 @@ export const de: Messages = {
   'cmp.locations.chaser': '10',
   'cmp.channels': 'Alarmkanäle',
   'cmp.channels.free': 'E-Mail',
-  'cmp.channels.chaser': 'E-Mail, Push, SMS',
+  'cmp.channels.chaser': 'E-Mail, Push',
   'cmp.speed': 'Alarmgeschwindigkeit',
   'cmp.speed.free': "Innerhalb von 10 Min.",
   'cmp.speed.chaser': "Bis zu 1 Std. vorher",
@@ -1191,8 +1190,6 @@ export const de: Messages = {
   'channel.email.sub': 'Konto-E-Mail',
   'channel.push': 'Push',
   'channel.push.sub': 'Benachrichtigungen auf dem Handy',
-  'channel.sms': 'SMS',
-  'channel.sms.sub': 'Textnachrichten',
 
   // ---- Saved locations ----
   'loc.h1a': 'Gespeicherte',

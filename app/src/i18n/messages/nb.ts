@@ -227,7 +227,6 @@ export const nb: Messages = {
   'sky.dir.WNW': "VNV",
   'sky.dir.NW': "NV",
   'sky.dir.NNW': "NNV",
-  'feat.sms': "SMS-varsler",
   'feat.substorm': "Varsler om Bz og substormstart",
   'feat.darkSky': "Kart over mørke steder",
   'feat.locations10': "Opptil 10 lagrede steder",
@@ -237,7 +236,7 @@ export const nb: Messages = {
   'cmp.locations.chaser': "10",
   'cmp.channels': "Varslingskanaler",
   'cmp.channels.free': "E-post",
-  'cmp.channels.chaser': "E-post, push, SMS",
+  'cmp.channels.chaser': "E-post, push",
   'cmp.speed': "Varslingsfart",
   'cmp.speed.free': "Innen 10 min",
   'cmp.speed.chaser': "Opptil 1 t i forveien",
@@ -1191,8 +1190,6 @@ export const nb: Messages = {
   'channel.email.sub': "Kontoens e-post",
   'channel.push': "Push",
   'channel.push.sub': "Varsler på telefonen",
-  'channel.sms': "SMS",
-  'channel.sms.sub': "Tekstmeldinger",
 
   // ---- Saved locations ----
   'loc.h1a': "Lagrede",

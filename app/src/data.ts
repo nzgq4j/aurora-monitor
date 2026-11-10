@@ -25,7 +25,7 @@ export const TRIAL_DAYS = 7;
 /** Feature (message key `feat.{id}`) and the index of the tier that introduces it. */
 export const FEATS = [
   ['live', 0], ['forecast3d', 0], ['digest', 0], ['push', 1], ['kp3h', 1], ['outlook27', 1],
-  ['hourly', 1], ['solarGraphs', 1], ['sms', 1], ['substorm', 1], ['darkSky', 1], ['locations10', 1],
+  ['hourly', 1], ['solarGraphs', 1], ['substorm', 1], ['darkSky', 1], ['locations10', 1],
 ] as const;
 
 /** Comparison rows: label `cmp.{id}`, cells `cmp.{id}.{tier}`. A cell reading "—" means not included. */
@@ -85,4 +85,5 @@ export const TRIGGER_DEFS: [TriggerKey, number][] = [['kp', 0], ['clear', 1], ['
 export const TECH_TRIGGERS = ['bz', 'sub', 'coupling', 'cme', 'flare'] as const;
 
 /** [key, minimum tier index]; label `channel.{key}`, detail `channel.{key}.sub` (email shows the account address instead). */
-export const CHANNEL_DEFS: [ChannelKey, number][] = [['email', 0], ['push', 1], ['sms', 1]];
+// SMS is not offered (`sms` stays in saved settings, always off).
+export const CHANNEL_DEFS: [Exclude<ChannelKey, 'sms'>, number][] = [['email', 0], ['push', 1]];
