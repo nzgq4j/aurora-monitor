@@ -3,7 +3,7 @@
  * and the in-memory store. Asserts on what would have been sent.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { runEventFeed, type FeedDeps } from './socialFeed';
+import { runDeletions, runEventFeed, type FeedDeps } from './socialFeed';
 import { memoryStore } from './socialStore';
 import type { Session } from './bluesky';
 import type { EventInputs } from './socialEvents';
@@ -129,5 +129,29 @@ describe('runEventFeed', () => {
     const st = memoryStore({ settings: { events_enabled: true }, session: session() });
     const r = await runEventFeed(st, deps({ inputs: async () => { throw new Error('NOAA down'); } }));
     expect(r).toEqual({ ok: false, error: 'NOAA down' });
+  });
+
+  it('deletes a post an administrator marked, and frees nothing else', async () => {
+    const st = memoryStore({ settings: { events_enabled: true }, session: session() });
+    await runEventFeed(st, deps());
+    const row = st.rows[0];
+    expect(row.status).toBe('posted');
+    await st.finish(row.key, { status: 'deleting' });
+    const out = await runDeletions(st, NOW);
+    expect(out.deleted).toEqual([row.key]);
+    const del = calls.find(c => c.method === 'com.atproto.repo.deleteRecord')!;
+    expect(del.body).toEqual({ repo: 'did:plc:pl', collection: 'app.bsky.feed.post', rkey: row.post_uri!.split('/').pop() });
+    expect(st.rows[0].status).toBe('deleted');
+    expect((await runDeletions(st, NOW)).deleted).toEqual([]);
+  });
+
+  it('keeps a post marked for deletion and records the error when Bluesky refuses', async () => {
+    const st = memoryStore({ settings: { events_enabled: true }, session: session() });
+    await runEventFeed(st, deps());
+    await st.finish(st.rows[0].key, { status: 'deleting' });
+    fail['com.atproto.repo.deleteRecord'] = { status: 500, error: 'InternalServerError' };
+    const out = await runDeletions(st, NOW);
+    expect(out.failed[0].error).toBe('InternalServerError');
+    expect(st.rows[0]).toMatchObject({ status: 'deleting', error: 'delete:InternalServerError' });
   });
 });

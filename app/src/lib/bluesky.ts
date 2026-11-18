@@ -67,6 +67,13 @@ export async function deleteSession(s: Session): Promise<void> {
   await xrpc(s.service, 'com.atproto.server.deleteSession', { token: s.refreshJwt });
 }
 
+/** Delete one of our posts by its at:// URI (repo, collection and rkey are its last three parts). */
+export async function deletePost(s: Session, uri: string): Promise<void> {
+  const [repo, collection, rkey] = uri.replace(/^at:\/\//, '').split('/');
+  if (!repo || collection !== 'app.bsky.feed.post' || !rkey) throw new BlueskyError('bad_uri', uri);
+  await xrpc(s.service, 'com.atproto.repo.deleteRecord', { token: s.accessJwt, body: { repo, collection, rkey } });
+}
+
 /** Seconds since the epoch at which a JWT expires, from its payload; null if unreadable. */
 export function jwtExp(jwt: string): number | null {
   try {

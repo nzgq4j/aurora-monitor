@@ -18,7 +18,8 @@ export interface SocialSettings extends SocialRules {
   updatedAt: string | null;
 }
 
-export type PostStatus = 'posting' | 'posted' | 'failed';
+/** 'deleting': an administrator asked for the post to be removed from Bluesky; 'deleted': it has been. */
+export type PostStatus = 'posting' | 'posted' | 'failed' | 'deleting' | 'deleted';
 export interface EventPostRow {
   key: string;
   kind: SocialEvent['kind'];
@@ -47,6 +48,8 @@ export interface SocialStore {
   finish(key: string, patch: Partial<EventPostRow>): Promise<void>;
   /** Remove a claim (image not ready yet, or a failed post being retried by hand). */
   release(key: string): Promise<void>;
+  /** Rows waiting to be deleted from Bluesky. */
+  deleting(): Promise<EventPostRow[]>;
   /** Sites for viewing outlooks, oldest first. */
   sites(): Promise<ViewingSite[]>;
   addSite(site: Omit<ViewingSite, 'id'>, by?: string | null): Promise<ViewingSite>;
@@ -109,6 +112,11 @@ export function supabaseStore(db: SupabaseClient): SocialStore {
       const { error } = await db.from('social_event_posts').delete().eq('key', key);
       if (error) throw new Error(`social_event_posts: ${error.message}`);
     },
+    async deleting() {
+      const { data, error } = await db.from('social_event_posts').select(COLS).eq('status', 'deleting').limit(20);
+      if (error) throw new Error(`social_event_posts: ${error.message}`);
+      return (data ?? []) as EventPostRow[];
+    },
     async sites() {
       const { data, error } = await db.from('social_sites').select('id, name, lat, lon, tags').order('created_at');
       if (error) throw new Error(`social_sites: ${error.message}`);
@@ -145,6 +153,7 @@ export function memoryStore(init: { settings?: Row; session?: Session | null; po
     },
     async finish(key: string, patch: Partial<EventPostRow>) { const r = rows.find(x => x.key === key); if (r) Object.assign(r, patch); },
     async release(key: string) { const i = rows.findIndex(x => x.key === key); if (i >= 0) rows.splice(i, 1); },
+    async deleting() { return rows.filter(r => r.status === 'deleting'); },
     async sites() { return [...siteList]; },
     async addSite(site: Omit<ViewingSite, 'id'>) { const s = { ...site, id: `site-${siteList.length + 1}` }; siteList.push(s); return s; },
     async removeSite(id: string) { const i = siteList.findIndex(x => x.id === id); if (i >= 0) siteList.splice(i, 1); },

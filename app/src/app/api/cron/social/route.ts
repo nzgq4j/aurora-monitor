@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../lib/billing';
-import { runEventFeed } from '../../../../lib/socialFeed';
+import { runDeletions, runEventFeed } from '../../../../lib/socialFeed';
 import { supabaseStore } from '../../../../lib/socialStore';
 import { liveDeps, viewingDeps } from '../../../../lib/socialLive';
 import { runViewingFeed } from '../../../../lib/socialViewing';
@@ -24,11 +24,13 @@ export async function POST(req: Request) {
   if (error || ok !== true) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   const store = supabaseStore(db);
   const viewingDue = new Date().getUTCMinutes() % 10 === 5;
-  const [events, viewing] = await Promise.all([
+  const [events, viewing, deletions] = await Promise.all([
     runEventFeed(store, liveDeps),
     viewingDue ? runViewingFeed(store, viewingDeps) : Promise.resolve(null),
+    runDeletions(store),
   ]);
+  if (deletions.deleted.length || deletions.failed.length || !deletions.ok) console.log('social deletions', JSON.stringify(deletions));
   if (events.outcomes?.length || !events.ok) console.log('social feed', JSON.stringify(events));
   if (viewing && (viewing.outcome || !viewing.ok)) console.log('viewing feed', JSON.stringify(viewing));
-  return NextResponse.json({ events, ...(viewing ? { viewing } : {}) });
+  return NextResponse.json({ events, ...(viewing ? { viewing } : {}), ...(deletions.deleted.length || deletions.failed.length ? { deletions } : {}) });
 }

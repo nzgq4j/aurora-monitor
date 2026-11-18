@@ -62,6 +62,12 @@ and place alerts (`lib/tonight.ts`: aurora strength, darkness, cloud from Open-M
 - Runs every 10 minutes (minute 5, 15, …) to stay well inside Open-Meteo's free limit; switch: *Post viewing outlooks*.
 - Hashtags: `#aurora #NorthernLights` (or `#AuroraAustralis` south of the equator) plus the site's own tags.
 
+## Deleting a post
+
+In /social → Recent posts, *Delete* (tap twice) removes a post from Bluesky straight away. If that fails, the post
+stays marked 'deleting' and the every-minute job retries. A deleted post no longer counts toward the viewing cap,
+gap or style rotation, and its region can be posted again.
+
 ## Picture styles and wording
 
 Posts rotate through picture styles per kind, so the feed doesn't repeat one look (`STYLES`, `pickStyle`):

@@ -22,7 +22,7 @@ const COUNTRY_TAGS: Record<string, string> = {
 interface Rules { enabled: boolean; stormMinG: number; flareMin: 'X' | 'M5' | 'off'; shocks: boolean; substorms: boolean; viewingEnabled: boolean }
 interface Site { id: string; name: string; lat: number; lon: number; tags: string; level: 'goNow' | 'goLater' | 'maybe' | 'no' | 'unavailable' | null; score: number | null }
 interface Connection { handle: string | null; connectedAt: string | null; lastError: string | null; envFallback: boolean }
-interface PostRow { key: string; kind: Kind; status: 'posting' | 'posted' | 'failed'; error: string | null; post_url: string | null; manual: boolean; image: boolean; created_at: string }
+interface PostRow { key: string; kind: Kind; status: 'posting' | 'posted' | 'failed' | 'deleting' | 'deleted'; error: string | null; post_url: string | null; manual: boolean; image: boolean; created_at: string }
 interface Data { rules: Rules; connection: Connection; now: { kind: Kind; key: string; at: number; posted: boolean; site?: string; mode?: 'now' | 'tonight' }[]; sites: Site[]; recent: PostRow[] }
 type Style = 'card' | 'globe' | 'map' | 'sun';
 interface Preview { sample: boolean; key: string | null; style: Style; styles: Style[]; text: string; alt: string | null; image: string | null; graphemes: number }
@@ -84,6 +84,7 @@ export function Social() {
   const [siteQ, setSiteQ] = useState('');
   const [found, setFound] = useState<PlaceResult[] | null>(null);
   const [siteTags, setSiteTags] = useState('');
+  const [armed, setArmed] = useState<string | null>(null);
 
   const err = (code?: string) => {
     const key = `social.err.${code}`;
@@ -129,6 +130,12 @@ export function Social() {
     setPreview({ kind, p: r.data, text: r.data.text, alt: r.data.alt ?? '' });
   });
 
+  const deletePost = (key: string) => act(async () => {
+    setArmed(null);
+    const r = await api('/api/admin/social', { method: 'POST', body: { action: 'delete', key } });
+    setMsg(r.ok ? { text: t('social.deletedOk') } : { text: err(r.data.error), bad: true });
+    await load();
+  });
   const postNow = () => act(async () => {
     if (!preview?.p) return;
     const r = await api<{ url?: string; repost?: boolean }>('/api/admin/social', { method: 'POST', body: { kind: preview.kind, style: preview.p.style, text: preview.text, alt: preview.alt } });
@@ -273,7 +280,17 @@ export function Social() {
             <div key={r.key} className="you-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
               <span className="you-row-label">{t(`social.kind.${r.kind}` as MessageKey)} · {t(`social.status.${r.status}` as MessageKey)}{r.manual ? ` · ${t('social.manual')}` : ''}{!r.image && r.status === 'posted' ? ` · ${t('social.noImage')}` : ''}</span>
               <span style={{ fontSize: 13, color: 'var(--muted)', overflowWrap: 'anywhere' }}>{when(r.created_at)}{r.error ? ` · ${err(r.error)}` : ''}</span>
-              {r.post_url && <a href={r.post_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 14, color: 'var(--green)' }}>{t('social.open')}</a>}
+              {r.post_url && r.status !== 'deleted' && (
+                <span style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                  <a href={r.post_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 14, color: 'var(--green)' }}>{t('social.open')}</a>
+                  {r.status === 'posted' && (
+                    <button type="button" className="btn" disabled={busy} style={{ fontSize: 14, color: '#F06A6A', fontWeight: 600 }}
+                      onClick={() => (armed === r.key ? void deletePost(r.key) : setArmed(r.key))}>
+                      {armed === r.key ? t('social.deleteConfirm') : t('social.delete')}
+                    </button>
+                  )}
+                </span>
+              )}
             </div>
           ))}
         </div>
@@ -319,7 +336,7 @@ export function Social() {
               {posted && <p style={{ ...note, color: '#E6B800' }}>{t('social.repostNote')}</p>}
               {preview.p.image
                 // eslint-disable-next-line @next/next/no-img-element -- a data URL from the server, nothing to optimise
-                ? <img src={preview.p.image} alt={preview.alt} style={{ width: '100%', height: 'auto', borderRadius: 12 }} />
+                ? <img src={preview.p.image} alt={preview.alt} style={{ width: '100%', maxWidth: 420, height: 'auto', borderRadius: 12, alignSelf: 'center' }} />
                 : <p style={note}>{t('social.noImage')}</p>}
               <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14 }}>
                 <span style={{ display: 'flex', justifyContent: 'space-between' }}><span>{t('social.text')}</span><span style={{ color: textCount > MAX_TEXT ? '#F06A6A' : 'var(--muted)' }}>{t('social.count', { n: textCount, max: MAX_TEXT })}</span></span>

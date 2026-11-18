@@ -56,7 +56,7 @@ export const STYLES: Record<EventKind, CardStyle[]> = {
 /** The next style for `kind`: the one after the style of its most recent post, so posts alternate. */
 export function pickStyle(kind: EventKind, recent: { kind: string; status: string; created_at: string; data: Partial<SocialEvent> | null }[]): CardStyle {
   const list = STYLES[kind];
-  const last = recent.filter(r => r.kind === kind && r.status !== 'failed').sort((a, b) => b.created_at.localeCompare(a.created_at))[0]?.data?.style;
+  const last = recent.filter(r => r.kind === kind && r.status !== 'failed' && r.status !== 'deleted').sort((a, b) => b.created_at.localeCompare(a.created_at))[0]?.data?.style;
   const i = last ? list.indexOf(last) : -1;
   return list[(i + 1) % list.length];
 }
