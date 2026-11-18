@@ -12,12 +12,7 @@ export const DEFAULT_SERVICE = 'https://bsky.social';
 export const MAX_GRAPHEMES = 300;
 export const MAX_BYTES = 3000;
 export const MAX_ALT = 2000;
-/**
- * app.bsky.embed.images: each image blob accepts image/* up to 2,000,000 bytes, and a post holds at most 4 images
- * (lexicon packages/api/lexicons/app/bsky/embed/images.json in bluesky-social/atproto, read 18 Nov 2026).
- */
-export const MAX_IMAGE_BYTES = 2_000_000;
-export const MAX_IMAGES = 4;
+export const MAX_IMAGE_BYTES = 1_000_000;
 
 export interface Session { service: string; did: string; handle: string; accessJwt: string; refreshJwt: string }
 
@@ -147,9 +142,7 @@ export interface PostResult { uri: string; url: string }
 export const postUrl = (handle: string, uri: string) => `https://bsky.app/profile/${handle}/post/${uri.split('/').pop()}`;
 
 /** The record that createRecord receives (exported for tests). */
-type EmbedImage = { blob: unknown; alt: string; width: number; height: number };
-export function postRecord(text: string, lang: string, createdAt: string, image?: EmbedImage | EmbedImage[]) {
-  const images = image === undefined ? [] : Array.isArray(image) ? image : [image];
+export function postRecord(text: string, lang: string, createdAt: string, image?: { blob: unknown; alt: string; width: number; height: number }) {
   const facets = detectFacets(text);
   return {
     $type: 'app.bsky.feed.post',
@@ -157,25 +150,18 @@ export function postRecord(text: string, lang: string, createdAt: string, image?
     ...(facets.length ? { facets } : {}),
     langs: [lang],
     createdAt,
-    ...(images.length ? { embed: { $type: 'app.bsky.embed.images', images: images.map(i => ({ image: i.blob, alt: i.alt, aspectRatio: { width: i.width, height: i.height } })) } } : {}),
+    ...(image ? { embed: { $type: 'app.bsky.embed.images', images: [{ image: image.blob, alt: image.alt, aspectRatio: { width: image.width, height: image.height } }] } } : {}),
   };
 }
 
-/** Publish a post with up to four images (`image` for one, `images` for several; both are combined in order). */
-export async function publish(s: Session, text: string, opts: { lang?: string; image?: PostImage | null; images?: PostImage[]; now?: number } = {}): Promise<PostResult> {
-  const all = [...(opts.image ? [opts.image] : []), ...(opts.images ?? [])];
-  if (all.length > MAX_IMAGES) throw new BlueskyError('too_many_images', `${all.length} images`);
-  for (const img of all) {
-    const problem = postProblem(text, img.alt);
-    if (problem) throw new BlueskyError(problem, problem);
-  }
-  const problem = postProblem(text);
+export async function publish(s: Session, text: string, opts: { lang?: string; image?: PostImage | null; now?: number } = {}): Promise<PostResult> {
+  const problem = postProblem(text, opts.image?.alt);
   if (problem) throw new BlueskyError(problem, problem);
-  for (const img of all) if (img.bytes.length > MAX_IMAGE_BYTES) throw new BlueskyError('image_too_large', `${img.bytes.length} bytes`);
-  const embed: EmbedImage[] = [];
-  for (const img of all) {
-    const up = await xrpc<{ blob: unknown }>(s.service, 'com.atproto.repo.uploadBlob', { token: s.accessJwt, bytes: img.bytes, type: img.type });
-    embed.push({ blob: up.blob, alt: img.alt, width: img.width, height: img.height });
+  let embed: { blob: unknown; alt: string; width: number; height: number } | undefined;
+  if (opts.image) {
+    if (opts.image.bytes.length > MAX_IMAGE_BYTES) throw new BlueskyError('image_too_large', `${opts.image.bytes.length} bytes`);
+    const up = await xrpc<{ blob: unknown }>(s.service, 'com.atproto.repo.uploadBlob', { token: s.accessJwt, bytes: opts.image.bytes, type: opts.image.type });
+    embed = { blob: up.blob, alt: opts.image.alt, width: opts.image.width, height: opts.image.height };
   }
   const record = postRecord(text, opts.lang ?? 'en', new Date(opts.now ?? Date.now()).toISOString(), embed);
   const r = await xrpc<{ uri: string }>(s.service, 'com.atproto.repo.createRecord', { token: s.accessJwt, body: { repo: s.did, collection: 'app.bsky.feed.post', record } });

@@ -12,7 +12,6 @@ import { stormHeadline } from '../lib/storm';
 import { outlookLine, summaryText } from '../lib/detailSummaries';
 import type { KpPoint } from '../lib/feeds';
 import { YourSky } from '../components/YourSky';
-import { SkyCams } from '../components/SkyCams';
 import { Tonight } from '../components/Tonight';
 import { G_SCALE } from '../lib/astro';
 import { useLocations } from '../lib/locations';
@@ -277,9 +276,6 @@ export function Home({ data, season }: { data: NowData; season?: AccountData }) 
       <Tonight kp={kp} series={data.series} />
 
       <YourSky kp={kp} />
-
-      {/* Live all-sky cameras near the place, while it is dark there (see components/SkyCams). */}
-      <SkyCams place={shownPlace} />
 
       <Outlook data={data} />
 
