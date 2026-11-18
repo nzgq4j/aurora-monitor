@@ -1637,7 +1637,8 @@ export const nl: Messages = {
   'social.level.no': "Vannacht niet",
   'social.level.unavailable': "Verwachting niet beschikbaar",
   // ---- Live sky cams ----
-  'skycam.title': "Live hemelcamera's",
+  'skycam.h2a': "Live",
+  'skycam.h2b': "hemelcamera's",
   'skycam.explainer': "Elke camera toont de hemel boven de camera, niet boven jouw plek. Een zwart of grijs beeld betekent bewolking, maanlicht of geen noorderlicht boven die camera.",
   'skycam.distance': "{km} km verderop",
   'skycam.captured': "Opgenomen {utc} UTC · {local} jouw tijd",

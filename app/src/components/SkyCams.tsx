@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useI18n } from '../i18n/I18n';
+import { headLead } from '../i18n/core';
 import { INTL_TAG } from '../i18n/config';
 import { SKY_CAMERAS, type SkyCamera } from '../lib/skycams';
 import { panelModel, type FrameStatus, type PanelItem, type PanelModel } from '../lib/skycamLogic';
@@ -62,7 +63,7 @@ export function SkyCamsView({ model, onResume, paused }: { model: PanelModel; on
 
   return (
     <section className="card skycams" aria-labelledby="skycams-h" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <h2 id="skycams-h" className="label" style={{ margin: 0 }}>{t('skycam.title')}</h2>
+      <h2 id="skycams-h" className="display" style={{ fontSize: 'var(--h-section)', lineHeight: 1, margin: 0 }}>{headLead(t('skycam.h2a'))}<span className="hl">{t('skycam.h2b')}</span></h2>
       <p style={small}>{t('skycam.explainer')}</p>
       {paused && onResume && <button type="button" className="btn" onClick={onResume} style={{ ...small, ...link, textAlign: 'left' }}>{t('skycam.paused')}</button>}
       <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(240px, 100%), 1fr))', gap: 16 }}>

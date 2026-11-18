@@ -1637,7 +1637,8 @@ export const fi: Messages = {
   'social.level.no': "Ei tänä yönä",
   'social.level.unavailable': "Ennuste ei ole saatavilla",
   // ---- Live sky cams ----
-  'skycam.title': "Taivaskamerat livenä",
+  'skycam.h2a': "Taivaskamerat",
+  'skycam.h2b': "livenä",
   'skycam.explainer': "Jokainen kamera näyttää taivaan kameran yllä, ei paikkasi yllä. Musta tai harmaa kuva tarkoittaa pilviä, kuunvaloa tai sitä, ettei kameran yllä ole revontulia.",
   'skycam.distance': "{km} km päässä",
   'skycam.captured': "Kuvattu {utc} UTC · {local} sinun aikaasi",
