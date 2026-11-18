@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { graphemes } from './bluesky';
-import { DEFAULT_SOCIAL_RULES, DISCLAIMER, EVENT_KINDS, detectEvents, eventPostText, flareClass, gLevel, isRepeat, sampleEvent, stormNow, type EventInputs, type SocialEvent } from './socialEvents';
+import { DEFAULT_SOCIAL_RULES, DISCLAIMER, EVENT_KINDS, STYLES, detectEvents, eventPostText, flareClass, gLevel, headline, isRepeat, pickStyle, sampleEvent, stormNow, type EventInputs, type SocialEvent } from './socialEvents';
 
 const NOW = Date.parse('2026-11-18T14:30:00Z');
 const empty: EventInputs = { kp: [], hp30: [], xrays: [], wind: [], power: [] };
@@ -73,5 +73,23 @@ describe('post text', () => {
         expect(text).toMatch(/#\w+/);
       }
     }
+  });
+});
+
+describe('variety', () => {
+  it('words the same kind of post differently from event to event, but the same for one event', () => {
+    const heads = new Set(Array.from({ length: 30 }, (_, i) => headline({ ...sampleEvent('storm', NOW), key: `storm:G3:day${i}` })));
+    expect(heads.size).toBeGreaterThan(1);
+    const ev = { ...sampleEvent('flare', NOW), key: 'flare:x' };
+    expect(eventPostText(ev)).toBe(eventPostText(ev));
+  });
+  it('rotates picture styles per kind, skipping failed posts', () => {
+    const row = (style: string, h: number, status = 'posted') => ({ kind: 'viewing', status, created_at: new Date(NOW - h * 36e5).toISOString(), data: { style } as Partial<SocialEvent> });
+    expect(pickStyle('viewing', [])).toBe('card');
+    expect(pickStyle('viewing', [row('card', 2)])).toBe('map');
+    expect(pickStyle('viewing', [row('map', 1), row('card', 5)])).toBe('globe');
+    expect(pickStyle('viewing', [row('globe', 1)])).toBe('card');
+    expect(pickStyle('viewing', [row('globe', 1, 'failed'), row('card', 3)])).toBe('map');
+    expect(STYLES.flare).toContain('sun');
   });
 });

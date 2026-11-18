@@ -14,7 +14,8 @@
 import { powerJump, shockArrival } from './alerts';
 import { graphemes, MAX_GRAPHEMES } from './bluesky';
 
-export type EventKind = 'storm' | 'flare' | 'shock' | 'substorm';
+export type EventKind = 'storm' | 'flare' | 'shock' | 'substorm' | 'viewing';
+/** The space-weather kinds the event feed detects; 'viewing' (site outlooks) has its own feed (socialViewing). */
 export const EVENT_KINDS: EventKind[] = ['storm', 'flare', 'shock', 'substorm'];
 
 export interface SocialRules {
@@ -41,6 +42,49 @@ export interface SocialEvent {
   /** shock: wind speed before and after (km/s); substorm: power before and after (GW) */
   from?: number; to?: number;
   hemi?: 'north' | 'south';
+  /** viewing: the site, now or later tonight, its score (0–100) and best window, and what the sky needs */
+  viewing?: Viewing;
+  /** The picture style for this post (rotates per kind, see STYLES). */
+  style?: CardStyle;
+}
+
+/** Picture styles: the data card, a globe, a regional map (viewing), or a real image of the Sun (flare, shock). */
+export type CardStyle = 'card' | 'globe' | 'map' | 'sun';
+export const STYLES: Record<EventKind, CardStyle[]> = {
+  storm: ['card', 'globe'], flare: ['card', 'sun'], shock: ['card', 'sun'], substorm: ['card', 'globe'], viewing: ['card', 'map', 'globe'],
+};
+/** The next style for `kind`: the one after the style of its most recent post, so posts alternate. */
+export function pickStyle(kind: EventKind, recent: { kind: string; status: string; created_at: string; data: Partial<SocialEvent> | null }[]): CardStyle {
+  const list = STYLES[kind];
+  const last = recent.filter(r => r.kind === kind && r.status !== 'failed').sort((a, b) => b.created_at.localeCompare(a.created_at))[0]?.data?.style;
+  const i = last ? list.indexOf(last) : -1;
+  return list[(i + 1) % list.length];
+}
+
+/** A stable pick from `options` for this event, so wording varies between posts but a preview matches the post. */
+export function variant<T>(key: string, options: T[]): T {
+  let h = 2166136261;
+  for (const ch of key) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  return options[(h >>> 0) % options.length];
+}
+
+export interface ViewingSite { id: string; name: string; lat: number; lon: number; tags: string }
+export interface Viewing {
+  site: ViewingSite;
+  mode: 'now' | 'tonight';
+  score: number;
+  /** Run of good hours (ms), local to the site via `tz`. */
+  window: { from: number; to: number } | null;
+  /** IANA time zone of the site (from the cloud forecast); null → times in UTC. */
+  tz: string | null;
+  kp: number | null;
+  need: number;
+  cloud: number | null;
+  look: 'low' | 'high' | 'overhead';
+  /** The next 12 hours' scores, for the card. */
+  hours: { t: number; score: number }[];
+  /** Names of the other sites grouped with this one (within ~150 km). */
+  nearby: string[];
 }
 
 /** An event older than this when first seen is never posted. */
@@ -125,12 +169,13 @@ export function detectEvents(inp: EventInputs, rules: SocialRules, now: number):
 }
 
 /** How long a posted event of this kind blocks another post of the same kind (unless a storm climbs a level). */
-export const REPEAT_MS: Record<EventKind, number> = { storm: 24 * 36e5, flare: 60 * 6e4, shock: 6 * 36e5, substorm: 3 * 36e5 };
+export const REPEAT_MS: Record<EventKind, number> = { storm: 24 * 36e5, flare: 60 * 6e4, shock: 6 * 36e5, substorm: 3 * 36e5, viewing: 0 };
 
 /** Whether `ev` repeats a recent non-failed post. A storm at a higher G level, or a bigger flare class, is new. */
 export function isRepeat(ev: SocialEvent, recent: { key: string; kind: string; created_at: string; data: Partial<SocialEvent> | null }[], now: number): boolean {
   return recent.some(r => {
     if (r.key === ev.key) return true;
+    if (ev.kind === 'viewing') return false; // viewing limits live in socialViewing
     if (r.kind !== ev.kind || Date.parse(r.created_at) < now - REPEAT_MS[ev.kind]) return false;
     if (ev.kind === 'storm') return (r.data?.g ?? 0) >= (ev.g ?? 0);
     if (ev.kind === 'flare') return (r.data?.flux ?? 0) * 10 >= (ev.flux ?? 0); // a tenfold-bigger flare is new
@@ -143,8 +188,8 @@ export function isRepeat(ev: SocialEvent, recent: { key: string; kind: string; c
 
 export const SITE_URL = 'https://www.polarlights.io';
 export const DISCLAIMER = 'Not an official warning service.';
-export const LINKS: Record<EventKind, string> = { storm: `${SITE_URL}/map`, flare: `${SITE_URL}/sun`, shock: `${SITE_URL}/sun`, substorm: `${SITE_URL}/map` };
-const TAGS: Record<EventKind, string> = {
+export const LINKS: Record<EventKind, string> = { storm: `${SITE_URL}/map`, flare: `${SITE_URL}/sun`, shock: `${SITE_URL}/sun`, substorm: `${SITE_URL}/map`, viewing: `${SITE_URL}/map` };
+const TAGS: Record<Exclude<EventKind, 'viewing'>, string> = {
   storm: '#aurora #NorthernLights #SpaceWeather #GeomagneticStorm',
   flare: '#SolarFlare #SpaceWeather #Sun',
   shock: '#SpaceWeather #CME #aurora',
@@ -155,12 +200,31 @@ export const hhmm = (t: number) => `${new Date(t).toISOString().slice(11, 16)} U
 /** Kp to one decimal (Kp comes in thirds; Hp30 can be any value). */
 export const fmtKp = (kp: number) => (Math.round(kp * 3) / 3).toFixed(1);
 
+/** Clock time at the site ("22:00"), in its time zone when known, else UTC. */
+export function localHm(t: number, tz: string | null): string {
+  try { return new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: tz ?? 'UTC' }).format(t); }
+  catch { return new Date(t).toISOString().slice(11, 16); }
+}
+const utcHm = (t: number) => new Date(t).toISOString().slice(11, 16);
+/** Where to look from the site, by how far past the threshold the aurora is. */
+export function lookPhrase(v: Viewing): string {
+  const side = v.site.lat < 0 ? 'southern' : 'northern';
+  return v.look === 'overhead' ? 'overhead' : v.look === 'high' ? `high in the ${side} sky` : `low on the ${side} horizon`;
+}
+const hashtags = (ev: SocialEvent) => (ev.kind === 'viewing'
+  ? `#aurora ${(ev.viewing?.site.lat ?? 1) < 0 ? '#AuroraAustralis' : '#NorthernLights'} ${ev.viewing?.site.tags ?? ''}`.trim()
+  : TAGS[ev.kind]);
+
 export function headline(ev: SocialEvent): string {
+  const g = `G${ev.g} (${G_NAME[ev.g ?? 1]})`, hemi = ev.hemi === 'south' ? 'southern' : 'northern', name = ev.viewing?.site.name ?? '';
   switch (ev.kind) {
-    case 'storm': return `Geomagnetic storm: G${ev.g} (${G_NAME[ev.g ?? 1]})`;
-    case 'flare': return `Solar flare: ${ev.cls}`;
-    case 'shock': return 'Solar wind shock at L1';
-    case 'substorm': return `Aurora brightening (${ev.hemi === 'south' ? 'southern' : 'northern'} hemisphere)`;
+    case 'storm': return variant(ev.key, [`Geomagnetic storm: ${g}`, `${g} geomagnetic storm under way`, `Storm level reached: ${g}`]);
+    case 'flare': return variant(ev.key, [`Solar flare: ${ev.cls}`, `${ev.cls} solar flare`, `The Sun just fired an ${ev.cls} flare`]);
+    case 'shock': return variant(ev.key, ['Solar wind shock at L1', 'Shock wave from the Sun arriving', 'CME shock detected at L1']);
+    case 'substorm': return variant(ev.key, [`Aurora brightening (${hemi} hemisphere)`, `Substorm under way (${hemi} hemisphere)`]);
+    case 'viewing': return ev.viewing?.mode === 'now'
+      ? variant(ev.key, [`Aurora visible now: ${name}`, `Look up in ${name}: aurora now`, `${name}: aurora conditions are good right now`])
+      : variant(ev.key, [`Good aurora chance tonight: ${name}`, `Tonight in ${name}: good aurora chances`, `${name} tonight: watch the sky`]);
   }
 }
 
@@ -183,12 +247,28 @@ function bodies(ev: SocialEvent): string[] {
       `Auroral power rose from ${ev.from} to ${ev.to} GW at ${hhmm(ev.at)}. Under the oval with dark, clear skies, look now.`,
       `Auroral power rose from ${ev.from} to ${ev.to} GW at ${hhmm(ev.at)}.`,
     ];
+    case 'viewing': {
+      const v = ev.viewing!;
+      if (v.mode === 'now') return [
+        `Aurora, darkness and clear sky line up (score ${v.score}/100). Kp ${fmtKp(v.kp ?? 0)}; this sky needs Kp ${v.need}. Look ${lookPhrase(v)}.`,
+        `Score ${v.score}/100 at ${localHm(ev.at, v.tz)} local time. Look ${lookPhrase(v)}.`,
+        `Score ${v.score}/100 now.`,
+      ];
+      const w = v.window ?? { from: ev.at, to: ev.at };
+      const cloud = v.cloud === null ? '' : `, ${v.cloud}% cloud expected`;
+      return [
+        `Best from ${localHm(w.from, v.tz)} to ${localHm(w.to, v.tz)} local time (${utcHm(w.from)}–${utcHm(w.to)} UTC), score ${v.score}/100${cloud}.`,
+        `Best from ${localHm(w.from, v.tz)} to ${localHm(w.to, v.tz)} local time, score ${v.score}/100.`,
+        `Score ${v.score}/100 later tonight.`,
+      ];
+    }
   }
 }
 
 /** The post: headline, body, link, hashtags, disclaimer. Always within 300 graphemes (the link counts). */
 export function eventPostText(ev: SocialEvent): string {
-  const tail = `${LINKS[ev.kind] === `${SITE_URL}/map` ? 'Live map and forecast' : 'Live data'}: ${LINKS[ev.kind]}\n${TAGS[ev.kind]}\n${DISCLAIMER}`;
+  const lead = LINKS[ev.kind] === `${SITE_URL}/map` ? variant(`${ev.key}:link`, ['Live map and forecast', 'Follow it live', 'Track it live']) : variant(`${ev.key}:link`, ['Live data', 'Follow it live']);
+  const tail = `${lead}: ${LINKS[ev.kind]}\n${hashtags(ev)}\n${DISCLAIMER}`;
   for (const body of bodies(ev)) {
     const text = `${headline(ev)}\n${body}\n${tail}`;
     if (graphemes(text) <= MAX_GRAPHEMES) return text;
@@ -204,5 +284,10 @@ export function sampleEvent(kind: EventKind, now: number): SocialEvent {
     case 'flare': return { kind, key: 'sample', at, flux: 1.2e-4, cls: 'X1.2' };
     case 'shock': return { kind, key: 'sample', at, from: 420, to: 610 };
     case 'substorm': return { kind, key: 'sample', at, from: 22, to: 64, hemi: 'north' };
+    case 'viewing': return { kind, key: 'sample', at, viewing: {
+      site: { id: 'sample', name: 'Fairbanks, Alaska', lat: 64.84, lon: -147.72, tags: '#Alaska' }, mode: 'tonight', score: 64,
+      window: { from: at + 3 * 36e5, to: at + 6 * 36e5 }, tz: 'America/Anchorage', kp: 4.33, need: 1, cloud: 10, look: 'high',
+      hours: Array.from({ length: 12 }, (_, i) => ({ t: at + i * 36e5, score: [8, 12, 25, 48, 60, 64, 58, 40, 22, 10, 4, 0][i] })), nearby: [],
+    } };
   }
 }

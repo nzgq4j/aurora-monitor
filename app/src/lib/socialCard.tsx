@@ -14,7 +14,8 @@ import type { Topology, GeometryCollection } from 'topojson-specification';
 import land110 from 'world-atlas/land-110m.json';
 import { auroraColor } from './auroraColor';
 import { ovalPoints, type Oval } from './feeds';
-import { DISCLAIMER, G_NAME, fmtKp, hhmm, type SocialEvent } from './socialEvents';
+import { DISCLAIMER, G_NAME, fmtKp, hhmm, localHm, lookPhrase, type CardStyle, type SocialEvent } from './socialEvents';
+import { globeSvg, midnightCenter, regionMapSvg } from './socialGlobe';
 
 export const CARD_W = 1080, CARD_H = 1350;
 const PAD = 64, INNER = CARD_W - 2 * PAD;
@@ -28,6 +29,17 @@ export interface CardData {
   xrays?: { t: number; flux: number }[];
   wind?: { t: number; speed: number | null; density: number | null }[];
   power?: { observed: number; north: number; south: number }[];
+  /** A current image of the Sun for the 'sun' style: a data URL, its instrument and its publisher. */
+  sun?: { src: string; label: string; source: string } | null;
+}
+
+/** The style actually drawn: the requested one when its data is there, else the data card. */
+export function effectiveStyle(ev: SocialEvent, data: CardData): CardStyle {
+  const s = ev.style ?? 'card';
+  if (s === 'sun') return data.sun ? 'sun' : 'card';
+  if (s === 'map') return ev.kind === 'viewing' && ev.viewing ? 'map' : 'card';
+  if (s === 'globe') return ev.kind === 'viewing' || ev.kind === 'storm' || ev.kind === 'substorm' ? 'globe' : 'card';
+  return 'card';
 }
 
 // ---- Fonts ----
@@ -79,7 +91,7 @@ function land(): [number, number][][] {
 }
 
 /** Polar map (side × side) of the OVATION oval with land outlines, north or south pole at the centre, edge at 40°. */
-export function polarSvg(oval: Oval | null | undefined, hemi: 'north' | 'south', side: number): string {
+export function polarSvg(oval: Oval | null | undefined, hemi: 'north' | 'south', side: number, marker?: { lat: number; lon: number } | null): string {
   const c = side / 2, k = (side / 2 - 4) / 50; // 90° → 40° fills the radius
   const proj = (lat: number, lon: number): [number, number] => {
     const co = hemi === 'north' ? 90 - lat : 90 + lat;
@@ -106,7 +118,9 @@ export function polarSvg(oval: Oval | null | undefined, hemi: 'north' | 'south',
     + `<defs><clipPath id="d"><circle cx="${c}" cy="${c}" r="${c - 2}"/></clipPath></defs>`
     + `<circle cx="${c}" cy="${c}" r="${c - 2}" fill="#06100c"/>`
     + `<g clip-path="url(#d)"><path d="${paths}" fill="#1c2620" stroke="#3b4a40" stroke-width="1.2"/>${cells.join('')}${rings}</g>`
-    + `<circle cx="${c}" cy="${c}" r="${c - 2}" fill="none" stroke="${LINE}" stroke-width="3"/></svg>`;
+    + `<circle cx="${c}" cy="${c}" r="${c - 2}" fill="none" stroke="${LINE}" stroke-width="3"/>`
+    + (marker ? (() => { const [x, y] = proj(marker.lat, marker.lon); return `<circle cx="${r1(x)}" cy="${r1(y)}" r="16" fill="none" stroke="${GREEN}" stroke-width="4"/><circle cx="${r1(x)}" cy="${r1(y)}" r="7" fill="#ffffff" stroke="#000" stroke-width="2"/>`; })() : '')
+    + '</svg>';
 }
 
 /** Kp bars: observed/estimated solid, predicted faded; a line at Kp 5 (storm level). */
@@ -120,6 +134,18 @@ export function kpBarsSvg(kp: { t: number; kp: number; kind: string }[], w: numb
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${bars}<line x1="0" x2="${w}" y1="${y5}" y2="${y5}" stroke="#ffffff" stroke-opacity="0.35" stroke-width="2" stroke-dasharray="6 6"/></svg>`;
 }
 
+/** The next 12 hours' viewing scores as bars (green from 50, amber from 20). */
+export function scoreBarsSvg(hours: { score: number }[], w: number, h: number): string {
+  const n = hours.length || 1, gap = 8, bw = (w - gap * (n - 1)) / n;
+  const bars = hours.map((p, i) => {
+    const bh = Math.max(4, (Math.min(100, p.score) / 100) * (h - 4));
+    const col = p.score >= 50 ? GREEN : p.score >= 20 ? '#E6B800' : '#3b4a40';
+    return `<rect x="${r1(i * (bw + gap))}" y="${r1(h - bh)}" width="${r1(bw)}" height="${r1(bh)}" rx="5" fill="${col}"/>`;
+  }).join('');
+  const y50 = r1(h - 0.5 * (h - 4));
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${bars}<line x1="0" x2="${w}" y1="${y50}" y2="${y50}" stroke="#ffffff" stroke-opacity="0.35" stroke-width="2" stroke-dasharray="6 6"/></svg>`;
+}
+
 /** A time series as a line on a w × h box; `y` maps a value to 0..1 (bottom..top). */
 function lineSvg(series: { t: number; v: number }[][], colors: string[], t0: number, t1: number, y: (v: number) => number, w: number, h: number, grid: number[] = [], marks: number[] = []): string {
   const X = (t: number) => r1(((t - t0) / (t1 - t0)) * w), Y = (v: number) => r1(h - Math.max(0, Math.min(1, y(v))) * h);
@@ -131,12 +157,14 @@ function lineSvg(series: { t: number; v: number }[][], colors: string[], t0: num
 
 // ---- Card ----
 
-export interface Card { bytes: Uint8Array; type: 'image/png'; width: number; height: number; alt: string }
+export interface Card { bytes: Uint8Array; type: 'image/png' | 'image/jpeg'; width: number; height: number; alt: string }
 
-const KICKER: Record<SocialEvent['kind'], string> = { storm: 'GEOMAGNETIC STORM', flare: 'SOLAR FLARE', shock: 'SOLAR WIND SHOCK', substorm: 'AURORAL SUBSTORM' };
+const KICKER: Record<SocialEvent['kind'], string> = { storm: 'GEOMAGNETIC STORM', flare: 'SOLAR FLARE', shock: 'SOLAR WIND SHOCK', substorm: 'AURORAL SUBSTORM', viewing: 'AURORA VIEWING' };
+const kicker = (ev: SocialEvent) => (ev.kind === 'viewing' ? `AURORA VIEWING · ${ev.viewing?.mode === 'now' ? 'NOW' : 'TONIGHT'}` : KICKER[ev.kind]);
 const SOURCE: Record<SocialEvent['kind'], string> = {
   storm: 'NOAA SWPC (Kp, OVATION), GFZ Potsdam (Hp30)', flare: 'NOAA SWPC (GOES X-ray flux)',
   shock: 'NOAA SWPC (real-time solar wind at L1)', substorm: 'NOAA SWPC (OVATION hemispheric power)',
+  viewing: 'NOAA SWPC (Kp, OVATION), Open-Meteo (cloud)',
 };
 const dateUtc = (t: number) => new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
 
@@ -148,6 +176,18 @@ export function cardFacts(ev: SocialEvent): [string, string][] {
     case 'flare': return [['Class', `${ev.cls} (peak so far)`], time, ['Source', SOURCE.flare]];
     case 'shock': return [['Solar wind', `${ev.from} → ${ev.to} km/s`], time, ['Source', SOURCE.shock]];
     case 'substorm': return [['Auroral power', `${ev.from} → ${ev.to} GW (${ev.hemi === 'south' ? 'southern' : 'northern'} hemisphere)`], time, ['Source', SOURCE.substorm]];
+    case 'viewing': {
+      const v = ev.viewing!;
+      const w = v.window;
+      return [
+        v.mode === 'now'
+          ? ['Now', `${localHm(ev.at, v.tz)} local (${hhmm(ev.at)})${w && w.to > ev.at ? ` · good until about ${localHm(w.to, v.tz)}` : ''}`]
+          : ['Best', w ? `${localHm(w.from, v.tz)}–${localHm(w.to, v.tz)} local (${hhmm(w.from).slice(0, 5)}–${hhmm(w.to)})` : `${localHm(ev.at, v.tz)} local (${hhmm(ev.at)})`],
+        ['Score', `${v.score}/100 · Kp ${v.kp === null ? '–' : fmtKp(v.kp)}, needs ${v.need}${v.cloud === null ? '' : ` · ${v.cloud}% cloud`}`],
+        ['Look', lookPhrase(v)],
+        ['Source', SOURCE.viewing],
+      ];
+    }
   }
 }
 
@@ -158,6 +198,7 @@ export function cardHead(ev: SocialEvent): string {
     case 'flare': return ev.cls ?? '';
     case 'shock': return `${ev.from} → ${ev.to} km/s`;
     case 'substorm': return `${ev.from} → ${ev.to} GW`;
+    case 'viewing': return ev.viewing?.site.name ?? '';
   }
 }
 const sentence = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
@@ -165,24 +206,100 @@ const sentence = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
 /** What the picture shows, for the alt text (the visual code explained). */
 function graphicDescription(ev: SocialEvent, data: CardData): string {
   const hemi = ev.hemi === 'south' ? 'south' : 'north';
+  const style = effectiveStyle(ev, data);
+  const ovalNote = data.oval ? '' : ' The aurora forecast was not available when the card was made.';
+  if (style === 'globe') {
+    const where = ev.viewing ? `centred on ${ev.viewing.site.name}, which is marked by a ringed white dot,` : `centred on the ${hemi}ern auroral zone at local midnight,`;
+    return `A globe ${where} shows the Earth now: night is dark and daylight a lighter wash, with the current aurora forecast (OVATION) drawn as rings of green, yellow and red dots around the poles; red is the highest chance.${ovalNote}`;
+  }
+  if (style === 'map' && ev.viewing) {
+    return `A map about 1,600 km across, centred on ${ev.viewing.site.name} (marked by a ringed white dot), shows land in dark green and the current aurora forecast (OVATION) as green, yellow and red squares; red is the highest chance. Dashed lines mark every 5° of latitude and 10° of longitude.${ovalNote}`;
+  }
+  if (style === 'sun' && data.sun) {
+    return `A current image of the Sun from ${data.sun.source} (${data.sun.label})${ev.kind === 'shock' ? ': a coronagraph that blocks the Sun\'s bright disc (a white circle marks it) to show clouds of material leaving it.' : ', in the wavelength that shows flares as bright patches.'}`;
+  }
   switch (ev.kind) {
     case 'storm': return `A map centred on the ${hemi} pole shows the current aurora forecast (OVATION) as a band of green, yellow and red dots around the pole; red is the highest chance. Below it, bars show the Kp index every 3 hours over the last day and the next day, coloured from green (quiet) to red (storm), with forecast bars faded and a dashed line at Kp 5, the storm threshold.${data.oval ? '' : ' The aurora forecast was not available when the card was made.'}`;
     case 'flare': return 'A chart shows the GOES X-ray flux over the last 6 hours on a logarithmic scale with the flare classes A, B, C, M and X marked; the line climbs into the flare and a dashed line marks when it crossed the posting threshold.';
     case 'shock': return 'Two charts show the solar wind at L1 over the last 6 hours: speed in km/s (green) and density in particles per cm³ (amber), both jumping at the shock, which a dashed line marks.';
     case 'substorm': return `A map centred on the ${hemi} pole shows the current aurora forecast as a band of coloured dots; below it, a line shows the ${hemi}ern hemispheric auroral power in gigawatts over the last 6 hours, rising sharply at the end.`;
+    case 'viewing': {
+      const v = ev.viewing!;
+      const pole = v.site.lat < 0 ? 'south' : 'north';
+      return `A map centred on the ${pole} pole shows the current aurora forecast as a band of green, yellow and red dots, with ${v.site.name} marked by a ringed white dot. Below it, bars show the viewing score for each of the next 12 hours in local time, combining aurora strength, darkness, cloud and moonlight: green bars are good (50 or more), amber possible, grey poor, with a dashed line at 50.${data.oval ? '' : ' The aurora forecast was not available when the card was made.'}`;
+    }
   }
 }
 
 /** Alt text: layout, headline, facts and the visual code, ending with the disclaimer printed on the card. */
 export function cardAlt(ev: SocialEvent, data: CardData): string {
   const facts = cardFacts(ev).map(([k, v]) => `${k}: ${v}`).join('. ');
-  return `Polar Lights card. ${sentence(KICKER[ev.kind])}: ${cardHead(ev)}. ${graphicDescription(ev, data)} ${facts}. www.polarlights.io. ${DISCLAIMER}`;
+  return `Polar Lights card. ${sentence(kicker(ev))}: ${cardHead(ev)}. ${graphicDescription(ev, data)} ${facts}. www.polarlights.io. ${DISCLAIMER}`;
 }
 
 const label = { fontFamily: 'JetBrains Mono', fontSize: 22, color: MUTED, letterSpacing: 1 } as const;
 
-function Graphic({ ev, data }: { ev: SocialEvent; data: CardData }) {
+const GLOBE_SIDE = 720, MAP_H = 720;
+/** The map or globe drawing for the card (async: their smooth layers are computed per pixel). */
+async function artFor(ev: SocialEvent, data: CardData): Promise<string | null> {
+  const style = effectiveStyle(ev, data);
+  if (style === 'globe') {
+    const center = ev.viewing ? { lat: Math.max(-70, Math.min(70, ev.viewing.site.lat - 8 * Math.sign(ev.viewing.site.lat))), lon: ev.viewing.site.lon } : midnightCenter(ev.at, ev.hemi === 'south');
+    return globeSvg({ side: GLOBE_SIDE, center, oval: data.oval, t: ev.at, marker: ev.viewing?.site });
+  }
+  if (style === 'map' && ev.viewing) return regionMapSvg({ w: INNER, h: MAP_H, site: ev.viewing.site, oval: data.oval });
+  return null;
+}
+
+function Graphic({ ev, data, art }: { ev: SocialEvent; data: CardData; art: string | null }) {
   const now = ev.at;
+  const style = effectiveStyle(ev, data);
+  if (style === 'globe' && art) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: INNER }}>
+        <img src={svgUrl(art)} width={GLOBE_SIDE} height={GLOBE_SIDE} alt="" />
+        <div style={{ display: 'flex', justifyContent: 'space-between', width: INNER, marginTop: 10, ...label, fontSize: 20 }}><span>EARTH NOW · NIGHT AND DAY</span><span>AURORA NOW (OVATION)</span></div>
+      </div>
+    );
+  }
+  if (style === 'map' && ev.viewing && art) {
+    const w = INNER, h = MAP_H;
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', width: INNER }}>
+        <img src={svgUrl(art)} width={w} height={h} alt="" />
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, ...label, fontSize: 20 }}><span>AURORA NOW (OVATION)</span><span>ABOUT 1,600 KM ACROSS</span></div>
+      </div>
+    );
+  }
+  if (style === 'sun' && data.sun) {
+    const side = 780;
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: INNER }}>
+        <img src={data.sun.src} width={side} height={side} style={{ borderRadius: 24 }} alt="" />
+        <div style={{ display: 'flex', justifyContent: 'space-between', width: side, marginTop: 10, ...label, fontSize: 20 }}><span>{data.sun.label.toUpperCase()}</span><span>{data.sun.source.toUpperCase()}</span></div>
+      </div>
+    );
+  }
+  if (ev.kind === 'viewing' && ev.viewing) {
+    const v = ev.viewing, side = 520, hemi = v.site.lat < 0 ? 'south' : 'north';
+    const hours = v.hours.slice(0, 12);
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: INNER }}>
+        <div style={{ display: 'flex', position: 'relative', width: side, height: side }}>
+          <img src={svgUrl(polarSvg(data.oval, hemi, side, v.site))} width={side} height={side} alt="" />
+          <div style={{ ...label, position: 'absolute', left: -150, top: 8, display: 'flex' }}>{hemi === 'north' ? 'NORTH POLE' : 'SOUTH POLE'}</div>
+          <div style={{ ...label, position: 'absolute', right: -150, top: 8, display: 'flex' }}>AURORA NOW</div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', width: INNER, marginTop: 24 }}>
+          <img src={svgUrl(scoreBarsSvg(hours, INNER, 130))} width={INNER} height={130} alt="" />
+          <div style={{ display: 'flex', marginTop: 8, ...label, fontSize: 20 }}>
+            {hours.map((h, i) => <span key={h.t} style={{ display: 'flex', width: INNER / hours.length }}>{i % 3 === 0 ? localHm(h.t, v.tz) : ''}</span>)}
+          </div>
+          <div style={{ display: 'flex', marginTop: 6, ...label, fontSize: 20 }}>VIEWING SCORE · NEXT 12 H · LOCAL TIME</div>
+        </div>
+      </div>
+    );
+  }
   if (ev.kind === 'storm' || ev.kind === 'substorm') {
     const side = 600;
     const hemi = ev.hemi === 'south' ? 'south' : 'north';
@@ -247,8 +364,9 @@ function Graphic({ ev, data }: { ev: SocialEvent; data: CardData }) {
 
 /** Draw the card for `ev`. Throws if fonts can't be loaded (the poster then waits and tries again). */
 export async function renderCard(ev: SocialEvent, data: CardData): Promise<Card> {
+  const art = await artFor(ev, data);
   const head = cardHead(ev);
-  const accent = ev.kind === 'storm' ? G_COLOR[ev.g ?? 1] : ev.kind === 'flare' ? (ev.cls?.startsWith('X') ? '#F06A6A' : '#FF9A3C') : GREEN;
+  const accent = ev.kind === 'viewing' ? (ev.viewing?.mode === 'now' ? GREEN : '#E6B800') : ev.kind === 'storm' ? G_COLOR[ev.g ?? 1] : ev.kind === 'flare' ? (ev.cls?.startsWith('X') ? '#F06A6A' : '#FF9A3C') : GREEN;
   const el = (
     <div style={{ width: CARD_W, height: CARD_H, display: 'flex', flexDirection: 'column', background: BG, padding: PAD, fontFamily: 'Barlow', color: '#fff' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -258,9 +376,9 @@ export async function renderCard(ev: SocialEvent, data: CardData): Promise<Card>
         </div>
         <div style={{ ...label, fontSize: 24, display: 'flex' }}>{`${hhmm(ev.at)} · ${dateUtc(ev.at)}`}</div>
       </div>
-      <div style={{ display: 'flex', ...label, fontSize: 28, color: accent, marginTop: 44, letterSpacing: 3 }}>{KICKER[ev.kind]}</div>
-      <div style={{ display: 'flex', fontFamily: 'Archivo', fontSize: fitLine(head, INNER, 112, 56), lineHeight: 1.05, marginTop: 8, whiteSpace: 'nowrap' }}>{head}</div>
-      <div style={{ display: 'flex', marginTop: 36, flexGrow: 1 }}><Graphic ev={ev} data={data} /></div>
+      <div style={{ display: 'flex', ...label, fontSize: 28, color: accent, marginTop: 44, letterSpacing: 3 }}>{kicker(ev)}</div>
+      <div style={{ display: 'flex', fontFamily: 'Archivo', fontSize: fitLine(head, INNER * 0.9, 112, 52), lineHeight: 1.05, marginTop: 8, whiteSpace: 'nowrap' }}>{head}</div>
+      <div style={{ display: 'flex', marginTop: 36, flexGrow: 1 }}><Graphic ev={ev} data={data} art={art} /></div>
       <div style={{ display: 'flex', flexDirection: 'column', borderTop: `2px solid ${LINE}`, paddingTop: 22 }}>
         {cardFacts(ev).filter(([k]) => k !== 'Time').map(([k, v]) => (
           <div key={k} style={{ display: 'flex', fontSize: 30, marginBottom: 8 }}>
@@ -274,7 +392,13 @@ export async function renderCard(ev: SocialEvent, data: CardData): Promise<Card>
     </div>
   );
   const res = new ImageResponse(el, { width: CARD_W, height: CARD_H, fonts: await fonts() });
-  const bytes = new Uint8Array(await res.arrayBuffer());
+  let bytes = new Uint8Array(await res.arrayBuffer());
   if (!bytes.length) throw new Error('empty card');
+  // Photographs make large PNGs: those cards go out as JPEG to stay well under Bluesky's 1 MB.
+  if (effectiveStyle(ev, data) === 'sun') {
+    const sharp = (await import('sharp')).default;
+    bytes = new Uint8Array(await sharp(bytes).jpeg({ quality: 86, mozjpeg: true }).toBuffer());
+    return { bytes, type: 'image/jpeg', width: CARD_W, height: CARD_H, alt: cardAlt(ev, data) };
+  }
   return { bytes, type: 'image/png', width: CARD_W, height: CARD_H, alt: cardAlt(ev, data) };
 }

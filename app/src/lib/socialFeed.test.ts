@@ -69,7 +69,7 @@ describe('runEventFeed', () => {
     const rec = (posts()[0].body as { repo: string; record: { text: string; langs: string[]; facets: unknown[]; embed: { images: { alt: string; aspectRatio: object }[] } } });
     expect(rec.repo).toBe('did:plc:pl');
     expect(rec.record.langs).toEqual(['en']);
-    expect(rec.record.text).toMatch(/^Geomagnetic storm: G3 \(strong\)/);
+    expect(rec.record.text.split('\n')[0]).toContain('G3 (strong)');
     expect(rec.record.facets.length).toBeGreaterThanOrEqual(2);
     expect(rec.record.embed.images[0].aspectRatio).toEqual({ width: 1080, height: 1350 });
     expect(rec.record.embed.images[0].alt.length).toBeGreaterThan(40);
