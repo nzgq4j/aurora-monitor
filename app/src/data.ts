@@ -19,7 +19,7 @@ export interface Tier {
 
 export const TIERS: Tier[] = [
   { id: 'free', m: 0, y: 0, locs: 1, accent: '#C9D0CB' },
-  { id: 'chaser', m: 3.99, y: 9.99, locs: 10, accent: '#6CFF2B' },
+  { id: 'chaser', m: 3.99, y: 6.99, locs: 10, accent: '#6CFF2B' },
 ];
 
 /** Days of free trial for a first subscription (Stripe checkout, see lib/billing). */

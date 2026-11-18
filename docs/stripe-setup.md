@@ -15,11 +15,11 @@ finds prices by lookup key, so no price IDs go into the code.
 
 | Price | Amount | Interval | Lookup key |
 | --- | --- | --- | --- |
-| Annual | $9.99 | Yearly | `chaser_annual` |
+| Annual | $6.99 | Yearly | `chaser_annual` |
 | Monthly (retired) | $3.99 | Monthly | `chaser_monthly` |
 
 Chaser is sold yearly only. The checkout uses `chaser_annual` alone; keep `chaser_monthly` for existing monthly subscribers.
-To change the annual price, create a new $9.99 yearly price and move the `chaser_annual` lookup key to it (tick "Transfer lookup key").
+To change the annual price, create a new $6.99 yearly price and move the `chaser_annual` lookup key to it (tick "Transfer lookup key").
 
 Leave the trial empty on the prices; the app adds the 7-day trial (`TRIAL_DAYS`) for first-time members only.
 
@@ -28,7 +28,7 @@ Leave the trial empty on the prices; the app adds the 7-day trial (`TRIAL_DAYS`)
 In Settings → Tax:
 1. Add the business's head office address.
 2. Choose a preset tax code for the product: "Software as a service (SaaS) – personal use", or the closest match.
-3. Set prices to **exclusive of tax**, so tax is added on top of $9.99.
+3. Set prices to **exclusive of tax**, so tax is added on top of $6.99.
 4. Add a registration for each country or US state where you're registered to collect tax. Stripe Tax's monitoring shows when you reach a threshold elsewhere.
 
 Checkout fails if Stripe Tax isn't set up, because the app requests automatic tax.
