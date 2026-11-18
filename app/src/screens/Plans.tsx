@@ -8,7 +8,6 @@ import { useI18n } from '../i18n/I18n';
 import { headLead } from '../i18n/core';
 
 /** Annual saving on the paid plan versus paying monthly, e.g. 17%. */
-const SAVING = Math.round((1 - TIERS[1].y / (TIERS[1].m * 12)) * 100);
 
 /** Icons for the comparison rows (24 px, stroked). */
 const ROW_ICON: Record<(typeof COMPARE)[number], string> = {
@@ -36,7 +35,7 @@ const Check = ({ on }: { on: boolean }) => (
  * (no page wrapper or hero heading).
  */
 export function Plans({ embedded = false }: { embedded?: boolean }) {
-  const { s, set, planIndex, choose } = useStore();
+  const { s, planIndex, choose } = useStore();
   const { profile } = useAuth();
   const { t, money } = useI18n();
   // Signed in on a paid plan: that plan; otherwise the paid plan is offered first.
@@ -103,14 +102,11 @@ export function Plans({ embedded = false }: { embedded?: boolean }) {
                 <span className="plans-option-text">
                   <span className="plans-option-name">
                     {t(`tier.${tr.id}`)}
-                    {paid && s.annual && <span className="plans-badge">{t('plans.saveBadge', { pct: SAVING })}</span>}
                     {current(i) && <span className="plans-badge plans-badge-dim">{t('plans.current')}</span>}
                   </span>
                   <span className="plans-option-blurb">{t(`tier.${tr.id}.blurb`)}</span>
                   <span className="plans-option-price">
-                    {!paid ? <><b>{money(0)}</b> {t('plans.freeForever')}</> : s.annual ? (
-                      <><b>{money(tr.y)}</b> {t('plans.perYear')} <span className="plans-permonth">({money(+(tr.y / 12).toFixed(2))} {t('plans.perMonth')})</span></>
-                    ) : <><b>{money(tr.m)}</b> {t('plans.perMonth')}</>}
+                    {!paid ? <><b>{money(0)}</b> {t('plans.freeForever')}</> : <><b>{money(tr.y)}</b> {t('plans.perYear')}</>}
                   </span>
                 </span>
                 <span className="plans-option-side">
@@ -120,11 +116,6 @@ export function Plans({ embedded = false }: { embedded?: boolean }) {
               </button>
             );
           })}
-        </div>
-
-        <div role="group" aria-label={t('plans.cycle')} className="plans-cycle">
-          <button type="button" className="btn" aria-pressed={!s.annual} onClick={() => set({ annual: false })}>{t('plans.monthly')}</button>
-          <button type="button" className="btn" aria-pressed={s.annual} onClick={() => set({ annual: true })}>{t('plans.annual')} <span className="plans-cycle-save">−{SAVING}%</span></button>
         </div>
 
         <button type="button" className="btn plans-cta" onClick={() => choose(sel)} disabled={current(sel)}>{cta}</button>

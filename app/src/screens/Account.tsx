@@ -108,7 +108,7 @@ export function Account({ data, phone }: { data: AccountData; phone?: ReactNode 
 }
 
 function usePlanLine() {
-  const { s, plan, planIndex, live } = useStore();
+  const { plan, planIndex, live } = useStore();
   const { profile, trialExpired } = useAuth();
   const { t, money, date } = useI18n();
   const price = (annual: boolean) => (annual ? t('dash.perYear', { price: money(plan.y) }) : t('dash.perMonth', { price: money(plan.m) }));
@@ -126,7 +126,7 @@ function usePlanLine() {
     const trial = profile?.trialEndsAt ? ` · ${t('dash.trialEnds', { date: date(profile.trialEndsAt, { month: 'short', day: 'numeric', year: 'numeric' }) })}` : '';
     return price(profile?.billingCycle === 'annual') + trial;
   }
-  return planIndex === 0 ? t('dash.freeLine') : `${price(s.annual)} · ${t('dash.trial')}`;
+  return planIndex === 0 ? t('dash.freeLine') : `${price(true)} · ${t('dash.trial')}`;
 }
 
 const h2 = { fontSize: 'clamp(28px, 7.5vw, 34px)', lineHeight: 1 };
@@ -691,13 +691,13 @@ function Language() {
 }
 
 export function Billing({ bare = false }: { bare?: boolean }) {
-  const { s, plan, planIndex, go, cancelPlan, openBilling, live } = useStore();
+  const { plan, planIndex, go, cancelPlan, openBilling, live } = useStore();
   const { profile } = useAuth();
   const { t, money } = useI18n();
   const [opening, setOpening] = useState(false);
   const planName = t(`tier.${plan.id}`);
   const planLine = usePlanLine();
-  const annual = live ? profile?.billingCycle === 'annual' : s.annual;
+  const annual = live ? profile?.billingCycle !== 'monthly' : true;
   // Google Play subscriptions are managed in Play; in the app, a Stripe subscription is managed on the website.
   const playBilled = live && profile?.billingSource === 'play' && !!profile.playPurchaseToken;
   const stripeCustomer = live && PAYMENTS && !!profile?.hasBilling && !playBilled;

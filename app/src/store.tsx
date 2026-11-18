@@ -120,7 +120,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (!live || !profileId) return;
     const intent = takeCheckoutIntent();
     if (!intent || !onFree) return;
-    setState(prev => ({ ...prev, pending: intent.tier, annual: intent.annual, toast: '' }));
+    setState(prev => ({ ...prev, pending: intent.tier, annual: true, toast: '' }));
     if (screen !== 'checkout') router.push(PATHS.checkout);
   }, [live, profileId]); // eslint-disable-line react-hooks/exhaustive-deps -- once per sign-in
 
@@ -173,20 +173,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           if (!auth.user) { go('signin'); return; }
           // In the Android app, Google Play requires its own billing.
           if (playBilling()) {
-            const r = await buyWithPlay(s.annual ? 'annual' : 'monthly', !!auth.profile?.trialEndsAt, auth.user.id, auth.verifyPlay);
+            const r = await buyWithPlay('annual', !!auth.profile?.trialEndsAt, auth.user.id, auth.verifyPlay);
             if (r === 'done') { go('account', { tab: 'overview', toast: t('toast.welcome', { plan: t(`tier.${pending.id}`) }) }); return; }
             if (r !== 'cancelled') set({ toast: t(`play.result.${r}`) });
             return;
           }
           if (playMissing()) { set({ toast: t('play.result.unavailable') }); return; }
           if (PAYMENTS) {
-            const r = await auth.startCheckout(pending.id, s.annual ? 'annual' : 'monthly');
+            const r = await auth.startCheckout(pending.id, 'annual');
             if (r.url) { window.location.assign(r.url); return; }
             if (r.error === 'already_subscribed') { await openBilling(); return; }
             set({ toast: t('toast.checkoutFailed') });
             return;
           }
-          const { error } = await auth.startTrial(pending.id, s.annual ? 'annual' : 'monthly');
+          const { error } = await auth.startTrial(pending.id, 'annual');
           if (error) { set({ toast: t('toast.trialFailed', { error: tx(error) }) }); return; }
           go('account', { tab: 'overview', toast: t('toast.welcome', { plan: t(`tier.${pending.id}`) }) });
           return;
@@ -259,6 +259,6 @@ function takeCheckoutIntent(): CheckoutIntent | null {
   } catch { return null; }
 }
 
-/** Displayed per-month price for a tier under the current billing cycle, formatted by `money`. */
+/** Displayed price for a tier: yearly, or monthly for a legacy monthly subscription, formatted by `money`. */
 export const displayPrice = (t: Tier, annual: boolean, money: (usd: number) => string) =>
-  money(annual ? +(t.y / 12).toFixed(2) : t.m);
+  money(annual ? t.y : t.m);

@@ -29,7 +29,7 @@ export function Checkout() {
   }, [live]);
   // Card or Play payments: one free trial per account (a trial already used means paying from today).
   const stripe = live && PAYMENTS && !play;
-  const playOffer = offers?.[s.annual ? 'annual' : 'monthly'];
+  const playOffer = offers?.annual;
   // On Play, only when the plan has a free-trial offer (set up in Play Console).
   const trial = play ? !profile?.trialEndsAt && !!playOffer?.trial : (!stripe && !play) || !profile?.trialEndsAt;
   // Today's date is known only in the browser (the page itself is built ahead of time).
@@ -38,10 +38,10 @@ export function Checkout() {
   // Play's trial is whatever the offer in Play Console says; the website's (Stripe) is TRIAL_DAYS.
   const trialDays = (play && playOffer?.trial?.trialDays) || TRIAL_DAYS;
   const trialEnd = now === null ? '' : date(now + trialDays * 864e5, { month: 'short', day: 'numeric', year: 'numeric' });
-  const cycle = s.annual ? t('plans.annual') : t('plans.monthly');
-  const price = (play && (trial ? playOffer?.trial ?? playOffer?.base : playOffer?.base)?.price) || money(s.annual ? pending.y : pending.m);
+  const cycle = t('plans.annual');
+  const price = (play && (trial ? playOffer?.trial ?? playOffer?.base : playOffer?.base)?.price) || money(pending.y);
   const name = t(`tier.${pending.id}`);
-  const per = s.annual ? t('checkout.perYear') : t('checkout.perMonth');
+  const per = t('checkout.perYear');
   const feats = FEATS.filter(x => x[1] > 0 && x[1] <= pendingIndex).map(x => x[0]).slice(0, 6);
 
   return (

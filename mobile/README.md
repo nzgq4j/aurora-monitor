@@ -61,9 +61,10 @@ current by Play's real-time developer notifications at `/api/play/rtdn`. Steps, 
 1. **Play Console:** create the app (`io.polarlights.app`) and upload a signed release (AAB) to the
    *Internal testing* track. Play only allows subscriptions once a build with billing has been uploaded.
 2. **Subscription:** *Monetize → Products → Subscriptions → Create subscription*, product ID `chaser`.
-   Add two auto-renewing base plans, IDs `monthly` (1 month, US$3.99) and `annual` (1 year, US$36), and
-   activate them (Play suggests local prices for other countries from the US price). For the trial,
-   add an offer to each base plan (any offer ID; ours are `7-day-trial-monthly` and `7-day-trial-annual`):
+   Chaser is sold yearly only: an auto-renewing base plan with ID `annual` (1 year, US$9.99), active,
+   with local prices converted from the US price. The older `monthly` base plan (US$3.99) is
+   deactivated, so existing monthly subscribers keep renewing but no one new can buy it. For the trial,
+   the `annual` base plan has an offer (ours is `7-day-trial-annual`):
    *New customer acquisition*, eligibility *New customer never had this subscription*, one free-trial
    phase. The app finds the offer by its free phase and shows its length at checkout.
 3. **API access:** in Google Cloud (project `io-polarlights-app`) enable the *Google Play Android
