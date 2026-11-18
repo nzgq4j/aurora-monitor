@@ -7,7 +7,7 @@ android {
         applicationId "io.polarlights.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 13
+        versionCode 14
         versionName "2.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
@@ -18,8 +18,12 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // R8 shrinks and optimises the code (smaller download, faster start). Keep rules: proguard-rules.pro,
+            // plus the rules Capacitor, Play Billing and Firebase ship with their libraries. The mapping file goes
+            // into the bundle, so Play shows readable crash reports. Resources are not shrunk: some are looked up by
+            // name at run time (splash, notification icon).
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }

@@ -1,21 +1,19 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
+# R8 keep rules for the release build (minifyEnabled in build.gradle).
 #
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Already covered by rules shipped with the libraries:
+# - Capacitor (consumer rules): every class extending com.getcapacitor.Plugin, so this app's own plugins
+#   (PlayBillingPlugin, PhotoLibraryPlugin, GoogleSignInPlugin, LongExposurePlugin) and their @PluginMethod,
+#   @PermissionCallback and @ActivityCallback methods, which Capacitor calls by name.
+# - proguard-android-optimize.txt: @JavascriptInterface methods (the WebView bridge).
+# - Play Billing, Firebase Messaging and AndroidX: their own consumer rules.
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Credential Manager (Sign in with Google) finds its Play services provider by reflection.
+-if class androidx.credentials.CredentialManager
+-keep class androidx.credentials.playservices.** { *; }
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# The app's own plugins, kept explicitly as well (they are registered by class in MainActivity).
+-keep class io.polarlights.app.** extends com.getcapacitor.Plugin { *; }
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Readable stack traces in Play's crash reports (with the mapping file R8 adds to the bundle).
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
