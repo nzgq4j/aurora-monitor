@@ -115,7 +115,8 @@ export function You() {
   const depth = useRef(0);
 
   useEffect(() => { load(); }, [load]);
-  useEffect(() => { if (auth.user) void myMember().then(m => setPoints(m?.points ?? null)); }, [auth.user]);
+  const [admin, setAdmin] = useState(false);
+  useEffect(() => { if (auth.user) void myMember().then(m => { setPoints(m?.points ?? null); setAdmin(!!m?.isAdmin); }); }, [auth.user]);
   useEffect(() => { if (auth.user) void feed('mine', { limit: 60 }).then(r => setPosted(r?.length ?? null)); }, [auth.user]);
   useEffect(() => {
     const sync = () => { const v = readView(); if (!v) depth.current = 0; setView(v); setSheet(null); };
@@ -214,6 +215,7 @@ export function You() {
         <Row icon={P.pin} label={t('you.locations')} value={String(locations.length)} onClick={() => open('locations')} />
         <Row icon={P.bell} label={t('nav.alerts')} onClick={() => go('alerts')} />
         {signedIn && <Row icon={P.badge} label={t('badges.title')} value={points === null ? '' : t(`rank.${rank(points).id}` as MessageKey)} onClick={() => go('badges')} />}
+        {signedIn && admin && <Row icon={P.chat} label={t('social.title')} onClick={() => go('social')} />}
         {signedIn && <Row icon={P.photo} label={t('you.myGallery')} value={posted === null ? '' : posted >= 60 ? '60+' : String(posted)} href="/gallery?f=mine" />}
       </Group>
 

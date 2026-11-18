@@ -26,6 +26,7 @@ import { useStore, type Tab } from '../store';
 import { Field } from '../components/Field';
 import { FeedbackForm } from '../components/Feedback';
 import { Plans } from './Plans';
+import { myMember } from '../lib/community';
 import { applyLocale, useI18n, type I18n } from '../i18n/I18n';
 import { LOCALES, LOCALE_NAMES, isLocale } from '../i18n/config';
 import type { MessageKey } from '../i18n/core';
@@ -41,10 +42,13 @@ const kpName = (t: I18n['t'], k: number) => t(`kp.name.${Math.max(2, Math.min(9,
  * screens it needs a signed-in user.
  */
 export function Account({ data, phone }: { data: AccountData; phone?: ReactNode }) {
-  const { s, set, signOut, live } = useStore();
+  const { s, set, go, signOut, live } = useStore();
   const auth = useAuth();
   const router = useRouter();
   const { t } = useI18n();
+  // Administrators also get a link to Social posting (the page re-checks on the server).
+  const [admin, setAdmin] = useState(false);
+  useEffect(() => { if (auth.user) void myMember().then(m => setAdmin(!!m?.isAdmin)); }, [auth.user]);
   const isPhone = usePhone() && !!phone;
   // Read the width directly: the first render always assumes the wide layout.
   useEffect(() => {
@@ -91,6 +95,11 @@ export function Account({ data, phone }: { data: AccountData; phone?: ReactNode 
             );
           })}
         </nav>
+        {admin && (
+          <button type="button" className="btn" onClick={() => go('social')} style={{ padding: '11px 14px', borderRadius: 10, fontWeight: 600, fontSize: 15, textAlign: 'left', color: C.muted }}>
+            {t('social.title')}
+          </button>
+        )}
         <button type="button" className="btn account-signout" onClick={signOut}>
           {t('dash.signOut')}
         </button>
