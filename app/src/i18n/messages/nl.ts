@@ -1636,18 +1636,4 @@ export const nl: Messages = {
   'social.level.maybe': "Mogelijk",
   'social.level.no': "Vannacht niet",
   'social.level.unavailable': "Verwachting niet beschikbaar",
-  // ---- Live sky cams ----
-  'skycam.title': "Live hemelcamera's",
-  'skycam.explainer': "Elke camera toont de hemel boven de camera, niet boven jouw plek. Een zwart of grijs beeld betekent bewolking, maanlicht of geen noorderlicht boven die camera.",
-  'skycam.distance': "{km} km verderop",
-  'skycam.captured': "Opgenomen {utc} UTC · {local} jouw tijd",
-  'skycam.alt': "Allsky-camerabeeld uit {name}, opgenomen {time} UTC",
-  'skycam.credit': "Beeld:",
-  'skycam.licence': "Licentie",
-  'skycam.notAltered': "Beeld niet bewerkt",
-  'skycam.openLive': "Livebeeld openen bij de beheerder",
-  'skycam.loading': "Nieuwste beeld laden…",
-  'skycam.offline': "Camera offline",
-  'skycam.error': "Beeld kon niet worden geladen",
-  'skycam.paused': "Verversen gepauzeerd. Tik om verder te gaan.",
 };
