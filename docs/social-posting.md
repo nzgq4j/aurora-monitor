@@ -45,7 +45,7 @@ posted, so switching the feed on posts no backlog. At most 2 posts per run, stor
 Viewing outlooks are a separate feed with their own rules (next section).
 
 Post text is English (the account's language), at most 300 graphemes including the link: headline, what was
-measured and when (UTC), a link to the map or Sun page, hashtags, and "Not an official warning service."
+measured and when (UTC), a link to the map or Sun page, and hashtags. No disclaimer line is added to posts, cards or alt text.
 Links and hashtags become facets with UTF-8 byte offsets (`detectFacets`).
 
 ## Viewing outlooks (`lib/socialViewing.ts`)
@@ -84,7 +84,7 @@ always reads the same (preview = post) while different events read differently.
 
 Built by `cardAlt()` from the same data as the card: what kind of card it is, the headline value, what the
 picture shows and its visual code (oval colours, Kp bar colours and the dashed storm line, chart scales), the
-facts (level, values, time UTC, source), the site address and the disclaimer printed on the card.
+facts (level, values, time UTC, source), and the site address printed on the card.
 It can be edited before a manual post (limit 2,000 characters).
 
 ## Changing things

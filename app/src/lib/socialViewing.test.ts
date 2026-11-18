@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { graphemes } from './bluesky';
 import { cardAlt } from './socialCard';
-import { DISCLAIMER, eventPostText, sampleEvent, type ViewingSite } from './socialEvents';
+import { eventPostText, sampleEvent, type ViewingSite } from './socialEvents';
 import { memoryStore } from './socialStore';
 import { groupRegions, nightKey, runViewingFeed, viewingBudget, viewingCandidates, type SiteOutlook, type ViewingDeps } from './socialViewing';
 import type { HourScore, Verdict } from './tonight';
@@ -76,14 +76,14 @@ describe('viewingBudget', () => {
 });
 
 describe('viewing text and alt', () => {
-  it('stays within 300 graphemes with local times, tags and disclaimer, even for long names', () => {
+  it('stays within 300 graphemes with local times and tags, even for long names', () => {
     for (const mode of ['now', 'tonight'] as const) {
       const ev = sampleEvent('viewing', NOW);
       ev.viewing = { ...ev.viewing!, mode, site: { ...ev.viewing!.site, name: 'Kirkenes and the Pasvik Valley, Sør-Varanger, Finnmark', tags: '#nordlys #Norway #Finnmark' } };
       const text = eventPostText(ev);
       expect(graphemes(text)).toBeLessThanOrEqual(300);
       expect(text).toContain('#nordlys');
-      expect(text).toContain(DISCLAIMER);
+      expect(text).not.toMatch(/official warning/i);
       expect(text).toContain('https://www.polarlights.io/map');
     }
     const tonight = eventPostText(sampleEvent('viewing', NOW));
@@ -112,7 +112,7 @@ describe('runViewingFeed', () => {
   const deps = (now: number): ViewingDeps => ({
     now: () => now,
     auth: async () => session,
-    render: async () => ({ bytes: new Uint8Array([137, 80, 78, 71]), type: 'image/png', width: 1080, height: 1350, alt: 'Polar Lights card for a viewing site with a map and hourly bars. Not an official warning service.' }),
+    render: async () => ({ bytes: new Uint8Array([137, 80, 78, 71]), type: 'image/png', width: 1080, height: 1350, alt: 'Polar Lights card for a viewing site with a map of the aurora oval and hourly viewing bars.' }),
     outlooks: async () => ({ outlooks: [outlook(SITES[0], 'goNow', [60], 0, 'Europe/Oslo', now), outlook(SITES[3], 'goLater', [20, 75], 1, 'America/Winnipeg', now)], card: {} }),
   });
 

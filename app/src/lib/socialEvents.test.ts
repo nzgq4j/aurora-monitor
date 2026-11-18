@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { graphemes } from './bluesky';
-import { DEFAULT_SOCIAL_RULES, DISCLAIMER, EVENT_KINDS, STYLES, detectEvents, eventPostText, flareClass, gLevel, headline, isRepeat, pickStyle, sampleEvent, stormNow, type EventInputs, type SocialEvent } from './socialEvents';
+import { DEFAULT_SOCIAL_RULES, EVENT_KINDS, STYLES, detectEvents, eventPostText, flareClass, gLevel, headline, isRepeat, pickStyle, sampleEvent, stormNow, type EventInputs, type SocialEvent } from './socialEvents';
 
 const NOW = Date.parse('2026-11-18T14:30:00Z');
 const empty: EventInputs = { kp: [], hp30: [], xrays: [], wind: [], power: [] };
@@ -63,13 +63,13 @@ describe('repeats', () => {
 });
 
 describe('post text', () => {
-  it('stays within 300 graphemes with link, tags and disclaimer, for every kind and extreme values', () => {
+  it('stays within 300 graphemes with link and tags, for every kind and extreme values', () => {
     for (const kind of EVENT_KINDS) {
       for (const ev of [sampleEvent(kind, NOW), { ...sampleEvent(kind, NOW), g: 5, kp: 9, cls: 'X28.0', from: 1234, to: 2999 }]) {
         const text = eventPostText(ev);
         expect(graphemes(text)).toBeLessThanOrEqual(300);
         expect(text).toContain('https://www.polarlights.io/');
-        expect(text).toContain(DISCLAIMER);
+        expect(text).not.toMatch(/official warning/i);
         expect(text).toMatch(/#\w+/);
       }
     }

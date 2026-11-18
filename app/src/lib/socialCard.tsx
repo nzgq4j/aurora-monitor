@@ -14,7 +14,7 @@ import type { Topology, GeometryCollection } from 'topojson-specification';
 import land110 from 'world-atlas/land-110m.json';
 import { auroraColor } from './auroraColor';
 import { ovalPoints, type Oval } from './feeds';
-import { DISCLAIMER, G_NAME, fmtKp, hhmm, localHm, lookPhrase, type CardStyle, type SocialEvent } from './socialEvents';
+import { G_NAME, fmtKp, hhmm, localHm, lookPhrase, type CardStyle, type SocialEvent } from './socialEvents';
 import { globeSvg, midnightCenter, regionMapSvg } from './socialGlobe';
 
 export const CARD_W = 1080, CARD_H = 1350;
@@ -231,10 +231,10 @@ function graphicDescription(ev: SocialEvent, data: CardData): string {
   }
 }
 
-/** Alt text: layout, headline, facts and the visual code, ending with the disclaimer printed on the card. */
+/** Alt text: layout, headline, facts and the visual code, ending with the site address printed on the card. */
 export function cardAlt(ev: SocialEvent, data: CardData): string {
   const facts = cardFacts(ev).map(([k, v]) => `${k}: ${v}`).join('. ');
-  return `Polar Lights card. ${sentence(kicker(ev))}: ${cardHead(ev)}. ${graphicDescription(ev, data)} ${facts}. www.polarlights.io. ${DISCLAIMER}`;
+  return `Polar Lights card. ${sentence(kicker(ev))}: ${cardHead(ev)}. ${graphicDescription(ev, data)} ${facts}. www.polarlights.io.`;
 }
 
 const label = { fontFamily: 'JetBrains Mono', fontSize: 22, color: MUTED, letterSpacing: 1 } as const;
@@ -386,7 +386,7 @@ export async function renderCard(ev: SocialEvent, data: CardData): Promise<Card>
           </div>
         ))}
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 14, ...label, fontSize: 22 }}>
-          <span style={{ color: GREEN }}>www.polarlights.io</span><span>{DISCLAIMER.toUpperCase()}</span>
+          <span style={{ color: GREEN }}>www.polarlights.io</span>
         </div>
       </div>
     </div>

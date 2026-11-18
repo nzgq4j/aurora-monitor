@@ -187,7 +187,6 @@ export function isRepeat(ev: SocialEvent, recent: { key: string; kind: string; c
 // ---- Post text (English: the account's language) ----
 
 export const SITE_URL = 'https://www.polarlights.io';
-export const DISCLAIMER = 'Not an official warning service.';
 export const LINKS: Record<EventKind, string> = { storm: `${SITE_URL}/map`, flare: `${SITE_URL}/sun`, shock: `${SITE_URL}/sun`, substorm: `${SITE_URL}/map`, viewing: `${SITE_URL}/map` };
 const TAGS: Record<Exclude<EventKind, 'viewing'>, string> = {
   storm: '#aurora #NorthernLights #SpaceWeather #GeomagneticStorm',
@@ -265,15 +264,15 @@ function bodies(ev: SocialEvent): string[] {
   }
 }
 
-/** The post: headline, body, link, hashtags, disclaimer. Always within 300 graphemes (the link counts). */
+/** The post: headline, body, link and hashtags. Always within 300 graphemes (the link counts). */
 export function eventPostText(ev: SocialEvent): string {
   const lead = LINKS[ev.kind] === `${SITE_URL}/map` ? variant(`${ev.key}:link`, ['Live map and forecast', 'Follow it live', 'Track it live']) : variant(`${ev.key}:link`, ['Live data', 'Follow it live']);
-  const tail = `${lead}: ${LINKS[ev.kind]}\n${hashtags(ev)}\n${DISCLAIMER}`;
+  const tail = `${lead}: ${LINKS[ev.kind]}\n${hashtags(ev)}`;
   for (const body of bodies(ev)) {
     const text = `${headline(ev)}\n${body}\n${tail}`;
     if (graphemes(text) <= MAX_GRAPHEMES) return text;
   }
-  return `${headline(ev)}\n${LINKS[ev.kind]}\n${DISCLAIMER}`;
+  return `${headline(ev)}\n${LINKS[ev.kind]}`;
 }
 
 /** Sample events for previews when nothing is happening (clearly marked as samples in the admin page). */
