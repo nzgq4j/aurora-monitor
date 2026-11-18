@@ -16,7 +16,8 @@ export async function POST(req: Request) {
   const user = await userFromRequest(req);
   if (!user) return fail('signed_out', 401);
   const { tier = 'chaser', cycle } = await req.json().catch(() => ({})) as { tier?: string; cycle?: string };
-  const key = tier === 'chaser' && (cycle === 'monthly' || cycle === 'annual') ? PRICE_LOOKUP.chaser[cycle] : null;
+  // Chaser is sold yearly only; existing monthly subscriptions carry on in Stripe until cancelled.
+  const key = tier === 'chaser' && cycle === 'annual' ? PRICE_LOOKUP.chaser.annual : null;
   if (!key) return fail('bad_request', 400);
   const profile = await billingProfile(user.id);
   if (!profile) return fail('failed', 500);
