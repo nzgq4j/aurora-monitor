@@ -1636,4 +1636,18 @@ export const en = {
   'social.level.maybe': "Possible",
   'social.level.no': "Not tonight",
   'social.level.unavailable': "Forecast unavailable",
+  // ---- Live sky cams ----
+  'skycam.title': "Live sky cams",
+  'skycam.explainer': "Each camera shows the sky over the camera, not over your place. A black or grey frame means cloud, moonlight, or no aurora overhead at that camera.",
+  'skycam.distance': "{km} km away",
+  'skycam.captured': "Captured {utc} UTC · {local} your time",
+  'skycam.alt': "All-sky camera image from {name}, captured {time} UTC",
+  'skycam.credit': "Image:",
+  'skycam.licence': "Licence",
+  'skycam.notAltered': "Image not altered",
+  'skycam.openLive': "Open live view at the operator's site",
+  'skycam.loading': "Loading the latest image…",
+  'skycam.offline': "Camera offline",
+  'skycam.error': "Couldn't load the image",
+  'skycam.paused': "Updates paused. Tap to resume.",
 };

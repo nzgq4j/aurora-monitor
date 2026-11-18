@@ -1636,4 +1636,18 @@ export const fr: Messages = {
   'social.level.maybe': "Possible",
   'social.level.no': "Pas cette nuit",
   'social.level.unavailable': "Prévision indisponible",
+  // ---- Live sky cams ----
+  'skycam.title': "Caméras du ciel en direct",
+  'skycam.explainer': "Chaque caméra montre le ciel au-dessus de la caméra, pas au-dessus de votre lieu. Une image noire ou grise signifie des nuages, la lumière de la Lune ou pas d’aurore au-dessus de cette caméra.",
+  'skycam.distance': "à {km} km",
+  'skycam.captured': "Prise à {utc} UTC · {local} chez vous",
+  'skycam.alt': "Image de la caméra plein ciel de {name}, prise à {time} UTC",
+  'skycam.credit': "Image :",
+  'skycam.licence': "Licence",
+  'skycam.notAltered': "Image non modifiée",
+  'skycam.openLive': "Ouvrir la vue en direct sur le site de l’exploitant",
+  'skycam.loading': "Chargement de la dernière image…",
+  'skycam.offline': "Caméra hors ligne",
+  'skycam.error': "Impossible de charger l’image",
+  'skycam.paused': "Mise à jour en pause. Touchez pour reprendre.",
 };

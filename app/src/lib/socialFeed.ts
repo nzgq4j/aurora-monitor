@@ -4,7 +4,7 @@
  * of runEventFeed, so a posting problem never breaks the cron route.
  */
 
-import { BlueskyError, createSession, deletePost, expiresSoon, graphemes, publish, refreshSession, type Session } from './bluesky';
+import { BlueskyError, createSession, deletePost, expiresSoon, graphemes, publish, refreshSession, type PostImage, type Session } from './bluesky';
 import { detectEvents, eventPostText, IMAGE_WAIT_MS, isRepeat, pickStyle, type EventInputs, type SocialEvent } from './socialEvents';
 import type { SocialStore } from './socialStore';
 import type { Card, CardData } from './socialCard';
@@ -60,7 +60,9 @@ export type PostOutcome = { key: string; status: 'posted'; url: string } | { key
  * Claim the event, draw its card and publish. Claim first, so overlapping runs never double-post. Without a
  * card the event waits (claim released) until IMAGE_WAIT_MS after it happened, then goes out as text only.
  */
-export async function postEvent(store: SocialStore, session: Session, ev: SocialEvent, data: CardData, render: FeedDeps['render'], opts: { now: number; manual?: boolean; by?: string | null; text?: string; alt?: string }): Promise<PostOutcome> {
+export async function postEvent(store: SocialStore, session: Session, ev: SocialEvent, data: CardData, render: FeedDeps['render'], opts: { now: number; manual?: boolean; by?: string | null; text?: string; alt?: string;
+  /** A second image and the text that credits it (the sky camera on "visible now" posts); null posts as usual. */
+  attach?: (text: string) => Promise<{ text: string; image: PostImage } | null> }): Promise<PostOutcome> {
   const claimed = await store.claim({ key: ev.key, kind: ev.kind, event_at: new Date(ev.at).toISOString(), data: ev, manual: !!opts.manual, posted_by: opts.by ?? null });
   if (!claimed) return { key: ev.key, status: 'taken' };
   const built = await buildPost(ev, data, render);
@@ -68,10 +70,17 @@ export async function postEvent(store: SocialStore, session: Session, ev: Social
     await store.release(ev.key);
     return { key: ev.key, status: 'waiting' };
   }
-  const text = opts.text ?? built.text;
+  let text = opts.text ?? built.text;
   const alt = built.card ? (opts.alt ?? built.alt ?? '') : null;
+  let extra: PostImage | null = null;
+  if (opts.attach) {
+    try {
+      const a = await opts.attach(text);
+      if (a) { text = a.text; extra = a.image; }
+    } catch (e) { console.error('social attachment failed', ev.key, e); }
+  }
   try {
-    const r = await publish(session, text, { lang: 'en', now: opts.now, image: built.card ? { bytes: built.card.bytes, type: built.card.type, alt: alt!, width: built.card.width, height: built.card.height } : null });
+    const r = await publish(session, text, { lang: 'en', now: opts.now, image: built.card ? { bytes: built.card.bytes, type: built.card.type, alt: alt!, width: built.card.width, height: built.card.height } : null, images: extra ? [extra] : [] });
     await store.finish(ev.key, { status: 'posted', post_uri: r.uri, post_url: r.url, text, alt, image: !!built.card, error: null });
     return { key: ev.key, status: 'posted', url: r.url };
   } catch (e) {

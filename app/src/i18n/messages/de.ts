@@ -1636,4 +1636,18 @@ export const de: Messages = {
   'social.level.maybe': "Möglich",
   'social.level.no': "Heute Nacht nicht",
   'social.level.unavailable': "Vorhersage nicht verfügbar",
+  // ---- Live sky cams ----
+  'skycam.title': "Live-Himmelskameras",
+  'skycam.explainer': "Jede Kamera zeigt den Himmel über der Kamera, nicht über deinem Ort. Ein schwarzes oder graues Bild bedeutet Wolken, Mondlicht oder kein Polarlicht über dieser Kamera.",
+  'skycam.distance': "{km} km entfernt",
+  'skycam.captured': "Aufgenommen {utc} UTC · {local} deine Zeit",
+  'skycam.alt': "Allsky-Kamerabild aus {name}, aufgenommen {time} UTC",
+  'skycam.credit': "Bild:",
+  'skycam.licence': "Lizenz",
+  'skycam.notAltered': "Bild nicht verändert",
+  'skycam.openLive': "Live-Ansicht beim Betreiber öffnen",
+  'skycam.loading': "Neuestes Bild wird geladen …",
+  'skycam.offline': "Kamera offline",
+  'skycam.error': "Bild konnte nicht geladen werden",
+  'skycam.paused': "Aktualisierung pausiert. Zum Fortsetzen tippen.",
 };
