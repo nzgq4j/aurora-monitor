@@ -40,7 +40,7 @@ const storm: EventInputs = { kp: [], hp30: [{ t: NOW - 20 * 6e4, hp: 7 }], xrays
 const deps = (over: Partial<FeedDeps> = {}, now = NOW): FeedDeps => ({
   inputs: async () => storm,
   cardData: async () => ({}),
-  render: async ev => ({ bytes: new Uint8Array([137, 80, 78, 71]), type: 'image/png', width: 1080, height: 1350, alt: `Polar Lights card for ${ev.kind}, a map of the aurora oval with Kp bars. Not an official warning service.` }),
+  render: async ev => ({ bytes: new Uint8Array([137, 80, 78, 71]), type: 'image/png', width: 1080, height: 1350, alt: `Polar Lights card for ${ev.kind}, a map of the aurora oval with Kp bars.` }),
   now: () => now,
   ...over,
 });
