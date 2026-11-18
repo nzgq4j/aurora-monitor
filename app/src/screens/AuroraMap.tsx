@@ -8,6 +8,7 @@ import { C } from '../data';
 import { placeName, useLocations, type Place } from '../lib/locations';
 import type { KpPoint } from '../lib/feeds';
 import { MapPanel } from '../components/MapPanel';
+import { SkyCams } from '../components/SkyCams';
 import { BottomSheet } from '../components/BottomSheet';
 import { TimeSlider } from '../components/TimeSlider';
 import type { Frame } from '../lib/ovalFrames';
@@ -601,6 +602,9 @@ export function AuroraMap({ kp, series }: { kp: number | null; series: KpPoint[]
         <MapPanel kp={kp} series={series} pick={pick} onClear={() => setPick(null)} layers={layerTiles} slider={frames.length > 0 ? timeSlider : null}
           legend={<div className="map-panel-section map-panel-legend"><span className="label">{t('map.legend')}</span>{legendBody}</div>} />
         {layerSheets}
+      </div>
+      <div className="wrap" style={{ width: '100%', padding: '16px var(--gutter)' }}>
+        <SkyCams place={shownPlace} />
       </div>
     </main>
   );

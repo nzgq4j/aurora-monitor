@@ -14,6 +14,7 @@ import type { HourScore, Verdict } from './tonight';
 import type { EventPostRow, SocialStore } from './socialStore';
 import type { Session } from './bluesky';
 import { postEvent, type FeedDeps, type PostOutcome } from './socialFeed';
+import { skycamAttachment, type SkipReason, type SkycamSocialDeps } from './skycamSocial';
 import type { CardData } from './socialCard';
 import { pickStyle, type SocialEvent, type ViewingSite } from './socialEvents';
 
@@ -100,10 +101,12 @@ export interface ViewingDeps {
   outlooks: (sites: ViewingSite[], now: number) => Promise<{ outlooks: SiteOutlook[]; card: CardData }>;
   render: FeedDeps['render'];
   auth: (store: SocialStore, now: number) => Promise<Session | null>;
+  /** Sky camera attachment for "visible now" posts (see skycamSocial; off unless SKYCAM_SOCIAL_ENABLED). */
+  skycam?: SkycamSocialDeps;
   now?: () => number;
 }
 
-export interface ViewingStatus { ok: boolean; skipped?: 'off' | 'no_sites' | 'not_connected' | 'daily_cap' | 'too_soon'; candidates?: string[]; outcome?: PostOutcome; error?: string }
+export interface ViewingStatus { ok: boolean; skipped?: 'off' | 'no_sites' | 'not_connected' | 'daily_cap' | 'too_soon'; candidates?: string[]; outcome?: PostOutcome; skycam?: string | SkipReason; error?: string }
 
 /** One run of the viewing feed. Never throws. */
 export async function runViewingFeed(store: SocialStore, deps: ViewingDeps): Promise<ViewingStatus> {
@@ -124,8 +127,16 @@ export async function runViewingFeed(store: SocialStore, deps: ViewingDeps): Pro
     if (!session) return { ok: true, skipped: 'not_connected', candidates: candidates.map(c => c.key) };
     const ev = { ...candidates[0], style: pickStyle('viewing', recent) };
     if (recent.some(r => r.key === ev.key && r.status === 'deleted')) await store.release(ev.key);
-    const outcome = await postEvent(store, session, ev, card, deps.render, { now });
-    return { ok: true, candidates: candidates.map(c => c.key), outcome };
+    // "Visible now" posts may carry a live sky camera frame; every gate is in skycamAttachment.
+    let skycam: string | undefined;
+    const site = ev.viewing?.mode === 'now' ? ev.viewing.site : null;
+    const attach = site ? async (text: string) => {
+      const a = await skycamAttachment(site, text, now, deps.skycam);
+      skycam = a.ok ? a.cam.id : a.reason;
+      return a.ok ? { text: a.text, image: a.image } : null;
+    } : undefined;
+    const outcome = await postEvent(store, session, ev, card, deps.render, { now, attach });
+    return { ok: true, candidates: candidates.map(c => c.key), outcome, ...(skycam ? { skycam } : {}) };
   } catch (e) {
     console.error('viewing feed failed', e);
     return { ok: false, error: String((e as Error).message ?? e).slice(0, 300) };
