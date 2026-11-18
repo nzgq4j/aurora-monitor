@@ -1637,8 +1637,7 @@ export const sv: Messages = {
   'social.level.no': "Inte i natt",
   'social.level.unavailable': "Prognosen är inte tillgänglig",
   // ---- Live sky cams ----
-  'skycam.h2a': "Himmelskameror",
-  'skycam.h2b': "live",
+  'skycam.title': "Himmelskameror live",
   'skycam.explainer': "Varje kamera visar himlen över kameran, inte över din plats. En svart eller grå bild betyder moln, månsken eller inget norrsken över den kameran.",
   'skycam.distance': "{km} km bort",
   'skycam.captured': "Tagen {utc} UTC · {local} din tid",

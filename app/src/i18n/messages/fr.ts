@@ -1637,8 +1637,7 @@ export const fr: Messages = {
   'social.level.no': "Pas cette nuit",
   'social.level.unavailable': "Prévision indisponible",
   // ---- Live sky cams ----
-  'skycam.h2a': "Caméras du ciel",
-  'skycam.h2b': "en direct",
+  'skycam.title': "Caméras du ciel en direct",
   'skycam.explainer': "Chaque caméra montre le ciel au-dessus de la caméra, pas au-dessus de votre lieu. Une image noire ou grise signifie des nuages, la lumière de la Lune ou pas d’aurore au-dessus de cette caméra.",
   'skycam.distance': "à {km} km",
   'skycam.captured': "Prise à {utc} UTC · {local} chez vous",

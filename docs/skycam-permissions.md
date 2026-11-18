@@ -4,7 +4,7 @@ This tracks what each camera operator allows and what Polar Lights wants to do w
 
 What Polar Lights wants, in general terms:
 
-1. **In-app display.** The latest frame appears in the "Live sky cams" panel on the Now page.
+1. **In-app display.** The latest frame appears in the "Live sky cams" panel on the Now and Map pages.
    - Served unaltered through `https://www.polarlights.io/api/skycam/<id>`.
    - Credit, licence link and "Image not altered" are shown under the image.
    - At most one request to the operator per camera per publishing interval: the frame is cached server-side and at the CDN.

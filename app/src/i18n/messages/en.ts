@@ -1637,8 +1637,7 @@ export const en = {
   'social.level.no': "Not tonight",
   'social.level.unavailable': "Forecast unavailable",
   // ---- Live sky cams ----
-  'skycam.h2a': "Live",
-  'skycam.h2b': "sky cams",
+  'skycam.title': "Live sky cams",
   'skycam.explainer': "Each camera shows the sky over the camera, not over your place. A black or grey frame means cloud, moonlight, or no aurora overhead at that camera.",
   'skycam.distance': "{km} km away",
   'skycam.captured': "Captured {utc} UTC · {local} your time",

@@ -1637,8 +1637,7 @@ export const nb: Messages = {
   'social.level.no': "Ikke i natt",
   'social.level.unavailable': "Prognosen er utilgjengelig",
   // ---- Live sky cams ----
-  'skycam.h2a': "Direkte",
-  'skycam.h2b': "himmelkameraer",
+  'skycam.title': "Direkte himmelkameraer",
   'skycam.explainer': "Hvert kamera viser himmelen over kameraet, ikke over stedet ditt. Et svart eller grått bilde betyr skyer, månelys eller ikke nordlys over det kameraet.",
   'skycam.distance': "{km} km unna",
   'skycam.captured': "Tatt {utc} UTC · {local} din tid",

@@ -1637,8 +1637,7 @@ export const es: Messages = {
   'social.level.no': "Esta noche no",
   'social.level.unavailable': "Previsión no disponible",
   // ---- Live sky cams ----
-  'skycam.h2a': "Cámaras del cielo",
-  'skycam.h2b': "en directo",
+  'skycam.title': "Cámaras del cielo en directo",
   'skycam.explainer': "Cada cámara muestra el cielo sobre la cámara, no sobre tu lugar. Una imagen negra o gris indica nubes, luz de luna o que no hay aurora sobre esa cámara.",
   'skycam.distance': "a {km} km",
   'skycam.captured': "Captada {utc} UTC · {local} tu hora",

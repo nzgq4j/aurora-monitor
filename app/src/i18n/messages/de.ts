@@ -1637,8 +1637,7 @@ export const de: Messages = {
   'social.level.no': "Heute Nacht nicht",
   'social.level.unavailable': "Vorhersage nicht verfügbar",
   // ---- Live sky cams ----
-  'skycam.h2a': "Himmelskameras",
-  'skycam.h2b': "live",
+  'skycam.title': "Live-Himmelskameras",
   'skycam.explainer': "Jede Kamera zeigt den Himmel über der Kamera, nicht über deinem Ort. Ein schwarzes oder graues Bild bedeutet Wolken, Mondlicht oder kein Polarlicht über dieser Kamera.",
   'skycam.distance': "{km} km entfernt",
   'skycam.captured': "Aufgenommen {utc} UTC · {local} deine Zeit",
