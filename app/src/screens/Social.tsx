@@ -6,17 +6,26 @@ import { useI18n } from '../i18n/I18n';
 import { BottomSheet } from '../components/BottomSheet';
 import { supabase } from '../lib/supabase';
 import type { MessageKey } from '../i18n/core';
+import { searchPlaces, type PlaceResult } from '../lib/locations';
 
 const BACK = 'M15 5l-7 7 7 7', CHEVRON = 'M9 6l6 6-6 6';
 const MAX_TEXT = 300, MAX_ALT = 2000;
-type Kind = 'storm' | 'flare' | 'shock' | 'substorm';
-const KINDS: Kind[] = ['storm', 'flare', 'shock', 'substorm'];
+type Kind = 'storm' | 'flare' | 'shock' | 'substorm' | 'viewing';
+const KINDS: Kind[] = ['storm', 'flare', 'shock', 'substorm', 'viewing'];
+/** Local aurora hashtags suggested for a new site, by country. */
+const COUNTRY_TAGS: Record<string, string> = {
+  Norway: '#nordlys #Norway', Norge: '#nordlys #Norway', Sweden: '#norrsken #Sweden', Sverige: '#norrsken #Sweden', Finland: '#revontulet #Finland', Suomi: '#revontulet #Finland',
+  Iceland: '#nordurljos #Iceland', Denmark: '#nordlys #Denmark', Greenland: '#Greenland', 'United Kingdom': '#aurora #UK', Canada: '#Canada', 'United States': '#USA',
+  Russia: '#Russia', Australia: '#AuroraAustralis #Australia', 'New Zealand': '#AuroraAustralis #NewZealand',
+};
 
-interface Rules { enabled: boolean; stormMinG: number; flareMin: 'X' | 'M5' | 'off'; shocks: boolean; substorms: boolean }
+interface Rules { enabled: boolean; stormMinG: number; flareMin: 'X' | 'M5' | 'off'; shocks: boolean; substorms: boolean; viewingEnabled: boolean }
+interface Site { id: string; name: string; lat: number; lon: number; tags: string; level: 'goNow' | 'goLater' | 'maybe' | 'no' | 'unavailable' | null; score: number | null }
 interface Connection { handle: string | null; connectedAt: string | null; lastError: string | null; envFallback: boolean }
 interface PostRow { key: string; kind: Kind; status: 'posting' | 'posted' | 'failed'; error: string | null; post_url: string | null; manual: boolean; image: boolean; created_at: string }
-interface Data { rules: Rules; connection: Connection; now: { kind: Kind; key: string; at: number; posted: boolean }[]; recent: PostRow[] }
-interface Preview { sample: boolean; key: string | null; text: string; alt: string | null; image: string | null; graphemes: number }
+interface Data { rules: Rules; connection: Connection; now: { kind: Kind; key: string; at: number; posted: boolean; site?: string; mode?: 'now' | 'tonight' }[]; sites: Site[]; recent: PostRow[] }
+type Style = 'card' | 'globe' | 'map' | 'sun';
+interface Preview { sample: boolean; key: string | null; style: Style; styles: Style[]; text: string; alt: string | null; image: string | null; graphemes: number }
 
 const segmenter = (Intl as unknown as { Segmenter?: new (l: string, o: object) => { segment: (s: string) => Iterable<unknown> } }).Segmenter;
 const seg = segmenter ? new segmenter('en', { granularity: 'grapheme' }) : null;
@@ -72,6 +81,9 @@ export function Social() {
   const [sheet, setSheet] = useState<null | 'storm' | 'flare'>(null);
   const [preview, setPreview] = useState<{ kind: Kind; p: Preview | null; text: string; alt: string } | null>(null);
   const [form, setForm] = useState({ identifier: '', password: '', service: '' });
+  const [siteQ, setSiteQ] = useState('');
+  const [found, setFound] = useState<PlaceResult[] | null>(null);
+  const [siteTags, setSiteTags] = useState('');
 
   const err = (code?: string) => {
     const key = `social.err.${code}`;
@@ -83,7 +95,7 @@ export function Social() {
   const load = useCallback(async () => {
     const r = await api<Data>('/api/admin/social');
     if (r.status === 403) { setDenied(true); return; }
-    if (r.ok) setData(r.data);
+    if (r.ok) setData({ ...r.data, sites: r.data.sites ?? [], now: r.data.now ?? [], recent: r.data.recent ?? [] });
     else setMsg({ text: err(r.data.error), bad: true });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- load once; err only reads translations
   useEffect(() => { void load(); }, [load]); // eslint-disable-line react-hooks/set-state-in-effect -- fetch once on open
@@ -101,15 +113,25 @@ export function Social() {
     const r = await api('/api/admin/social', { method: 'PATCH', body: p });
     if (!r.ok) { setMsg({ text: err(r.data.error), bad: true }); await load(); }
   });
-  const openPreview = (kind: Kind) => act(async () => {
-    setPreview({ kind, p: null, text: '', alt: '' });
-    const r = await api<Preview>(`/api/admin/social?preview=${kind}`);
+  const sites = (body: object) => act(async () => {
+    const r = await api('/api/admin/social/sites', { method: 'POST', body });
+    if (!r.ok) { setMsg({ text: err(r.data.error), bad: true }); return; }
+    setFound(null); setSiteQ(''); setSiteTags('');
+    await load();
+  });
+  const findSite = () => act(async () => {
+    try { setFound(await searchPlaces(siteQ)); } catch { setMsg({ text: err('unreachable'), bad: true }); }
+  });
+  const openPreview = (kind: Kind, style?: Style) => act(async () => {
+    setPreview(prev => ({ kind, p: style && prev?.kind === kind ? prev.p : null, text: prev?.text ?? '', alt: prev?.alt ?? '' }));
+    const r = await api<Preview>(`/api/admin/social?preview=${kind}${style ? `&style=${style}` : ''}`);
     if (!r.ok) { setPreview(null); setMsg({ text: err(r.data.error), bad: true }); return; }
     setPreview({ kind, p: r.data, text: r.data.text, alt: r.data.alt ?? '' });
   });
+
   const postNow = () => act(async () => {
     if (!preview?.p) return;
-    const r = await api<{ url?: string; repost?: boolean }>('/api/admin/social', { method: 'POST', body: { kind: preview.kind, text: preview.text, alt: preview.alt } });
+    const r = await api<{ url?: string; repost?: boolean }>('/api/admin/social', { method: 'POST', body: { kind: preview.kind, style: preview.p.style, text: preview.text, alt: preview.alt } });
     if (!r.ok) { setMsg({ text: err(r.data.error), bad: true }); return; }
     setPreview(null);
     setMsg({ text: t('social.postedOk') });
@@ -180,13 +202,63 @@ export function Social() {
         <Switch label={t('social.substorms')} on={rules.substorms} disabled={busy} onChange={v => void patch({ substorms: v })} />
       </Group>
 
+      <Group label={t('social.viewing')}>
+        <div className="you-row"><p style={note}>{t('social.viewingHelp')}</p></div>
+        <Switch label={t('social.viewingEnabled')} on={rules.viewingEnabled} disabled={busy} onChange={v => void patch({ viewingEnabled: v })} />
+      </Group>
+
+      <details className="you-group social-sites">
+        <summary className="you-group-label" style={{ cursor: 'pointer' }}>{t('social.sites', { n: data.sites.length })}</summary>
+        <div className="you-group-rows">
+          {data.sites.length === 0 && <div className="you-row"><span style={note}>{t('social.noSites')}</span></div>}
+          {data.sites.map(s => (
+            <div key={s.id} className="you-row" style={{ gap: 10 }}>
+              <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
+                <span className="you-row-label" style={{ overflowWrap: 'anywhere' }}>{s.name}</span>
+                <span style={{ fontSize: 13, color: s.level === 'goNow' || s.level === 'goLater' ? 'var(--green)' : 'var(--muted)' }}>
+                  {s.level ? t(`social.level.${s.level}` as MessageKey) : '–'}{s.score !== null && s.level !== 'unavailable' ? ` · ${s.score}/100` : ''}{s.tags ? ` · ${s.tags}` : ''}
+                </span>
+              </span>
+              <button type="button" className="btn pill pill-ghost" style={{ padding: '6px 12px', fontSize: 14 }} disabled={busy} aria-label={t('social.removeSite', { name: s.name })} onClick={() => void sites({ action: 'remove', id: s.id })}>{t('social.remove')}</button>
+            </div>
+          ))}
+          <form className="you-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 10 }} onSubmit={e => { e.preventDefault(); void findSite(); }}>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14 }}>{t('social.addSite')}
+              <span style={{ display: 'flex', gap: 8 }}>
+                <input style={{ ...field, flex: 1, minWidth: 0 }} value={siteQ} onChange={e => setSiteQ(e.target.value)} placeholder="Tromsø" />
+                <button type="submit" className="btn pill pill-ghost" style={{ padding: '0 16px' }} disabled={busy || siteQ.trim().length < 2}>{t('social.search')}</button>
+              </span>
+            </label>
+            {found && found.length === 0 && <p style={note}>{t('social.noResults')}</p>}
+            {found && found.length > 0 && (
+              <>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14 }}>{t('social.tags')}
+                  <input style={field} value={siteTags} onChange={e => setSiteTags(e.target.value)} placeholder="#nordlys #Norway" autoCapitalize="none" />
+                </label>
+                {found.map(p => {
+                  const region = p.detail.split(', ')[0] || p.detail;
+                  const country = p.detail.split(', ').pop() ?? '';
+                  return (
+                    <button key={`${p.lat},${p.lon}`} type="button" className="btn you-row" style={{ justifyContent: 'space-between' }} disabled={busy}
+                      onClick={() => void sites({ action: 'add', name: region && region !== p.name ? `${p.name}, ${region}` : p.name, lat: p.lat, lon: p.lon, tags: siteTags || COUNTRY_TAGS[country] || '' })}>
+                      <span className="you-row-label" style={{ overflowWrap: 'anywhere' }}>{p.name}<span style={{ color: 'var(--muted)', fontSize: 13 }}> · {p.detail}</span></span>
+                      <span className="you-row-value" style={{ color: 'var(--green)' }}>{t('social.add')}</span>
+                    </button>
+                  );
+                })}
+              </>
+            )}
+          </form>
+        </div>
+      </details>
+
       <Group label={t('social.now')}>
         {KINDS.map(k => {
           const n = nowFor(k);
           return (
             <button key={k} type="button" className="btn you-row" aria-haspopup="dialog" disabled={busy} onClick={() => void openPreview(k)}>
               <span className="you-row-label">{t(`social.kind.${k}` as MessageKey)}</span>
-              <span className="you-row-value" style={n ? { color: 'var(--green)' } : undefined}>{n ? (n.posted ? t('social.posted') : t('social.happening')) : t('social.nothing')}</span>
+              <span className="you-row-value" style={n ? { color: 'var(--green)' } : undefined}>{n ? (n.posted ? t('social.posted') : n.site ? `${n.site} · ${t(n.mode === 'now' ? 'social.level.goNow' : 'social.level.goLater')}` : t('social.happening')) : t('social.nothing')}</span>
               <span className="you-chevron"><Icon d={CHEVRON} size={16} /></span>
             </button>
           );
@@ -236,6 +308,14 @@ export function Social() {
           {!preview.p ? <p style={note}>{t('social.loading')}</p> : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {preview.p.sample && <p style={{ ...note, color: '#E6B800' }}>{t('social.sample')}</p>}
+              {(preview.p.styles?.length ?? 0) > 1 && (
+                <div role="group" aria-label={t('social.style')} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {preview.p.styles.map(st => (
+                    <button key={st} type="button" className={'btn pill ' + (st === preview.p!.style ? 'pill-primary' : 'pill-ghost')} aria-pressed={st === preview.p!.style}
+                      style={{ padding: '6px 14px', fontSize: 14 }} disabled={busy} onClick={() => void openPreview(preview.kind, st)}>{t(`social.style.${st}` as MessageKey)}</button>
+                  ))}
+                </div>
+              )}
               {posted && <p style={{ ...note, color: '#E6B800' }}>{t('social.repostNote')}</p>}
               {preview.p.image
                 // eslint-disable-next-line @next/next/no-img-element -- a data URL from the server, nothing to optimise

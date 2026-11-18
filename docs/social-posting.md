@@ -42,9 +42,43 @@ posted, so switching the feed on posts no backlog. At most 2 posts per run, stor
 | Shock | On | Solar wind speeds up 50 km/s and density or field rises by half (L1) | One per 6 h |
 | Substorm | Off | Hemispheric auroral power at least doubles to 30 GW or more | One per 3 h per hemisphere |
 
+Viewing outlooks are a separate feed with their own rules (next section).
+
 Post text is English (the account's language), at most 300 graphemes including the link: headline, what was
 measured and when (UTC), a link to the map or Sun page, hashtags, and "Not an official warning service."
 Links and hashtags become facets with UTF-8 byte offsets (`detectFacets`).
+
+## Viewing outlooks (`lib/socialViewing.ts`)
+
+Posts about aurora viewing at chosen sites around the world (table `social_sites`, managed in /social; seeded
+from the administrator's saved places). Each site is scored hour by hour with the same model as the Tonight page
+and place alerts (`lib/tonight.ts`: aurora strength, darkness, cloud from Open-Meteo, moonlight).
+
+- **Visible now:** the score now is 50 or more. **Tonight:** the best hour in the next 12 scores 50 or more and
+  starts at least 30 minutes ahead; the post gives the window in local time and UTC.
+- Sites within 150 km form one region (the three Nordland sites are one); the best site in the region is named.
+- At most one post per region per night (the site's local night, which turns over at local noon), at most 4
+  viewing posts per UTC day, at least 2 hours apart, one per run. Visible now goes before tonight.
+- Runs every 10 minutes (minute 5, 15, …) to stay well inside Open-Meteo's free limit; switch: *Post viewing outlooks*.
+- Hashtags: `#aurora #NorthernLights` (or `#AuroraAustralis` south of the equator) plus the site's own tags.
+
+## Picture styles and wording
+
+Posts rotate through picture styles per kind, so the feed doesn't repeat one look (`STYLES`, `pickStyle`):
+
+| Kind | Styles |
+| --- | --- |
+| Storm, substorm | data card (oval map + Kp bars or power), globe (night side, live oval, day and night) |
+| Flare | data card (X-ray chart), Sun image (NASA SDO AIA 131 Å, the flare channel) |
+| Shock | data card (solar wind charts), coronagraph (ESA/NASA SOHO LASCO C3, shows CMEs leaving the Sun) |
+| Viewing | data card (map + hourly scores), regional map (~1,600 km around the site), globe centred on the site |
+
+The next post of a kind uses the style after its last post's. If a Sun image can't be fetched in time, the card
+falls back to the data style. Photo cards are saved as JPEG to stay under 1 MB. In /social, the preview shows the
+style that would be used and lets you pick another before posting by hand.
+
+Wording varies too: each kind has several headlines and link lines, picked from the event's key, so the same event
+always reads the same (preview = post) while different events read differently.
 
 ## Alt text
 
@@ -67,3 +101,5 @@ It can be edited before a manual post (limit 2,000 characters).
   off, not connected, one post with image/alt/facets/langs/aspect ratio, overlapping runs, waiting for the card,
   token refresh and rotation, refused refresh, failed posts not retried, feed errors reported.
 - `socialCard.test.ts`: alt text for every kind; real PNGs under 1 MB (skipped offline).
+- `socialViewing.test.ts`: regions, local nights, candidates, the daily cap and gap, text limits, a full run.
+- `socialEvents.test.ts` also checks that wording varies between events and styles rotate.

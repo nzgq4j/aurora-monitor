@@ -5,7 +5,7 @@
  */
 
 import { BlueskyError, createSession, expiresSoon, graphemes, publish, refreshSession, type Session } from './bluesky';
-import { detectEvents, eventPostText, IMAGE_WAIT_MS, isRepeat, type EventInputs, type SocialEvent } from './socialEvents';
+import { detectEvents, eventPostText, IMAGE_WAIT_MS, isRepeat, pickStyle, type EventInputs, type SocialEvent } from './socialEvents';
 import type { SocialStore } from './socialStore';
 import type { Card, CardData } from './socialCard';
 
@@ -20,7 +20,7 @@ export interface FeedDeps {
 
 /** At most this many posts per run, biggest news first. */
 const PER_RUN = 2;
-const PRIORITY: Record<SocialEvent['kind'], number> = { storm: 0, flare: 1, shock: 2, substorm: 3 };
+const PRIORITY: Record<SocialEvent['kind'], number> = { storm: 0, flare: 1, shock: 2, substorm: 3, viewing: 4 };
 
 /** A session that works now: the stored one (refreshed when it expires within 5 minutes), else the env account. */
 export async function authFor(store: SocialStore, now = Date.now()): Promise<Session | null> {
@@ -104,6 +104,7 @@ export async function runEventFeed(store: SocialStore, deps: FeedDeps): Promise<
     const outcomes: PostOutcome[] = [];
     for (const ev of fresh) {
       try {
+        ev.style = pickStyle(ev.kind, recent);
         outcomes.push(await postEvent(store, session, ev, await deps.cardData(ev, inputs), deps.render, { now }));
       } catch (e) {
         outcomes.push({ key: ev.key, status: 'failed', error: String((e as Error).message ?? e).slice(0, 200) });
