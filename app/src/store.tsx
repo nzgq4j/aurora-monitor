@@ -256,10 +256,7 @@ function takeCheckoutIntent(): CheckoutIntent | null {
     if (!raw) return null;
     localStorage.removeItem(INTENT_KEY);
     const v = JSON.parse(raw) as CheckoutIntent;
-    return Date.now() - v.at < 864e5 && TIERS.some(t => t.id === v.tier && t.m > 0) ? v : null;
+    return Date.now() - v.at < 864e5 && TIERS.some(t => t.id === v.tier && t.y > 0) ? v : null;
   } catch { return null; }
 }
 
-/** Displayed price for a tier: yearly, or monthly for a legacy monthly subscription, formatted by `money`. */
-export const displayPrice = (t: Tier, annual: boolean, money: (usd: number) => string) =>
-  money(annual ? t.y : t.m);

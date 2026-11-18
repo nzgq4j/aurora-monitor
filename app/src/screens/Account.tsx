@@ -120,7 +120,7 @@ function usePlanLine() {
   const { plan, planIndex, live } = useStore();
   const { profile, trialExpired } = useAuth();
   const { t, money, date } = useI18n();
-  const price = (annual: boolean) => (annual ? t('dash.perYear', { price: money(plan.y) }) : t('dash.perMonth', { price: money(plan.m) }));
+  const price = () => t('dash.perYear', { price: money(plan.y) });
   if (live) {
     if (planIndex === 0) return trialExpired ? t('dash.trialEnded') : t('dash.freeLine');
     const sub = profile?.subscriptionStatus;
@@ -130,12 +130,12 @@ function usePlanLine() {
         : profile.cancelAtPeriodEnd ? t('dash.endsOn', { date: when })
         : sub === 'trialing' ? t('dash.trialEnds', { date: when })
         : t('dash.renewsOn', { date: when });
-      return `${price(profile.billingCycle === 'annual')} · ${state}`;
+      return `${price()} · ${state}`;
     }
     const trial = profile?.trialEndsAt ? ` · ${t('dash.trialEnds', { date: date(profile.trialEndsAt, { month: 'short', day: 'numeric', year: 'numeric' }) })}` : '';
-    return price(profile?.billingCycle === 'annual') + trial;
+    return price() + trial;
   }
-  return planIndex === 0 ? t('dash.freeLine') : `${price(true)} · ${t('dash.trial')}`;
+  return planIndex === 0 ? t('dash.freeLine') : `${price()} · ${t('dash.trial')}`;
 }
 
 const h2 = { fontSize: 'clamp(28px, 7.5vw, 34px)', lineHeight: 1 };
@@ -706,7 +706,6 @@ export function Billing({ bare = false }: { bare?: boolean }) {
   const [opening, setOpening] = useState(false);
   const planName = t(`tier.${plan.id}`);
   const planLine = usePlanLine();
-  const annual = live ? profile?.billingCycle !== 'monthly' : true;
   // Google Play subscriptions are managed in Play; in the app, a Stripe subscription is managed on the website.
   const playBilled = live && profile?.billingSource === 'play' && !!profile.playPurchaseToken;
   const stripeCustomer = live && PAYMENTS && !!profile?.hasBilling && !playBilled;
@@ -757,7 +756,7 @@ export function Billing({ bare = false }: { bare?: boolean }) {
               <span style={{ fontSize: 14, color: 'var(--soft)' }}>
                 {!planIndex ? t('billing.freeNever')
                   : live && PAYMENTS ? t('billing.noCardNeeded')
-                  : t('billing.after', { plan: planName, price: annual ? t('billing.aYear', { price: money(plan.y) }) : t('billing.aMonth', { price: money(plan.m) }) })}
+                  : t('billing.after', { plan: planName, price: t('billing.aYear', { price: money(plan.y) }) })}
               </span>
             </>
           )}
