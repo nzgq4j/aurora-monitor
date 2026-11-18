@@ -106,7 +106,7 @@ MADE FOR THE DARK
 • Available in English, German, Spanish, French, Dutch, Norwegian, Danish, Swedish, Finnish and Russian
 
 PLANS
-Polar Lights is free to use, with the live map, forecasts and alerts for one place. Chaser adds up to 10 places, instant push alerts, the technical alerts, the 3-hour Kp forecast and 27-day outlook, hour-by-hour cloud and darkness, solar wind graphs and the dark-sky spot map. Chaser is US$9.99 a year, with a 7-day free trial for new subscribers. Prices in other countries are shown in Google Play before you subscribe.
+Polar Lights is free to use, with the live map, forecasts and alerts for one place. Chaser adds up to 10 places, instant push alerts, the technical alerts, the 3-hour Kp forecast and 27-day outlook, hour-by-hour cloud and darkness, solar wind graphs and the dark-sky spot map. Chaser is US$6.99 a year, with a 7-day free trial for new subscribers. Prices in other countries are shown in Google Play before you subscribe.
 
 Data from NOAA's Space Weather Prediction Center, NASA, ESA, GFZ Potsdam, EUMETSAT and Open-Meteo. Polar Lights is independent and not affiliated with these organisations.
 
@@ -137,4 +137,4 @@ Translations for Norwegian, Danish, Swedish, Finnish and Russian are in
   (`7-day-trial-annual`; `7-day-trial-monthly` is deactivated with its base plan). Keep it in step with `TRIAL_DAYS` in `app/src/data.ts`
   (the website's Stripe trial).
 - The prices in the PLANS paragraph must match the `chaser` base plans in Play Console
-  (`annual` US$9.99; the `monthly` plan is deactivated) and `TIERS` in `app/src/data.ts`. Update all three together.
+  (`annual` US$6.99; the `monthly` plan is deactivated) and `TIERS` in `app/src/data.ts`. Update all three together.
