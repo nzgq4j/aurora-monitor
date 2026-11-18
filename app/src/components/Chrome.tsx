@@ -28,7 +28,7 @@ export function Header({ kpLabel }: { kpLabel: string }) {
           <nav className="nav">
             {NAV.map(([label, screen]) => {
               // Plans, checkout, badges and alerts live under the Dashboard.
-              const on = current === screen || (screen === 'account' && (current === 'plans' || current === 'checkout' || current === 'badges' || current === 'alerts'));
+              const on = current === screen || (screen === 'account' && (current === 'plans' || current === 'checkout' || current === 'badges' || current === 'alerts' || current === 'social'));
               return (
                 <button key={screen} type="button" className={'btn nav-item' + (on ? ' on' : '')} aria-current={on ? 'page' : undefined}
                   onClick={screen === 'account' ? goAccount : () => go(screen)}>
@@ -111,7 +111,7 @@ export function TabBar() {
   const { t } = useI18n();
   const ref = useStickToBottom();
   // You holds the account, plans, sign-in, badges, alerts, settings and help.
-  const you = screen === 'account' || screen === 'plans' || screen === 'checkout' || screen === 'signin' || screen === 'badges' || screen === 'alerts' || screen === 'support';
+  const you = screen === 'account' || screen === 'plans' || screen === 'checkout' || screen === 'signin' || screen === 'badges' || screen === 'alerts' || screen === 'support' || screen === 'social';
   const tab = (id: string, label: string, on: boolean, onClick: () => void) => (
     <button key={id} type="button" className={`btn tabbar-item tab-${id}` + (on ? ' on' : '')} aria-current={on ? 'page' : undefined} onClick={onClick}>
       <Icon id={id} /><span>{label}</span>
