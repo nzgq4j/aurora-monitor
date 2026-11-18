@@ -89,7 +89,7 @@ export function viewingCandidates(outlooks: SiteOutlook[], now: number): SocialE
 
 /** Whether another viewing post may go out now: under the daily cap and at least 2 hours after the last. */
 export function viewingBudget(recent: Pick<EventPostRow, 'kind' | 'status' | 'created_at'>[], now: number): { ok: true } | { ok: false; reason: 'daily_cap' | 'too_soon' } {
-  const posts = recent.filter(r => r.kind === 'viewing' && r.status !== 'failed').map(r => Date.parse(r.created_at));
+  const posts = recent.filter(r => r.kind === 'viewing' && r.status !== 'failed' && r.status !== 'deleted' && r.status !== 'deleting').map(r => Date.parse(r.created_at));
   const day = new Date(now).toISOString().slice(0, 10);
   if (posts.filter(t => new Date(t).toISOString().slice(0, 10) === day).length >= DAILY_CAP) return { ok: false, reason: 'daily_cap' };
   if (posts.some(t => t > now - GAP_MS)) return { ok: false, reason: 'too_soon' };
@@ -117,11 +117,13 @@ export async function runViewingFeed(store: SocialStore, deps: ViewingDeps): Pro
     const budget = viewingBudget(recent, now);
     if (!budget.ok) return { ok: true, skipped: budget.reason };
     const { outlooks, card } = await deps.outlooks(sites, now);
-    const candidates = viewingCandidates(outlooks, now).filter(ev => !recent.some(r => r.key === ev.key));
+    // A region posted (or failed) tonight is done; one whose post was deleted can go out again.
+    const candidates = viewingCandidates(outlooks, now).filter(ev => !recent.some(r => r.key === ev.key && r.status !== 'deleted'));
     if (!candidates.length) return { ok: true, candidates: [] };
     const session = await deps.auth(store, now);
     if (!session) return { ok: true, skipped: 'not_connected', candidates: candidates.map(c => c.key) };
     const ev = { ...candidates[0], style: pickStyle('viewing', recent) };
+    if (recent.some(r => r.key === ev.key && r.status === 'deleted')) await store.release(ev.key);
     const outcome = await postEvent(store, session, ev, card, deps.render, { now });
     return { ok: true, candidates: candidates.map(c => c.key), outcome };
   } catch (e) {

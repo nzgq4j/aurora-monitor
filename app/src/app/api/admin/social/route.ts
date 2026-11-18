@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { adminFromRequest } from '../../../../lib/adminAuth';
 import { supabaseAdmin } from '../../../../lib/billing';
 import { BlueskyError } from '../../../../lib/bluesky';
-import { authFor, buildPost, postEvent } from '../../../../lib/socialFeed';
+import { authFor, buildPost, postEvent, runDeletions } from '../../../../lib/socialFeed';
 import { detectEvents, EVENT_KINDS, pickStyle, sampleEvent, STYLES, type CardStyle, type EventKind, type SocialEvent, type SocialRules } from '../../../../lib/socialEvents';
 import { supabaseStore, type SocialSettings, type SocialStore } from '../../../../lib/socialStore';
 import { liveDeps, siteOutlooks } from '../../../../lib/socialLive';
@@ -73,6 +73,7 @@ export async function GET(req: Request) {
   const viewing = outlook ? viewingCandidates(outlook.outlooks, now) : [];
   const { handle, did, service, connectedAt, lastError, updatedAt, ...rules } = settings;
   const posted = (key: string) => recent.some(r => r.key === key && r.status === 'posted');
+  // (deleted posts are listed with their status; the region can be posted again)
   return NextResponse.json({
     rules,
     connection: { handle, did, service, connectedAt, lastError, envFallback: !!(process.env.BLUESKY_IDENTIFIER && process.env.BLUESKY_APP_PASSWORD) },
@@ -108,17 +109,26 @@ export async function PATCH(req: Request) {
 export async function POST(req: Request) {
   const admin = await adminFromRequest(req);
   if (!admin) return NextResponse.json({ error: 'not_allowed' }, { status: 403 });
-  const b = (await req.json().catch(() => ({}))) as { kind?: string; text?: string; alt?: string; style?: string };
-  if (!isKind(b.kind)) return NextResponse.json({ error: 'bad_request' }, { status: 400 });
+  const b = (await req.json().catch(() => ({}))) as { kind?: string; text?: string; alt?: string; style?: string; action?: string; key?: string };
   const store = supabaseStore(supabaseAdmin());
   const now = Date.now();
+  // Delete a post from Bluesky: mark it, then remove it straight away (the cron retries if this fails).
+  if (b.action === 'delete') {
+    const row = typeof b.key === 'string' ? (await store.recent(now - 90 * 864e5, 500)).find(r => r.key === b.key) : undefined;
+    if (!row || (row.status !== 'posted' && row.status !== 'deleting')) return NextResponse.json({ error: 'bad_request' }, { status: 400 });
+    await store.finish(row.key, { status: 'deleting' });
+    const out = await runDeletions(store, now);
+    const failed = out.failed.find(f => f.key === row.key);
+    return failed ? NextResponse.json({ error: failed.error }, { status: 502 }) : NextResponse.json({ ok: true });
+  }
+  if (!isKind(b.kind)) return NextResponse.json({ error: 'bad_request' }, { status: 400 });
   const { live, data } = await liveEvent(store, await store.settings(), b.kind, now, await styleFor(store, b.kind, b.style, now));
   if (!live) return NextResponse.json({ error: 'no_event' }, { status: 409 });
   const session = await authFor(store, now);
   if (!session) return NextResponse.json({ error: 'not_connected' }, { status: 409 });
   // A failed post is retried under its own key; one already posted goes out again under a new key.
   const prior = (await store.recent(now - 7 * 864e5, 300)).find(r => r.key === live.key);
-  if (prior?.status === 'failed') await store.release(live.key);
+  if (prior?.status === 'failed' || prior?.status === 'deleted') await store.release(live.key);
   const ev = prior?.status === 'posted' || prior?.status === 'posting' ? { ...live, key: `${live.key}#${now}` } : live;
   try {
     const out = await postEvent(store, session, ev, data, liveDeps.render, { now, manual: true, by: admin.id, text: b.text?.trim() || undefined, alt: b.alt?.trim() || undefined });

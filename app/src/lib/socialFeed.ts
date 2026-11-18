@@ -4,7 +4,7 @@
  * of runEventFeed, so a posting problem never breaks the cron route.
  */
 
-import { BlueskyError, createSession, expiresSoon, graphemes, publish, refreshSession, type Session } from './bluesky';
+import { BlueskyError, createSession, deletePost, expiresSoon, graphemes, publish, refreshSession, type Session } from './bluesky';
 import { detectEvents, eventPostText, IMAGE_WAIT_MS, isRepeat, pickStyle, type EventInputs, type SocialEvent } from './socialEvents';
 import type { SocialStore } from './socialStore';
 import type { Card, CardData } from './socialCard';
@@ -94,7 +94,7 @@ export async function runEventFeed(store: SocialStore, deps: FeedDeps): Promise<
     const events = detectEvents(inputs, rules, now);
     if (!events.length) return { ok: true, events: [] };
     const recent = await store.recent(now - 24 * 36e5, 200);
-    const live = recent.filter(r => r.status !== 'failed');
+    const live = recent.filter(r => r.status !== 'failed' && r.status !== 'deleted' && r.status !== 'deleting');
     // Failed keys are not retried automatically either.
     const fresh = events.filter(ev => !isRepeat(ev, live, now) && !recent.some(r => r.key === ev.key))
       .sort((a, b) => PRIORITY[a.kind] - PRIORITY[b.kind]).slice(0, PER_RUN);
@@ -114,5 +114,35 @@ export async function runEventFeed(store: SocialStore, deps: FeedDeps): Promise<
   } catch (e) {
     console.error('social feed failed', e);
     return { ok: false, error: String((e as Error).message ?? e).slice(0, 300) };
+  }
+}
+
+/**
+ * Remove posts an administrator asked to delete (status 'deleting') from Bluesky, then mark them 'deleted'.
+ * A failure is recorded and retried on the next run. Never throws.
+ */
+export async function runDeletions(store: SocialStore, now = Date.now()): Promise<{ ok: boolean; deleted: string[]; failed: { key: string; error: string }[]; error?: string }> {
+  const out = { ok: true, deleted: [] as string[], failed: [] as { key: string; error: string }[] };
+  try {
+    const rows = await store.deleting();
+    if (!rows.length) return out;
+    const session = await authFor(store, now);
+    for (const r of rows) {
+      try {
+        if (r.post_uri) {
+          if (!session) throw new BlueskyError('not_connected', 'no session');
+          await deletePost(session, r.post_uri);
+        }
+        await store.finish(r.key, { status: 'deleted', error: null });
+        out.deleted.push(r.key);
+      } catch (e) {
+        const error = e instanceof BlueskyError ? e.error : String((e as Error).message ?? e).slice(0, 200);
+        await store.finish(r.key, { error: `delete:${error}` });
+        out.failed.push({ key: r.key, error });
+      }
+    }
+    return out;
+  } catch (e) {
+    return { ...out, ok: false, error: String((e as Error).message ?? e).slice(0, 300) };
   }
 }
