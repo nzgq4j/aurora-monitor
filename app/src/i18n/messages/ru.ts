@@ -1671,7 +1671,8 @@ export const ru: Messages = {
   'social.level.no': "Не этой ночью",
   'social.level.unavailable': "Прогноз недоступен",
   // ---- Live sky cams ----
-  'skycam.title': "Камеры неба онлайн",
+  'skycam.h2a': "Камеры неба",
+  'skycam.h2b': "онлайн",
   'skycam.explainer': "Каждая камера показывает небо над камерой, а не над вашим местом. Чёрный или серый кадр означает облака, лунный свет или отсутствие сияния над этой камерой.",
   'skycam.distance': "{km} км",
   'skycam.captured': "Снято в {utc} UTC · {local} по вашему времени",

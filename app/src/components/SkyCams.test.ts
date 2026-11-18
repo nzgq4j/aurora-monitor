@@ -20,7 +20,7 @@ function render(place: { lat: number; lon: number }, now: number, frames: Record
 describe('SkyCamsView', () => {
   it('visible: image with alt text, capture time, credit, licence and "Image not altered"', () => {
     const html = render(KIRUNA, NIGHT + 60_000, { 'irf-kiruna': { kind: 'frame', capturedAt: NIGHT, src: 'blob:kiruna' } });
-    expect(html).toContain('Live sky cams');
+    expect(html).toContain('Live <span class="hl">sky cams</span></h2>');
     expect(html).toContain('alt="All-sky camera image from Kiruna, Sweden, captured 21:14 UTC"');
     expect(html).toContain('src="blob:kiruna"');
     expect(html).toContain('Captured 21:14 UTC');
