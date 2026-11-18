@@ -63,7 +63,7 @@ current by Play's real-time developer notifications at `/api/play/rtdn`. Steps, 
 2. **Subscription:** *Monetize → Products → Subscriptions → Create subscription*, product ID `chaser`.
    Chaser is sold yearly only: an auto-renewing base plan with ID `annual` (1 year, US$6.99), active,
    with local prices converted from the US price. The older `monthly` base plan (US$3.99) is
-   deactivated, so existing monthly subscribers keep renewing but no one new can buy it. For the trial,
+   deactivated; no one was subscribed to it. For the trial,
    the `annual` base plan has an offer (ours is `7-day-trial-annual`):
    *New customer acquisition*, eligibility *New customer never had this subscription*, one free-trial
    phase. The app finds the offer by its free phase and shows its length at checkout.

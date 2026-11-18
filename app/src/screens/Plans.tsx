@@ -96,7 +96,7 @@ export function Plans({ embedded = false }: { embedded?: boolean }) {
 
         <div role="radiogroup" aria-label={t('plans.pick')} className="plans-options">
           {order.map(i => {
-            const tr = TIERS[i], on = i === sel, paid = tr.m > 0;
+            const tr = TIERS[i], on = i === sel, paid = tr.y > 0;
             return (
               <button key={tr.id} type="button" role="radio" aria-checked={on} className={`btn plans-option${on ? ' on' : ''}`} onClick={() => setSel(i)}>
                 <span className="plans-option-text">

@@ -8,8 +8,8 @@ import { TRIAL_DAYS, type TierId } from '../data';
 // so switching between test and live mode needs no code change.
 
 /** Stripe price lookup keys for each paid tier and billing cycle. */
-export const PRICE_LOOKUP: Record<Exclude<TierId, 'free'>, Record<'monthly' | 'annual', string>> = {
-  chaser: { monthly: 'chaser_monthly', annual: 'chaser_annual' },
+export const PRICE_LOOKUP: Record<Exclude<TierId, 'free'>, Record<'annual', string>> = {
+  chaser: { annual: 'chaser_annual' },
 };
 
 export { TRIAL_DAYS };

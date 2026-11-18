@@ -16,9 +16,8 @@ finds prices by lookup key, so no price IDs go into the code.
 | Price | Amount | Interval | Lookup key |
 | --- | --- | --- | --- |
 | Annual | $6.99 | Yearly | `chaser_annual` |
-| Monthly (retired) | $3.99 | Monthly | `chaser_monthly` |
 
-Chaser is sold yearly only. The checkout uses `chaser_annual` alone; keep `chaser_monthly` for existing monthly subscribers.
+Chaser is sold yearly only. The old monthly price (`chaser_monthly`, $3.99) is archived; no one was on it.
 To change the annual price, create a new $6.99 yearly price and move the `chaser_annual` lookup key to it (tick "Transfer lookup key").
 
 Leave the trial empty on the prices; the app adds the 7-day trial (`TRIAL_DAYS`) for first-time members only.

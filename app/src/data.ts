@@ -5,12 +5,7 @@ export type TierId = 'free' | 'chaser';
 /** Plan names and copy are translated: see `tier.{id}` and `tier.{id}.blurb` in the messages. */
 export interface Tier {
   id: TierId;
-  /**
-   * Former monthly price in USD. Chaser is now sold yearly only; this stays so existing monthly
-   * subscribers still see what they pay, and so `m > 0` marks a paid tier.
-   */
-  m: number;
-  /** Yearly price in USD: the only plan new subscribers can buy. */
+  /** Yearly price in USD (Chaser is sold yearly only); 0 for the free tier. */
   y: number;
   /** Saved-location allowance. */
   locs: number;
@@ -18,8 +13,8 @@ export interface Tier {
 }
 
 export const TIERS: Tier[] = [
-  { id: 'free', m: 0, y: 0, locs: 1, accent: '#C9D0CB' },
-  { id: 'chaser', m: 3.99, y: 6.99, locs: 10, accent: '#6CFF2B' },
+  { id: 'free', y: 0, locs: 1, accent: '#C9D0CB' },
+  { id: 'chaser', y: 6.99, locs: 10, accent: '#6CFF2B' },
 ];
 
 /** Days of free trial for a first subscription (Stripe checkout, see lib/billing). */
