@@ -95,7 +95,7 @@ export function Social() {
   const load = useCallback(async () => {
     const r = await api<Data>('/api/admin/social');
     if (r.status === 403) { setDenied(true); return; }
-    if (r.ok) setData(r.data);
+    if (r.ok) setData({ ...r.data, sites: r.data.sites ?? [], now: r.data.now ?? [], recent: r.data.recent ?? [] });
     else setMsg({ text: err(r.data.error), bad: true });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- load once; err only reads translations
   useEffect(() => { void load(); }, [load]); // eslint-disable-line react-hooks/set-state-in-effect -- fetch once on open
