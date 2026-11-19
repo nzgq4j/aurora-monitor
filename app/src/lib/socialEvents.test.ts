@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { graphemes } from './bluesky';
-import { DEFAULT_SOCIAL_RULES, EVENT_KINDS, STYLES, detectEvents, eventPostText, flareClass, gLevel, headline, isRepeat, pickStyle, sampleEvent, stormNow, type EventInputs, type SocialEvent } from './socialEvents';
+import { DEFAULT_SOCIAL_RULES, EVENT_KINDS, STYLES, detectEvents, eventPostText, flareClass, gLevel, headline, isRepeat, pickStyle, recentFlare, sampleEvent, stormNow, type EventInputs, type SocialEvent } from './socialEvents';
 
 const NOW = Date.parse('2026-11-18T14:30:00Z');
 const empty: EventInputs = { kp: [], hp30: [], xrays: [], wind: [], power: [] };
@@ -96,5 +96,27 @@ describe('variety', () => {
     expect(pickStyle('viewing', [row('map', 1, 'failed'), row('globe', 3)])).toBe('map');
     expect(pickStyle('storm', [])).toBe('card');
     expect(STYLES.flare).toContain('sun');
+  });
+});
+
+describe('recentFlare (Post now)', () => {
+  const NOW2 = Date.parse('2026-11-19T14:30:00Z');
+  // Quiet C-level flux with two finished flares: M2.4 peaking at 13:24 and M1.1 at 13:59.
+  const xrays = Array.from({ length: 360 }, (_, i) => {
+    const t = NOW2 - (359 - i) * 6e4;
+    const m = new Date(t).toISOString().slice(11, 16);
+    const flux = m >= '13:15' && m <= '13:35' ? (m === '13:24' ? 2.4e-5 : 1.4e-5) : m >= '13:56' && m <= '14:03' ? (m === '13:59' ? 1.1e-5 : 1.02e-5) : 4e-6;
+    return { t, flux };
+  });
+  it('finds the biggest finished flare of the last 6 hours at the chosen level', () => {
+    expect(recentFlare(xrays, NOW2, 'M2')).toEqual({ kind: 'flare', key: 'flare:2026-11-19T13:15', at: Date.parse('2026-11-19T13:24:00Z'), flux: 2.4e-5, cls: 'M2.4', ended: true });
+    expect(recentFlare(xrays, NOW2, 'X')).toBeNull();
+    expect(recentFlare(xrays, NOW2 + 7 * 36e5, 'M2')).toBeNull(); // out of the window
+  });
+  it('uses the same key as the live feed for a flare still in progress', () => {
+    const live = xrays.map(p => (p.t >= NOW2 - 10 * 6e4 ? { ...p, flux: p.t >= NOW2 - 4 * 6e4 ? 3e-5 : 1.5e-5 } : p));
+    const ev = recentFlare(live, NOW2, 'M2')!;
+    expect(ev).toMatchObject({ cls: 'M3.0', ended: false });
+    expect(detectEvents({ kp: [], hp30: [], xrays: live, wind: [], power: [] }, { enabled: true, stormMinG: 0, flareMin: 'M2', shocks: false, substorms: false }, NOW2)[0].key).toBe(ev.key);
   });
 });

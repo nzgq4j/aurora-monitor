@@ -176,7 +176,7 @@ export function cardFacts(ev: SocialEvent): [string, string][] {
   const time: [string, string] = ['Time', `${hhmm(ev.at)}, ${dateUtc(ev.at)}`];
   switch (ev.kind) {
     case 'storm': return [['Level', `G${ev.g} (${G_NAME[ev.g ?? 1]})`], ['Kp', fmtKp(ev.kp ?? 0)], time, ['Source', SOURCE.storm]];
-    case 'flare': return [['Class', `${ev.cls} (peak so far)`], time, ['Source', SOURCE.flare]];
+    case 'flare': return [['Class', `${ev.cls} (${ev.ended ? 'peak' : 'peak so far'})`], time, ['Source', SOURCE.flare]];
     case 'shock': return [['Solar wind', `${ev.from} → ${ev.to} km/s`], time, ['Source', SOURCE.shock]];
     case 'substorm': return [['Auroral power', `${ev.from} → ${ev.to} GW (${ev.hemi === 'south' ? 'southern' : 'northern'} hemisphere)`], time, ['Source', SOURCE.substorm]];
     case 'viewing': {
@@ -227,7 +227,7 @@ function graphicDescription(ev: SocialEvent, data: CardData): string {
   }
   switch (ev.kind) {
     case 'storm': return `A map centred on the ${hemi} pole shows the current aurora forecast (OVATION) as a band of green, yellow and red dots around the pole; red is the highest chance. Below it, bars show the Kp index every 3 hours over the last day and the next day, coloured from green (quiet) to red (storm), with forecast bars faded and a dashed line at Kp 5, the storm threshold.${data.oval ? '' : ' The aurora forecast was not available when the card was made.'}`;
-    case 'flare': return 'A chart shows the GOES X-ray flux over the last 6 hours on a logarithmic scale with the flare classes A, B, C, M and X marked; the line climbs into the flare and a dashed line marks when it crossed the posting threshold.';
+    case 'flare': return `A chart shows the GOES X-ray flux over the last 6 hours on a logarithmic scale with the flare classes A, B, C, M and X marked; the line climbs into the flare and a dashed line marks ${ev.ended ? 'its peak' : 'when it crossed the posting threshold'}.`;;
     case 'shock': return 'Two charts show the solar wind at L1 over the last 6 hours: speed in km/s (green) and density in particles per cm³ (amber), both jumping at the shock, which a dashed line marks.';
     case 'substorm': return `A map centred on the ${hemi} pole shows the current aurora forecast as a band of coloured dots; below it, a line shows the ${hemi}ern hemispheric auroral power in gigawatts over the last 6 hours, rising sharply at the end.`;
     case 'viewing': {
