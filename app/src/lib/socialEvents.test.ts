@@ -85,11 +85,13 @@ describe('variety', () => {
   });
   it('rotates picture styles per kind, skipping failed posts', () => {
     const row = (style: string, h: number, status = 'posted') => ({ kind: 'viewing', status, created_at: new Date(NOW - h * 36e5).toISOString(), data: { style } as Partial<SocialEvent> });
-    expect(pickStyle('viewing', [])).toBe('card');
-    expect(pickStyle('viewing', [row('card', 2)])).toBe('map');
-    expect(pickStyle('viewing', [row('map', 1), row('card', 5)])).toBe('globe');
-    expect(pickStyle('viewing', [row('globe', 1)])).toBe('card');
-    expect(pickStyle('viewing', [row('globe', 1, 'failed'), row('card', 3)])).toBe('map');
+    expect(pickStyle('viewing', [])).toBe('globe');
+    expect(pickStyle('viewing', [row('globe', 2)])).toBe('map');
+    expect(pickStyle('viewing', [row('map', 1), row('globe', 5)])).toBe('globe');
+    // An older post with a retired style starts the rotation again.
+    expect(pickStyle('viewing', [row('card', 1)])).toBe('globe');
+    expect(pickStyle('viewing', [row('map', 1, 'failed'), row('globe', 3)])).toBe('map');
+    expect(pickStyle('storm', [])).toBe('card');
     expect(STYLES.flare).toContain('sun');
   });
 });
