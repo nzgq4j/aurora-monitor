@@ -51,7 +51,7 @@ export interface SocialEvent {
 /** Picture styles: the data card, a globe, a regional map (viewing), or a real image of the Sun (flare, shock). */
 export type CardStyle = 'card' | 'globe' | 'map' | 'sun';
 export const STYLES: Record<EventKind, CardStyle[]> = {
-  storm: ['card', 'globe'], flare: ['card', 'sun'], shock: ['card', 'sun'], substorm: ['card', 'globe'], viewing: ['card', 'map', 'globe'],
+  storm: ['card', 'globe'], flare: ['card', 'sun'], shock: ['card', 'sun'], substorm: ['card', 'globe'], viewing: ['globe', 'map'],
 };
 /** The next style for `kind`: the one after the style of its most recent post, so posts alternate. */
 export function pickStyle(kind: EventKind, recent: { kind: string; status: string; created_at: string; data: Partial<SocialEvent> | null }[]): CardStyle {

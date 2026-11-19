@@ -12,7 +12,7 @@ import type { Topology, GeometryCollection } from 'topojson-specification';
 import land110 from 'world-atlas/land-110m.json';
 import land50 from 'world-atlas/land-50m.json';
 import { auroraColor } from './auroraColor';
-import { sunAltitude } from './astro';
+import { magLat, magLocalTime, ovalShift, sunAltitude } from './astro';
 import type { Oval } from './feeds';
 
 const GREEN = '#6CFF2B';
@@ -60,13 +60,17 @@ const auroraPx = (p: number): [number, number, number, number] | null => {
 const image = (href: string, w: number, h: number) => `<image x="0" y="0" width="${w}" height="${h}" href="${href}" xlink:href="${href}" preserveAspectRatio="none"/>`;
 
 /**
- * Orthographic globe of radius side/2 centred on `center`. Land is filled; points beyond the horizon are pulled
- * onto the rim so coastlines that cross it still close. Daylight (a lighter wash, fading through twilight) and the
- * aurora oval are smooth layers computed per pixel from the Sun's altitude at `t` and the OVATION grid.
+ * Orthographic globe centred on `center`, drawn in a `w` × `h` frame. At zoom 1 the whole globe fits (radius
+ * min(w, h)/2); a higher zoom enlarges it so the frame shows a region (zoom 2.6 is about 5,000 km top to bottom)
+ * and the frame becomes a rounded rectangle. Land is filled; points beyond the horizon are pulled onto the rim so
+ * coastlines that cross it still close. Daylight (a lighter wash, fading through twilight) and the aurora oval
+ * are smooth layers computed per pixel from the Sun's altitude at `t` and the oval grid.
  */
-export async function globeSvg(opts: { side: number; center: Point; oval?: Oval | null; t: number; marker?: Point | null }): Promise<string> {
-  const { side, center, oval, t, marker } = opts;
-  const R = side / 2 - 6, c = side / 2;
+export async function globeSvg(opts: { side?: number; w?: number; h?: number; zoom?: number; center: Point; oval?: Oval | null; t: number; marker?: Point | null }): Promise<string> {
+  const { center, oval, t, marker } = opts;
+  const w = opts.w ?? opts.side ?? 720, h = opts.h ?? opts.side ?? 720, zoom = opts.zoom ?? 1;
+  const whole = zoom <= 1;
+  const R = (Math.min(w, h) / 2 - (whole ? 6 : 0)) * Math.max(1, zoom), cx = w / 2, cy = h / 2;
   const φ0 = center.lat * RAD, λ0 = center.lon * RAD;
   const sinφ0 = Math.sin(φ0), cosφ0 = Math.cos(φ0);
   const proj = (lat: number, lon: number): { x: number; y: number; front: boolean } => {
@@ -74,43 +78,88 @@ export async function globeSvg(opts: { side: number; center: Point; oval?: Oval 
     const cosc = sinφ0 * Math.sin(φ) + cosφ0 * Math.cos(φ) * Math.cos(dλ);
     let x = Math.cos(φ) * Math.sin(dλ), y = cosφ0 * Math.sin(φ) - sinφ0 * Math.cos(φ) * Math.cos(dλ);
     if (cosc < 0) { const n = Math.hypot(x, y) || 1; x /= n; y /= n; } // behind: onto the rim
-    return { x: c + R * x, y: c - R * y, front: cosc >= 0 };
+    return { x: cx + R * x, y: cy - R * y, front: cosc >= 0 };
   };
-  // Inverse projection (pixel → lat/lon), for the per-pixel layers; null off the globe.
-  const S = 360, scale = side / S;
+  // Inverse projection (pixel → lat/lon), for the per-pixel layers; null off the globe. Rasters are half size.
+  const scale = 2, RW = Math.ceil(w / scale), RH = Math.ceil(h / scale);
   const inv = (px: number, py: number): Point | null => {
-    const x = (px * scale - c) / R, y = (c - py * scale) / R, ρ = Math.hypot(x, y);
+    const x = (px * scale - cx) / R, y = (cy - py * scale) / R, ρ = Math.hypot(x, y);
     if (ρ > 1) return null;
     const cc = Math.asin(ρ), sinc = Math.sin(cc), cosc = Math.cos(cc);
     const lat = Math.asin(cosc * sinφ0 + (ρ ? (y * sinc * cosφ0) / ρ : 0)) / RAD;
     const lon = (λ0 + Math.atan2(x * sinc, ρ * cosφ0 * cosc - y * sinφ0 * sinc)) / RAD;
     return { lat, lon };
   };
-  const land = rings('110m').map(ring => {
+  // Zoomed in, the detailed coastlines (1:50m), keeping only rings with a visible point in or near the frame.
+  const inFrame = (p: { x: number; y: number; front: boolean }) => p.front && p.x > -w * 0.5 && p.x < w * 1.5 && p.y > -h * 0.5 && p.y < h * 1.5;
+  const land = rings(zoom >= 1.5 ? '50m' : '110m').map(ring => {
     const pts = ring.map(([lon, lat]) => proj(lat, lon));
-    if (!pts.some(p => p.front)) return '';
+    if (!pts.some(inFrame)) return '';
     return pts.map((p, i) => `${i ? 'L' : 'M'}${r1(p.x)} ${r1(p.y)}`).join('') + 'Z';
   }).filter(Boolean).join('');
   const [day, aurora] = await Promise.all([
-    raster(S, S, (x, y) => {
+    raster(RW, RH, (x, y) => {
       const p = inv(x, y);
       if (!p) return null;
       const alt = sunAltitude(t, p.lat, p.lon);
       const k = Math.max(0, Math.min(1, (alt + 12) / 12)); // dark below −12°, full daylight from 0°
       return k > 0 ? [150, 205, 255, Math.round(k * 46)] : null;
     }),
-    oval ? raster(S, S, (x, y) => { const p = inv(x, y); return p ? auroraPx(ovalAtPoint(oval, p.lat, p.lon)) : null; }) : Promise.resolve(null),
+    oval ? raster(RW, RH, (x, y) => { const p = inv(x, y); return p ? auroraPx(ovalAtPoint(oval, p.lat, p.lon)) : null; }) : Promise.resolve(null),
   ]);
   const m = marker ? proj(marker.lat, marker.lon) : null;
-  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${side}" height="${side}" viewBox="0 0 ${side} ${side}">`
-    + `<defs><clipPath id="g"><circle cx="${c}" cy="${c}" r="${R}"/></clipPath>`
+  const frame = whole ? `<circle cx="${cx}" cy="${cy}" r="${R}"/>` : `<rect width="${w}" height="${h}" rx="24"/>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`
+    + `<defs><clipPath id="f">${frame}</clipPath><clipPath id="g"><circle cx="${cx}" cy="${cy}" r="${R}"/></clipPath>`
     + `<radialGradient id="glow" cx="50%" cy="50%" r="50%"><stop offset="88%" stop-color="${GREEN}" stop-opacity="0"/><stop offset="100%" stop-color="${GREEN}" stop-opacity="0.3"/></radialGradient></defs>`
-    + `<circle cx="${c}" cy="${c}" r="${c}" fill="url(#glow)"/>`
-    + `<circle cx="${c}" cy="${c}" r="${R}" fill="#050b10"/>`
-    + `<g clip-path="url(#g)"><path d="${land}" fill="#16231b" stroke="#2f4236" stroke-width="1"/>${image(day, side, side)}${aurora ? image(aurora, side, side) : ''}</g>`
-    + `<circle cx="${c}" cy="${c}" r="${R}" fill="none" stroke="#2a302c" stroke-width="2"/>`
+    + (whole ? `<circle cx="${cx}" cy="${cy}" r="${Math.min(w, h) / 2}" fill="url(#glow)"/>` : `<rect width="${w}" height="${h}" rx="24" fill="#020405"/>`)
+    + `<g clip-path="url(#f)"><circle cx="${cx}" cy="${cy}" r="${R}" fill="#050b10"/>`
+    + `<g clip-path="url(#g)"><path d="${land}" fill="#16231b" stroke="#2f4236" stroke-width="1"/>${image(day, w, h)}${aurora ? image(aurora, w, h) : ''}</g>`
+    + `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#2a302c" stroke-width="2"/></g>`
+    + (whole ? '' : `<rect width="${w}" height="${h}" rx="24" fill="none" stroke="#2a302c" stroke-width="2"/>`)
     + (m && m.front ? `<circle cx="${r1(m.x)}" cy="${r1(m.y)}" r="15" fill="none" stroke="${GREEN}" stroke-width="4"/><circle cx="${r1(m.x)}" cy="${r1(m.y)}" r="6.5" fill="#fff" stroke="#000" stroke-width="2"/>` : '')
     + '</svg>';
+}
+
+/**
+ * A forecast oval for time `t` from a Kp value (NOAA's 3-hourly Kp forecast), in the same grid as OVATION so it
+ * draws the same way. The rule of thumb used across the app (lib/astro): the equatorward edge sits near
+ * 66° − 2·Kp magnetic latitude around magnetic midnight and further poleward towards dawn and dusk (ovalShift);
+ * the band is 8–12° wide, widening with Kp. Probabilities are illustrative, peaking higher as Kp rises.
+ * It is a model, not an OVATION forecast: cards label it as such.
+ */
+export function kpModelOval(kp: number, t: number): Oval {
+  // Peaks of about 20 % at Kp 2.5, 40 % at Kp 5 and 55 % at Kp 7, like OVATION's midnight sector at those levels.
+  // The band runs from that edge about 8–12° poleward (wider when active), with a softer poleward fade: at Kp 3
+  // that is roughly 60–71° magnetic, like the statistical oval.
+  const peak = Math.min(90, 8 * kp), width = 8 + 0.5 * kp;
+  const grid: Uint8Array[] = [];
+  for (let la = -90; la <= 90; la++) {
+    const row = new Uint8Array(360);
+    if (Math.abs(la) >= 35) for (let lo = 0; lo < 360; lo++) {
+      const m = Math.abs(magLat(la, lo));
+      const shift = ovalShift(magLocalTime(la, lo, t));
+      const edge = 66 - 2 * kp + shift;
+      const d = m - edge; // degrees poleward of the edge
+      if (d < -1.5 || d > width + 3) continue;
+      const k = d < 0 ? (d + 1.5) / 1.5 : d <= width ? 1 : 1 - (d - width) / 3;
+      // Brightest around magnetic midnight, fading towards dawn and dusk.
+      row[lo] = Math.round(peak * Math.max(0, k) * (1 - shift / 8));
+    }
+    grid.push(row);
+  }
+  return { observed: null, forecast: t, grid };
+}
+
+/** Longitudes made continuous along a ring (no ±360° jumps between neighbours). */
+function unwrapLons(lons: number[]): number[] {
+  const out: number[] = [];
+  let shift = 0;
+  lons.forEach((lon, i) => {
+    if (i) { const d = lon + shift - out[i - 1]; if (d > 180) shift -= 360; else if (d < -180) shift += 360; }
+    out.push(lon + shift);
+  });
+  return out;
 }
 
 /** Where a globe should look for a hemisphere's aurora right now: 62° from the equator, under local midnight. */
@@ -133,8 +182,15 @@ export async function regionMapSvg(opts: { w: number; h: number; site: Point; ov
   const Y = (lat: number) => h / 2 - (lat - site.lat) * kmPerDegLat * k;
   const latSpan = h / k / kmPerDegLat / 2 + 2, lonSpan = w / k / (kmPerDegLat * cosφ) / 2 + 2;
   const near = (lat: number, lon: number) => Math.abs(lat - site.lat) < latSpan + 10 && Math.abs((((lon - site.lon + 540) % 360) - 180)) < lonSpan + 20;
-  const land = rings('50m').filter(r => r.some(([lon, lat]) => near(lat, lon)))
-    .map(r => r.map(([lon, lat], i) => `${i ? 'L' : 'M'}${r1(X(lon))} ${r1(Y(lat))}`).join('') + 'Z').join('');
+  // Each ring is unwrapped into continuous longitude and shifted as a whole to the copy nearest the site.
+  // (Wrapping point by point would make a ring that crosses 180°, such as Eurasia, jump across the map.)
+  const land = rings('50m').filter(r => r.some(([lon, lat]) => near(lat, lon))).map(r => {
+    const lons = unwrapLons(r.map(p => p[0]));
+    const mid = (Math.min(...lons) + Math.max(...lons)) / 2;
+    const shift = Math.round((site.lon - mid) / 360) * 360;
+    const Xc = (lon: number) => w / 2 + (lon + shift - site.lon) * kmPerDegLat * cosφ * k;
+    return r.map(([, lat], i) => `${i ? 'L' : 'M'}${r1(Xc(lons[i]))} ${r1(Y(lat))}`).join('') + 'Z';
+  }).join('');
   // The oval as a smooth layer: each pixel back to lat/lon, interpolated from the 1° grid.
   const S = 4, aurora = oval ? await raster(Math.ceil(w / S), Math.ceil(h / S), (x, y) => {
     const lat = site.lat - (y * S - h / 2) / (kmPerDegLat * k);

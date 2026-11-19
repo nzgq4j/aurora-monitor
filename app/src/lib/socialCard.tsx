@@ -15,7 +15,7 @@ import land110 from 'world-atlas/land-110m.json';
 import { auroraColor } from './auroraColor';
 import { ovalPoints, type Oval } from './feeds';
 import { G_NAME, fmtKp, hhmm, localHm, lookPhrase, type CardStyle, type SocialEvent } from './socialEvents';
-import { globeSvg, midnightCenter, regionMapSvg } from './socialGlobe';
+import { globeSvg, kpModelOval, midnightCenter, regionMapSvg } from './socialGlobe';
 
 export const CARD_W = 1080, CARD_H = 1350;
 const PAD = 64, INNER = CARD_W - 2 * PAD;
@@ -37,7 +37,9 @@ export interface CardData {
 export function effectiveStyle(ev: SocialEvent, data: CardData): CardStyle {
   const s = ev.style ?? 'card';
   if (s === 'sun') return data.sun ? 'sun' : 'card';
-  if (s === 'map') return ev.kind === 'viewing' && ev.viewing ? 'map' : 'card';
+  // Viewing posts always show the place: tonight a forecast globe for the best hour; now the live map or globe.
+  if (ev.kind === 'viewing' && ev.viewing) return ev.viewing.mode === 'now' && s === 'map' ? 'map' : 'globe';
+  if (s === 'map') return 'card';
   if (s === 'globe') return ev.kind === 'viewing' || ev.kind === 'storm' || ev.kind === 'substorm' ? 'globe' : 'card';
   return 'card';
 }
@@ -166,6 +168,7 @@ const SOURCE: Record<SocialEvent['kind'], string> = {
   shock: 'NOAA SWPC (real-time solar wind at L1)', substorm: 'NOAA SWPC (OVATION hemispheric power)',
   viewing: 'NOAA SWPC (Kp, OVATION), Open-Meteo (cloud)',
 };
+const SOURCE_TONIGHT = 'NOAA SWPC (Kp forecast), Open-Meteo (cloud)';
 const dateUtc = (t: number) => new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
 
 /** The facts the card shows, label → value: shared by the card and its alt text. */
@@ -185,7 +188,7 @@ export function cardFacts(ev: SocialEvent): [string, string][] {
           : ['Best', w ? `${localHm(w.from, v.tz)}–${localHm(w.to, v.tz)} local (${hhmm(w.from).slice(0, 5)}–${hhmm(w.to)})` : `${localHm(ev.at, v.tz)} local (${hhmm(ev.at)})`],
         ['Score', `${v.score}/100 · Kp ${v.kp === null ? '–' : fmtKp(v.kp)}, needs ${v.need}${v.cloud === null ? '' : ` · ${v.cloud}% cloud`}`],
         ['Look', lookPhrase(v)],
-        ['Source', SOURCE.viewing],
+        ['Source', v.mode === 'now' ? SOURCE.viewing : SOURCE_TONIGHT],
       ];
     }
   }
@@ -208,9 +211,13 @@ function graphicDescription(ev: SocialEvent, data: CardData): string {
   const hemi = ev.hemi === 'south' ? 'south' : 'north';
   const style = effectiveStyle(ev, data);
   const ovalNote = data.oval ? '' : ' The aurora forecast was not available when the card was made.';
+  if (style === 'globe' && ev.viewing?.mode === 'tonight') {
+    const v = ev.viewing;
+    return `A close-up globe centred on ${v.site.name} (marked by a ringed white dot) shows the Earth at ${localHm(ev.at, v.tz)} local time (${hhmm(ev.at)}), the best time tonight: night is dark and daylight a lighter wash. The forecast aurora oval for that time is drawn in green, yellow and red; it is modelled from NOAA's Kp forecast (Kp ${v.kp === null ? 'unknown' : fmtKp(v.kp)}), not a live observation. Below it, bars show the viewing score for each of the next 12 hours in local time, combining aurora strength, darkness, cloud and moonlight: green bars are good (50 or more), amber possible, grey poor, with a dashed line at 50.`;
+  }
   if (style === 'globe') {
-    const where = ev.viewing ? `centred on ${ev.viewing.site.name}, which is marked by a ringed white dot,` : `centred on the ${hemi}ern auroral zone at local midnight,`;
-    return `A globe ${where} shows the Earth now: night is dark and daylight a lighter wash, with the current aurora forecast (OVATION) drawn as rings of green, yellow and red dots around the poles; red is the highest chance.${ovalNote}`;
+    const where = ev.viewing ? `A close-up globe, about 5,000 km top to bottom, centred on ${ev.viewing.site.name}, which is marked by a ringed white dot,` : `A globe centred on the ${hemi}ern auroral zone at local midnight`;
+    return `${where} shows the Earth now: night is dark and daylight a lighter wash, with the current aurora forecast (OVATION) drawn as rings of green, yellow and red dots around the poles; red is the highest chance.${ovalNote}`;
   }
   if (style === 'map' && ev.viewing) {
     return `A map about 1,600 km across, centred on ${ev.viewing.site.name} (marked by a ringed white dot), shows land in dark green and the current aurora forecast (OVATION) as green, yellow and red squares; red is the highest chance. Dashed lines mark every 5° of latitude and 10° of longitude.${ovalNote}`;
@@ -239,14 +246,21 @@ export function cardAlt(ev: SocialEvent, data: CardData): string {
 
 const label = { fontFamily: 'JetBrains Mono', fontSize: 22, color: MUTED, letterSpacing: 1 } as const;
 
-const GLOBE_SIDE = 720, MAP_H = 720;
+const GLOBE_SIDE = 720, MAP_H = 720, FORECAST_H = 500;
+/** Close-up globes: about 5,000 km top to bottom around a site; storms show most of the oval. */
+const ZOOM_SITE = 2.6, ZOOM_STORM = 1.5;
 /** The map or globe drawing for the card (async: their smooth layers are computed per pixel). */
 async function artFor(ev: SocialEvent, data: CardData): Promise<string | null> {
   const style = effectiveStyle(ev, data);
-  if (style === 'globe') {
-    const center = ev.viewing ? { lat: Math.max(-70, Math.min(70, ev.viewing.site.lat - 8 * Math.sign(ev.viewing.site.lat))), lon: ev.viewing.site.lon } : midnightCenter(ev.at, ev.hemi === 'south');
-    return globeSvg({ side: GLOBE_SIDE, center, oval: data.oval, t: ev.at, marker: ev.viewing?.site });
+  if (style === 'globe' && ev.viewing) {
+    const v = ev.viewing;
+    // Centred a little poleward of the site, where the oval is.
+    const center = { lat: Math.max(-80, Math.min(80, v.site.lat + 3 * Math.sign(v.site.lat))), lon: v.site.lon };
+    // Tonight: the Earth at the best hour, with the oval modelled from the Kp forecast for that hour.
+    if (v.mode === 'tonight') return globeSvg({ w: INNER, h: FORECAST_H, zoom: ZOOM_SITE, center, oval: v.kp === null ? null : kpModelOval(v.kp, ev.at), t: ev.at, marker: v.site });
+    return globeSvg({ w: INNER, h: GLOBE_SIDE, zoom: ZOOM_SITE, center, oval: data.oval, t: ev.at, marker: v.site });
   }
+  if (style === 'globe') return globeSvg({ w: INNER, h: GLOBE_SIDE, zoom: ZOOM_STORM, center: midnightCenter(ev.at, ev.hemi === 'south'), oval: data.oval, t: ev.at });
   if (style === 'map' && ev.viewing) return regionMapSvg({ w: INNER, h: MAP_H, site: ev.viewing.site, oval: data.oval });
   return null;
 }
@@ -254,10 +268,26 @@ async function artFor(ev: SocialEvent, data: CardData): Promise<string | null> {
 function Graphic({ ev, data, art }: { ev: SocialEvent; data: CardData; art: string | null }) {
   const now = ev.at;
   const style = effectiveStyle(ev, data);
+  if (style === 'globe' && art && ev.viewing?.mode === 'tonight') {
+    const v = ev.viewing, hours = v.hours.slice(0, 12);
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', width: INNER }}>
+        <img src={svgUrl(art)} width={INNER} height={FORECAST_H} alt="" />
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, ...label, fontSize: 20 }}>
+          <span>{`FORECAST FOR ${localHm(ev.at, v.tz)} LOCAL (${hhmm(ev.at)})`}</span><span>{v.kp === null ? 'NO KP FORECAST' : `AURORA · KP ${fmtKp(v.kp)} MODEL`}</span>
+        </div>
+        <img src={svgUrl(scoreBarsSvg(hours, INNER, 110))} width={INNER} height={110} style={{ marginTop: 22 }} alt="" />
+        <div style={{ display: 'flex', marginTop: 8, ...label, fontSize: 20 }}>
+          {hours.map((h, i) => <span key={h.t} style={{ display: 'flex', width: INNER / hours.length }}>{i % 3 === 0 ? localHm(h.t, v.tz) : ''}</span>)}
+        </div>
+        <div style={{ display: 'flex', marginTop: 6, ...label, fontSize: 20 }}>VIEWING SCORE · NEXT 12 H · LOCAL TIME</div>
+      </div>
+    );
+  }
   if (style === 'globe' && art) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: INNER }}>
-        <img src={svgUrl(art)} width={GLOBE_SIDE} height={GLOBE_SIDE} alt="" />
+        <img src={svgUrl(art)} width={INNER} height={GLOBE_SIDE} alt="" />
         <div style={{ display: 'flex', justifyContent: 'space-between', width: INNER, marginTop: 10, ...label, fontSize: 20 }}><span>EARTH NOW · NIGHT AND DAY</span><span>AURORA NOW (OVATION)</span></div>
       </div>
     );
@@ -277,26 +307,6 @@ function Graphic({ ev, data, art }: { ev: SocialEvent; data: CardData; art: stri
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: INNER }}>
         <img src={data.sun.src} width={side} height={side} style={{ borderRadius: 24 }} alt="" />
         <div style={{ display: 'flex', justifyContent: 'space-between', width: side, marginTop: 10, ...label, fontSize: 20 }}><span>{data.sun.label.toUpperCase()}</span><span>{data.sun.source.toUpperCase()}</span></div>
-      </div>
-    );
-  }
-  if (ev.kind === 'viewing' && ev.viewing) {
-    const v = ev.viewing, side = 520, hemi = v.site.lat < 0 ? 'south' : 'north';
-    const hours = v.hours.slice(0, 12);
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: INNER }}>
-        <div style={{ display: 'flex', position: 'relative', width: side, height: side }}>
-          <img src={svgUrl(polarSvg(data.oval, hemi, side, v.site))} width={side} height={side} alt="" />
-          <div style={{ ...label, position: 'absolute', left: -150, top: 8, display: 'flex' }}>{hemi === 'north' ? 'NORTH POLE' : 'SOUTH POLE'}</div>
-          <div style={{ ...label, position: 'absolute', right: -150, top: 8, display: 'flex' }}>AURORA NOW</div>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', width: INNER, marginTop: 24 }}>
-          <img src={svgUrl(scoreBarsSvg(hours, INNER, 130))} width={INNER} height={130} alt="" />
-          <div style={{ display: 'flex', marginTop: 8, ...label, fontSize: 20 }}>
-            {hours.map((h, i) => <span key={h.t} style={{ display: 'flex', width: INNER / hours.length }}>{i % 3 === 0 ? localHm(h.t, v.tz) : ''}</span>)}
-          </div>
-          <div style={{ display: 'flex', marginTop: 6, ...label, fontSize: 20 }}>VIEWING SCORE · NEXT 12 H · LOCAL TIME</div>
-        </div>
       </div>
     );
   }

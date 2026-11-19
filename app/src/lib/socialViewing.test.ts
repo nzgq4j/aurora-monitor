@@ -134,7 +134,7 @@ describe('runViewingFeed', () => {
     expect(later.outcome).toMatchObject({ status: 'posted' });
     expect((sent[1] as { record: { text: string } }).record.text.split('\n')[0]).toContain('Churchill, Manitoba');
     // The picture style rotates: the second viewing post uses the next style after the first's.
-    expect(st.rows.map(r => r.data?.style)).toEqual(['card', 'map']);
+    expect(st.rows.map(r => r.data?.style)).toEqual(['globe', 'map']);
     st.rows.forEach(r => { r.created_at = new Date(NOW).toISOString(); });
     const again = await runViewingFeed(st, deps(NOW + 4 * 36e5 + 2 * 6e4));
     expect(again.candidates).toEqual([]);

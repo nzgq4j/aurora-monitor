@@ -74,12 +74,15 @@ Posts rotate through picture styles per kind, so the feed doesn't repeat one loo
 
 | Kind | Styles |
 | --- | --- |
-| Storm, substorm | data card (oval map + Kp bars or power), globe (night side, live oval, day and night) |
+| Storm, substorm | data card (oval map + Kp bars or power), close-up globe (night side, live oval, day and night) |
 | Flare | data card (X-ray chart), Sun image (NASA SDO AIA 131 Å, the flare channel) |
 | Shock | data card (solar wind charts), coronagraph (ESA/NASA SOHO LASCO C3, shows CMEs leaving the Sun) |
-| Viewing | data card (map + hourly scores), regional map (~1,600 km around the site), globe centred on the site |
+| Viewing, tonight | always a forecast: a close-up globe (~5,000 km) at the best hour, with the oval modelled from NOAA's Kp forecast for that hour, plus the hourly scores |
+| Viewing, now | alternates: close-up globe centred on the site, regional map (~1,600 km); both with the live OVATION oval |
 
-The next post of a kind uses the style after its last post's. If a Sun image can't be fetched in time, the card
+The next post of a kind uses the style after its last post's.
+
+The forecast oval (`kpModelOval` in `lib/socialGlobe.ts`) uses the app's rule of thumb: the equatorward edge is near 66° − 2·Kp magnetic latitude at magnetic midnight, moving poleward towards dawn and dusk. The band is 8–12° wide and brightest at midnight. It is labelled "KP MODEL" on the card and described as a model in the alt text, because OVATION itself only forecasts about an hour ahead. If a Sun image can't be fetched in time, the card
 falls back to the data style. Photo cards are saved as JPEG to stay under 1 MB. In /social, the preview shows the
 style that would be used and lets you pick another before posting by hand.
 
