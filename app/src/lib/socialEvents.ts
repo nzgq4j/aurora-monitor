@@ -39,6 +39,8 @@ export interface SocialEvent {
   g?: number; kp?: number;
   /** flare: peak flux so far (W/m²) and its class, e.g. "X1.2" */
   flux?: number; cls?: string;
+  /** flare: true when the flare had already ended (a recent flare posted by hand); the card then says "peak". */
+  ended?: boolean;
   /** shock: wind speed before and after (km/s); substorm: power before and after (GW) */
   from?: number; to?: number;
   hemi?: 'north' | 'south';
@@ -135,6 +137,29 @@ export function flareNowRun(xrays: EventInputs['xrays'], now: number): { start: 
   const run = pts.slice(i);
   const top = run.reduce((a, b) => (b.flux > a.flux ? b : a));
   return { start: run[0].t, peak: top.flux, peakAt: top.t, points: run };
+}
+
+/**
+ * The biggest flare of the last `windowMs` (6 h by default) that reached `min` ('M2' or 'X'), finished or not, for
+ * "Post now" in the admin page. Runs are spans of 1-minute flux at or above M1 with gaps under 5 minutes; the key
+ * is the run's start, as in detectEvents, so a flare the feed already posted is recognised as the same one.
+ */
+export function recentFlare(xrays: EventInputs['xrays'], now: number, min: 'X' | 'M2', windowMs = 6 * 36e5): SocialEvent | null {
+  const pts = xrays.filter(p => p.t <= now + 6e4 && p.t >= now - windowMs).sort((a, b) => a.t - b.t);
+  const newest = pts[pts.length - 1]?.t ?? 0;
+  let best: SocialEvent | null = null;
+  for (let i = 0; i < pts.length; i++) {
+    if (pts[i].flux < 1e-5) continue;
+    let j = i;
+    while (j + 1 < pts.length && pts[j + 1].flux >= 1e-5 && pts[j + 1].t - pts[j].t <= 5 * 6e4) j++;
+    const run = pts.slice(i, j + 1);
+    const top = run.reduce((a, b) => (b.flux > a.flux ? b : a));
+    if (top.flux >= FLARE_THRESHOLD[min] && (!best || top.flux > best.flux!)) {
+      best = { kind: 'flare', key: `flare:${isoMinute(run[0].t)}`, at: top.t, flux: top.flux, cls: flareClass(top.flux), ended: run[run.length - 1].t < newest };
+    }
+    i = j;
+  }
+  return best;
 }
 
 /** Events worth a post now under `rules`. Recent-post checks (de-duplication) are in socialFeed. */

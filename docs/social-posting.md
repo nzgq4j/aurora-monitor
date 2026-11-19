@@ -27,6 +27,9 @@ Vercel are used only when no session is stored or it stops working.
 - Each event is **claimed** in `social_event_posts` (unique key, status `posting`) before Bluesky is called,
   so overlapping runs never double-post. On success the row becomes `posted` with the post URL; on failure
   `failed` with the error. Failed posts are not retried automatically; use *Post now* in /social.
+- *Post now* for flares uses the flare in progress, or else the biggest flare of the last 6 hours at the chosen level
+  (M2 or X), even if it has ended (`recentFlare`). Its card then says "peak" rather than "peak so far". It shares the
+  feed's key for that flare, so it is never posted twice by accident.
 - The card is drawn in-process (`lib/socialCard.tsx`, next/og) from the data the rule used. If it can't be
   drawn, the event waits and is tried again the next minute; 15 minutes after the event it goes out as text only.
 

@@ -3,7 +3,7 @@ import { adminFromRequest } from '../../../../lib/adminAuth';
 import { supabaseAdmin } from '../../../../lib/billing';
 import { BlueskyError } from '../../../../lib/bluesky';
 import { authFor, buildPost, postEvent, runDeletions } from '../../../../lib/socialFeed';
-import { detectEvents, EVENT_KINDS, pickStyle, sampleEvent, STYLES, type CardStyle, type EventKind, type SocialEvent, type SocialRules } from '../../../../lib/socialEvents';
+import { detectEvents, EVENT_KINDS, pickStyle, recentFlare, sampleEvent, STYLES, type CardStyle, type EventKind, type SocialEvent, type SocialRules } from '../../../../lib/socialEvents';
 import { supabaseStore, type SocialSettings, type SocialStore } from '../../../../lib/socialStore';
 import { liveDeps, siteOutlooks } from '../../../../lib/socialLive';
 import { viewingCandidates } from '../../../../lib/socialViewing';
@@ -29,7 +29,9 @@ async function liveEvent(store: SocialStore, settings: SocialSettings, kind: Eve
     return { live: live && { ...live, style }, data: card };
   }
   const { inputs, events } = await current(settings, now);
-  const found = events.find(e => e.kind === kind);
+  // A flare in progress first; otherwise the biggest one of the last 6 hours at the chosen level, even if it ended.
+  const found = events.find(e => e.kind === kind)
+    ?? (kind === 'flare' ? recentFlare(inputs.xrays, now, settings.flareMin === 'M2' ? 'M2' : 'X') ?? undefined : undefined);
   const live = found && { ...found, style };
   return { live, data: await liveDeps.cardData(live ?? { ...sampleEvent(kind, now), style }, inputs) };
 }
