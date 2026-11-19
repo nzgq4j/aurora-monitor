@@ -1580,7 +1580,7 @@ export const da: Messages = {
   'social.off': "Fra",
   'social.flares': "Soludbrud",
   'social.flareX': "X1 og derover",
-  'social.flareM5': "M5 og derover",
+  'social.flareM2': "M2 og derover",
   'social.shocks': "Chok i solvinden",
   'social.substorms': "Substorme",
   'social.now': "Nu",

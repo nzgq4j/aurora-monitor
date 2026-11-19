@@ -19,7 +19,7 @@ const COUNTRY_TAGS: Record<string, string> = {
   Russia: '#Russia', Australia: '#AuroraAustralis #Australia', 'New Zealand': '#AuroraAustralis #NewZealand',
 };
 
-interface Rules { enabled: boolean; stormMinG: number; flareMin: 'X' | 'M5' | 'off'; shocks: boolean; substorms: boolean; viewingEnabled: boolean }
+interface Rules { enabled: boolean; stormMinG: number; flareMin: 'X' | 'M2' | 'off'; shocks: boolean; substorms: boolean; viewingEnabled: boolean }
 interface Site { id: string; name: string; lat: number; lon: number; tags: string; level: 'goNow' | 'goLater' | 'maybe' | 'no' | 'unavailable' | null; score: number | null }
 interface Connection { handle: string | null; connectedAt: string | null; lastError: string | null; envFallback: boolean }
 interface PostRow { key: string; kind: Kind; status: 'posting' | 'posted' | 'failed' | 'deleting' | 'deleted'; error: string | null; post_url: string | null; manual: boolean; image: boolean; created_at: string }
@@ -203,7 +203,7 @@ export function Social() {
         </button>
         <button type="button" className="btn you-row" aria-haspopup="dialog" onClick={() => setSheet('flare')}>
           <span className="you-row-label">{t('social.flares')}</span>
-          <span className="you-row-value">{rules.flareMin === 'off' ? t('social.off') : t(rules.flareMin === 'X' ? 'social.flareX' : 'social.flareM5')}</span><span className="you-chevron"><Icon d={CHEVRON} size={16} /></span>
+          <span className="you-row-value">{rules.flareMin === 'off' ? t('social.off') : t(rules.flareMin === 'X' ? 'social.flareX' : 'social.flareM2')}</span><span className="you-chevron"><Icon d={CHEVRON} size={16} /></span>
         </button>
         <Switch label={t('social.shocks')} on={rules.shocks} disabled={busy} onChange={v => void patch({ shocks: v })} />
         <Switch label={t('social.substorms')} on={rules.substorms} disabled={busy} onChange={v => void patch({ substorms: v })} />
@@ -311,9 +311,9 @@ export function Social() {
       {sheet === 'flare' && (
         <BottomSheet title={t('social.flares')} onClose={() => setSheet(null)}>
           <div className="you-group-rows">
-            {(['off', 'M5', 'X'] as const).map(v => (
+            {(['off', 'M2', 'X'] as const).map(v => (
               <button key={v} type="button" className="btn you-row" aria-pressed={rules.flareMin === v} onClick={() => { void patch({ flareMin: v }); setSheet(null); }}>
-                <span className="you-row-label">{v === 'off' ? t('social.off') : t(v === 'X' ? 'social.flareX' : 'social.flareM5')}</span>
+                <span className="you-row-label">{v === 'off' ? t('social.off') : t(v === 'X' ? 'social.flareX' : 'social.flareM2')}</span>
                 {rules.flareMin === v && <span className="you-row-value" style={{ color: 'var(--green)' }}>✓</span>}
               </button>
             ))}

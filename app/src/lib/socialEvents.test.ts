@@ -45,7 +45,10 @@ describe('flare', () => {
   it('never posts a backlog (crossed over 30 minutes ago) or a flare below the minimum', () => {
     expect(detectEvents({ ...empty, xrays: run(1.5e-4, 40) }, on, NOW)).toEqual([]);
     expect(detectEvents({ ...empty, xrays: run(6e-5, 5) }, on, NOW)).toEqual([]);
-    expect(detectEvents({ ...empty, xrays: run(6e-5, 5) }, { ...on, flareMin: 'M5' }, NOW)).toHaveLength(1);
+    // M2 option: an M2.4 that crossed 5 minutes ago posts; an M1.9 does not.
+    const m = (peak: number) => Array.from({ length: 60 }, (_, i) => ({ t: NOW - (59 - i) * 6e4, flux: i < 54 ? 1.2e-5 : peak }));
+    expect(detectEvents({ ...empty, xrays: m(2.4e-5) }, { ...on, flareMin: 'M2' }, NOW)).toMatchObject([{ kind: 'flare', cls: 'M2.4' }]);
+    expect(detectEvents({ ...empty, xrays: m(1.9e-5) }, { ...on, flareMin: 'M2' }, NOW)).toEqual([]);
   });
 });
 

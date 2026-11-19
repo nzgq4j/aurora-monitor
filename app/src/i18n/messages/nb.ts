@@ -1580,7 +1580,7 @@ export const nb: Messages = {
   'social.off': "Av",
   'social.flares': "Solutbrudd",
   'social.flareX': "X1 og høyere",
-  'social.flareM5': "M5 og høyere",
+  'social.flareM2': "M2 og høyere",
   'social.shocks': "Sjokk i solvinden",
   'social.substorms': "Substormer",
   'social.now': "Nå",
