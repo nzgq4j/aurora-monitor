@@ -1580,7 +1580,7 @@ export const fr: Messages = {
   'social.off': "Désactivé",
   'social.flares': "Éruptions solaires",
   'social.flareX': "X1 et plus",
-  'social.flareM5': "M5 et plus",
+  'social.flareM2': "M2 et plus",
   'social.shocks': "Chocs du vent solaire",
   'social.substorms': "Sous-orages",
   'social.now': "Maintenant",

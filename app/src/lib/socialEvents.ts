@@ -5,7 +5,7 @@
  * Rules, all from observed data only (never forecasts):
  * - storm: Kp (observed/estimated, last 3 h) or GFZ Hp30 (last 90 min) reaches the minimum G level.
  *   Posted again only when it climbs to a higher G level, or after 24 h.
- * - flare: GOES X-ray flux reaches the minimum class (X1, or M5 if chosen). One post per flare.
+ * - flare: GOES X-ray flux reaches the minimum class (X1, or M2 if chosen). One post per flare.
  * - shock: a solar-wind shock passes L1 (speed up 50 km/s and density or field up by half). One per 6 h.
  * - substorm: auroral power in a hemisphere at least doubles to 30 GW or more. Off by default; one per 3 h.
  * An event first crossed more than 30 minutes ago is never posted, so switching the feed on posts no backlog.
@@ -22,8 +22,8 @@ export interface SocialRules {
   enabled: boolean;
   /** Minimum NOAA G level for storm posts (1–5); 0 turns storm posts off. */
   stormMinG: number;
-  /** Minimum flare class: 'X' (X1+), 'M5' (M5+), or 'off'. */
-  flareMin: 'X' | 'M5' | 'off';
+  /** Minimum flare class: 'X' (X1+), 'M2' (M2+), or 'off'. */
+  flareMin: 'X' | 'M2' | 'off';
   shocks: boolean;
   substorms: boolean;
 }
@@ -102,7 +102,7 @@ export function flareClass(flux: number): string {
   const [l, base] = scale.find(([, b]) => flux >= b) ?? scale[scale.length - 1];
   return `${l}${(Math.floor((flux / base) * 10 + 1e-9) / 10).toFixed(1)}`;
 }
-const FLARE_THRESHOLD = { X: 1e-4, M5: 5e-5 } as const;
+const FLARE_THRESHOLD = { X: 1e-4, M2: 2e-5 } as const;
 
 export interface EventInputs {
   kp: { t: number; kp: number; kind: string }[];

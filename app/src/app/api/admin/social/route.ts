@@ -97,7 +97,7 @@ export async function PATCH(req: Request) {
   const patch: Record<string, unknown> = {};
   if (typeof b.enabled === 'boolean') patch.events_enabled = b.enabled;
   if (typeof b.stormMinG === 'number' && Number.isInteger(b.stormMinG) && b.stormMinG >= 0 && b.stormMinG <= 5) patch.storm_min_g = b.stormMinG;
-  if (b.flareMin === 'X' || b.flareMin === 'M5' || b.flareMin === 'off') patch.flare_min = b.flareMin;
+  if (b.flareMin === 'X' || b.flareMin === 'M2' || b.flareMin === 'off') patch.flare_min = b.flareMin;
   if (typeof b.shocks === 'boolean') patch.shocks_enabled = b.shocks;
   if (typeof b.substorms === 'boolean') patch.substorms_enabled = b.substorms;
   if (typeof b.viewingEnabled === 'boolean') patch.viewing_enabled = b.viewingEnabled;

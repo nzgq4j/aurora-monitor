@@ -1614,7 +1614,7 @@ export const ru: Messages = {
   'social.off': "Выкл.",
   'social.flares': "Солнечные вспышки",
   'social.flareX': "X1 и выше",
-  'social.flareM5': "M5 и выше",
+  'social.flareM2': "M2 и выше",
   'social.shocks': "Ударные волны солнечного ветра",
   'social.substorms': "Суббури",
   'social.now': "Сейчас",

@@ -1580,7 +1580,7 @@ export const nl: Messages = {
   'social.off': "Uit",
   'social.flares': "Zonnevlammen",
   'social.flareX': "X1 en hoger",
-  'social.flareM5': "M5 en hoger",
+  'social.flareM2': "M2 en hoger",
   'social.shocks': "Schokgolven in de zonnewind",
   'social.substorms': "Substormen",
   'social.now': "Nu",

@@ -1580,7 +1580,7 @@ export const sv: Messages = {
   'social.off': "Av",
   'social.flares': "Solutbrott",
   'social.flareX': "X1 och högre",
-  'social.flareM5': "M5 och högre",
+  'social.flareM2': "M2 och högre",
   'social.shocks': "Chockvågor i solvinden",
   'social.substorms': "Substormar",
   'social.now': "Nu",

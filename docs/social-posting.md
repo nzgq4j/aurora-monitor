@@ -38,7 +38,7 @@ posted, so switching the feed on posts no backlog. At most 2 posts per run, stor
 | Kind | Default | Posts when | Repeats |
 | --- | --- | --- | --- |
 | Storm | G1 and above | Kp (observed/estimated, last 3 h) or GFZ Hp30 (last 90 min) reaches the level | Again only at a higher G level, or after 24 h |
-| Flare | X1 and above (or M5) | GOES X-ray flux crosses the class | One post per flare (a tenfold-bigger flare within the hour is new) |
+| Flare | X1 and above (or M2) | GOES X-ray flux crosses the class | One post per flare (a tenfold-bigger flare within the hour is new) |
 | Shock | On | Solar wind speeds up 50 km/s and density or field rises by half (L1) | One per 6 h |
 | Substorm | Off | Hemispheric auroral power at least doubles to 30 GW or more | One per 3 h per hemisphere |
 

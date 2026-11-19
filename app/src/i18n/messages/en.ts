@@ -1580,7 +1580,7 @@ export const en = {
   'social.off': "Off",
   'social.flares': "Solar flares",
   'social.flareX': "X1 and above",
-  'social.flareM5': "M5 and above",
+  'social.flareM2': "M2 and above",
   'social.shocks': "Solar wind shocks",
   'social.substorms': "Substorms",
   'social.now': "Now",

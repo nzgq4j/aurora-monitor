@@ -1580,7 +1580,7 @@ export const fi: Messages = {
   'social.off': "Pois",
   'social.flares': "Auringonpurkaukset",
   'social.flareX': "X1 ja yli",
-  'social.flareM5': "M5 ja yli",
+  'social.flareM2': "M2 ja yli",
   'social.shocks': "Aurinkotuulen shokit",
   'social.substorms': "Alimyrskyt",
   'social.now': "Nyt",
