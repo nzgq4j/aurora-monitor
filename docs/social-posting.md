@@ -85,7 +85,7 @@ Posts rotate through picture styles per kind, so the feed doesn't repeat one loo
 
 The next post of a kind uses the style after its last post's.
 
-The forecast oval (`kpModelOval` in `lib/socialGlobe.ts`) uses the app's rule of thumb: the equatorward edge is near 66° − 2·Kp magnetic latitude at magnetic midnight, moving poleward towards dawn and dusk. The band is 8–12° wide and brightest at midnight. It is labelled "KP MODEL" on the card and described as a model in the alt text, because OVATION itself only forecasts about an hour ahead. If a Sun image can't be fetched in time, the card
+The forecast oval (`kpModelAurora` in `lib/socialGlobe.ts`) follows the statistical (Feldstein–Starkov) oval for the forecast Kp: at magnetic midnight it runs from 67.5 − 1.5·Kp to 73 − 0.6·Kp magnetic latitude (about 63–71° at Kp 3), and at noon from 77 − 0.8·Kp to 80 − 0.5·Kp. It is strongest near midnight and about a quarter as strong at noon, and is computed per pixel. It is labelled "KP MODEL" on the card and described as a model in the alt text, because OVATION itself only forecasts about an hour ahead. If a Sun image can't be fetched in time, the card
 falls back to the data style. Photo cards are saved as JPEG to stay under 1 MB. In /social, the preview shows the
 style that would be used and lets you pick another before posting by hand.
 
