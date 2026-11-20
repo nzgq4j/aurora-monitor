@@ -12,7 +12,7 @@ import type { Topology, GeometryCollection } from 'topojson-specification';
 import land110 from 'world-atlas/land-110m.json';
 import land50 from 'world-atlas/land-50m.json';
 import { auroraColor } from './auroraColor';
-import { magLat, magLocalTime, ovalShift, sunAltitude } from './astro';
+import { magLat, magLocalTime, sunAltitude } from './astro';
 import type { Oval } from './feeds';
 
 const GREEN = '#6CFF2B';
@@ -66,8 +66,10 @@ const image = (href: string, w: number, h: number) => `<image x="0" y="0" width=
  * coastlines that cross it still close. Daylight (a lighter wash, fading through twilight) and the aurora oval
  * are smooth layers computed per pixel from the Sun's altitude at `t` and the oval grid.
  */
-export async function globeSvg(opts: { side?: number; w?: number; h?: number; zoom?: number; center: Point; oval?: Oval | null; t: number; marker?: Point | null }): Promise<string> {
+export async function globeSvg(opts: { side?: number; w?: number; h?: number; zoom?: number; center: Point; oval?: Oval | null; field?: ((lat: number, lon: number) => number) | null; t: number; marker?: Point | null }): Promise<string> {
   const { center, oval, t, marker } = opts;
+  // The aurora layer: a modelled field if given (forecast cards), else the OVATION grid.
+  const field = opts.field ?? (oval ? (lat: number, lon: number) => ovalAtPoint(oval, lat, lon) : null);
   const w = opts.w ?? opts.side ?? 720, h = opts.h ?? opts.side ?? 720, zoom = opts.zoom ?? 1;
   const whole = zoom <= 1;
   const R = (Math.min(w, h) / 2 - (whole ? 6 : 0)) * Math.max(1, zoom), cx = w / 2, cy = h / 2;
@@ -105,7 +107,7 @@ export async function globeSvg(opts: { side?: number; w?: number; h?: number; zo
       const k = Math.max(0, Math.min(1, (alt + 12) / 12)); // dark below −12°, full daylight from 0°
       return k > 0 ? [150, 205, 255, Math.round(k * 46)] : null;
     }),
-    oval ? raster(RW, RH, (x, y) => { const p = inv(x, y); return p ? auroraPx(ovalAtPoint(oval, p.lat, p.lon)) : null; }) : Promise.resolve(null),
+    field ? raster(RW, RH, (x, y) => { const p = inv(x, y); return p ? auroraPx(field(p.lat, p.lon)) : null; }) : Promise.resolve(null),
   ]);
   const m = marker ? proj(marker.lat, marker.lon) : null;
   const frame = whole ? `<circle cx="${cx}" cy="${cy}" r="${R}"/>` : `<rect width="${w}" height="${h}" rx="24"/>`;
@@ -122,33 +124,30 @@ export async function globeSvg(opts: { side?: number; w?: number; h?: number; zo
 }
 
 /**
- * A forecast oval for time `t` from a Kp value (NOAA's 3-hourly Kp forecast), in the same grid as OVATION so it
- * draws the same way. The rule of thumb used across the app (lib/astro): the equatorward edge sits near
- * 66° − 2·Kp magnetic latitude around magnetic midnight and further poleward towards dawn and dusk (ovalShift);
- * the band is 8–12° wide, widening with Kp. Probabilities are illustrative, peaking higher as Kp rises.
- * It is a model, not an OVATION forecast: cards label it as such.
+ * A forecast aurora field for time `t` from a Kp value (NOAA's 3-hourly Kp forecast): probability 0–100 at any
+ * point, on the same colour scale as OVATION. It follows the statistical auroral oval (Feldstein–Starkov): a ring
+ * around the magnetic pole shifted towards the night side. Its equatorward and poleward edges in magnetic latitude
+ * move between their midnight and noon positions with magnetic local time, and both move equatorward as Kp rises:
+ *   midnight: 67.5 − 1.5·Kp to 73 − 0.6·Kp   (Kp 3: about 63–71°)
+ *   noon:     77 − 0.8·Kp   to 80 − 0.5·Kp   (Kp 3: about 75–79°)
+ * Inside the band the chance rises from the equatorward edge, peaks in its equatorward half and fades poleward;
+ * it is strongest around magnetic midnight and about a quarter as strong at noon. Peaks run near 8 × Kp %, like
+ * OVATION's midnight sector. It is a model, not an OVATION forecast: cards label it as such.
  */
-export function kpModelOval(kp: number, t: number): Oval {
-  // Peaks of about 20 % at Kp 2.5, 40 % at Kp 5 and 55 % at Kp 7, like OVATION's midnight sector at those levels.
-  // The band runs from that edge about 8–12° poleward (wider when active), with a softer poleward fade: at Kp 3
-  // that is roughly 60–71° magnetic, like the statistical oval.
-  const peak = Math.min(90, 8 * kp), width = 8 + 0.5 * kp;
-  const grid: Uint8Array[] = [];
-  for (let la = -90; la <= 90; la++) {
-    const row = new Uint8Array(360);
-    if (Math.abs(la) >= 35) for (let lo = 0; lo < 360; lo++) {
-      const m = Math.abs(magLat(la, lo));
-      const shift = ovalShift(magLocalTime(la, lo, t));
-      const edge = 66 - 2 * kp + shift;
-      const d = m - edge; // degrees poleward of the edge
-      if (d < -1.5 || d > width + 3) continue;
-      const k = d < 0 ? (d + 1.5) / 1.5 : d <= width ? 1 : 1 - (d - width) / 3;
-      // Brightest around magnetic midnight, fading towards dawn and dusk.
-      row[lo] = Math.round(peak * Math.max(0, k) * (1 - shift / 8));
-    }
-    grid.push(row);
-  }
-  return { observed: null, forecast: t, grid };
+export function kpModelAurora(kp: number, t: number): (lat: number, lon: number) => number {
+  const eMid = 67.5 - 1.5 * kp, pMid = 73 - 0.6 * kp, eNoon = 77 - 0.8 * kp, pNoon = 80 - 0.5 * kp;
+  const peak = Math.min(90, 8 * kp);
+  return (lat, lon) => {
+    if (Math.abs(lat) < 35) return 0;
+    const m = Math.abs(magLat(lat, lon));
+    const night = (1 + Math.cos(((magLocalTime(lat, lon, t) - 23) / 24) * 2 * Math.PI)) / 2; // 1 at 23 MLT, 0 at 11
+    const e = eNoon + (eMid - eNoon) * night, p = pNoon + (pMid - pNoon) * night;
+    if (m < e - 1 || m > p + 1) return 0;
+    // Position across the band, 0 at the equatorward edge and 1 at the poleward edge, with 1° soft margins.
+    const x = (m - e) / (p - e);
+    const profile = x < 0 ? (1 + x * (p - e)) * 0.35 : x <= 0.35 ? 0.35 + 0.65 * Math.sin((x / 0.35) * Math.PI / 2) : x <= 1 ? Math.cos(((x - 0.35) / 0.65) * Math.PI / 2) ** 0.7 : 0;
+    return peak * Math.max(0, profile) * (0.25 + 0.75 * night);
+  };
 }
 
 /** Longitudes made continuous along a ring (no ±360° jumps between neighbours). */

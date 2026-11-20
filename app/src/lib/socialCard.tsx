@@ -15,7 +15,7 @@ import land110 from 'world-atlas/land-110m.json';
 import { auroraColor } from './auroraColor';
 import { ovalPoints, type Oval } from './feeds';
 import { G_NAME, fmtKp, hhmm, localHm, lookPhrase, type CardStyle, type SocialEvent } from './socialEvents';
-import { globeSvg, kpModelOval, midnightCenter, regionMapSvg } from './socialGlobe';
+import { globeSvg, kpModelAurora, midnightCenter, regionMapSvg } from './socialGlobe';
 
 export const CARD_W = 1080, CARD_H = 1350;
 const PAD = 64, INNER = CARD_W - 2 * PAD;
@@ -257,7 +257,7 @@ async function artFor(ev: SocialEvent, data: CardData): Promise<string | null> {
     // Centred a little poleward of the site, where the oval is.
     const center = { lat: Math.max(-80, Math.min(80, v.site.lat + 3 * Math.sign(v.site.lat))), lon: v.site.lon };
     // Tonight: the Earth at the best hour, with the oval modelled from the Kp forecast for that hour.
-    if (v.mode === 'tonight') return globeSvg({ w: INNER, h: FORECAST_H, zoom: ZOOM_SITE, center, oval: v.kp === null ? null : kpModelOval(v.kp, ev.at), t: ev.at, marker: v.site });
+    if (v.mode === 'tonight') return globeSvg({ w: INNER, h: FORECAST_H, zoom: ZOOM_SITE, center, field: v.kp === null ? null : kpModelAurora(v.kp, ev.at), t: ev.at, marker: v.site });
     return globeSvg({ w: INNER, h: GLOBE_SIDE, zoom: ZOOM_SITE, center, oval: data.oval, t: ev.at, marker: v.site });
   }
   if (style === 'globe') return globeSvg({ w: INNER, h: GLOBE_SIDE, zoom: ZOOM_STORM, center: midnightCenter(ev.at, ev.hemi === 'south'), oval: data.oval, t: ev.at });

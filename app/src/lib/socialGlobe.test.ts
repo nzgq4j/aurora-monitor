@@ -1,29 +1,41 @@
 import { describe, expect, it } from 'vitest';
-import { globeSvg, kpModelOval, regionMapSvg } from './socialGlobe';
+import { globeSvg, kpModelAurora, regionMapSvg } from './socialGlobe';
 import { cardAlt, effectiveStyle } from './socialCard';
 import { sampleEvent, type SocialEvent } from './socialEvents';
+import { magLat } from './astro';
 
-const T = Date.parse('2026-11-19T22:00:00Z'); // near magnetic midnight over the North Atlantic
-const at = (o: ReturnType<typeof kpModelOval>, lat: number, lon: number) => o.grid[Math.round(lat) + 90][((Math.round(lon) % 360) + 360) % 360];
+const T = Date.parse('2026-11-20T21:00:00Z'); // evening over the North Atlantic: magnetic midnight near Greenland/Iceland
 
-describe('kpModelOval', () => {
-  it('puts quiet aurora over Iceland and northern Norway, not over Scotland', () => {
-    const quiet = kpModelOval(2.67, T);
-    expect(at(quiet, 65, -19)).toBeGreaterThan(10); // Iceland
-    expect(at(quiet, 69, 19)).toBeGreaterThan(10); // Tromsø
-    expect(at(quiet, 56, -3)).toBe(0); // Edinburgh
+describe('kpModelAurora (statistical oval from the Kp forecast)', () => {
+  const quiet = kpModelAurora(3, T);
+  it('puts quiet-time aurora over Iceland and northern Norway, not over Scotland or Oslo', () => {
+    expect(quiet(65, -18)).toBeGreaterThan(8); // Iceland, magnetic ~69°
+    expect(quiet(69.65, 18.96)).toBeGreaterThan(5); // Tromsø
+    expect(quiet(55.95, -3.19)).toBe(0); // Edinburgh
+    expect(quiet(59.91, 10.75)).toBe(0); // Oslo
   });
-  it('moves equatorward and brightens as Kp rises', () => {
-    const storm = kpModelOval(7, T);
-    expect(at(storm, 56, -3)).toBeGreaterThan(0);
-    const max = (o: ReturnType<typeof kpModelOval>) => Math.max(...o.grid.map(r => Math.max(...r)));
-    expect(max(storm)).toBeGreaterThan(max(kpModelOval(2.67, T)));
-    expect(max(kpModelOval(2.67, T))).toBeLessThan(30); // quiet stays green-yellow, like OVATION
+  it('is a band about 8° wide at midnight, starting near 63° magnetic latitude at Kp 3', () => {
+    // Walk north along Iceland's meridian and record where the aurora is.
+    const lit = Array.from({ length: 41 }, (_, i) => 50 + i * 0.5).filter(lat => quiet(lat, -25) > 3).map(lat => magLat(lat, -25));
+    expect(Math.min(...lit)).toBeGreaterThan(61.5);
+    expect(Math.min(...lit)).toBeLessThan(64.5);
+    expect(Math.max(...lit) - Math.min(...lit)).toBeLessThan(11);
   });
-  it('is weaker on the dayside than at magnetic midnight, and empty at low latitudes', () => {
-    const o = kpModelOval(4, T);
-    expect(at(o, 66, 100)).toBeLessThan(at(o, 66, -19)); // Siberia at local morning vs Iceland at night
-    expect(o.grid.slice(90 - 30, 90 + 31).every(r => r.every(v => v === 0))).toBe(true);
+  it('moves equatorward and brightens as Kp rises, and stays green-yellow when quiet', () => {
+    const storm = kpModelAurora(7, T);
+    expect(storm(55.95, -3.19)).toBeGreaterThan(0);
+    let qMax = 0, sMax = 0;
+    for (let lat = 50; lat <= 85; lat++) for (let lon = -180; lon < 180; lon += 2) { qMax = Math.max(qMax, quiet(lat, lon)); sMax = Math.max(sMax, storm(lat, lon)); }
+    expect(sMax).toBeGreaterThan(qMax);
+    expect(qMax).toBeLessThan(30);
+  });
+  it('is fainter and further poleward on the dayside; nothing at low latitudes', () => {
+    // At 21 UTC it is local noon near 135° W (Alaska): there the band starts further poleward and is weaker.
+    const along = (lon: number) => Array.from({ length: 81 }, (_, i) => 50 + i * 0.5).map(lat => ({ m: magLat(lat, lon), v: quiet(lat, lon) })).filter(p => p.v > 0);
+    const night = along(-25), day = along(-135);
+    expect(Math.min(...day.map(p => p.m))).toBeGreaterThan(Math.min(...night.map(p => p.m)) + 6);
+    expect(Math.max(...day.map(p => p.v))).toBeLessThan(Math.max(...night.map(p => p.v)) * 0.6);
+    expect(quiet(30, -18)).toBe(0);
   });
 });
 
